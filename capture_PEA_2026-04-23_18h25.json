@@ -1,0 +1,101 @@
+{
+  "id": 1776961537372,
+  "label": "2026-04-23 18:25",
+  "date": "2026-04-23",
+  "time": "18:25",
+  "timestamp": "2026-04-23T16:25:37.372Z",
+  "account": "PEA",
+  "positions": [
+    {
+      "nom": "TECHNIP ENERGIES",
+      "isin": "NL0014559478",
+      "ticker": "",
+      "quantite": 11,
+      "pru": 32.14,
+      "cours": 39.96,
+      "valeur": 439.56,
+      "pvEur": 86.02000000000001,
+      "pvPct": 24.33,
+      "secteur": ""
+    },
+    {
+      "nom": "SMAIO",
+      "isin": "FR0014005I80",
+      "ticker": "",
+      "quantite": 50,
+      "pru": 6.31,
+      "cours": 7.64,
+      "valeur": 382,
+      "pvEur": 66.5,
+      "pvPct": 21.08,
+      "secteur": ""
+    },
+    {
+      "nom": "ENTECH",
+      "isin": "FR0014004362",
+      "ticker": "",
+      "quantite": 25,
+      "pru": 7.44,
+      "cours": 9.55,
+      "valeur": 238.75000000000003,
+      "pvEur": 52.75000000000001,
+      "pvPct": 28.36,
+      "secteur": ""
+    },
+    {
+      "nom": "AMUNDI PEA MONDE MSCI WORLD UCITS ETF ACC",
+      "isin": "FR001400U5Q4",
+      "ticker": "",
+      "quantite": 210,
+      "pru": 5.43,
+      "cours": 5.68,
+      "valeur": 1192.8,
+      "pvEur": 52.5,
+      "pvPct": 4.6,
+      "secteur": ""
+    },
+    {
+      "nom": "HAFFNER ENERGY",
+      "isin": "FR0014007ND6",
+      "ticker": "",
+      "quantite": 2420,
+      "pru": 0.09,
+      "cours": 0.18,
+      "valeur": 435.59999999999997,
+      "pvEur": 217.79999999999998,
+      "pvPct": 100,
+      "secteur": ""
+    },
+    {
+      "nom": "AMUNDI PEA EMERGENT (MSCI EMERGING) ESG TRANSITION UCITS ETF S - ACC",
+      "isin": "FR001400ZGO4",
+      "ticker": "",
+      "quantite": 30,
+      "pru": 6.78,
+      "cours": 6.82,
+      "valeur": 204.60000000000002,
+      "pvEur": 1.200000000000001,
+      "pvPct": 0.59,
+      "secteur": ""
+    },
+    {
+      "nom": "KALRAY",
+      "isin": "FR0010722819",
+      "ticker": "",
+      "quantite": 50,
+      "pru": 5.23,
+      "cours": 6.02,
+      "valeur": 301,
+      "pvEur": 39.49999999999996,
+      "pvPct": 15.11,
+      "secteur": ""
+    }
+  ],
+  "summary": {
+    "nbPositions": 7,
+    "totalActuel": 3194.31,
+    "totalInvesti": 2678.04,
+    "totalPV": 516.27,
+    "totalPVpct": 19.28
+  }
+}
