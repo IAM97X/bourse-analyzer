@@ -15,6 +15,8 @@ const SYNC_KEYS = [
   "bourse_pea_ouverture", "bourse_cto_ouverture", "bourse_account",
   "bourse_dark", "bourse_compact", "bourse_hidden", "bourse_avatar_emoji",
   "bourse_sidebar_collapsed", "bourse_active_tab",
+  "bourse_avis_operes", "bourse_snapshots", "bourse_dividendes",
+  "bourse_api_keys", "bourse_impot_sortie", "bourse_local_name",
 ];
 
 // userId courant pour la sync (module-level mutable ref)
@@ -264,7 +266,7 @@ function getEuronextUrl(isin, nom) {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const TABS = { PORTFOLIO: "portfolio", MARCHE: "marche", PROJECTION: "projection", HISTORIQUE: "historique", DCA: "dca", OPERATIONS: "operations", PROFIL: "profil", SETTINGS: "settings" };
+const TABS = { PORTFOLIO: "portfolio", MARCHE: "marche", PROJECTION: "projection", HISTORIQUE: "historique", DCA: "dca", OPERATIONS: "operations", CHAT: "chat", PROFIL: "profil", SETTINGS: "settings" };
 const UI   = { IDLE: "idle", LOADING: "loading", RESULT: "result", ERROR: "error" };
 const RISQUE_PCT = { prudent: 0.05, equilibre: 0.10, dynamique: 0.15 };
 const SURV_SECS  = 30 * 60;
@@ -547,7 +549,7 @@ const SIGNAL_CONFIG = {
   VENDRE:    { color: "#DC2626",  bg: "#FFF5F5",    border: "#DC2626",               icon: "🚨" },
 };
 
-const DEFAULT_PROFIL    = { capital: 0, horizon: "moyen", risque: "equilibre", capitalPEA: 0, capitalCTO: 0, dcaMensuel: 0, dcaDuree: 12 };
+const DEFAULT_PROFIL    = { capital: 0, horizon: "moyen", risque: "equilibre", capitalPEA: 0, capitalCTO: 0, dcaMensuel: 0, dcaDuree: 12, courtier: "boursobank" };
 const STORAGE_VERSION = "v4";
 
 const DEFAULT_POSITIONS = [];
@@ -695,10 +697,18 @@ function fmtPV(eur, pct) {
   const sign = eur >= 0 ? "+" : "";
   return `${sign}${fmtEur(eur).replace(" €", "")} € (${fmtPct(pct)})`;
 }
-function calcFraisCourtage(montant) {
-  if (!montant || montant <= 0) return 0;
-  if (montant <= 500) return 1.99;
-  return Math.max(montant * 0.005, 3.99);
+const COURTIERS = {
+  boursobank:    { nom: "Boursobank",     minOrdre: 0,    frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
+  fortuneo:      { nom: "Fortuneo",       minOrdre: 0,    frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
+  bourse_direct: { nom: "Bourse Direct",  minOrdre: 0,    frais: m => m <= 0 ? 0 : m <= 300 ? 0.99 : m <= 2000 ? 1.90 : Math.max(m * 0.00095, 3.00) },
+  trade_rep:     { nom: "Trade Republic", minOrdre: 1,    frais: m => m <= 0 ? 0 : 1.00 },
+  degiro:        { nom: "DEGIRO",         minOrdre: 0,    frais: m => m <= 0 ? 0 : Math.max(0.50 + m * 0.00004, 0.50) },
+  saxo:          { nom: "Saxo Banque",    minOrdre: 0,    frais: m => m <= 0 ? 0 : Math.max(m * 0.0008, 4.00) },
+  autre:         { nom: "Autre",          minOrdre: 0,    frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
+};
+function calcFraisCourtage(montant, courtierKey) {
+  const c = COURTIERS[courtierKey] || COURTIERS.boursobank;
+  return c.frais(montant);
 }
 function tauxFraisCourtage(montant) {
   const frais = calcFraisCourtage(montant);
@@ -749,6 +759,12 @@ const GOOGLE_API_KEY       = { toString() { return getKey("google"); } };
 const GOOGLE_CX            = { toString() { return getKey("cx"); } };
 const ALPHAVANTAGE_KEY     = { toString() { return getKey("alphavantage"); } };
 const hasClaudeKey = () => !!getKey("anthropic");
+
+// En production (Vercel), les appels Anthropic passent par /api/claude (clé côté serveur).
+// En dev, on appelle directement l'API (setupProxy gère le CORS).
+const CLAUDE_ENDPOINT = process.env.NODE_ENV === "production"
+  ? "/api/claude"
+  : "CLAUDE_ENDPOINT";
 
 // Cache des symboles Alpha Vantage (ISIN → symbol) pour éviter les appels répétés
 const _avSymbolCache = {};
@@ -964,7 +980,7 @@ async function callClaude(system, userMessage, useSearch = false, _retries = 4, 
   for (let attempt = 0; attempt < _retries; attempt++) {
     let res, data;
     try {
-      res  = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      res  = await fetch("CLAUDE_ENDPOINT", { method: "POST", headers, body: JSON.stringify(bodyObj) });
       data = await res.json();
     } catch (networkErr) {
       if (attempt < _retries - 1) { await delay(2000 * (attempt + 1)); continue; }
@@ -1022,7 +1038,7 @@ async function callClaudeHaiku(system, userMessage) {
   for (let attempt = 0; attempt < 3; attempt++) {
     let res, data;
     try {
-      res  = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      res  = await fetch("CLAUDE_ENDPOINT", { method: "POST", headers, body: JSON.stringify(bodyObj) });
       data = await res.json();
     } catch (networkErr) {
       if (attempt < 2) { await delay(3000); continue; }
@@ -1050,6 +1066,42 @@ async function callClaudeHaiku(system, userMessage) {
   throw new Error("Nombre de tentatives maximum atteint.");
 }
 
+// ─── Chat conversationnel multi-tour (retourne du texte brut, pas JSON) ──────
+async function callClaudeConversation(system, messages, _retries = 3) {
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": ANTHROPIC_API_KEY,
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true",
+  };
+  const bodyObj = { model: "claude-haiku-4-5-20251001", max_tokens: 1500, system, messages };
+  for (let attempt = 0; attempt < _retries; attempt++) {
+    let res, data;
+    try {
+      res  = await fetch("CLAUDE_ENDPOINT", { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      data = await res.json();
+    } catch (networkErr) {
+      if (attempt < _retries - 1) { await delay(2000 * (attempt + 1)); continue; }
+      throw new Error(`Erreur réseau : ${networkErr.message}`);
+    }
+    if (res.status === 429 || data?.error?.type === "rate_limit_error") {
+      if (attempt < _retries - 1) { await delay(8000 * (attempt + 1)); continue; }
+      throw new Error(`Limite de taux (429). Réessayez dans 1 minute.`);
+    }
+    if (res.status === 500 || res.status === 529) {
+      if (attempt < _retries - 1) { await delay(5000 * (attempt + 1)); continue; }
+      throw new Error("Service temporairement indisponible — Réessayez dans quelques instants.");
+    }
+    if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
+    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez REACT_APP_ANTHROPIC_API_KEY dans .env`);
+    if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
+    const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+    if (!text) throw new Error("Réponse vide.");
+    return text.trim();
+  }
+  throw new Error("Nombre de tentatives maximum atteint.");
+}
+
 // ─── Chaining : Google Search → Claude structure le JSON ─────────────────────
 async function callClaudeChained(system, userMessage) {
   const [coursData, analyseData] = await Promise.all([
@@ -1073,7 +1125,7 @@ En te basant sur ces données, génère le JSON demandé. FORMAT PRIX : point d�
     system,
     messages: [{ role: "user", content: structuredMsg }]
   };
-  const res  = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify(bodyObj) });
+  const res  = await fetch("CLAUDE_ENDPOINT", { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify(bodyObj) });
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
@@ -1786,9 +1838,11 @@ function PortfolioResult({ data, timestamp }) {
 const isETFName = (nom) => /etf|tracker|ucits|msci|world|amundi|lyxor|ishares|bnp.*easy|vanguard|s&p|sp500|nasdaq|cac|dax/i.test(nom || "");
 const MOIS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
-function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunScoring }) {
-  const dcaMensuel = Number(profil?.dcaMensuel) || 0;
-  const dcaDuree   = Number(profil?.dcaDuree) || 120;
+function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunScoring, onSaveProfil }) {
+  const dcaMensuel   = Number(profil?.dcaMensuel) || 0;
+  const dcaDuree     = Number(profil?.dcaDuree) || 120;
+  const courtierKey  = profil?.courtier || "boursobank";
+  const courtierCfg  = COURTIERS[courtierKey] || COURTIERS.boursobank;
   const [priorityAnalysis, setPriorityAnalysis] = useState(null);
   const [analysisUi, setAnalysisUi]             = useState(UI.IDLE);
   const analysisKeyRef = useRef(null);
@@ -1885,12 +1939,13 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
   if (!prioritaire) return null;
 
   // ── Calcul achat + frais de courtage ───────────────────────────────────────
-  const titresAchetables = Math.floor(dcaMensuel / prioritaire.cours);
+  const minOrdre         = Math.max(courtierCfg.minOrdre, prioritaire.cours); // ≥ 1 titre
+  const titresAchetables = dcaMensuel >= minOrdre ? Math.floor(dcaMensuel / prioritaire.cours) : 0;
   const montantReel      = titresAchetables * prioritaire.cours;
-  const fraisBourso      = calcFraisCourtage(montantReel);
+  const fraisBourso      = calcFraisCourtage(montantReel, courtierKey);
   const coutTotal        = montantReel + fraisBourso;
   const reste            = dcaMensuel - montantReel;
-  const manque           = prioritaire.cours - dcaMensuel;
+  const manque           = Math.max(minOrdre, prioritaire.cours) - dcaMensuel;
   const minPourUnTitre   = Math.ceil(prioritaire.cours * 100) / 100;
   const surplusConseille = titresAchetables > 0 ? reste : manque;
   const peutSuggererPlus = titresAchetables === 0 ||
@@ -1904,10 +1959,10 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
 
   // Frais si DCA augmenté (1 titre de plus)
   const montantPlus    = (titresAchetables + 1) * prioritaire.cours;
-  const fraisPlus      = calcFraisCourtage(montantPlus);
+  const fraisPlus      = calcFraisCourtage(montantPlus, courtierKey);
 
-  // DCA min conseillé (1 titre + frais rentables ≥ 1%)
-  const dcaMinConseille = Math.max(minPourUnTitre + fraisBourso, prioritaire.cours * 1.01);
+  // DCA min conseillé = max(minOrdre courtier, 1 titre + frais raisonnables)
+  const dcaMinConseille = Math.max(minPourUnTitre + fraisBourso, minOrdre, prioritaire.cours * 1.01);
 
   // ── Projection réaliste 3 scénarios ──────────────────────────────────────
   const projScenario = (tauxAnnuel, mois) => {
@@ -2222,58 +2277,54 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
 
       {/* ── Conseils DCA flex ── */}
       <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "16px 18px", marginBottom: "20px" }}>
-        <div style={{ fontSize: "10px", color: C.navy, fontWeight: "700", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "14px" }}>
-          📊 Ajustements DCA selon votre budget mensuel
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+          <div style={{ fontSize: "10px", color: C.navy, fontWeight: "700", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+            📊 Ajustements DCA selon votre budget mensuel
+          </div>
+          {/* Sélecteur courtier */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600" }}>Courtier :</span>
+            <select
+              value={courtierKey}
+              onChange={e => onSaveProfil && onSaveProfil({ ...profil, courtier: e.target.value })}
+              style={{ fontSize: "10px", fontWeight: "700", color: C.navy, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 6px", background: C.snow, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+              {Object.entries(COURTIERS).map(([k, v]) => <option key={k} value={k}>{v.nom}</option>)}
+            </select>
+          </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {/* Mois normal */}
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
             <div style={{ background: C.green, color: C.snow, borderRadius: "6px", padding: "3px 8px", fontSize: "10px", fontWeight: "700", flexShrink: 0, marginTop: "2px" }}>NORMAL</div>
             <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: "1.5" }}>
-              Budget habituel {fmtEur(dcaMensuel)} · {titresAchetables > 0 ? `Acheter ${titresAchetables} titre${titresAchetables > 1 ? "s" : ""} de ${prioritaire.nom} = ${fmtEur(montantReel)} + ${fmtEur(fraisBourso)} frais` : `Budget insuffisant — économisez pour le mois prochain`}
+              Budget habituel {fmtEur(dcaMensuel)} · {titresAchetables > 0 ? `Acheter ${titresAchetables} titre${titresAchetables > 1 ? "s" : ""} de ${prioritaire.nom} = ${fmtEur(montantReel)} + ${fmtEur(fraisBourso)} frais (${courtierCfg.nom})` : `Budget insuffisant pour 1 titre (${fmtEur(prioritaire.cours)}) — économisez pour le mois prochain`}
             </div>
           </div>
           {/* Mois abondant */}
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
             <div style={{ background: C.navy, color: C.snow, borderRadius: "6px", padding: "3px 8px", fontSize: "10px", fontWeight: "700", flexShrink: 0, marginTop: "2px" }}>HAUSSE</div>
             <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: "1.5" }}>
-              Si vous pouvez investir davantage : ciblez {fmtEur(montantPlus)} (+1 titre) pour maximiser l'effet DCA. Frais de courtage : {fmtEur(fraisPlus)} ({tauxFraisCourtage(montantPlus)}%). Au-delà de 500 € le taux passe à 0,5% — avantageux.
+              Si vous pouvez investir davantage : ciblez {fmtEur(montantPlus)} (+1 titre) pour maximiser l'effet DCA. Frais {courtierCfg.nom} : {fmtEur(fraisPlus)} ({tauxFraisCourtage(montantPlus)}%).
             </div>
           </div>
           {/* Mois contraint */}
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
             <div style={{ background: C.goldDark, color: C.snow, borderRadius: "6px", padding: "3px 8px", fontSize: "10px", fontWeight: "700", flexShrink: 0, marginTop: "2px" }}>RÉDUIT</div>
             <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: "1.5" }}>
-              Si budget contraint : minimum conseillé {fmtEur(dcaMinConseille)} (1 titre + frais raisonnables). En dessous, mieux vaut reporter et cumuler pour éviter des frais disproportionnés (1,99 € sur un petit montant = impact fort). Vous pouvez aussi placer la somme en attente.
+              Minimum conseillé : <strong>{fmtEur(dcaMinConseille)}</strong> (1 titre à {fmtEur(prioritaire.cours)} + {fmtEur(fraisBourso)} frais {courtierCfg.nom}{courtierCfg.minOrdre > 0 ? ` · ordre min ${fmtEur(courtierCfg.minOrdre)}` : ""}).
+              En dessous, reporter et cumuler évite des frais disproportionnés.
             </div>
           </div>
           {/* Mois difficile */}
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
             <div style={{ background: C.red, color: C.snow, borderRadius: "6px", padding: "3px 8px", fontSize: "10px", fontWeight: "700", flexShrink: 0, marginTop: "2px" }}>PAUSE</div>
             <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: "1.5" }}>
-              En cas de difficultés : ne jamais forcer un achat. Le DCA sur 10 ans tolère 1 à 2 mois de pause sans impact majeur sur la performance finale. L'essentiel est la régularité sur la durée.
+              Ne jamais forcer un achat. Le DCA sur 10 ans tolère 1 à 2 mois de pause sans impact majeur. L'essentiel est la régularité sur la durée.
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Bouton Analyse IA de toutes les lignes ── */}
-      {marketScoringUi !== UI.LOADING && (
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <button
-            onClick={() => onRunScoring && onRunScoring(positions)}
-            disabled={!onRunScoring || positions.length === 0}
-            style={{ background: C.navy, color: C.snow, border: "none", borderRadius: "50px", padding: "14px 36px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "-0.01em", boxShadow: shadow.pill }}
-          >
-            🤖 Analyser toutes mes lignes
-          </button>
-        </div>
-      )}
-      {marketScoringUi === UI.LOADING && (
-        <div style={{ textAlign: "center", marginBottom: "20px", fontSize: "13px", color: C.inkSubtle, fontStyle: "italic" }}>
-          <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color={C.inkMuted} /> Analyse IA en cours pour toutes vos lignes…</span>
-        </div>
-      )}
 
       {/* ── Analyse IA approfondie de l'action prioritaire ── */}
       {analysisUi === UI.LOADING && <LoadingPanel label="ANALYSE APPROFONDIE EN COURS" />}
@@ -2408,43 +2459,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
         );
       })()}
 
-      {/* Autres positions */}
-      {scored.filter(p => p.id !== prioritaire.id).length > 0 && (
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>
-            Autres lignes — pas d'investissement prévu ce mois
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {[...scored].sort((a, b) => b.score - a.score).filter(p => p.id !== prioritaire.id).map(pos => {
-              const sig = pos.iaEntry?.signal;
-              const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? "#7B1111" : sig === "PRUDENCE" ? C.red : sig === "ATTENDRE" ? C.goldDark : C.inkSubtle;
-              return (
-                <div key={pos.id} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: pos.iaEntry?.resume ? "4px" : "0" }}>
-                      <span style={{ fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "Inter, sans-serif" }}>{pos.nom}</span>
-                      {sig && <span style={{ fontSize: "9px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "4px", padding: "1px 6px", flexShrink: 0 }}>{sig}</span>}
-                    </div>
-                    {pos.iaEntry?.resume && (
-                      <p style={{ fontSize: "11px", color: C.inkSubtle, margin: 0, lineHeight: "1.5", fontStyle: "italic" }}>{pos.iaEntry.resume}</p>
-                    )}
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>Score {Math.round(pos.score * 100)}/100</div>
-                    <div style={{ fontSize: "10px", color: C.inkSubtle }}>{(pos.poids * 100).toFixed(1)} % port.</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
-      <div style={{ textAlign: "center", padding: "12px", background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "8px" }}>
-        <span style={{ fontSize: "12px", color: C.navy, fontWeight: "600" }}>
-          📈 Consultez l'onglet <strong>Projection</strong> pour le graphique et les simulations sur 30 ans
-        </span>
-      </div>
     </Card>
   );
 }
@@ -5097,12 +5112,11 @@ function PriceEvolutionChart({ positions }) {
 }
 
 // ─── Marché Tab ─────────────────────────────────────────────────────────────
-function MarcheTab({ profil, portfolioVersion, account = "PEA" }) {
+function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, marketScoringUi, onRunScoring }) {
   const [allPositions, setAllPositions] = useState(() => sanitizePositions(load("bourse_portfolio", DEFAULT_POSITIONS)));
   const positions = allPositions.filter(p => (p.compte || "PEA") === account);
   const [selectedPosId, setSelectedPosId] = useState(null);
 
-  // Resynchronise les positions quand le portefeuille change dans un autre onglet
   useEffect(() => {
     setAllPositions(sanitizePositions(load("bourse_portfolio", DEFAULT_POSITIONS)));
     setSelectedPosId(null);
@@ -5115,13 +5129,86 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA" }) {
   );
 
   const selectedPos = positions.find(p => p.id === selectedPosId) || null;
+  const SIG_COLOR = { ACHAT: C.green, RENFORCER: C.accent, ATTENDRE: C.gold, PRUDENCE: C.red, VENDRE: "#7B1111" };
+  const SIG_BG    = { ACHAT: C.greenLight, RENFORCER: C.paleBlue, ATTENDRE: C.goldLight, PRUDENCE: C.redLight, VENDRE: "rgba(123,17,17,0.08)" };
+
+  const scores = Array.isArray(marketScores) ? marketScores : [];
+  const scoredPositions = positions.map(p => {
+    const s = scores.find(sc => sc.isin === p.isin || sc.nom?.toLowerCase() === p.nom?.toLowerCase());
+    return { ...p, _score: s || null };
+  }).sort((a, b) => (b._score?.score_marche ?? -1) - (a._score?.score_marche ?? -1));
 
   return (
     <div>
-      {/* Sélecteur de valeur + projection — en premier */}
+      {/* ── Scoring IA dynamique ── */}
+      <div style={{ background: C.cardGrad, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "22px", boxShadow: shadow.card, marginBottom: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px", flexWrap: "wrap", gap: "10px" }}>
+          <div>
+            <div style={{ fontWeight: "700", fontSize: "14px", color: C.ink }}>Scoring IA Dynamique</div>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px" }}>Analyse temps réel de chaque position — actualités + signaux marché</div>
+          </div>
+          <button
+            onClick={() => onRunScoring && onRunScoring(positions)}
+            disabled={marketScoringUi === UI.LOADING}
+            style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
+            {marketScoringUi === UI.LOADING
+              ? <><span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", border: "2px solid #aaa", borderTopColor: "transparent", animation: "spin 0.7s linear infinite" }} />Analyse en cours…</>
+              : "Lancer le scoring IA"}
+          </button>
+        </div>
+
+        {marketScoringUi === UI.IDLE && scores.length === 0 && (
+          <div style={{ textAlign: "center", padding: "28px 0", color: C.inkSubtle, fontSize: "13px" }}>
+            Cliquez sur "Lancer le scoring IA" pour analyser vos positions en temps réel.
+          </div>
+        )}
+
+        {(marketScoringUi === UI.RESULT || scores.length > 0) && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {scoredPositions.map(pos => {
+              const s = pos._score;
+              if (!s) return (
+                <div key={pos.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 14px", background: C.snowOff, borderRadius: "12px", border: `1px solid ${C.border}` }}>
+                  <div style={{ fontWeight: "600", fontSize: "13px", color: C.inkMuted, minWidth: "120px" }}>{pos.nom}</div>
+                  <div style={{ fontSize: "11px", color: C.inkSubtle }}>Non scoré — Lancez une analyse</div>
+                </div>
+              );
+              const scoreBarColor = s.score_marche >= 14 ? C.green : s.score_marche >= 9 ? C.gold : C.red;
+              return (
+                <div key={pos.id} style={{ padding: "14px 16px", background: SIG_BG[s.signal] || C.snowOff, borderRadius: "14px", border: `1px solid ${SIG_COLOR[s.signal] ? SIG_COLOR[s.signal] + "33" : C.border}`, display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                    <div style={{ fontWeight: "700", fontSize: "13.5px", color: C.ink, flex: 1, minWidth: "100px" }}>{pos.nom}</div>
+                    <span style={{ fontSize: "10px", fontWeight: "800", color: SIG_COLOR[s.signal] || C.inkMuted, background: SIG_COLOR[s.signal] ? SIG_COLOR[s.signal] + "22" : C.snowDim, padding: "3px 10px", borderRadius: "20px", border: `1px solid ${SIG_COLOR[s.signal] || C.border}`, letterSpacing: "0.5px" }}>{s.signal}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ width: "80px", height: "6px", borderRadius: "3px", background: C.snowDim, overflow: "hidden" }}>
+                        <div style={{ width: `${(s.score_marche / 20) * 100}%`, height: "100%", background: scoreBarColor, borderRadius: "3px", transition: "width 0.5s" }} />
+                      </div>
+                      <span style={{ fontSize: "12px", fontWeight: "700", color: scoreBarColor }}>{s.score_marche}/20</span>
+                    </div>
+                  </div>
+                  {s.resume && <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: "1.5" }}>{s.resume}</div>}
+                  {s.catalyseur_cle && (
+                    <div style={{ fontSize: "11px", color: C.inkSubtle, display: "flex", alignItems: "center", gap: "5px" }}>
+                      <span style={{ fontWeight: "700", color: C.inkMuted }}>Catalyseur :</span> {s.catalyseur_cle}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {marketScoringUi === UI.ERROR && (
+          <div style={{ padding: "12px 14px", background: C.redLight, border: `1px solid rgba(231,76,60,0.25)`, borderRadius: "12px", color: C.red, fontSize: "12.5px" }}>
+            Erreur lors du scoring — Vérifiez votre clé API et réessayez.
+          </div>
+        )}
+      </div>
+
+      {/* ── Projection par valeur ── */}
       <div style={{ background: C.cardGradPurp, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "22px", boxShadow: shadow.card }}>
         <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px" }}>
-          📊 Projection par valeur
+          Projection par valeur
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
           {positions.map(pos => (
@@ -5145,9 +5232,8 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA" }) {
       </div>
 
       <div style={{ height: "20px" }} />
-
-      {/* Évolution historique de tous les cours — en second */}
       <PriceEvolutionChart positions={positions} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -8149,6 +8235,407 @@ function InfoTip({ term, text, position = "top" }) {
   );
 }
 
+// ─── Portfolio Chart — graphique évolution portefeuille (Google Finance style) ─
+async function resolveIsinToTicker(isin) {
+  try {
+    const url = `https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v1/finance/search?q=${isin}&quotesCount=5&newsCount=0&enableFuzzyQuery=false`)}`;
+    const res  = await fetch(url);
+    const json = await res.json();
+    const quotes = json.quotes || [];
+    const eq = quotes.find(q => q.quoteType === "EQUITY" && q.symbol) || quotes.find(q => q.symbol);
+    return eq?.symbol || null;
+  } catch { return null; }
+}
+
+async function rebuildPortfolioHistory(account, onProgress) {
+  const acc = account || "PEA";
+  const progress = onProgress || (() => {});
+
+  // ── Étape 1 : charger les transactions ────────────────────────────────────
+  const ops = (() => { try { return JSON.parse(localStorage.getItem("bourse_avis_operes") || "[]"); } catch { return []; } })()
+    .filter(o => (o.compte || "PEA") === acc)
+    .sort((a, b) => a.date < b.date ? -1 : 1);
+
+  const portfolio = load("bourse_portfolio", []).filter(p => (p.compte || "PEA") === acc);
+
+  // ── Étape 2 : mapping ISIN → ticker (cache + portfolio + résolution auto) ─
+  const cache = (() => { try { return JSON.parse(localStorage.getItem("bourse_isin_ticker_cache") || "{}"); } catch { return {}; } })();
+  const isinToTicker = { ...cache };
+  portfolio.forEach(p => { if (p.isin && p.ticker) isinToTicker[p.isin] = p.ticker; });
+
+  const allIsins = [...new Set([
+    ...ops.map(o => o.isin).filter(Boolean),
+    ...portfolio.map(p => p.isin).filter(Boolean),
+  ])];
+
+  // Résolution automatique des ISIN sans ticker connu
+  const unresolved = allIsins.filter(isin => !isinToTicker[isin]);
+  if (unresolved.length) {
+    progress(`Résolution de ${unresolved.length} ISIN...`);
+    for (let i = 0; i < unresolved.length; i++) {
+      const isin = unresolved[i];
+      const ticker = await resolveIsinToTicker(isin);
+      if (ticker) {
+        isinToTicker[isin] = ticker;
+        cache[isin] = ticker;
+      }
+      progress(`Résolution ISIN ${i + 1}/${unresolved.length}${ticker ? ` → ${ticker}` : " (non trouvé)"}`);
+    }
+    try { localStorage.setItem("bourse_isin_ticker_cache", JSON.stringify(cache)); } catch {}
+  }
+
+  const resolvedIsins = allIsins.filter(isin => isinToTicker[isin]);
+  const tickers = [...new Set(resolvedIsins.map(isin => isinToTicker[isin]))];
+  if (!tickers.length) return { count: 0, resolved: 0, total: allIsins.length };
+
+  // ── Étape 3 : cours historiques Yahoo Finance ──────────────────────────────
+  progress(`Téléchargement des cours pour ${tickers.length} valeur(s)...`);
+  const pricesByTicker = {};
+  await Promise.all(tickers.map(async ticker => {
+    try {
+      const url = `https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5y`)}`;
+      const res  = await fetch(url);
+      const json = await res.json();
+      const result = json.chart?.result?.[0];
+      if (!result) { pricesByTicker[ticker] = {}; return; }
+      const ts     = result.timestamp || [];
+      const closes = result.indicators?.quote?.[0]?.close || [];
+      pricesByTicker[ticker] = {};
+      ts.forEach((t, i) => {
+        if (closes[i] != null)
+          pricesByTicker[ticker][new Date(t * 1000).toISOString().slice(0, 10)] = closes[i];
+      });
+    } catch { pricesByTicker[ticker] = {}; }
+  }));
+
+  // ── Étape 4 : rejouer les transactions jour par jour ──────────────────────
+  const allDates = new Set(Object.values(pricesByTicker).flatMap(m => Object.keys(m)));
+  const useOps   = ops.length > 0;
+  const earliest = useOps
+    ? ops[0].date
+    : portfolio.map(p => p.dateAchat).filter(Boolean).sort()[0] || new Date().toISOString().slice(0, 10);
+  const today  = new Date().toISOString().slice(0, 10);
+  const sorted = [...allDates].filter(d => d >= earliest && d <= today).sort();
+
+  progress(`Calcul de ${sorted.length} jours de marché...`);
+  const synth = [];
+
+  if (useOps) {
+    // Méthode précise : rejouer les transactions chronologiquement
+    const holdings = {}; // isin → { qte, pru } — état courant
+    let opIdx = 0;
+    for (const date of sorted) {
+      // Appliquer toutes les transactions <= date
+      while (opIdx < ops.length && ops[opIdx].date <= date) {
+        const op   = ops[opIdx++];
+        const isin = op.isin;
+        if (!isin) continue;
+        if (!holdings[isin]) holdings[isin] = { qte: 0, pru: 0 };
+        const h    = holdings[isin];
+        const qte  = parseFloat(op.quantite)    || 0;
+        const prix = parseFloat(op.prixUnitaire) || 0;
+        const frais= parseFloat(op.frais)        || 0;
+        if (op.type === "ACHAT") {
+          const total = h.pru * h.qte + prix * qte + frais;
+          h.qte += qte;
+          h.pru  = h.qte > 0 ? total / h.qte : 0;
+        } else if (op.type === "VENTE") {
+          h.qte = Math.max(0, h.qte - qte);
+        }
+      }
+      let valeur = 0, investi = 0;
+      for (const [isin, h] of Object.entries(holdings)) {
+        if (h.qte <= 0) continue;
+        const ticker = isinToTicker[isin];
+        const price  = ticker ? pricesByTicker[ticker]?.[date] : null;
+        if (!price) continue;
+        valeur  += price * h.qte;
+        investi += h.pru * h.qte;
+      }
+      if (valeur > 0) synth.push({ date, valeur, investi, source: "transactions" });
+    }
+  } else {
+    // Fallback : positions actuelles avec dateAchat
+    const withTicker = portfolio.filter(p => p.dateAchat && p.quantite > 0);
+    for (const date of sorted) {
+      let valeur = 0, investi = 0;
+      for (const pos of withTicker) {
+        if (pos.dateAchat > date) continue;
+        const ticker = isinToTicker[pos.isin] || pos.ticker;
+        const price  = ticker ? pricesByTicker[ticker]?.[date] : null;
+        if (!price) continue;
+        valeur  += price * pos.quantite;
+        investi += (pos.pru || 0) * pos.quantite;
+      }
+      if (valeur > 0) synth.push({ date, valeur, investi, source: "positions" });
+    }
+  }
+
+  // ── Étape 5 : fusionner (snapshots réels prioritaires) ────────────────────
+  const existing = (() => { try { return JSON.parse(localStorage.getItem(SNAPSHOTS_KEY) || "[]"); } catch { return []; } })();
+  const byDate   = {};
+  synth.forEach(s   => byDate[s.date] = s);
+  existing.forEach(s => byDate[s.date] = s);
+  const merged = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date)).slice(-730);
+  localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(merged));
+  return { count: merged.length, resolved: resolvedIsins.length, total: allIsins.length };
+}
+
+function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) {
+  const peaOuv = profil?.peaOuverture || profil?.pea_ouverture || load("bourse_pea_ouverture", null);
+  const ctoOuv = profil?.ctoOuverture || profil?.cto_ouverture || load("bourse_cto_ouverture", null);
+  const ouverture = account === "CTO" ? ctoOuv : peaOuv;
+
+  const [rebuilding, setRebuilding] = useState(false);
+  const [rebuildMsg, setRebuildMsg] = useState(null);
+  const [snapVersion, setSnapVersion] = useState(0);
+
+  const PERIODS = [
+    { label: "1 S", days: 7   },
+    { label: "1 M", days: 30  },
+    { label: "3 M", days: 90  },
+    { label: "6 M", days: 180 },
+    { label: "1 A", days: 365 },
+    { label: "Max", days: 9999},
+  ];
+  const [pidx, setPidx] = useState(() => { try { return parseInt(localStorage.getItem("bourse_chart_pidx") || "5", 10); } catch { return 5; } });
+  const changePidx = i => { setPidx(i); try { localStorage.setItem("bourse_chart_pidx", String(i)); } catch {} };
+  const [hover, setHover] = useState(null);
+  const svgRef = useRef(null);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const allSnaps = useMemo(() => load("bourse_snapshots", []), [snapVersion]);
+  const cutoff   = Date.now() - PERIODS[pidx].days * 86400000;
+  const snaps    = allSnaps.filter(s => new Date(s.date).getTime() >= cutoff);
+  const rawSnaps = snaps.length >= 2 ? snaps : (allSnaps.length >= 2 ? allSnaps : null);
+
+  // Filtre anti-parasites : médiane glissante sur fenêtre de 5 points, seuil 20%
+  const displaySnaps = useMemo(() => {
+    if (!rawSnaps || rawSnaps.length < 3) return rawSnaps;
+    const gv = s => s.valeur || s.total || 0;
+    return rawSnaps.filter((s, i, arr) => {
+      if (i === 0 || i === arr.length - 1) return true;
+      const v = gv(s);
+      const neighbors = [];
+      for (let j = Math.max(0, i - 2); j <= Math.min(arr.length - 1, i + 2); j++) {
+        if (j !== i) neighbors.push(gv(arr[j]));
+      }
+      const sorted = [...neighbors].sort((a, b) => a - b);
+      const median = sorted[Math.floor(sorted.length / 2)];
+      return median === 0 || Math.abs(v - median) / median < 0.20;
+    });
+  }, [rawSnaps]);
+
+  const VW = 800, VH = 240, ML = 10, MR = 62, MT = 12, MB = 30;
+  const CW = VW - ML - MR, CH = VH - MT - MB;
+
+  const vals  = displaySnaps.map(s => s.valeur || s.total || 0);
+  const dates = displaySnaps.map(s => new Date(s.date).getTime());
+  const minV  = Math.min(...vals) * 0.996;
+  const maxV  = Math.max(...vals) * 1.004;
+  const minT  = dates[0], maxT = dates[dates.length - 1];
+
+  const xS = t => ML + ((t - minT) / (maxT - minT || 1)) * CW;
+  const yS = v => MT + CH - ((v - minV) / (maxV - minV || 1)) * CH;
+
+  const first = vals[0], last = vals[vals.length - 1];
+  const isUp  = last >= first;
+  const chartColor = isUp ? "#1D7A4A" : "#C0392B";
+  const chartLight = isUp ? "rgba(29,122,74,0.10)" : "rgba(192,57,43,0.09)";
+
+  const linePts  = displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(vals[i]).toFixed(1)}`).join(" L ");
+  const areaPath = `M ${xS(dates[0]).toFixed(1)},${MT+CH} L ${linePts} L ${xS(dates[dates.length-1]).toFixed(1)},${MT+CH} Z`;
+
+  const lastSnap    = displaySnaps[displaySnaps.length - 1];
+  const investi     = lastSnap?.investi || totalInvesti;
+  // Ligne investie dynamique — suit le capital investi snapshot par snapshot
+  const investiVals = displaySnaps.map(s => s.investi || 0);
+  const hasInvesti  = investiVals.some(v => v > 0);
+  const investiPts  = hasInvesti
+    ? displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(investiVals[i]).toFixed(1)}`).join(" ")
+    : null;
+  // Zone PV : polygone entre courbe valeur et courbe investie
+  const pvZonePath = hasInvesti
+    ? `M ${displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(vals[i]).toFixed(1)}`).join(" L ")} L ${[...displaySnaps].reverse().map((s, i, arr) => { const ri = arr.length - 1 - i; return `${xS(dates[ri]).toFixed(1)},${yS(investiVals[ri]).toFixed(1)}`; }).join(" L ")} Z`
+    : null;
+  // Label à droite sur le dernier point de la ligne
+  const lastInvestiY = hasInvesti ? yS(investi) : null;
+  const pruVisible   = hasInvesti && investi >= minV && investi <= maxV;
+
+  // Grille Y — 5 niveaux, labels à droite
+  const gridVals = Array.from({ length: 5 }, (_, i) => minV + (maxV - minV) * i / 4);
+
+  // Labels X — 5 points
+  const xLabels = Array.from({ length: 5 }, (_, i) => ({
+    t: minT + (maxT - minT) * i / 4,
+    x: xS(minT + (maxT - minT) * i / 4),
+  }));
+
+  const handleMouseMove = (e) => {
+    if (!svgRef.current) return;
+    const rect  = svgRef.current.getBoundingClientRect();
+    // Convertir position écran → coordonnées SVG, en tenant compte de ML et CW
+    const svgX  = ((e.clientX - rect.left) / rect.width) * VW;
+    const clamp = Math.max(ML, Math.min(ML + CW, svgX));
+    const t     = minT + ((clamp - ML) / CW) * (maxT - minT);
+    let ci = 0;
+    dates.forEach((d, i) => { if (Math.abs(d - t) < Math.abs(dates[ci] - t)) ci = i; });
+    const snap = displaySnaps[ci];
+    const hInvesti = snap.investi || 0;
+    const hPv      = vals[ci] - hInvesti;
+    setHover({ x: xS(dates[ci]), y: yS(vals[ci]), val: vals[ci], date: snap.date, investi: hInvesti, pv: hPv });
+  };
+
+  // Variation sur la période sélectionnée (vs premier point de la période)
+  const periodChangeEur = last - first;
+  const periodChangePct = first > 0 ? (periodChangeEur / first) * 100 : 0;
+  // Plus-value réelle vs capital investi (toujours cohérent)
+  const pvEur = last - investi;
+  const pvPct = investi > 0 ? (pvEur / investi) * 100 : 0;
+  // On affiche la variation de période si raisonnable (<500%), sinon PV vs investi
+  const showPeriodVar = Math.abs(periodChangePct) < 500 && pidx < 5;
+  const changeEur = showPeriodVar ? periodChangeEur : pvEur;
+  const changePct = showPeriodVar ? periodChangePct : pvPct;
+  const lastDate  = displaySnaps[displaySnaps.length - 1]?.date;
+  const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
+  const xFmt = pidx <= 1
+    ? { day: "numeric", month: "short" }
+    : { month: "short", year: "2-digit" };
+
+  return (
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "18px 20px 14px", marginTop: "14px", boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
+
+      {/* ── Style Yahoo Finance : grande valeur + variation ── */}
+      <div style={{ marginBottom: "4px", ...blurStyle }}>
+        <span style={{ fontSize: "28px", fontWeight: "700", color: C.ink, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums" }}>{fmtEur(last)}</span>
+        <span style={{ fontSize: "15px", fontWeight: "600", color: isUp ? "#1D7A4A" : "#C0392B", marginLeft: "10px" }}>
+          {changeEur >= 0 ? "+" : ""}{fmtEur(changeEur)} ({changePct >= 0 ? "+" : ""}{changePct.toFixed(2)} %)
+        </span>
+        <span style={{ fontSize: "11px", color: C.inkSubtle, marginLeft: "8px", fontWeight: "400" }}>
+          {showPeriodVar ? "sur la période" : "vs capital investi"}
+        </span>
+      </div>
+      <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "14px" }}>
+        {displaySnaps.length >= 2
+          ? <>Du <strong>{new Date(displaySnaps[0].date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</strong> au <strong>{new Date(lastDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</strong></>
+          : "—"}
+        {snaps.length < allSnaps.length && snaps.length >= 2 && (
+          <span style={{ marginLeft: "8px", color: C.accent, fontWeight: "600" }}>· {snaps.length} points</span>
+        )}
+        {snaps.length >= allSnaps.length && pidx < 5 && (
+          <span style={{ marginLeft: "8px", color: C.goldDark, fontWeight: "600" }}>· Toutes les données disponibles ({allSnaps.length} j)</span>
+        )}
+      </div>
+
+      {/* Sélecteur de période */}
+      <div style={{ display: "flex", gap: "2px", marginBottom: "10px", flexWrap: "wrap" }}>
+        {PERIODS.map((p, i) => {
+          const periodSnaps = allSnaps.filter(s => new Date(s.date).getTime() >= Date.now() - p.days * 86400000);
+          const isRedundant = i < 5 && periodSnaps.length >= allSnaps.length;
+          return (
+          <button key={p.label} onClick={() => changePidx(i)}
+            style={{ padding: "4px 10px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: "600", background: i === pidx ? C.accent : "transparent", color: i === pidx ? "#fff" : isRedundant ? "rgba(148,163,184,0.45)" : C.inkSubtle, transition: "all 0.15s", fontFamily: "Inter,sans-serif" }}>
+            {p.label}
+          </button>
+          );
+        })}
+        <button onClick={async () => {
+          setRebuilding(true); setRebuildMsg(null);
+          try {
+            const result = await rebuildPortfolioHistory(account, msg => setRebuildMsg(msg));
+            setSnapVersion(v => v + 1);
+            if (result.count > 0) {
+              setRebuildMsg(`${result.count} jours · ${result.resolved}/${result.total} ISIN résolus`);
+            } else if (result.total === 0) {
+              setRebuildMsg("Aucune transaction importée");
+            } else {
+              setRebuildMsg(`0 jour — ${result.total - result.resolved} ISIN non résolus (configurez les tickers)`);
+            }
+          } catch (e) { setRebuildMsg("Erreur : " + (e.message || "réseau")); }
+          setRebuilding(false);
+        }} disabled={rebuilding}
+          style={{ marginLeft: "8px", padding: "4px 12px", borderRadius: "6px", border: `1px solid ${C.border}`, cursor: rebuilding ? "wait" : "pointer", fontSize: "11px", fontWeight: "600", background: "transparent", color: C.inkSubtle, transition: "all 0.15s", fontFamily: "Inter,sans-serif" }}>
+          {rebuilding ? "..." : "Reconstituer"}
+        </button>
+        {rebuildMsg && <span style={{ fontSize: "10px", color: rebuilding ? C.inkSubtle : C.green, fontWeight: "600", marginLeft: "6px" }}>{rebuildMsg}</span>}
+      </div>
+
+      {/* SVG */}
+      <svg ref={svgRef} viewBox={`0 0 ${VW} ${VH}`}
+        style={{ width: "100%", height: "auto", cursor: "crosshair", display: "block" }}
+        onMouseMove={handleMouseMove} onMouseLeave={() => setHover(null)}>
+
+        {/* Grille horizontale */}
+        {gridVals.map((v, i) => (
+          <g key={i}>
+            <line x1={ML} x2={ML+CW} y1={yS(v)} y2={yS(v)} stroke="rgba(148,163,184,0.18)" strokeWidth="1" strokeDasharray="4,5" />
+            <text x={ML+CW+6} y={yS(v)+4} textAnchor="start" fontSize="9.5" fill="#94A3B8" fontFamily="Inter,sans-serif">
+              {v >= 10000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0)}
+            </text>
+          </g>
+        ))}
+
+        {/* Labels X */}
+        {xLabels.map(({ t, x }, i) => (
+          <text key={i} x={x} y={MT+CH+22}
+            textAnchor={i === 0 ? "start" : i === xLabels.length - 1 ? "end" : "middle"}
+            fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">
+            {new Date(t).toLocaleDateString("fr-FR", xFmt)}
+          </text>
+        ))}
+
+        {/* Area de fond (valeur totale) */}
+        <path d={areaPath} fill={chartLight} />
+
+        {/* Zone PV : entre courbe valeur et courbe investie */}
+        {pruVisible && pvZonePath && (
+          <path d={pvZonePath} fill="rgba(29,122,74,0.13)" />
+        )}
+
+        {/* Ligne capital investi dynamique */}
+        {pruVisible && investiPts && (
+          <>
+            <polyline points={investiPts} fill="none" stroke="#B8920A" strokeWidth="1.5" strokeDasharray="6,4" opacity="0.80" strokeLinejoin="round" />
+            <rect x={ML+CW+2} y={lastInvestiY-8} width="52" height="15" rx="3" fill="#B8920A" opacity="0.90" />
+            <text x={ML+CW+28} y={lastInvestiY+3.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">Investi</text>
+          </>
+        )}
+
+        {/* Ligne principale */}
+        <polyline points={linePts.replace(/ L /g, " ")} fill="none" stroke={chartColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+
+        {/* Point final */}
+        <circle cx={xS(dates[dates.length-1])} cy={yS(vals[vals.length-1])} r="3.5" fill={chartColor} stroke="#fff" strokeWidth="1.5" />
+
+        {/* Hover */}
+        {hover && (
+          <>
+            <line x1={hover.x} x2={hover.x} y1={MT} y2={MT+CH} stroke="rgba(148,163,184,0.45)" strokeWidth="1" strokeDasharray="3,3" />
+            <circle cx={hover.x} cy={hover.y} r="4" fill={chartColor} stroke="#fff" strokeWidth="2" />
+            {(() => {
+              const W  = 140, H = hover.investi > 0 ? 58 : 38;
+              const tx = Math.max(ML, Math.min(hover.x - W/2, ML + CW - W));
+              const ty = Math.max(MT + 2, hover.y - H - 6);
+              const pvColor = hover.pv >= 0 ? "#4ADE80" : "#F87171";
+              return (<>
+                <rect x={tx} y={ty} width={W} height={H} rx="7" fill={C.ink} />
+                <text x={tx+W/2} y={ty+14} textAnchor="middle" fontSize="10.5" fill="#fff" fontFamily="Inter,sans-serif" fontWeight="700">{fmtEur(hover.val)}</text>
+                {hover.investi > 0 && <>
+                  <text x={tx+8} y={ty+30} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.55)" fontFamily="Inter,sans-serif">Investi</text>
+                  <text x={tx+W-8} y={ty+30} textAnchor="end" fontSize="8.5" fill="rgba(255,255,255,0.8)" fontFamily="Inter,sans-serif">{fmtEur(hover.investi)}</text>
+                  <text x={tx+8} y={ty+44} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.55)" fontFamily="Inter,sans-serif">PV</text>
+                  <text x={tx+W-8} y={ty+44} textAnchor="end" fontSize="8.5" fill={pvColor} fontFamily="Inter,sans-serif" fontWeight="600">{hover.pv >= 0 ? "+" : ""}{fmtEur(hover.pv)}</text>
+                </>}
+                <text x={tx+W/2} y={ty+H-5} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.4)" fontFamily="Inter,sans-serif">{new Date(hover.date).toLocaleDateString("fr-FR", { day:"numeric", month:"short", year:"numeric" })}</text>
+              </>);
+            })()}
+          </>
+        )}
+      </svg>
+    </div>
+  );
+}
+
 // ─── Dashboard Bar — 4 cards essentielles ────────────────────────────────────
 function computeRiskScore(positions, totalActuel) {
   if (!positions.length) return null;
@@ -8180,107 +8667,108 @@ function computeRiskScore(positions, totalActuel) {
 }
 
 function DashboardBar({ onTabChange, hidden, profil, account = "PEA" }) {
-  const isMobile   = useIsMobile();
-  const allPos     = load("bourse_portfolio", []);
-  const positions  = allPos.filter(p => (p.compte || "PEA") === account);
+  const isMobile  = useIsMobile();
+  const allPos    = load("bourse_portfolio", []);
+  const positions = allPos.filter(p => (p.compte || "PEA") === account);
   if (positions.length === 0) return null;
 
-  const capitalPEA  = account === "PEA"
-    ? (Number(profil?.capitalPEA) || 0)
-    : (Number(profil?.capitalCTO) || 0);
-  const totalActuel = positions.reduce((s, p) => s + ((p.dernierCours || p.pru || 0)) * (p.quantite || 0), 0);
-  const totalPV     = totalActuel - positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
-  const totalPVpct  = capitalPEA > 0 ? (totalPV / capitalPEA) * 100
-                    : totalActuel > 0 ? (totalPV / (totalActuel - totalPV)) * 100 : 0;
+  const capitalInvesti = account === "PEA" ? (Number(profil?.capitalPEA) || 0) : (Number(profil?.capitalCTO) || 0);
+  const totalActuel    = positions.reduce((s, p) => s + ((p.dernierCours || p.pru || 0)) * (p.quantite || 0), 0);
+  const totalInvesti   = positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
+  const totalPV        = totalActuel - totalInvesti;
+  const totalPVpct     = totalInvesti > 0 ? (totalPV / totalInvesti) * 100 : 0;
 
   const riskScore = computeRiskScore(positions, totalActuel);
   const riskColor = riskScore <= 3 ? C.green : riskScore <= 6 ? C.goldDark : C.red;
-  const riskLabel = riskScore <= 3 ? "Faible" : riskScore <= 6 ? "Modéré" : "Élevé";
+  const riskLabel = riskScore <= 3 ? "Risque faible" : riskScore <= 6 ? "Risque modéré" : "Risque élevé";
 
-  // Variation du jour : somme pondérée des intradayVariation par valeur
-  const varJour = positions.reduce((s, p) => {
-    const v = (p.dernierCours || p.pru) * p.quantite;
-    const r = p.intradayVariation != null ? p.intradayVariation / 100 : null;
-    return r != null ? s + v * r / (1 + r) * r : s; // approximation Δ€ du jour
-  }, null);
   const varJourEur = positions.some(p => p.intradayVariation != null)
     ? positions.reduce((s, p) => {
         if (p.intradayVariation == null) return s;
         const cours = p.dernierCours || p.pru;
-        const coursHier = cours / (1 + p.intradayVariation / 100);
-        return s + (cours - coursHier) * p.quantite;
+        const hier  = cours / (1 + p.intradayVariation / 100);
+        return s + (cours - hier) * p.quantite;
       }, 0)
     : null;
   const varJourPct = varJourEur != null && totalActuel > 0
-    ? (varJourEur / (totalActuel - varJourEur)) * 100 : null;
+    ? (varJourEur / (totalActuel - (varJourEur || 0))) * 100 : null;
+
+  // Top / Flop
+  const sorted = [...positions].map(p => ({
+    ...p, pvPct: p.pru > 0 ? ((p.dernierCours || p.pru) - p.pru) / p.pru * 100 : 0,
+  })).sort((a, b) => b.pvPct - a.pvPct);
+  const best  = sorted[0];
+  const worst = sorted[sorted.length - 1];
+
+  // Sparkline depuis snapshots
+  const snapshots = load("bourse_snapshots", []);
+  const snap30 = snapshots.slice(-30);
+  const sparkPath = (() => {
+    if (snap30.length < 2) return null;
+    const vals = snap30.map(s => s.total || 0);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = max - min || 1;
+    const W = 200, H = 50;
+    const pts = vals.map((v, i) => `${(i / (vals.length - 1)) * W},${H - ((v - min) / range) * H}`);
+    return `M ${pts.join(" L ")}`;
+  })();
+
+  // Statut marché (Euronext Paris : lun-ven 9h-17h30, hors jours fériés)
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const cetOffset = now.getTimezoneOffset() / -60; // local UTC offset in hours
+  const cetHour   = now.getHours() + (cetOffset - (now.getMonth() >= 3 && now.getMonth() <= 9 ? 2 : 1)); // approx CET/CEST
+  const mm = now.getMonth() + 1, dd = now.getDate();
+  // Jours fériés fixes Euronext Paris
+  const isFerie = (
+    (mm === 1  && dd === 1)  || // Nouvel An
+    (mm === 5  && dd === 1)  || // Fête du Travail
+    (mm === 5  && dd === 8)  || // Victoire 1945
+    (mm === 7  && dd === 14) || // Fête Nationale
+    (mm === 8  && dd === 15) || // Assomption
+    (mm === 11 && dd === 1)  || // Toussaint
+    (mm === 11 && dd === 11) || // Armistice
+    (mm === 12 && dd === 25) || // Noël
+    (mm === 12 && dd === 26)    // Boxing Day (Euronext fermé)
+  );
+  const isOpen = !isFerie && dayOfWeek >= 1 && dayOfWeek <= 5 && cetHour >= 9 && (cetHour < 17 || (cetHour === 17 && now.getMinutes() <= 30));
+  const marketLabel = isOpen ? "Ouvert" : "Fermé";
+  const marketColor = isOpen ? C.green : C.red;
 
   const blurStyle = hidden ? { filter: "blur(7px)", userSelect: "none", pointerEvents: "none" } : {};
 
-  const cards = [
-    {
-      label: "Valeur du portefeuille",
-      tip: "Valeur du portefeuille",
-      main: fmtEur(totalActuel),
-      sub: null,
-      color: C.ink,
-      numColor: C.ink,
-    },
-    {
-      label: account === "CTO" ? "Capital investi CTO" : "Capital investi PEA",
-      tip: "Capital investi",
-      main: capitalPEA > 0 ? fmtEur(capitalPEA) : "—",
-      sub: capitalPEA > 0 ? null : "À renseigner dans Profil",
-      color: C.inkMuted,
-      numColor: C.ink,
-      subSmall: true,
-    },
-    {
-      label: "Plus-value latente",
-      tip: "Plus-value latente",
-      main: (totalPV >= 0 ? "+" : "") + fmtEur(totalPV),
-      sub: (totalPVpct >= 0 ? "+" : "") + totalPVpct.toFixed(2) + "%",
-      color: totalPV >= 0 ? C.green : C.red,
-      numColor: totalPV >= 0 ? C.green : C.red,
-    },
-    {
-      label: "Variation du jour",
-      tip: "Variation du jour",
-      main: varJourEur != null ? (varJourEur >= 0 ? "+" : "") + fmtEur(varJourEur) : "—",
-      sub: varJourPct != null ? (varJourPct >= 0 ? "+" : "") + varJourPct.toFixed(2) + "%" : null,
-      color: varJourEur == null ? C.inkSubtle : varJourEur >= 0 ? C.green : C.red,
-      numColor: varJourEur == null ? C.inkMuted : varJourEur >= 0 ? C.green : C.red,
-    },
-    {
-      label: "Score de risque",
-      tip: "Score de risque",
-      main: riskScore !== null ? `${riskScore} / 10` : "—",
-      sub: riskScore !== null ? riskLabel : null,
-      color: riskColor,
-      numColor: riskColor,
-      isRisk: true,
-    },
-  ];
-
   return (
-    <div style={{ marginBottom: "28px" }}>
+    <div style={{ marginBottom: "24px" }}>
+
+      <style>{`@keyframes marketPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.85)} }`}</style>
+
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <span style={{ fontSize: "17px", fontWeight: "700", color: C.ink, letterSpacing: "-0.03em" }}>Portefeuille</span>
           <span style={{ fontSize: "10px", fontWeight: "600", color: account === "PEA" ? C.accent : "#7C3AED", background: account === "PEA" ? "rgba(59,130,246,0.08)" : "rgba(124,58,237,0.08)", borderRadius: "5px", padding: "2px 8px" }}>{account}</span>
         </div>
-        <span style={{ fontSize: "11px", color: C.inkSubtle }}>{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: marketColor, display: "inline-block", animation: isOpen ? "marketPulse 2.5s ease-in-out infinite" : "none" }} />
+            <span style={{ fontSize: "11px", color: marketColor, fontWeight: "600" }}>{marketLabel}</span>
+          </span>
+          <span style={{ fontSize: "11px", color: C.inkSubtle }}>{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</span>
+        </div>
       </div>
 
-      {/* KPI strip — 5 cartes horizontales */}
+      {/* KPI strip — 4 cartes horizontales */}
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: "-4px", marginRight: "-4px", paddingLeft: "4px", paddingRight: "4px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(5, 140px)" : "repeat(5, 1fr)", gap: "10px", minWidth: isMobile ? "720px" : "auto" }}>
-          {cards.map((card, i) => (
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(4, 150px)" : "repeat(4, 1fr)", gap: "10px", minWidth: isMobile ? "620px" : "auto" }}>
+          {[
+            { label: account === "CTO" ? "Capital investi CTO" : "Capital investi PEA", main: capitalInvesti > 0 ? fmtEur(capitalInvesti) : "—", sub: null, color: C.inkMuted, numColor: C.ink, subSmall: capitalInvesti === 0 },
+            { label: "Plus-value latente", main: (totalPV >= 0 ? "+" : "") + fmtEur(totalPV), sub: (totalPVpct >= 0 ? "+" : "") + totalPVpct.toFixed(2) + "%", color: totalPV >= 0 ? C.green : C.red, numColor: totalPV >= 0 ? C.green : C.red },
+            { label: "Variation du jour", main: varJourEur != null ? (varJourEur >= 0 ? "+" : "") + fmtEur(varJourEur) : "—", sub: varJourPct != null ? (varJourPct >= 0 ? "+" : "") + varJourPct.toFixed(2) + "%" : null, color: varJourEur == null ? C.inkSubtle : varJourEur >= 0 ? C.green : C.red, numColor: varJourEur == null ? C.inkMuted : varJourEur >= 0 ? C.green : C.red },
+            { label: "Score de risque", main: riskScore !== null ? `${riskScore} / 10` : "—", sub: riskLabel, color: riskColor, numColor: riskColor, isRisk: true },
+          ].map((card) => (
             <div key={card.label} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: card.color, borderRadius: "16px 16px 0 0" }} />
-              <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
-                {card.label}{card.tip && <InfoTip term={card.tip} />}
-              </div>
+              <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "10px" }}>{card.label}</div>
               <div style={{ fontSize: isMobile ? "20px" : "22px", fontWeight: "700", color: card.numColor || C.ink, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", lineHeight: 1, ...blurStyle }}>{card.main}</div>
               {card.isRisk && riskScore !== null && (
                 <div style={{ marginTop: "8px", background: C.snowOff, borderRadius: "4px", height: "4px", overflow: "hidden" }}>
@@ -8292,13 +8780,16 @@ function DashboardBar({ onTabChange, hidden, profil, account = "PEA" }) {
                   <span style={{ fontSize: "10px", fontWeight: "700", color: card.color, fontVariantNumeric: "tabular-nums", ...blurStyle }}>{card.sub}</span>
                 </div>
               )}
-              {card.subSmall && !card.sub && (
+              {card.subSmall && (
                 <div style={{ marginTop: "8px", background: C.snowDim, borderRadius: "6px", padding: "4px 9px", fontSize: "10px", color: C.inkMuted, fontWeight: "600", display: "inline-block" }}>À renseigner dans Profil</div>
               )}
             </div>
           ))}
         </div>
       </div>
+
+      {/* ── Graphique portefeuille ── */}
+      <PortfolioChart totalActuel={totalActuel} totalInvesti={totalInvesti} hidden={hidden} profil={profil} account={account} />
 
       {/* ── Bilan hebdomadaire ── */}
       <WeeklySummary positions={positions} totalActuel={totalActuel} totalPV={totalPV} hidden={hidden} />
@@ -8308,13 +8799,35 @@ function DashboardBar({ onTabChange, hidden, profil, account = "PEA" }) {
 
 // ─── Bilan hebdomadaire ───────────────────────────────────────────────────────
 const WEEKLY_KEY = "bourse_weekly_seen";
+
+function isJourFerie(d) {
+  const mm = d.getMonth() + 1, dd = d.getDate();
+  return (mm===1&&dd===1)||(mm===5&&dd===1)||(mm===5&&dd===8)||(mm===7&&dd===14)||
+         (mm===8&&dd===15)||(mm===11&&dd===1)||(mm===11&&dd===11)||(mm===12&&dd===25)||(mm===12&&dd===26);
+}
+function isJourMarche(d) {
+  const j = d.getDay();
+  return j >= 1 && j <= 5 && !isJourFerie(d);
+}
+
 function WeeklySummary({ positions, totalActuel, totalPV, hidden }) {
+  const today = new Date();
   const currentWeek = Math.floor(Date.now() / (7 * 24 * 3600 * 1000));
   const [dismissed, setDismiss] = useState(() => {
-    try { return parseInt(localStorage.getItem(WEEKLY_KEY) || "0") >= currentWeek; } catch { return false; }
+    try {
+      const stored = JSON.parse(localStorage.getItem(WEEKLY_KEY) || "{}");
+      return stored.week >= currentWeek && stored.date === today.toISOString().slice(0, 10);
+    } catch { return false; }
   });
 
-  if (dismissed || positions.length === 0) return null;
+  // Vérifier si aujourd'hui est le premier ou dernier jour de marché de la semaine
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1);
+  const isFirstJourMarche = isJourMarche(today) && !isJourMarche(yesterday);
+  const isLastJourMarche  = isJourMarche(today) && !isJourMarche(tomorrow);
+  const shouldShow = isFirstJourMarche || isLastJourMarche;
+
+  if (dismissed || positions.length === 0 || !shouldShow) return null;
 
   const totalInvest = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
   const pvPct = totalInvest > 0 ? (totalPV / totalInvest) * 100 : 0;
@@ -8333,7 +8846,7 @@ function WeeklySummary({ positions, totalActuel, totalPV, hidden }) {
   const blurStyle = hidden ? { filter: "blur(7px)", userSelect: "none" } : {};
 
   const dismiss = () => {
-    try { localStorage.setItem(WEEKLY_KEY, String(currentWeek)); } catch {}
+    try { localStorage.setItem(WEEKLY_KEY, JSON.stringify({ week: currentWeek, date: today.toISOString().slice(0, 10) })); } catch {}
     setDismiss(true);
   };
 
@@ -8531,7 +9044,7 @@ function DCASimulator({ profil, dcaSim, setDcaSim, positions }) {
 
 // ─── Stratégie DCA Tab ────────────────────────────────────────────────────────
 // Contient la stratégie DCA mensuelle + l'analyse IA du portefeuille
-function StratégieDCATab({ profil, portfolioVersion, marketScores, marketScoringUi, onRunScoring, account = "PEA" }) {
+function StratégieDCATab({ profil, portfolioVersion, marketScores, marketScoringUi, onRunScoring, onSaveProfil, account = "PEA" }) {
   const [allPositions, setAllPositions] = useState(() => sanitizePositions(load("bourse_portfolio", DEFAULT_POSITIONS)));
   const positions = allPositions.filter(p => (p.compte || "PEA") === account);
 
@@ -8555,8 +9068,8 @@ function StratégieDCATab({ profil, portfolioVersion, marketScores, marketScorin
 
   return (
     <div>
-      <DCAStrategy positions={positions} profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={onRunScoring} />
       <DCASimulator profil={profil} dcaSim={dcaSim} setDcaSim={setDcaSim} positions={positions} />
+      <DCAStrategy positions={positions} profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={onRunScoring} onSaveProfil={onSaveProfil} />
     </div>
   );
 }
@@ -8623,6 +9136,13 @@ const IconNewspaper = () => (
     <line x1="4" y1="10.5" x2="9" y2="10.5"/>
   </svg>
 );
+const IconChat = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3.5 C2 2.67 2.67 2 3.5 2 L12.5 2 C13.33 2 14 2.67 14 3.5 L14 9.5 C14 10.33 13.33 11 12.5 11 L9 11 L6 14 L6 11 L3.5 11 C2.67 11 2 10.33 2 9.5 Z"/>
+    <line x1="5" y1="5.5" x2="11" y2="5.5"/>
+    <line x1="5" y1="8" x2="9" y2="8"/>
+  </svg>
+);
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const NAV_GROUPS = [
@@ -8635,6 +9155,7 @@ const NAV_GROUPS = [
   { label: "ANALYSE", items: [
     { key: TABS.HISTORIQUE, label: "Répartition",   icon: <IconPie/> },
     { key: TABS.OPERATIONS, label: "Transactions",  icon: <IconSwap/> },
+    { key: TABS.CHAT,       label: "Conseiller Privé",  icon: <IconChat/> },
   ]},
   { label: "COMPTE", items: [
     { key: TABS.PROFIL,    label: "Profil investisseur", icon: <IconUser/> },
@@ -9166,7 +9687,7 @@ Règles strictes :
           ? { role: m.role, content: `[CONTEXTE DE MON PORTEFEUILLE]\n${context}\n\n[MA QUESTION]\n${m.content}` }
           : { role: m.role, content: m.content }
       );
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("CLAUDE_ENDPOINT", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -9398,6 +9919,543 @@ Règles strictes :
         </div>
       )}
     </>
+  );
+}
+
+// ─── Chat Portefeuille — Assistant IA + Briefing matinal + Détection opportunités
+const FINANCE_GLOSSARY = {
+  "PRU": "Prix de Revient Unitaire — prix moyen auquel vous avez acquis un titre.",
+  "DCA": "Dollar Cost Averaging — investissement régulier à intervalles fixes pour lisser le prix d'achat.",
+  "ETF": "Exchange Traded Fund — fonds indiciel coté en bourse qui réplique un indice.",
+  "PEA": "Plan d'Épargne en Actions — enveloppe fiscale française exonérée d'impôt sur les plus-values après 5 ans.",
+  "CTO": "Compte-Titres Ordinaire — enveloppe d'investissement sans avantage fiscal particulier.",
+  "TER": "Total Expense Ratio — frais annuels totaux d'un ETF exprimés en pourcentage.",
+  "plus-value": "Gain réalisé entre le prix d'achat et la valeur actuelle d'un titre.",
+  "dividende": "Part des bénéfices distribuée périodiquement aux actionnaires.",
+  "volatilité": "Amplitude des variations de prix d'un actif — plus c'est élevé, plus le risque est important.",
+  "RSI": "Relative Strength Index — indicateur technique mesurant la force d'une tendance (0=survendu, 100=suracheté).",
+  "MACD": "Moving Average Convergence Divergence — indicateur de momentum basé sur deux moyennes mobiles.",
+  "support": "Niveau de cours où la demande est assez forte pour stopper la baisse.",
+  "résistance": "Niveau de cours où l'offre est assez forte pour stopper la hausse.",
+  "ISIN": "International Securities Identification Number — code unique à 12 caractères identifiant un titre.",
+  "benchmark": "Indice de référence servant à mesurer la performance d'un fonds ou portefeuille.",
+  "drawdown": "Baisse maximale depuis un sommet — mesure clé du risque de perte.",
+  "CAGR": "Compound Annual Growth Rate — taux de croissance annuel composé sur une période donnée.",
+  "rebalancement": "Rééquilibrage périodique du portefeuille pour revenir à l'allocation cible.",
+  "capitalisation": "Valeur boursière totale d'une société : cours × nombre d'actions en circulation.",
+  "liquidité": "Facilité à acheter ou vendre un actif rapidement sans impacter significativement son prix.",
+  "allocation": "Répartition du portefeuille entre différentes classes d'actifs (actions, obligations, etc.).",
+  "diversification": "Stratégie consistant à répartir les investissements pour réduire le risque global.",
+  "effet de levier": "Utilisation de capital emprunté pour amplifier les gains (et les pertes).",
+  "rendement": "Gain annuel généré par un investissement, exprimé en pourcentage.",
+};
+
+function parseAiTerms(reply) {
+  const sep = "---TERMES---";
+  const idx = reply.indexOf(sep);
+  if (idx === -1) return { cleanReply: reply, terms: [] };
+  const cleanReply = reply.slice(0, idx).trim();
+  try {
+    const json = reply.slice(idx + sep.length).trim();
+    const terms = JSON.parse(json);
+    if (Array.isArray(terms)) return { cleanReply, terms };
+  } catch {}
+  return { cleanReply, terms: [] };
+}
+
+function ChatTab({ profil, account, portfolioVersion, marketScores }) {
+  const [sessions, setSessions]         = useState(() => load("bourse_chat_sessions", []));
+  const [input, setInput]               = useState("");
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState(null);
+  const [expandedTerms, setExpandedTerms] = useState(null);
+  const [hoveredSession, setHoveredSession] = useState(null);
+  const [briefing, setBriefing]         = useState(() => load("bourse_last_briefing", null));
+  const [briefingLoading, setBriefingLoading] = useState(false);
+  const [oppoLoading, setOppoLoading]   = useState(false);
+  const [activePanel, setActivePanel]   = useState("chat");
+  const bottomRef                       = useRef(null);
+
+  const persistSessions = (next) => { setSessions(next); save("bourse_chat_sessions", next.slice(-100)); };
+  const deleteSession   = (id)  => persistSessions(sessions.filter(s => s.id !== id));
+
+  // Purge automatique des sessions de plus de 24h
+  useEffect(() => {
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    const fresh = sessions.filter(s => s.id >= cutoff);
+    if (fresh.length !== sessions.length) persistSessions(fresh);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  const buildPortfolioContext = () => {
+    const all = sanitizePositions(load("bourse_portfolio", []));
+    const positions = all.filter(p => (p.compte || "PEA") === (account || "PEA"));
+    const totalInvesti = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
+    const totalActuel  = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+    const pv           = totalActuel - totalInvesti;
+    const pvPct        = totalInvesti > 0 ? ((pv / totalInvesti) * 100).toFixed(2) : "0";
+    const posLines     = positions.map(p => {
+      const val  = (p.dernierCours || p.pru) * p.quantite;
+      const gain = ((p.dernierCours || p.pru) - p.pru) / p.pru * 100;
+      return `- ${p.nom} (${p.isin || "?"}) : ${p.quantite} titres, PRU=${p.pru}€, cours=${p.dernierCours || "N/A"}€, valeur=${val.toFixed(0)}€, perf=${gain.toFixed(1)}%`;
+    }).join("\n");
+    const snapshots = load("bourse_snapshots", []).slice(-10);
+    const snapLine  = snapshots.length >= 2
+      ? `Historique récent : ${snapshots.map(s => `${s.date}=${s.valeur?.toFixed(0)}€`).join(", ")}`
+      : "Pas d'historique.";
+    const ops = load("bourse_avis_operes", []).filter(o => (o.compte || "PEA") === (account || "PEA")).slice(-10);
+    const opsLine = ops.length > 0
+      ? `10 dernières transactions : ${ops.map(o => `${o.date} ${o.type} ${o.quantite}×${o.titre} à ${o.prixUnitaire}€`).join(" | ")}`
+      : "Aucune transaction.";
+    const scores = Array.isArray(marketScores) ? marketScores : [];
+    const scoresLine = scores.length > 0
+      ? `Signaux IA marché : ${scores.map(s => `${s.nom}→${s.signal}(${s.score_marche}/20)`).join(", ")}`
+      : "Pas de signaux IA.";
+    return { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine };
+  };
+
+  const buildSystemPrompt = () => {
+    const { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine } = buildPortfolioContext();
+    return `Tu es le Conseiller Privé IA de cet investisseur. Tu as accès à toutes ses données et réponds en français, de façon concise et personnalisée.
+
+COMPTE : ${account || "PEA"} | PROFIL : risque=${profil?.risque || "N/A"}, horizon=${profil?.horizon || "N/A"}, DCA=${profil?.dcaMensuel || 0}€/mois, courtier=${profil?.courtier || "boursobank"}
+
+PORTEFEUILLE (${positions.length} positions) :
+${posLines || "Aucune position."}
+
+RÉSUMÉ : valeur=${totalActuel.toFixed(0)}€, investi=${totalInvesti.toFixed(0)}€, PV=${pv >= 0 ? "+" : ""}${pv.toFixed(0)}€ (${pvPct}%)
+${snapLine}
+${opsLine}
+${scoresLine}
+
+RÈGLES : réponds en français, sois concis et direct, utilise les données ci-dessus. Markdown autorisé. Tu n'es pas conseiller financier agréé — toujours rappeler que les décisions appartiennent à l'investisseur.
+
+TERMES TECHNIQUES : si tu utilises des termes financiers techniques dans ta réponse (ex : PRU, ETF, DCA, PEA, RSI, OPCVM, etc.), ajoute OBLIGATOIREMENT à la fin de ta réponse le bloc suivant — rien d'autre après :
+---TERMES---
+[{"term":"NOM_DU_TERME","def":"définition courte en français"},...]
+
+Si aucun terme technique, n'ajoute pas ce bloc.`;
+  };
+
+  // Feature 2 — Briefing matinal automatique
+  const generateBriefing = async () => {
+    setBriefingLoading(true);
+    const { positions, totalActuel, totalInvesti, pv, pvPct, posLines, scoresLine } = buildPortfolioContext();
+    const top    = [...positions].sort((a,b) => ((b.dernierCours||b.pru)-b.pru)/b.pru - ((a.dernierCours||a.pru)-a.pru)/a.pru);
+    const best   = top[0];
+    const worst  = top[top.length - 1];
+    const prompt = `Tu es un conseiller financier personnel. Génère un briefing matinal concis pour cet investisseur.
+
+PORTEFEUILLE :
+${posLines || "Aucune position."}
+Valeur totale : ${totalActuel.toFixed(0)}€ | PV latente : ${pv >= 0 ? "+" : ""}${pv.toFixed(0)}€ (${pvPct}%)
+Meilleure position : ${best?.nom || "N/A"} | Moins bonne : ${worst?.nom || "N/A"}
+${scoresLine}
+
+STRUCTURE DU BRIEFING (max 200 mots) :
+1. **Résumé portefeuille** — état en une phrase
+2. **Point du jour** — 1 observation clé sur la composition ou un signal IA
+3. **3 actions prioritaires** — concrètes et actionnables aujourd'hui
+4. **Vigilance** — 1 risque à surveiller
+
+Réponds en français, direct, sans introduction générique.`;
+    try {
+      const reply = await callClaudeConversation("Tu es un conseiller financier. Sois concis et direct.", [{ role: "user", content: prompt }]);
+      const data  = { date: todayKey, content: reply };
+      setBriefing(data);
+      save("bourse_last_briefing", data);
+    } catch (e) {
+      setBriefing({ date: todayKey, content: `Erreur : ${e.message}`, error: true });
+    } finally {
+      setBriefingLoading(false);
+    }
+  };
+
+  // Auto-briefing au premier chargement du jour
+  useEffect(() => {
+    const positions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === (account || "PEA"));
+    if (positions.length > 0 && (!briefing || briefing.date !== todayKey)) {
+      generateBriefing();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account]);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [sessions, loading]);
+
+  // Feature 4 — Détection d'opportunités
+  const detectOpportunities = async () => {
+    if (oppoLoading || loading) return;
+    setOppoLoading(true);
+    setActivePanel("chat");
+    const { positions, totalActuel, posLines, scoresLine } = buildPortfolioContext();
+    const sectors = {};
+    positions.forEach(p => {
+      const s = p.secteur || "Inconnu";
+      sectors[s] = (sectors[s] || 0) + (p.dernierCours || p.pru) * p.quantite;
+    });
+    const sectorLines = Object.entries(sectors).map(([k, v]) => `${k}: ${((v/totalActuel)*100).toFixed(1)}%`).join(", ");
+    const prompt = `Analyse ce portefeuille et identifie les opportunités concrètes.
+
+POSITIONS :
+${posLines}
+RÉPARTITION SECTORIELLE : ${sectorLines || "Non disponible"}
+${scoresLine}
+PROFIL : risque=${profil?.risque}, horizon=${profil?.horizon} ans
+
+Détecte et explique :
+1. **Surexpositions** — secteurs ou positions > 25% du portefeuille
+2. **Manques sectoriels** — secteurs absents mais pertinents pour ce profil
+3. **Corrélations dangereuses** — positions qui évoluent de concert (risque de chute simultanée)
+4. **Opportunités DCA** — quelle position renforcer ce mois (avec justification)
+5. **Position à surveiller** — celle qui nécessite une attention particulière
+
+Sois spécifique, cite les noms des positions, donne des chiffres.`;
+    const userMsg = "Détecte les opportunités et risques dans mon portefeuille.";
+    const sid = Date.now();
+    const next = [...sessions, { id: sid, date: new Date().toISOString(), userMsg, assistantMsg: null, terms: [] }];
+    persistSessions(next);
+    try {
+      const apiMsgs = sessions.flatMap(s => [{ role: "user", content: s.userMsg }, ...(s.assistantMsg ? [{ role: "assistant", content: s.assistantMsg }] : [])]).concat({ role: "user", content: prompt });
+      const raw = await callClaudeConversation(buildSystemPrompt(), apiMsgs);
+      const { cleanReply, terms } = parseAiTerms(raw);
+      setSessions(prev => { const upd = prev.map(s => s.id === sid ? { ...s, assistantMsg: cleanReply, terms } : s); save("bourse_chat_sessions", upd.slice(-100)); return upd; });
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setOppoLoading(false);
+    }
+  };
+
+  const SUGGESTIONS = [
+    "Quel est mon actif le plus performant ?",
+    "Quels sont mes risques principaux ?",
+    "Analyse ma diversification sectorielle",
+    "Si le marché baisse de 10%, quel est mon impact ?",
+    "Quelle position renforcer en DCA ce mois ?",
+    "Résume mon portefeuille en 3 points",
+  ];
+
+  const sendMessage = async (text) => {
+    const userText = (text || input).trim();
+    if (!userText || loading) return;
+    setInput(""); setError(null); setActivePanel("chat");
+    const sid = Date.now();
+    const next = [...sessions, { id: sid, date: new Date().toISOString(), userMsg: userText, assistantMsg: null, terms: [] }];
+    persistSessions(next);
+    setLoading(true);
+    // Historique complet pour le contexte conversationnel
+    const apiMsgs = sessions.flatMap(s => [
+      { role: "user", content: s.userMsg },
+      ...(s.assistantMsg ? [{ role: "assistant", content: s.assistantMsg }] : []),
+    ]).concat({ role: "user", content: userText });
+    try {
+      const raw = await callClaudeConversation(buildSystemPrompt(), apiMsgs);
+      const { cleanReply, terms } = parseAiTerms(raw);
+      setSessions(prev => {
+        const updated = prev.map(s => s.id === sid ? { ...s, assistantMsg: cleanReply, terms } : s);
+        save("bourse_chat_sessions", updated.slice(-100));
+        return updated;
+      });
+    } catch (e) {
+      setError(e.message);
+      setSessions(prev => { const upd = prev.filter(s => s.id !== sid); save("bourse_chat_sessions", upd); return upd; });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatMessage = (text) => {
+    const applyInline = (s) => s
+      .replace(/\*\*(.+?)\*\*/g, (_, m) => `<strong>${m}</strong>`)
+      .replace(/\*(.+?)\*/g, (_, m) => `<em>${m}</em>`)
+      .replace(/`(.+?)`/g, (_, m) => `<code style="background:rgba(30,58,95,0.08);padding:1px 5px;border-radius:4px;font-size:0.92em">${m}</code>`);
+
+    const lines = text.split("\n");
+    const result = [];
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // Horizontal rule
+      if (/^-{3,}$/.test(line.trim()) || /^\*{3,}$/.test(line.trim())) {
+        result.push(<hr key={i} style={{ border: "none", borderTop: `1px solid ${C.border}`, margin: "10px 0" }} />);
+        i++; continue;
+      }
+
+      // Heading ## or ###
+      if (/^#{1,3}\s/.test(line)) {
+        const lvl = line.match(/^(#+)/)[1].length;
+        const txt = line.replace(/^#+\s/, "");
+        const sz  = lvl === 1 ? "15px" : lvl === 2 ? "13.5px" : "12.5px";
+        result.push(<div key={i} style={{ fontWeight: "800", fontSize: sz, color: C.ink, marginTop: "10px", marginBottom: "4px" }} dangerouslySetInnerHTML={{ __html: applyInline(txt) }} />);
+        i++; continue;
+      }
+
+      // Blockquote >
+      if (line.startsWith("> ")) {
+        const txt = line.replace(/^>\s?/, "");
+        result.push(
+          <div key={i} style={{ borderLeft: `3px solid ${C.gold}`, paddingLeft: "10px", color: C.inkMuted, fontSize: "12.5px", margin: "6px 0" }} dangerouslySetInnerHTML={{ __html: applyInline(txt) }} />
+        );
+        i++; continue;
+      }
+
+      // Table — collect all | lines
+      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+        const tableLines = [];
+        while (i < lines.length && lines[i].trim().startsWith("|")) {
+          tableLines.push(lines[i]);
+          i++;
+        }
+        const isSeperator = (l) => /^\|[-: |]+\|$/.test(l.trim());
+        const rows = tableLines.filter(l => !isSeperator(l));
+        result.push(
+          <div key={`table-${i}`} style={{ overflowX: "auto", margin: "8px 0" }}>
+            <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "12px" }}>
+              <tbody>
+                {rows.map((row, ri) => {
+                  const cells = row.trim().replace(/^\||\|$/g, "").split("|");
+                  const isHeader = ri === 0;
+                  return (
+                    <tr key={ri} style={{ background: ri % 2 === 0 ? "rgba(30,58,95,0.03)" : "transparent" }}>
+                      {cells.map((cell, ci) => (
+                        <td key={ci} style={{ padding: "5px 10px", borderBottom: `1px solid ${C.border}`, fontWeight: isHeader ? "700" : "400", color: isHeader ? C.ink : C.inkMuted, whiteSpace: "nowrap" }}
+                          dangerouslySetInnerHTML={{ __html: applyInline(cell.trim()) }} />
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+        continue;
+      }
+
+      // List item
+      if (/^[-•*]\s/.test(line)) {
+        result.push(<div key={i} style={{ display: "flex", gap: "7px", marginBottom: "3px", alignItems: "flex-start" }}>
+          <span style={{ color: C.gold, fontWeight: "800", flexShrink: 0, marginTop: "1px" }}>·</span>
+          <span style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.55" }} dangerouslySetInnerHTML={{ __html: applyInline(line.replace(/^[-•*]\s/, "")) }} />
+        </div>);
+        i++; continue;
+      }
+
+      // Numbered list
+      if (/^\d+\.\s/.test(line)) {
+        const num = line.match(/^(\d+)\./)[1];
+        result.push(<div key={i} style={{ display: "flex", gap: "7px", marginBottom: "4px", alignItems: "flex-start" }}>
+          <span style={{ minWidth: "18px", height: "18px", borderRadius: "50%", background: C.accent, color: "#fff", fontSize: "10px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "2px" }}>{num}</span>
+          <span style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.55" }} dangerouslySetInnerHTML={{ __html: applyInline(line.replace(/^\d+\.\s/, "")) }} />
+        </div>);
+        i++; continue;
+      }
+
+      // Empty line
+      if (line.trim() === "") { result.push(<div key={i} style={{ height: "6px" }} />); i++; continue; }
+
+      // Normal paragraph
+      result.push(<p key={i} style={{ margin: "2px 0", fontSize: "13px", color: C.inkMuted, lineHeight: "1.6" }} dangerouslySetInnerHTML={{ __html: applyInline(line) }} />);
+      i++;
+    }
+    return result;
+  };
+
+  const isBusy = loading || oppoLoading;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 100px)", maxWidth: "820px", margin: "0 auto", padding: "0 16px 16px" }}>
+
+      {/* En-tête avec tabs */}
+      <div style={{ padding: "16px 0 12px", borderBottom: `1px solid ${C.border}`, marginBottom: "12px", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: shadow.pill, flexShrink: 0 }}>
+            <IconChat />
+          </div>
+          <div style={{ flex: 1, minWidth: "120px" }}>
+            <div style={{ fontWeight: "700", fontSize: "15px", color: C.ink }}>Conseiller Privé</div>
+            <div style={{ fontSize: "11px", color: C.inkSubtle }}>Briefing · Conseil · Opportunités</div>
+          </div>
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+            {[["briefing", "Briefing du jour"], ["chat", "Chat libre"]].map(([panel, label]) => (
+              <button key={panel} onClick={() => setActivePanel(panel)}
+                style={{ fontSize: "11px", fontWeight: "600", padding: "5px 12px", borderRadius: "20px", border: `1px solid ${activePanel === panel ? C.accent : C.border}`, background: activePanel === panel ? C.accent : "transparent", color: activePanel === panel ? "#fff" : C.inkMuted, cursor: "pointer", transition: "all 0.15s" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {activePanel === "chat" && (
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontSize: "10px", color: C.inkSubtle, fontStyle: "italic" }}>Conservé 24h</span>
+              {sessions.length > 0 && (
+                <button onClick={() => { if(window.confirm("Effacer tout l'historique ?")) { persistSessions([]); setError(null); } }}
+                  style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, background: C.snowDim, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "5px 10px", cursor: "pointer" }}>
+                  Tout effacer
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Panel Briefing du jour (Feature 2) ── */}
+      {activePanel === "briefing" && (
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          <div style={{ background: C.cardGradGold, border: `1px solid rgba(230,184,0,0.3)`, borderRadius: "16px", padding: "20px", marginBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+              <div>
+                <div style={{ fontWeight: "700", fontSize: "14px", color: C.ink }}>Briefing du {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</div>
+                <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px" }}>Analyse IA de votre portefeuille · Mis à jour chaque matin</div>
+              </div>
+              <button onClick={generateBriefing} disabled={briefingLoading}
+                style={{ fontSize: "11px", fontWeight: "600", padding: "6px 12px", borderRadius: "10px", border: `1px solid ${C.border}`, background: briefingLoading ? C.snowDim : C.snow, color: briefingLoading ? C.inkSubtle : C.ink, cursor: briefingLoading ? "not-allowed" : "pointer" }}>
+                {briefingLoading ? "Génération…" : "Rafraîchir"}
+              </button>
+            </div>
+            {briefingLoading && (
+              <div style={{ display: "flex", gap: "5px", alignItems: "center", padding: "20px 0", justifyContent: "center" }}>
+                {[0,1,2].map(j => <span key={j} style={{ width: "7px", height: "7px", borderRadius: "50%", background: C.gold, display: "inline-block", animation: `chatDot 1.2s ease-in-out ${j * 0.2}s infinite` }} />)}
+              </div>
+            )}
+            {!briefingLoading && briefing?.content && !briefing?.error && (
+              <div style={{ fontSize: "13px", lineHeight: "1.65", color: C.ink }}>
+                <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>{formatMessage(briefing.content)}</ul>
+              </div>
+            )}
+            {!briefingLoading && briefing?.error && (
+              <div style={{ color: C.red, fontSize: "12.5px" }}>{briefing.content}</div>
+            )}
+            {!briefingLoading && !briefing && (
+              <div style={{ textAlign: "center", color: C.inkSubtle, fontSize: "12.5px", padding: "16px 0" }}>Cliquez sur "Rafraîchir" pour générer le briefing.</div>
+            )}
+          </div>
+          {/* Bouton détection opportunités */}
+          <div style={{ background: C.cardGradGreen, border: `1px solid rgba(39,174,96,0.2)`, borderRadius: "16px", padding: "18px 20px" }}>
+            <div style={{ fontWeight: "700", fontSize: "13.5px", color: C.ink, marginBottom: "6px" }}>Détection d'opportunités</div>
+            <div style={{ fontSize: "12px", color: C.inkSubtle, marginBottom: "14px" }}>Analyse croisée : surexpositions, corrélations cachées, secteurs manquants, position DCA prioritaire.</div>
+            <button onClick={() => { detectOpportunities(); setActivePanel("chat"); }} disabled={isBusy}
+              style={{ padding: "9px 20px", borderRadius: "12px", border: "none", cursor: isBusy ? "not-allowed" : "pointer", background: isBusy ? C.snowDim : `linear-gradient(135deg, #1E8449 0%, ${C.green} 100%)`, color: isBusy ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", boxShadow: !isBusy ? "0 4px 16px rgba(39,174,96,0.35)" : "none", transition: "all 0.15s" }}>
+              {oppoLoading ? "Analyse en cours…" : "Détecter les opportunités →"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Panel Chat libre ── */}
+      {activePanel === "chat" && (
+        <>
+          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px", paddingBottom: "8px" }}>
+            {sessions.length === 0 && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", paddingTop: "20px" }}>
+                <div style={{ fontSize: "12.5px", color: C.inkSubtle }}>Suggestions :</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center", maxWidth: "600px" }}>
+                  {SUGGESTIONS.map((s, i) => (
+                    <button key={i} onClick={() => sendMessage(s)}
+                      style={{ fontSize: "12px", color: C.accent, background: C.paleBlue, border: `1px solid rgba(30,58,95,0.15)`, borderRadius: "20px", padding: "7px 14px", cursor: "pointer", fontWeight: "500" }}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => { detectOpportunities(); }} disabled={isBusy}
+                  style={{ fontSize: "12px", fontWeight: "700", color: C.green, background: C.greenLight, border: `1px solid rgba(39,174,96,0.25)`, borderRadius: "20px", padding: "8px 18px", cursor: isBusy ? "not-allowed" : "pointer" }}>
+                  Détecter les opportunités
+                </button>
+              </div>
+            )}
+
+            {/* Sessions — 1 session = 1 Q&A supprimable */}
+            {sessions.map((sess) => (
+              <div key={sess.id}
+                onMouseEnter={() => setHoveredSession(sess.id)}
+                onMouseLeave={() => setHoveredSession(null)}
+                style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+
+                {/* Message utilisateur + bouton supprimer */}
+                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "6px" }}>
+                  {hoveredSession === sess.id && (
+                    <button onClick={() => deleteSession(sess.id)}
+                      title="Supprimer cet échange"
+                      style={{ width: "20px", height: "20px", borderRadius: "50%", border: "none", background: C.snowDim, color: C.inkSubtle, fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>
+                      ×
+                    </button>
+                  )}
+                  <div style={{ maxWidth: "78%", padding: "10px 14px", borderRadius: "16px 16px 4px 16px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", color: "#fff", boxShadow: shadow.card, fontSize: "13.5px", lineHeight: "1.55" }}>
+                    {sess.userMsg}
+                  </div>
+                </div>
+
+                {/* Réponse assistant */}
+                {sess.assistantMsg && (
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                    <div style={{ width: "26px", height: "26px", borderRadius: "8px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0, marginTop: "2px" }}>
+                      <IconChat />
+                    </div>
+                    <div style={{ maxWidth: "78%" }}>
+                      <div style={{ padding: "10px 14px", borderRadius: "16px 16px 16px 4px", background: C.snow, color: C.ink, boxShadow: shadow.card, fontSize: "13.5px", lineHeight: "1.55", border: `1px solid ${C.border}` }}>
+                        <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>{formatMessage(sess.assistantMsg)}</ul>
+                      </div>
+                      {/* Chips termes techniques */}
+                      {sess.terms && sess.terms.length > 0 && (
+                        <div style={{ marginTop: "6px" }}>
+                          <button onClick={() => setExpandedTerms(expandedTerms === sess.id ? null : sess.id)}
+                            style={{ fontSize: "10px", fontWeight: "700", color: C.accent, background: C.paleBlue, border: `1px solid rgba(30,58,95,0.15)`, borderRadius: "12px", padding: "3px 10px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            📚 {sess.terms.length} terme{sess.terms.length > 1 ? "s" : ""} · {sess.terms.map(t => t.term).join(", ")}
+                          </button>
+                          {expandedTerms === sess.id && (
+                            <div style={{ marginTop: "6px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "10px 14px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                              {sess.terms.map(({ term, def }) => (
+                                <div key={term}>
+                                  <span style={{ fontWeight: "700", fontSize: "11.5px", color: C.accent }}>{term}</span>
+                                  <span style={{ fontSize: "11.5px", color: C.inkMuted }}> — {def}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px", paddingLeft: "2px" }}>
+                        {new Date(sess.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {isBusy && (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ width: "26px", height: "26px", borderRadius: "8px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}><IconChat /></div>
+                <div style={{ padding: "10px 16px", background: C.snow, borderRadius: "16px 16px 16px 4px", border: `1px solid ${C.border}`, boxShadow: shadow.card, display: "flex", gap: "5px", alignItems: "center" }}>
+                  {[0,1,2].map(j => <span key={j} style={{ width: "6px", height: "6px", borderRadius: "50%", background: C.accent, display: "inline-block", animation: `chatDot 1.2s ease-in-out ${j * 0.2}s infinite` }} />)}
+                </div>
+              </div>
+            )}
+
+            {error && <div style={{ padding: "10px 14px", background: C.redLight, border: `1px solid rgba(231,76,60,0.25)`, borderRadius: "12px", color: C.red, fontSize: "12.5px" }}>{error}</div>}
+            <div ref={bottomRef} />
+          </div>
+
+          <div style={{ flexShrink: 0, paddingTop: "10px", borderTop: `1px solid ${C.border}` }}>
+            <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
+              <textarea value={input} onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                placeholder="Posez une question sur votre portefeuille…" rows={2}
+                style={{ flex: 1, padding: "10px 14px", borderRadius: "14px", border: `1px solid ${C.border}`, background: C.snow, fontSize: "13.5px", color: C.ink, resize: "none", fontFamily: "inherit", outline: "none", boxShadow: shadow.card, lineHeight: "1.5" }} />
+              <button onClick={() => sendMessage()} disabled={!input.trim() || isBusy}
+                style={{ width: "42px", height: "42px", borderRadius: "12px", border: "none", cursor: input.trim() && !isBusy ? "pointer" : "not-allowed", background: input.trim() && !isBusy ? "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)" : C.snowDim, color: input.trim() && !isBusy ? "#fff" : C.inkSubtle, fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: input.trim() && !isBusy ? shadow.pill : "none", transition: "all 0.15s" }}>
+                ↑
+              </button>
+            </div>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "5px", textAlign: "center" }}>Entrée pour envoyer · Shift+Entrée pour nouvelle ligne</div>
+          </div>
+        </>
+      )}
+
+      <style>{`@keyframes chatDot { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }`}</style>
+    </div>
   );
 }
 
@@ -9760,11 +10818,12 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             </div>
           )}
             {activeTab === TABS.PORTFOLIO  && <><DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} /><PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} /></>}
-{activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} />}
+{activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
             {activeTab === TABS.PROJECTION && <ProjectionTab profil={profil} account={account} />}
             {activeTab === TABS.HISTORIQUE && <HistoriqueTab portfolioVersion={portfolioVersion} account={account} />}
-            {activeTab === TABS.DCA        && <StratégieDCATab profil={profil} portfolioVersion={portfolioVersion} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} />}
+            {activeTab === TABS.DCA        && <StratégieDCATab profil={profil} portfolioVersion={portfolioVersion} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} onSaveProfil={p => { setProfil(p); save("bourse_profil", p); }} account={account} />}
             {activeTab === TABS.OPERATIONS && <OperationsTab account={account} />}
+            {activeTab === TABS.CHAT       && <ChatTab profil={profil} account={account} portfolioVersion={portfolioVersion} marketScores={marketScores} />}
             {activeTab === TABS.PROFIL     && <ProfilTab profil={profil} onChange={setProfil} />}
             {activeTab === TABS.SETTINGS   && <ParametresTab />}
           </div>
@@ -9783,7 +10842,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       {/* ── Bottom navigation bar (mobile only) ── */}
       <nav className="ba-bottom-nav">
         {NAV_GROUPS.flatMap(g => g.items).map(({ key, icon }) => {
-          const SHORT = { portfolio: "Positions", marche: "Marchés", dca: "DCA", projection: "Projec.", historique: "Répart.", operations: "Opérat.", profil: "Config." };
+          const SHORT = { portfolio: "Positions", marche: "Marchés", dca: "DCA", projection: "Projec.", historique: "Répart.", operations: "Opérat.", chat: "Conseil", profil: "Config." };
           const isActive = activeTab === key;
           return (
             <button key={key} onClick={() => changeTab(key)}

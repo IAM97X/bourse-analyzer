@@ -1,0 +1,651 @@
+Last login: Mon Apr 20 19:42:08 on ttys000
+cheikahamed@MacBook-Pro ~ % cd ~/bourse-analyzer
+cheikahamed@MacBook-Pro bourse-analyzer % git remote add origin https://github.com/TON_USERNAME/bourse-analyzer.git
+cheikahamed@MacBook-Pro bourse-analyzer % git remote add origin https://github.com/IAM97X/bourse-analyzer.git
+error: remote origin already exists.
+cheikahamed@MacBook-Pro bourse-analyzer % git push -u origin main
+Username for 'https://github.com': IAM97X
+Password for 'https://IAM97X@github.com': 
+remote: Invalid username or token. Password authentication is not supported for Git operations.
+fatal: Authentication failed for 'https://github.com/TON_USERNAME/bourse-analyzer.git/'
+cheikahamed@MacBook-Pro bourse-analyzer % git push -u origin main
+Username for 'https://github.com': IAM97X
+Password for 'https://IAM97X@github.com': 
+remote: Invalid username or token. Password authentication is not supported for Git operations.
+fatal: Authentication failed for 'https://github.com/TON_USERNAME/bourse-analyzer.git/'
+cheikahamed@MacBook-Pro bourse-analyzer % git remote -v
+origin	https://github.com/TON_USERNAME/bourse-analyzer.git (fetch)
+origin	https://github.com/TON_USERNAME/bourse-analyzer.git (push)
+cheikahamed@MacBook-Pro bourse-analyzer % git remote set-url origin https://github.com/IAM97X/bourse-analyzer.git 
+cheikahamed@MacBook-Pro bourse-analyzer % git push -u origin main
+Username for 'https://github.com': IAM97X
+Password for 'https://IAM97X@github.com': 
+remote: Repository not found.
+fatal: repository 'https://github.com/IAM97X/bourse-analyzer.git/' not found
+cheikahamed@MacBook-Pro bourse-analyzer % git push -u origin main
+Username for 'https://github.com': IAM97X
+Password for 'https://IAM97X@github.com': 
+remote: Invalid username or token. Password authentication is not supported for Git operations.
+fatal: Authentication failed for 'https://github.com/IAM97X/bourse-analyzer.git/'
+cheikahamed@MacBook-Pro bourse-analyzer % 
+cheikahamed@MacBook-Pro bourse-analyzer % 
+cheikahamed@MacBook-Pro bourse-analyzer % 
+cheikahamed@MacBook-Pro bourse-analyzer % ssh-keygen -t ed25519 -C "IAM97X"
+Generating public/private ed25519 key pair.
+Enter file in which to save the key (/Users/cheikahamed/.ssh/id_ed25519): 
+Created directory '/Users/cheikahamed/.ssh'.
+Enter passphrase for "/Users/cheikahamed/.ssh/id_ed25519" (empty for no passphrase): 
+Enter same passphrase again: 
+Passphrases do not match.  Try again.
+Enter passphrase for "/Users/cheikahamed/.ssh/id_ed25519" (empty for no passphrase): 
+Enter same passphrase again: 
+Passphrases do not match.  Try again.
+Enter passphrase for "/Users/cheikahamed/.ssh/id_ed25519" (empty for no passphrase): 
+Enter same passphrase again: 
+Passphrases do not match.  Try again.
+Enter passphrase for "/Users/cheikahamed/.ssh/id_ed25519" (empty for no passphrase): 
+Enter same passphrase again: 
+Passphrases do not match.  Try again.
+Enter passphrase for "/Users/cheikahamed/.ssh/id_ed25519" (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /Users/cheikahamed/.ssh/id_ed25519
+Your public key has been saved in /Users/cheikahamed/.ssh/id_ed25519.pub
+The key fingerprint is:
+SHA256:33COqSLfSk9Jx6ZkFyK+IPJo+Spj5GsqxHFNr+DWVDU IAM97X
+The key's randomart image is:
++--[ED25519 256]--+
+|        .E       |
+|     . .  .      |
+|    o + . .      |
+| . o + o o .     |
+|o = = o S * .    |
+| B.+ + = B B     |
+|=oo   o + + o    |
+|=+. ...+ .       |
+|B+o. ooo+        |
++----[SHA256]-----+
+cheikahamed@MacBook-Pro bourse-analyzer % 
+cheikahamed@MacBook-Pro bourse-analyzer % cat ~/.ssh/id_ed25519.pub
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILIZIVCamtYKeogDrjlkAoeVhw2KinaIrjrd1tGJIvI/ IAM97X
+cheikahamed@MacBook-Pro bourse-analyzer % git remote set-url origin git@github.com:IAM97X/bourse-analyzer.git 
+cheikahamed@MacBook-Pro bourse-analyzer % git push -u origin main
+The authenticity of host 'github.com (140.82.121.4)' can't be established.
+ED25519 key fingerprint is: SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'github.com' (ED25519) to the list of known hosts.
+ERROR: Repository not found.
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+cheikahamed@MacBook-Pro bourse-analyzer %  git push -u origin main
+Enumerating objects: 22, done.
+Counting objects: 100% (22/22), done.
+Delta compression using up to 10 threads
+Compressing objects: 100% (22/22), done.
+Writing objects: 100% (22/22), 172.77 KiB | 1.76 MiB/s, done.
+Total 22 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+To github.com:IAM97X/bourse-analyzer.git
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+cheikahamed@MacBook-Pro bourse-analyzer % npm install
+npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+npm warn deprecated gauge@3.0.2: This package is no longer supported.
+npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+up to date, audited 1325 packages in 4s
+
+267 packages are looking for funding
+  run `npm fund` for details
+
+32 vulnerabilities (9 low, 6 moderate, 17 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+cheikahamed@MacBook-Pro bourse-analyzer % git add package-lock.json
+  git commit -m "fix lock file"                                                                                          
+  git push
+[main 081ea1d] fix lock file
+ Committer: CHEIK AHAMED <cheikahamed@MacBook-Pro.lan>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 1 file changed, 555 insertions(+)
+Enumerating objects: 5, done.
+Counting objects: 100% (5/5), done.
+Delta compression using up to 10 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 5.90 KiB | 1.18 MiB/s, done.
+Total 3 (delta 2), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
+To github.com:IAM97X/bourse-analyzer.git
+   bc13173..081ea1d  main -> main
+cheikahamed@MacBook-Pro bourse-analyzer % git status 
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   package.json
+	modified:   public/index.html
+	modified:   public/manifest.json
+	modified:   src/App.js
+	modified:   src/index.css
+	modified:   src/index.js
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.env
+	.env.save
+	Bourse_PEA/
+	PEA_avis_operes.md
+	capture_PEA_2026-04-22_17h53.json
+	capture_PEA_2026-04-23_18h25.json
+	newsletter-sync.gs
+	public/sw.js
+	src/App.js.save
+	src/setupProxy.js
+
+no changes added to commit (use "git add" and/or "git commit -a")
+cheikahamed@MacBook-Pro bourse-analyzer % npm install
+npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+npm warn deprecated gauge@3.0.2: This package is no longer supported.
+npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+up to date, audited 1325 packages in 4s
+
+267 packages are looking for funding
+  run `npm fund` for details
+
+31 vulnerabilities (9 low, 6 moderate, 16 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+cheikahamed@MacBook-Pro bourse-analyzer % git add package-lock.json               
+  git commit -m "fix lock file"
+  git push
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   package.json
+	modified:   public/index.html
+	modified:   public/manifest.json
+	modified:   src/App.js
+	modified:   src/index.css
+	modified:   src/index.js
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.env
+	.env.save
+	Bourse_PEA/
+	PEA_avis_operes.md
+	capture_PEA_2026-04-22_17h53.json
+	capture_PEA_2026-04-23_18h25.json
+	newsletter-sync.gs
+	public/sw.js
+	src/App.js.save
+	src/setupProxy.js
+
+no changes added to commit (use "git add" and/or "git commit -a")
+Everything up-to-date
+cheikahamed@MacBook-Pro bourse-analyzer % cat .gitignore
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+cheikahamed@MacBook-Pro bourse-analyzer % ls package-lock.json
+package-lock.json
+cheikahamed@MacBook-Pro bourse-analyzer % git add -f package-lock.json
+cheikahamed@MacBook-Pro bourse-analyzer % git commit -m "add lock file"
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   package.json
+	modified:   public/index.html
+	modified:   public/manifest.json
+	modified:   src/App.js
+	modified:   src/index.css
+	modified:   src/index.js
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.env
+	.env.save
+	Bourse_PEA/
+	PEA_avis_operes.md
+	capture_PEA_2026-04-22_17h53.json
+	capture_PEA_2026-04-23_18h25.json
+	newsletter-sync.gs
+	public/sw.js
+	src/App.js.save
+	src/setupProxy.js
+
+no changes added to commit (use "git add" and/or "git commit -a")
+cheikahamed@MacBook-Pro bourse-analyzer % git push
+Everything up-to-date
+cheikahamed@MacBook-Pro bourse-analyzer % rm package-lock.json
+cheikahamed@MacBook-Pro bourse-analyzer % npm install
+npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+npm warn deprecated gauge@3.0.2: This package is no longer supported.
+npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+up to date, audited 1325 packages in 5s
+
+267 packages are looking for funding
+  run `npm fund` for details
+
+30 vulnerabilities (9 low, 6 moderate, 15 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+cheikahamed@MacBook-Pro bourse-analyzer % git add package-lock.json
+cheikahamed@MacBook-Pro bourse-analyzer % git commit -m "regenerate lock file"
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   package.json
+	modified:   public/index.html
+	modified:   public/manifest.json
+	modified:   src/App.js
+	modified:   src/index.css
+	modified:   src/index.js
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.env
+	.env.save
+	Bourse_PEA/
+	PEA_avis_operes.md
+	capture_PEA_2026-04-22_17h53.json
+	capture_PEA_2026-04-23_18h25.json
+	newsletter-sync.gs
+	public/sw.js
+	src/App.js.save
+	src/setupProxy.js
+
+no changes added to commit (use "git add" and/or "git commit -a")
+cheikahamed@MacBook-Pro bourse-analyzer % git push
+Everything up-to-date
+cheikahamed@MacBook-Pro bourse-analyzer % git show HEAD:package-lock.json | grep yaml
+        "js-yaml": "^4.1.0",
+    "node_modules/@eslint/eslintrc/node_modules/js-yaml": {
+      "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.1.tgz",
+        "js-yaml": "bin/js-yaml.js"
+        "js-yaml": "^3.13.1",
+        "yaml": "^1.10.0"
+        "yaml": "^1.10.2"
+        "js-yaml": "^4.1.0",
+    "node_modules/eslint/node_modules/js-yaml": {
+      "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.1.tgz",
+        "js-yaml": "bin/js-yaml.js"
+        "yaml": "^1.7.2"
+    "node_modules/js-yaml": {
+      "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-3.14.2.tgz",
+        "js-yaml": "bin/js-yaml.js"
+        "js-yaml": "^3.13.1",
+        "yaml": "^2.4.2"
+        "yaml": {
+    "node_modules/yaml": {
+      "resolved": "https://registry.npmjs.org/yaml/-/yaml-1.10.3.tgz",
+cheikahamed@MacBook-Pro bourse-analyzer % rm package-lock.json
+cheikahamed@MacBook-Pro bourse-analyzer % npm install yaml@2.8.3
+npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+npm warn deprecated gauge@3.0.2: This package is no longer supported.
+npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 3 packages, changed 1 package, and audited 1328 packages in 8s
+
+268 packages are looking for funding
+  run `npm fund` for details
+
+30 vulnerabilities (9 low, 6 moderate, 15 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+cheikahamed@MacBook-Pro bourse-analyzer % git add -f package-lock.json
+cheikahamed@MacBook-Pro bourse-analyzer % git commit --allow-empty -m "force update lock file"
+[main 8370e16] force update lock file
+ Committer: CHEIK AHAMED <cheikahamed@MacBook-Pro.lan>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 1 file changed, 39 insertions(+), 5 deletions(-)
+cheikahamed@MacBook-Pro bourse-analyzer % git push
+Enumerating objects: 5, done.
+Counting objects: 100% (5/5), done.
+Delta compression using up to 10 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 587 bytes | 587.00 KiB/s, done.
+Total 3 (delta 2), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
+To github.com:IAM97X/bourse-analyzer.git
+   081ea1d..8370e16  main -> main
+cheikahamed@MacBook-Pro bourse-analyzer %  git add .
+cheikahamed@MacBook-Pro bourse-analyzer % git commit -m "cloudflare wrangler config"
+[main 4ce0c64] cloudflare wrangler config
+ Committer: CHEIK AHAMED <cheikahamed@MacBook-Pro.lan>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 83 files changed, 11422 insertions(+), 37 deletions(-)
+ create mode 100644 .env
+ create mode 100644 .env.save
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-02-04-2026-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-03-12-2025-ORANGE.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-04-04-2022-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-04-07-2025-EAGLE-FOOTBALL-GR.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-04-07-2025-ENTECH-2.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-04-07-2025-ENTECH.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-07-01-2026-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-07-03-2022-EAGLE-FOOTBALL-GR.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-07-07-2025-Amundi-MSCI-World-Swap-UCITS-ETF-EUR-Dist.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-07-07-2025-ENTECH.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-08-04-2026-INVENTIVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-08-07-2025-ENTECH.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-08-09-2025-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-09-07-2025-ENTECH.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-09-07-2025-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-10-07-2025-ENTECH.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-10-07-2025-SMAIO-2.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-10-07-2025-SMAIO-3.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-10-07-2025-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-10-07-2025-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-11-07-2025-ENTECH.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-11-07-2025-VALNEVA-2.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-11-07-2025-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-14-04-2026-INVENTIVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-14-04-2026-KALRAY-2.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-14-04-2026-KALRAY-3.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-14-04-2026-KALRAY.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-16-04-2026-Amundi-PEA-Emergent-MSCI-Emerging-ESG-Transition-UCITS-ETF-S-Acc.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-17-04-2026-HAFFNER-ENERGY.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-17-04-2026-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-17-07-2025-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-17-07-2025-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-20-11-2025-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-22-10-2025-GROUPE-OKWIND.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-22-12-2025-CAPITAL-B.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-22-12-2025-ORANGE.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-22-12-2025-TECHNIP-ENERGIES.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-22-12-2025-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-01-2026-AMUNDI-PEA-MONDE-MSCI-World-UCITS-ETF-Acc.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-04-2026-HAFFNER-ENERGY.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-04-2026-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-12-2025-AMUNDI-PEA-MONDE-MSCI-World-UCITS-ETF-Acc-2.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-12-2025-AMUNDI-PEA-MONDE-MSCI-World-UCITS-ETF-Acc-3.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-12-2025-AMUNDI-PEA-MONDE-MSCI-World-UCITS-ETF-Acc.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-12-2025-CAPITAL-B.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-12-2025-TECHNIP-ENERGIES.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-23-12-2025-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-24-12-2025-AMUNDI-PEA-MONDE-MSCI-World-UCITS-ETF-Acc.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-25-06-2025-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-26-06-2025-CARREFOUR-2.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-26-06-2025-CARREFOUR.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-26-06-2025-GROUPE-OKWIND.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-26-06-2025-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-27-02-2026-AMUNDI-PEA-MONDE-MSCI-World-UCITS-ETF-Acc.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-27-04-2026-Amundi-PEA-Monde-MSCI-World-UCITS-ETF.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-27-04-2026-HAFFNER-ENERGY.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-28-04-2026-HAFFNER-ENERGY-2.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-28-04-2026-HAFFNER-ENERGY.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-29-01-2025-Amundi-IS-MSCI-World-Swap-ETF-EUR-Dist.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-29-01-2026-AMUNDI-PEA-MONDE-MSCI-World-UCITS-ETF-Acc.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-29-09-2025-INVENTIVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-29-12-2025-SMAIO.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-29-12-2025-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-30-06-2025-VALNEVA.pdf"
+ create mode 100644 "Bourse_PEA/Avis_op\303\251r\303\251s/Avis-d-op\303\251r\303\251s-31-03-2026-AMUNDI-PEA-MONDE-MSCI-World-UCITS-ETF-Acc.pdf"
+ create mode 100644 Bourse_PEA/bourse-analyzer.jsx
+ create mode 100644 Bourse_PEA/datasets.rss
+ create mode 100644 Bourse_PEA/email-export-107744983.csv
+ create mode 100644 PEA_avis_operes.md
+ create mode 100644 capture_PEA_2026-04-22_17h53.json
+ create mode 100644 capture_PEA_2026-04-23_18h25.json
+ create mode 100644 newsletter-sync.gs
+ create mode 100644 public/sw.js
+ create mode 100644 src/App.js.save
+ create mode 100644 src/setupProxy.js
+cheikahamed@MacBook-Pro bourse-analyzer % git push 
+Enumerating objects: 98, done.
+Counting objects: 100% (98/98), done.
+Delta compression using up to 10 threads
+Compressing objects: 100% (88/88), done.
+Writing objects: 100% (89/89), 2.43 MiB | 3.24 MiB/s, done.
+Total 89 (delta 6), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (6/6), completed with 5 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:     
+remote:       —— Anthropic API Key —————————————————————————————————
+remote:        locations:
+remote:          - commit: 4ce0c6474a9b14380fb4607f1892777053d4acbc
+remote:            path: .env:1
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/IAM97X/bourse-analyzer/security/secret-scanning/unblock-secret/3D311jDdX0c6BbeOjstuVj2e71h
+remote:     
+remote: 
+remote: 
+To github.com:IAM97X/bourse-analyzer.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'github.com:IAM97X/bourse-analyzer.git'
+cheikahamed@MacBook-Pro bourse-analyzer % git add src/App.js src/index.js src/index.css public/index.html public/manifest.json package.json
+cheikahamed@MacBook-Pro bourse-analyzer % git commit -m "add app source code"
+On branch main
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+cheikahamed@MacBook-Pro bourse-analyzer % git push
+Enumerating objects: 98, done.
+Counting objects: 100% (98/98), done.
+Delta compression using up to 10 threads
+Compressing objects: 100% (88/88), done.
+Writing objects: 100% (89/89), 2.43 MiB | 3.28 MiB/s, done.
+Total 89 (delta 6), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (6/6), completed with 5 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:     
+remote:       —— Anthropic API Key —————————————————————————————————
+remote:        locations:
+remote:          - commit: 4ce0c6474a9b14380fb4607f1892777053d4acbc
+remote:            path: .env:1
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/IAM97X/bourse-analyzer/security/secret-scanning/unblock-secret/3D311jDdX0c6BbeOjstuVj2e71h
+remote:     
+remote: 
+remote: 
+To github.com:IAM97X/bourse-analyzer.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'github.com:IAM97X/bourse-analyzer.git'
+cheikahamed@MacBook-Pro bourse-analyzer % git rm --cached .env
+rm '.env'
+cheikahamed@MacBook-Pro bourse-analyzer % echo ".env" >> .gitignore
+cheikahamed@MacBook-Pro bourse-analyzer % git add .gitignore
+cheikahamed@MacBook-Pro bourse-analyzer % git commit -m "remove env file"
+[main 147d308] remove env file
+ Committer: CHEIK AHAMED <cheikahamed@MacBook-Pro.lan>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 2 files changed, 1 insertion(+), 4 deletions(-)
+ delete mode 100644 .env
+cheikahamed@MacBook-Pro bourse-analyzer % git push
+Enumerating objects: 102, done.
+Counting objects: 100% (102/102), done.
+Delta compression using up to 10 threads
+Compressing objects: 100% (91/91), done.
+Writing objects: 100% (92/92), 2.43 MiB | 3.39 MiB/s, done.
+Total 92 (delta 8), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (8/8), completed with 6 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:     
+remote:       —— Anthropic API Key —————————————————————————————————
+remote:        locations:
+remote:          - commit: 4ce0c6474a9b14380fb4607f1892777053d4acbc
+remote:            path: .env:1
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/IAM97X/bourse-analyzer/security/secret-scanning/unblock-secret/3D311jDdX0c6BbeOjstuVj2e71h
+remote:     
+remote: 
+remote: 
+To github.com:IAM97X/bourse-analyzer.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'github.com:IAM97X/bourse-analyzer.git'
+cheikahamed@MacBook-Pro bourse-analyzer % git rebase -i HEAD~2
+hint: Waiting for your editor to close the file... 
+drop 4ce0c64 # cloudflare wrangler config
+pick 147d308 # remove env file
+
+# Rebase 8370e16..147d308 onto 8370e16 (2 commands)
+#
+# Commands:
+# p, pick <commit> = use commit
+# r, reword <commit> = use commit, but edit the commit message
+# e, edit <commit> = use commit, but stop for amending
+# s, squash <commit> = use commit, but meld into previous commit
+# f, fixup [-C | -c] <commit> = like "squash" but keep only the previous
+#                    commit's log message, unless -C is used, in which case
+#                    keep only this commit's message; -c is same as -C but
+#                    opens the editor
+# x, exec <command> = run command (the rest of the line) using shell
+# b, break = stop here (continue rebase later with 'git rebase --continue')
+# d, drop <commit> = remove commit
+# l, label <label> = label current HEAD with a name
+# t, reset <label> = reset HEAD to a label
+# m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]
+#         create a merge commit using the original merge commit's
+#         message (or the oneline, if no original merge commit was
+#         specified); use -c <commit> to reword the commit message
+# u, update-ref <ref> = track a placeholder for the <ref> to be updated
+#                       to this position in the new commits. The <ref> is
+#                       updated at the end of the rebase
+#
+# These lines can be re-ordered; they are executed from top to bottom.
+#
+-- INSERT --                                                                                                    
