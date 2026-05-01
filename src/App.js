@@ -764,7 +764,7 @@ const hasClaudeKey = () => !!getKey("anthropic");
 // En dev, on appelle directement l'API (setupProxy gère le CORS).
 const CLAUDE_ENDPOINT = process.env.NODE_ENV === "production"
   ? "/api/claude"
-  : "CLAUDE_ENDPOINT";
+  : "https://api.anthropic.com/v1/messages";
 
 // Cache des symboles Alpha Vantage (ISIN → symbol) pour éviter les appels répétés
 const _avSymbolCache = {};
@@ -980,7 +980,7 @@ async function callClaude(system, userMessage, useSearch = false, _retries = 4, 
   for (let attempt = 0; attempt < _retries; attempt++) {
     let res, data;
     try {
-      res  = await fetch("CLAUDE_ENDPOINT", { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
       data = await res.json();
     } catch (networkErr) {
       if (attempt < _retries - 1) { await delay(2000 * (attempt + 1)); continue; }
@@ -1038,7 +1038,7 @@ async function callClaudeHaiku(system, userMessage) {
   for (let attempt = 0; attempt < 3; attempt++) {
     let res, data;
     try {
-      res  = await fetch("CLAUDE_ENDPOINT", { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
       data = await res.json();
     } catch (networkErr) {
       if (attempt < 2) { await delay(3000); continue; }
@@ -1078,7 +1078,7 @@ async function callClaudeConversation(system, messages, _retries = 3) {
   for (let attempt = 0; attempt < _retries; attempt++) {
     let res, data;
     try {
-      res  = await fetch("CLAUDE_ENDPOINT", { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
       data = await res.json();
     } catch (networkErr) {
       if (attempt < _retries - 1) { await delay(2000 * (attempt + 1)); continue; }
@@ -1125,7 +1125,7 @@ En te basant sur ces données, génère le JSON demandé. FORMAT PRIX : point d�
     system,
     messages: [{ role: "user", content: structuredMsg }]
   };
-  const res  = await fetch("CLAUDE_ENDPOINT", { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify(bodyObj) });
+  const res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify(bodyObj) });
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
@@ -9687,7 +9687,7 @@ Règles strictes :
           ? { role: m.role, content: `[CONTEXTE DE MON PORTEFEUILLE]\n${context}\n\n[MA QUESTION]\n${m.content}` }
           : { role: m.role, content: m.content }
       );
-      const res = await fetch("CLAUDE_ENDPOINT", {
+      const res = await fetch(CLAUDE_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
