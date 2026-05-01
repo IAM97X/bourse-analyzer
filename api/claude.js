@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const key = process.env.ANTHROPIC_API_KEY;
@@ -20,4 +20,4 @@ export default async function handler(req, res) {
   } catch (e) {
     res.status(502).json({ error: e.message });
   }
-}
+};
