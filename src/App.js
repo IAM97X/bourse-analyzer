@@ -9067,7 +9067,7 @@ function StratégieDCATab({ profil, portfolioVersion, marketScores, marketScorin
   );
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <DCASimulator profil={profil} dcaSim={dcaSim} setDcaSim={setDcaSim} positions={positions} />
       <DCAStrategy positions={positions} profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={onRunScoring} onSaveProfil={onSaveProfil} />
     </div>

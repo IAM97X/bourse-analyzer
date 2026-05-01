@@ -5,6 +5,7 @@ export default async function handler(req, res) {
   if (!key) return res.status(500).json({ error: "Clé API manquante côté serveur." });
 
   try {
+    const body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
     const upstream = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -12,7 +13,7 @@ export default async function handler(req, res) {
         "x-api-key": key,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify(req.body),
+      body,
     });
     const data = await upstream.json();
     res.status(upstream.status).json(data);
