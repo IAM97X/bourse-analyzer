@@ -8481,6 +8481,7 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
     let ci = 0;
     dates.forEach((d, i) => { if (Math.abs(d - t) < Math.abs(dates[ci] - t)) ci = i; });
     const snap = displaySnaps[ci];
+    if (!snap) return;
     const hInvesti = snap.investi || 0;
     const hPv      = vals[ci] - hInvesti;
     setHover({ x: xS(dates[ci]), y: yS(vals[ci]), val: vals[ci], date: snap.date, investi: hInvesti, pv: hPv });
