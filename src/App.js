@@ -4381,7 +4381,7 @@ function StockProjectionChart({ pos, onClose }) {
   const svgRef = useRef(null);
 
   // Dimensions SVG
-  const VW = 800, VH = 360, ML = 62, MR = 24, MT = 15, MB = 35;
+  const VW = 800, VH = 240, ML = 62, MR = 24, MT = 15, MB = 35;
   const CW = VW - ML - MR, CH = VH - MT - MB;
 
   useEffect(() => {
@@ -4835,7 +4835,7 @@ function PriceEvolutionChart({ positions }) {
   const [hoverFrac, setHoverFrac] = useState(null);
   const svgRef = useRef(null);
 
-  const VW=800, VH=360, ML=52, MR=16, MT=12, MB=32;
+  const VW=800, VH=240, ML=52, MR=16, MT=12, MB=32;
   const CW=VW-ML-MR, CH=VH-MT-MB;
 
   useEffect(() => {
