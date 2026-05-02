@@ -8411,7 +8411,7 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
 
   // Filtre anti-parasites : médiane glissante sur fenêtre de 5 points, seuil 20%
   const displaySnaps = useMemo(() => {
-    if (!rawSnaps || rawSnaps.length < 3) return rawSnaps;
+    if (!rawSnaps || rawSnaps.length < 3) return rawSnaps || [];
     const gv = s => s.valeur || s.total || 0;
     return rawSnaps.filter((s, i, arr) => {
       if (i === 0 || i === arr.length - 1) return true;
