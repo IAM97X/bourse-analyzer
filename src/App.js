@@ -734,12 +734,50 @@ function setCachedCours(key, cours) {
 }
 // Sanitize stored positions: remove impossibly large cours values (parse artefacts)
 function sanitizePositions(positions) {
+  if (!Array.isArray(positions)) return [];
   return positions.map(p => {
-    if (p.dernierCours && p.pru && p.dernierCours > p.pru * 20 && p.dernierCours > 1000) {
-      return { ...p, dernierCours: null }; // clear bad value
-    }
-    return p;
-  });
+    if (!p || typeof p !== "object") return null;
+    const pru      = Number(p.pru)      || 0;
+    const quantite = Number(p.quantite) || 0;
+    let dernierCours = Number(p.dernierCours) || 0;
+    // Filtre valeur aberrante (cours > 20× PRU et > 1000€)
+    if (dernierCours && pru && dernierCours > pru * 20 && dernierCours > 1000) dernierCours = 0;
+    return {
+      nom: p.nom || "Inconnu",
+      isin: p.isin || "",
+      ticker: p.ticker || "",
+      secteur: p.secteur || "Autre",
+      compte: p.compte || "PEA",
+      pru,
+      quantite,
+      dernierCours: dernierCours || null,
+      alerteHaute: Number(p.alerteHaute) || null,
+      alerteBasse: Number(p.alerteBasse) || null,
+      ...p,
+      pru, quantite, dernierCours: dernierCours || null,
+    };
+  }).filter(Boolean);
+}
+
+// Modèles Claude — changer ici pour mettre à jour toute l'app
+const CLAUDE_MODELS = {
+  fast:     CLAUDE_MODELS.fast, // Conseiller Privé, briefing
+  standard: "claude-sonnet-4-6",          // Analyse, scoring, assistant flottant
+};
+
+// Helper corsproxy avec proxy de secours
+const PROXIES = [
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+];
+async function fetchWithProxy(url, opts = {}) {
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(url), { signal: AbortSignal.timeout(10000), ...opts });
+      if (res.ok || res.status < 500) return res;
+    } catch {}
+  }
+  throw new Error("Données de marché indisponibles (proxies CORS inaccessibles)");
 }
 
 // Clés API : localStorage d'abord (par utilisateur), fallback sur .env
@@ -850,7 +888,7 @@ async function fetchActualites(nom, isin) {
 // ─── Yahoo Finance — actualités RSS avec liens ────────────────────────────────
 async function fetchYahooFinanceRSS(ticker) {
   const url = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=FR&lang=fr-FR&siteid=yahoofr`;
-  const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(10000) });
+  const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
   const xml = new DOMParser().parseFromString(text, "text/xml");
@@ -918,7 +956,7 @@ async function callGoogleSearch(query, nbResults = 5) {
 // ─── Yahoo Finance — données analystes (consensus, objectif de cours) ────────
 async function fetchYahooAnalysts(ticker) {
   const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=financialData,recommendationTrend`;
-  const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(10000) });
+  const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   const result = json?.quoteSummary?.result?.[0];
@@ -929,7 +967,7 @@ async function fetchYahooAnalysts(ticker) {
 // ─── Google News RSS — actualités sans clé API ────────────────────────────────
 async function fetchGoogleNewsRSS(query) {
   const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=fr&gl=FR&ceid=FR:fr`;
-  const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(10000) });
+  const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
   const xml = new DOMParser().parseFromString(text, "text/xml");
@@ -973,7 +1011,7 @@ async function callClaude(system, userMessage, useSearch = false, _retries = 4, 
   if (useSearch && getKey("google") && getKey("cx") && !skipChaining) {
     return callClaudeChained(system, userMessage);
   }
-  const bodyObj = { model: "claude-sonnet-4-6", max_tokens: maxTokens || (useSearch ? 4000 : 1500), system, messages: [{ role: "user", content: userMessage }] };
+  const bodyObj = { model: CLAUDE_MODELS.standard, max_tokens: maxTokens || (useSearch ? 4000 : 1500), system, messages: [{ role: "user", content: userMessage }] };
   if (useSearch) bodyObj.tools = [{ type: "web_search_20250305", name: "web_search" }];
   const headers = { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
   if (useSearch) headers["anthropic-beta"] = "web-search-2025-03-05";
@@ -1029,7 +1067,7 @@ async function callClaude(system, userMessage, useSearch = false, _retries = 4, 
 // ─── Haiku : modèle léger pour signaux marché (10x moins cher que Sonnet) ─────
 async function callClaudeHaiku(system, userMessage) {
   const bodyObj = {
-    model: "claude-haiku-4-5-20251001",
+    model: CLAUDE_MODELS.fast,
     max_tokens: 2000,
     system,
     messages: [{ role: "user", content: userMessage }],
@@ -1074,7 +1112,7 @@ async function callClaudeConversation(system, messages, _retries = 3) {
     "anthropic-version": "2023-06-01",
     "anthropic-dangerous-direct-browser-access": "true",
   };
-  const bodyObj = { model: "claude-haiku-4-5-20251001", max_tokens: 1500, system, messages };
+  const bodyObj = { model: CLAUDE_MODELS.fast, max_tokens: 1500, system, messages };
   for (let attempt = 0; attempt < _retries; attempt++) {
     let res, data;
     try {
@@ -1120,7 +1158,7 @@ ${rawData}
 
 En te basant sur ces données, génère le JSON demandé. FORMAT PRIX : point décimal (ex: "32.140"). JSON valide sans markdown.`;
   const bodyObj = {
-    model: "claude-sonnet-4-6",
+    model: CLAUDE_MODELS.standard,
     max_tokens: 1500,
     system,
     messages: [{ role: "user", content: structuredMsg }]
@@ -2872,7 +2910,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     await Promise.all(needTicker.map(async (pos) => {
       try {
         const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(pos.isin)}&quotesCount=3&newsCount=0`;
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(searchUrl)}`, { signal: AbortSignal.timeout(12000) });
+        const res = await fetchWithProxy(searchUrl, { signal: AbortSignal.timeout(12000) });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const hits = (json?.quotes || []).filter(q => ["EQUITY", "ETF", "MUTUALFUND"].includes(q.quoteType));
@@ -2890,7 +2928,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       try {
         const symbols = resolved.map(p => cache[p.isin]).join(",");
         const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`;
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(quoteUrl)}`, { signal: AbortSignal.timeout(20000) });
+        const res = await fetchWithProxy(quoteUrl, { signal: AbortSignal.timeout(20000) });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         const qMap = {};
@@ -2931,7 +2969,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const ticker = cache[pos.isin];
         try {
           const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=assetProfile,fundProfile`;
-          const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(10000) });
+          const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
           const json = await res.json();
           const profile = json?.quoteSummary?.result?.[0];
           const sectorRaw = profile?.assetProfile?.sector || profile?.assetProfile?.industry || profile?.fundProfile?.categoryName || null;
@@ -3865,7 +3903,7 @@ function LiveMarketPanel({ pos, onClose }) {
     if (!ticker && pos.isin) {
       try {
         const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(pos.isin)}&quotesCount=3&newsCount=0`;
-        const sRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(searchUrl)}`, { signal: AbortSignal.timeout(10000) });
+        const sRes = await fetchWithProxy(searchUrl, { signal: AbortSignal.timeout(10000) });
         if (sRes.ok) {
           const sJson = await sRes.json();
           const hit = (sJson?.quotes || []).find(q => ["EQUITY","ETF","MUTUALFUND"].includes(q.quoteType));
@@ -3880,7 +3918,7 @@ function LiveMarketPanel({ pos, onClose }) {
     if (!ticker) { setErr("Ticker Yahoo Finance introuvable · renseignez-le manuellement via ✏ dans le tableau."); setLoading(false); return; }
     try {
       const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=5m&range=1d`;
-      const res  = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(14000) });
+      const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(14000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const r    = json?.chart?.result?.[0];
@@ -4406,8 +4444,8 @@ function StockProjectionChart({ pos, onClose }) {
         const urlReg = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1wk&range=5y`;
 
         const [resDisplay, resReg] = await Promise.all([
-          fetch(`https://corsproxy.io/?${encodeURIComponent(urlDisplay)}`, { signal: AbortSignal.timeout(15000) }),
-          fetch(`https://corsproxy.io/?${encodeURIComponent(urlReg)}`,     { signal: AbortSignal.timeout(15000) }),
+          fetchWithProxy(urlDisplay, { signal: AbortSignal.timeout(15000) }),
+          fetchWithProxy(urlReg,     { signal: AbortSignal.timeout(15000) }),
         ]);
         if (!resDisplay.ok) throw new Error(`HTTP ${resDisplay.status}`);
         const jsonDisplay = await resDisplay.json();
@@ -4857,7 +4895,7 @@ function PriceEvolutionChart({ positions }) {
         if (!ticker) { missingList.push({ nom: pos.nom, reason: "Ticker non configuré" }); return; }
         try {
           const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${p.interval}&range=${p.range}`;
-          const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(15000) });
+          const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
           if (!res.ok) { missingList.push({ nom: pos.nom, reason: `Erreur ${res.status}` }); return; }
           const data = await res.json();
           const r = data?.chart?.result?.[0];
@@ -4879,7 +4917,7 @@ function PriceEvolutionChart({ positions }) {
       // Fetch CAC 40 (^FCHI) en parallèle
       try {
         const cacUrl = `https://query1.finance.yahoo.com/v8/finance/chart/%5EFCHI?interval=${p.interval}&range=${p.range}`;
-        const cacRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(cacUrl)}`, { signal: AbortSignal.timeout(15000) });
+        const cacRes = await fetchWithProxy(cacUrl, { signal: AbortSignal.timeout(15000) });
         if (cacRes.ok) {
           const cacJson = await cacRes.json();
           const cr = cacJson?.chart?.result?.[0];
@@ -6060,8 +6098,7 @@ function BenchmarkComparaison() {
     const to   = Math.floor(Date.now() / 1000);
     const from = to - months * 30 * 86400;
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${from}&period2=${to}&interval=1d`;
-    const url = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(25000) });
+    const res = await fetchWithProxy(yahooUrl, { signal: AbortSignal.timeout(25000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     const closes = (json?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || []).filter(v => v != null);
@@ -6852,7 +6889,7 @@ function CorrelationMatrix({ positions }) {
       if (!ticker && p.isin) {
         try {
           const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(p.isin)}&quotesCount=3&newsCount=0`;
-          const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(10000) });
+          const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
           if (res.ok) {
             const j = await res.json();
             const hit = (j.quotes || []).find(q => ["EQUITY","ETF","MUTUALFUND"].includes(q.quoteType));
@@ -6871,7 +6908,7 @@ function CorrelationMatrix({ positions }) {
       if (!p.resolvedTicker) return;
       try {
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(p.resolvedTicker)}?interval=${INTERVAL}&range=${period}`;
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(15000) });
+        const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
         if (!res.ok) return;
         const j = await res.json();
         const closes = j?.chart?.result?.[0]?.indicators?.quote?.[0]?.close;
@@ -7528,7 +7565,7 @@ function ProjectionTab({ profil, account = "PEA" }) {
       const ticker = (p.isin && tickerCache[p.isin]) || p.ticker;
       try {
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1wk&range=5y`;
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(12000) });
+        const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
         if (!res.ok) return null;
         const json = await res.json();
         const r = json?.chart?.result?.[0];
@@ -8240,8 +8277,7 @@ function InfoTip({ term, text, position = "top" }) {
 // ─── Portfolio Chart — graphique évolution portefeuille (Google Finance style) ─
 async function resolveIsinToTicker(isin) {
   try {
-    const url = `https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v1/finance/search?q=${isin}&quotesCount=5&newsCount=0&enableFuzzyQuery=false`)}`;
-    const res  = await fetch(url);
+    const res  = await fetchWithProxy(`https://query1.finance.yahoo.com/v1/finance/search?q=${isin}&quotesCount=5&newsCount=0&enableFuzzyQuery=false`);
     const json = await res.json();
     const quotes = json.quotes || [];
     const eq = quotes.find(q => q.quoteType === "EQUITY" && q.symbol) || quotes.find(q => q.symbol);
@@ -8295,8 +8331,7 @@ async function rebuildPortfolioHistory(account, onProgress) {
   const pricesByTicker = {};
   await Promise.all(tickers.map(async ticker => {
     try {
-      const url = `https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5y`)}`;
-      const res  = await fetch(url);
+      const res  = await fetchWithProxy(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5y`);
       const json = await res.json();
       const result = json.chart?.result?.[0];
       if (!result) { pricesByTicker[ticker] = {}; return; }
@@ -9698,13 +9733,14 @@ Règles strictes :
           "anthropic-version": "2023-06-01",
           "anthropic-dangerous-direct-browser-access": "true",
         },
-        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1024, system: SYSTEM_PROMPT, messages: apiMsgs }),
+        body: JSON.stringify({ model: CLAUDE_MODELS.standard, max_tokens: 1024, system: SYSTEM_PROMPT, messages: apiMsgs }),
       });
       const data  = await res.json();
+      if (data?.error) throw new Error(data.error.message || "Erreur API");
       const reply = data?.content?.[0]?.text || "Désolé, je n'ai pas pu générer une réponse.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Erreur de connexion. Vérifiez que votre clé API Claude est bien configurée." }]);
+    } catch (e) {
+      setMessages(prev => [...prev, { role: "assistant", content: `Erreur : ${e.message || "Vérifiez votre clé API Claude."}` }]);
     }
     setLoading(false);
   };
