@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from "react";
 import ReactDOM from "react-dom";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+// pdfjs chargé en lazy (import dynamique) pour réduire le bundle initial
 import { createClient } from "@supabase/supabase-js";
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.min.js`;
+// workerSrc configuré dynamiquement lors du premier chargement PDF
 
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 const SB_URL  = process.env.REACT_APP_SUPABASE_URL  || "";
@@ -5250,6 +5250,8 @@ function PEAAvisOperes({ account = "PEA" }) {
 
   const extractPdfText = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.min.js`;
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let text = "";
     for (let i = 1; i <= pdf.numPages; i++) {
