@@ -7353,7 +7353,9 @@ const ISIN_SECTEUR = {
 function buildArcs(slices, total, CX, CY, R, R_INNER) {
   let cumAngle = -Math.PI / 2;
   return slices.map(sl => {
-    const pct = sl.valeur / total;
+    const rawPct = sl.valeur / total;
+    // Un arc SVG avec start==end (100%) est invisible — on plafonne à 99.99%
+    const pct = rawPct >= 1 ? 0.9999 : rawPct;
     const startAngle = cumAngle;
     const endAngle = cumAngle + pct * 2 * Math.PI;
     cumAngle = endAngle;
