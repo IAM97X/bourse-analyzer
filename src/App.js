@@ -706,6 +706,15 @@ const COURTIERS = {
   saxo:          { nom: "Saxo Banque",    minOrdre: 0,    frais: m => m <= 0 ? 0 : Math.max(m * 0.0008, 4.00) },
   autre:         { nom: "Autre",          minOrdre: 0,    frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
 };
+const COURTIERS_DETAIL = {
+  boursobank:    "Boursobank — PEA/CTO : 1,99€ fixe pour ordres ≤500€ ; 0,50% (min 3,99€) au-delà. Pas de minimum d'ordre. ETF Amundi éligibles PEA sans surcoût. Small-caps (ex: Kalray, Entech) accessibles mais liquidité parfois réduite. Settlement T+2. Pas de frais de garde sur PEA. Frais de change 0,50% sur CTO en devises étrangères.",
+  fortuneo:      "Fortuneo — PEA/CTO : 1,99€ fixe ≤500€ ; 0,50% (min 3,99€) au-delà. Formule Starter : 0€ de frais de garde. Pas de frais si 4+ ordres/mois. Settlement T+2.",
+  bourse_direct: "Bourse Direct — PEA/CTO : 0,99€ fixe ≤300€ ; 1,90€ ≤2000€ ; 0,095% (min 3€) au-delà. L'un des moins chers pour petits montants. Settlement T+2.",
+  trade_rep:     "Trade Republic — CTO uniquement (pas de PEA) : 1€ fixe par ordre quel que soit le montant. Actions et ETF fractionnables. Settlement T+2. Pas de frais de change sur €.",
+  degiro:        "DEGIRO — CTO uniquement (pas de PEA) : 0,50€ + 0,004% par ordre (min 0,50€). ETF gratuits selon liste spéciale. Settlement T+2. Frais de change 0,25%.",
+  saxo:          "Saxo Banque — PEA/CTO : 0,08% par ordre (min 4€). Accès marchés européens et mondiaux. Settlement T+2.",
+  autre:         "Courtier non précisé — frais estimés : 1,99€ fixe ≤500€ ; 0,50% (min 3,99€) au-delà.",
+};
 function calcFraisCourtage(montant, courtierKey) {
   const c = COURTIERS[courtierKey] || COURTIERS.boursobank;
   return c.frais(montant);
@@ -10071,6 +10080,9 @@ function ChatTab({ profil, account, portfolioVersion, marketScores }) {
 
 COMPTE : ${account || "PEA"} | PROFIL : risque=${profil?.risque || "N/A"}, horizon=${profil?.horizon || "N/A"}, DCA=${profil?.dcaMensuel || 0}€/mois, courtier=${profil?.courtier || "boursobank"}, espèces disponibles=${account === "CTO" ? (profil?.especesCTO || 0) : (profil?.especesPEA || 0)}€
 
+CONDITIONS TARIFAIRES COURTIER : ${COURTIERS_DETAIL[profil?.courtier || "boursobank"]}
+Tu connais donc exactement les frais applicables — ne demande JAMAIS à l'utilisateur ses frais de courtage, calcule-les directement.
+
 PORTEFEUILLE (${positions.length} positions) :
 ${posLines || "Aucune position."}
 
@@ -10525,6 +10537,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [refreshing, setRefreshing]             = useState(false);
   const [lastRefresh, setLastRefresh]           = useState(null); // timestamp ms
   const [refreshAgo, setRefreshAgo]             = useState("");
+  const [updateAvailable, setUpdateAvailable]   = useState(false);
   const [marketScores, setMarketScores]         = useState(() => load("bourse_market_scores", null));
   const [marketScoringUi, setMarketScoringUi]   = useState(() => load("bourse_market_scores", null)?.length > 0 ? UI.RESULT : UI.IDLE);
   const [hiddenValues, setHiddenValues]         = useState(() => load("bourse_hidden", false));
@@ -10580,14 +10593,40 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     return () => clearInterval(t);
   }, [lastRefresh]);
 
+  // Vérifie si une nouvelle version est déployée (hash du bundle JS)
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
+    const getCurrentHash = () => {
+      const s = document.querySelector('script[src*="/static/js/main."]');
+      return s ? s.src : null;
+    };
+    const check = async () => {
+      try {
+        const res = await fetch(window.location.origin + "/?_v=" + Date.now(), { cache: "no-store" });
+        const html = await res.text();
+        const match = html.match(/\/static\/js\/main\.[a-f0-9]+\.js/);
+        if (!match) return;
+        const remoteHash = match[0];
+        const localSrc = getCurrentHash();
+        if (localSrc && !localSrc.includes(remoteHash.split(".")[2])) {
+          setUpdateAvailable(true);
+        }
+      } catch {}
+    };
+    check();
+    const t = setInterval(check, 5 * 60 * 1000); // toutes les 5 min
+    return () => clearInterval(t);
+  }, []);
+
   // Actualisation générale : rafraîchit les cours + resync tous les onglets
   const refreshAll = useCallback(() => {
+    if (updateAvailable) { window.location.reload(); return; }
     setRefreshing(true);
     setLastRefresh(Date.now());
     window.dispatchEvent(new CustomEvent("refreshCoursAll"));
     window.dispatchEvent(new CustomEvent("portfolioUpdated"));
     setTimeout(() => setRefreshing(false), 3000);
-  }, []);
+  }, [updateAvailable]);
 
   // ── Analyse IA de toutes les positions (scoring marché) ──────────────────────
   const runMarketScoring = useCallback(async (positions) => {
@@ -10769,9 +10808,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               {/* RIGHT */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                 {refreshAgo && <span style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "400" }}>{refreshAgo}</span>}
-                <button onClick={refreshAll} disabled={refreshing} title="Actualiser"
-                  style={{ width: "34px", height: "34px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: "10px", cursor: refreshing ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", fontSize: "16px", color: C.inkMuted }}>
+                <button onClick={refreshAll} disabled={refreshing} title={updateAvailable ? "Nouvelle version disponible — cliquer pour mettre à jour" : "Actualiser"}
+                  style={{ position: "relative", width: "34px", height: "34px", background: updateAvailable ? C.green + "18" : "transparent", border: `1px solid ${updateAvailable ? C.green : C.border}`, borderRadius: "10px", cursor: refreshing ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", fontSize: "16px", color: updateAvailable ? C.green : C.inkMuted }}>
                   {refreshing ? <ThinkingSpinner size={16} color={C.green} /> : "↻"}
+                  {updateAvailable && !refreshing && <span style={{ position: "absolute", top: "4px", right: "4px", width: "7px", height: "7px", borderRadius: "50%", background: C.green, boxShadow: `0 0 0 2px ${C.bg}` }} />}
                 </button>
                 <button onClick={toggleHidden} title={hiddenValues ? "Afficher" : "Masquer"}
                   style={{ width: "34px", height: "34px", background: hiddenValues ? C.navyLight : "transparent", border: `1px solid ${C.border}`, borderRadius: "10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", transition: "all 0.15s" }}>
