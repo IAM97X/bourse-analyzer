@@ -549,7 +549,7 @@ const SIGNAL_CONFIG = {
   VENDRE:    { color: "#DC2626",  bg: "#FFF5F5",    border: "#DC2626",               icon: "🚨" },
 };
 
-const DEFAULT_PROFIL    = { capital: 0, horizon: "moyen", risque: "equilibre", capitalPEA: 0, capitalCTO: 0, dcaMensuel: 0, dcaDuree: 12, courtier: "boursobank" };
+const DEFAULT_PROFIL    = { capital: 0, horizon: "moyen", risque: "equilibre", capitalPEA: 0, capitalCTO: 0, especesPEA: 0, especesCTO: 0, dcaMensuel: 0, dcaDuree: 12, courtier: "boursobank" };
 const STORAGE_VERSION = "v4";
 
 const DEFAULT_POSITIONS = [];
@@ -5647,7 +5647,9 @@ function ProfilTab({ profil, onChange }) {
       ...form,
       capital:    parseFloat(String(form.capital).replace(",", "."))    || 0,
       capitalPEA: parseFloat(String(form.capitalPEA).replace(",", ".")) || 0,
-      capitalCTO: parseFloat(String(form.capitalCTO || "0").replace(",", ".")) || 0,
+      capitalCTO:  parseFloat(String(form.capitalCTO  || "0").replace(",", ".")) || 0,
+      especesPEA:  parseFloat(String(form.especesPEA || "0").replace(",", ".")) || 0,
+      especesCTO:  parseFloat(String(form.especesCTO || "0").replace(",", ".")) || 0,
       dcaMensuel: parseFloat(String(form.dcaMensuel).replace(",", ".")) || 0,
       dcaDuree:   parseInt(String(form.dcaDuree))                       || 12,
     };
@@ -5700,6 +5702,14 @@ function ProfilTab({ profil, onChange }) {
             <div>
               <label style={lbl}>Capital total CTO (€)</label>
               <input style={inp} type="number" min="0" placeholder="0" value={form.capitalCTO || ""} onChange={e => setForm(f => ({ ...f, capitalCTO: e.target.value }))} />
+            </div>
+            <div>
+              <label style={lbl}>Espèces disponibles PEA (€)</label>
+              <input style={inp} type="number" min="0" placeholder="0" value={form.especesPEA || ""} onChange={e => setForm(f => ({ ...f, especesPEA: e.target.value }))} />
+            </div>
+            <div>
+              <label style={lbl}>Espèces disponibles CTO (€)</label>
+              <input style={inp} type="number" min="0" placeholder="0" value={form.especesCTO || ""} onChange={e => setForm(f => ({ ...f, especesCTO: e.target.value }))} />
             </div>
             <div>
               <label style={lbl}>Versement mensuel DCA (€)</label>
@@ -10059,7 +10069,7 @@ function ChatTab({ profil, account, portfolioVersion, marketScores }) {
     const { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine } = buildPortfolioContext();
     return `Tu es le Conseiller Privé IA de cet investisseur. Tu as accès à toutes ses données et réponds en français, de façon concise et personnalisée.
 
-COMPTE : ${account || "PEA"} | PROFIL : risque=${profil?.risque || "N/A"}, horizon=${profil?.horizon || "N/A"}, DCA=${profil?.dcaMensuel || 0}€/mois, courtier=${profil?.courtier || "boursobank"}
+COMPTE : ${account || "PEA"} | PROFIL : risque=${profil?.risque || "N/A"}, horizon=${profil?.horizon || "N/A"}, DCA=${profil?.dcaMensuel || 0}€/mois, courtier=${profil?.courtier || "boursobank"}, espèces disponibles=${account === "CTO" ? (profil?.especesCTO || 0) : (profil?.especesPEA || 0)}€
 
 PORTEFEUILLE (${positions.length} positions) :
 ${posLines || "Aucune position."}
