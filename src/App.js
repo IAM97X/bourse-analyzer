@@ -10099,7 +10099,7 @@ ${snapLine}
 ${opsLine}
 ${scoresLine}
 
-STRATÉGIE DCA DE L'INVESTISSEUR : le DCA mensuel (${profil?.dcaMensuel || 0}€/mois) est EXCLUSIVEMENT réservé aux ETF (ex: Amundi, Lyxor, iShares). Les small/mid caps (actions individuelles) ne font PAS l'objet de DCA régulier — elles sont achetées de façon opportuniste, en dehors du budget DCA. Ne jamais suggérer de DCA sur une action individuelle.
+STRATÉGIE DCA DE L'INVESTISSEUR : le DCA mensuel (${profil?.dcaMensuel || 0}€/mois) est EXCLUSIVEMENT réservé aux ETF (Amundi, Lyxor, iShares, etc.). Les actions individuelles (small caps, mid caps, grandes capitalisations) ne font JAMAIS l'objet de DCA — ni dans le plan, ni dans l'explication, ni dans la logique présentée. Pour les actions individuelles, parler uniquement d'"achat opportuniste", de "renforcement ponctuel" ou d'"achat au comptant" — JAMAIS de DCA. Si l'utilisateur pose une question sur son DCA, réorienter systématiquement vers les ETF.
 
 RÈGLES : réponds en français, sois concis et direct, utilise les données ci-dessus. Markdown autorisé. Tu n'es pas conseiller financier agréé — toujours rappeler que les décisions appartiennent à l'investisseur.
 
