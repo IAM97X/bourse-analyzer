@@ -770,8 +770,8 @@ function sanitizePositions(positions) {
 
 // Modèles Claude — changer ici pour mettre à jour toute l'app
 const CLAUDE_MODELS = {
-  fast:     CLAUDE_MODELS.fast, // Conseiller Privé, briefing
-  standard: "claude-sonnet-4-6",          // Analyse, scoring, assistant flottant
+  fast:     "claude-haiku-4-5-20251001",
+  standard: "claude-sonnet-4-6",
 };
 
 // Helper corsproxy avec proxy de secours
