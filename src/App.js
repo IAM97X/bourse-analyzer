@@ -9366,6 +9366,7 @@ function AutopilotIA({ account, profil, hidden }) {
   const positions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === (account || "PEA"));
   const [running, setRunning]   = useState(false);
   const [step, setStep]         = useState("");
+  const [expanded, setExpanded] = useState({});
   const [result, setResult]     = useState(() => {
     const r = load("bourse_autopilot_last", null);
     // Validate structure — discard corrupted cached results
@@ -9548,18 +9549,25 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
               const ac = op.action || "";
               const acShort = ac.length > 12 ? ac.split(/[\s/]/)[0] : ac;
               const acColor = actionColor(ac);
+              const isExpanded = expanded[i];
+              const dcaMensuel = profil?.dcaMensuel || 200;
+              const montant = op.montant_suggere && op.montant_suggere > 0 ? op.montant_suggere : dcaMensuel;
+              const catalyseurDisplay = op.catalyseur && op.catalyseur.length > 55 ? op.catalyseur.slice(0, 52) + "…" : op.catalyseur;
               return (
                 <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: shadow.card, ...blurStyle }}>
                   {/* Barre top colorée */}
-                  <div style={{ height: "3px", background: acColor, opacity: 0.6 }} />
+                  <div style={{ height: "3px", background: acColor }} />
                   <div style={{ padding: "14px 16px" }}>
                     {/* Ligne 1 : nom + badge action + prix */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: "14px", fontWeight: "800", color: C.ink, whiteSpace: "nowrap" }}>{op.nom}</span>
-                        <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "4px", padding: "1px 6px", fontWeight: "600", flexShrink: 0 }}>{op.symbol}</span>
-                        <span style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0 }}>{op.secteur}</span>
-                        {op.dans_portefeuille && <span style={{ fontSize: "9px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px", flexShrink: 0 }}>En portefeuille</span>}
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "8px" }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "3px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>{op.nom}</span>
+                          <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "4px", padding: "1px 5px", fontWeight: "600" }}>{op.symbol}</span>
+                          <span style={{ fontSize: "10px", color: C.inkSubtle }}>{op.secteur}</span>
+                          {op.dans_portefeuille && <span style={{ fontSize: "9px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px" }}>En portefeuille</span>}
+                        </div>
+                        {catalyseurDisplay && <div style={{ fontSize: "11px", fontWeight: "600", color: "#966F1A", background: "rgba(200,151,42,0.1)", borderRadius: "5px", padding: "2px 8px", display: "inline-block" }}>⚡ {catalyseurDisplay}</div>}
                       </div>
                       <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
                         <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", background: acColor, borderRadius: "6px", padding: "3px 10px", whiteSpace: "nowrap" }}>{acShort}</span>
@@ -9567,16 +9575,21 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
                         {op.var_jour != null && <span style={{ fontSize: "11px", color: op.var_jour >= 0 ? C.green : C.red, fontWeight: "600" }}>{op.var_jour >= 0 ? "+" : ""}{op.var_jour}% auj.</span>}
                       </div>
                     </div>
-                    {/* Rationale */}
-                    <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55, marginBottom: "8px" }}>{op.rationale}</div>
-                    {/* Catalyseur */}
-                    {op.catalyseur && <div style={{ fontSize: "11px", fontWeight: "600", color: "#966F1A", background: "rgba(200,151,42,0.1)", borderRadius: "6px", padding: "3px 10px", display: "inline-block", marginBottom: "10px" }}>⚡ {op.catalyseur}</div>}
+                    {/* Rationale — 2 lignes max, expandable */}
+                    <div
+                      style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55, marginBottom: "6px",
+                        ...(!isExpanded ? { overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } : {}) }}
+                    >{op.rationale}</div>
+                    <button onClick={() => setExpanded(e => ({ ...e, [i]: !e[i] }))}
+                      style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: "none", padding: "0 0 8px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                      {isExpanded ? "▲ Réduire" : "▼ Lire plus"}
+                    </button>
                     {/* Métriques */}
                     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", borderTop: `1px solid ${C.border}`, paddingTop: "10px" }}>
                       {[
-                        { label: "Risque",    val: op.risque,                    color: riskColor(op.risque) },
-                        { label: "Horizon",   val: op.horizon,                   color: C.inkMuted },
-                        { label: "Montant",   val: fmtEur(op.montant_suggere),   color: C.ink },
+                        { label: "Risque",    val: op.risque,   color: riskColor(op.risque) },
+                        { label: "Horizon",   val: op.horizon,  color: C.inkMuted },
+                        { label: "Montant",   val: fmtEur(montant), color: C.ink },
                         { label: "Δ bas 52s", val: op.dist_bas52 != null ? `+${op.dist_bas52}%` : "—", color: (op.dist_bas52 || 0) < 10 ? C.green : C.inkSubtle },
                       ].map(m => (
                         <div key={m.label} style={{ background: C.snowOff, borderRadius: "6px", padding: "4px 10px" }}>
