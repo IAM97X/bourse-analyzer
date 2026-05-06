@@ -6505,9 +6505,18 @@ function buildVersementsHistory() {
   return points;
 }
 
+function calcCapitalVerse() {
+  try {
+    const ops = JSON.parse(localStorage.getItem("bourse_avis_operes") || "[]");
+    return ops
+      .filter(o => o.type === "ACHAT")
+      .reduce((s, o) => s + (parseFloat(o.quantite) || 0) * (parseFloat(o.prixUnitaire) || 0), 0);
+  } catch { return 0; }
+}
+
 function takeSnapshot(positions) {
-  const valeur   = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
-  const investi  = positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
+  const valeur  = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
+  const investi = calcCapitalVerse() || positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
   if (valeur === 0) return;
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const snaps = (() => { try { return JSON.parse(localStorage.getItem(SNAPSHOTS_KEY) || "[]"); } catch { return []; } })();
@@ -8506,8 +8515,12 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
 
   const lastSnap    = displaySnaps[displaySnaps.length - 1];
   const investi     = lastSnap?.investi || totalInvesti;
-  // Ligne investie dynamique — suit le capital investi snapshot par snapshot
-  const investiVals = displaySnaps.map(s => s.investi || 0);
+  // Ligne investie dynamique — capital versé cumulatif (ne peut que croître)
+  const investiVals = (() => {
+    const raw = displaySnaps.map(s => s.investi || 0);
+    let max = 0;
+    return raw.map(v => { max = Math.max(max, v); return max; });
+  })();
   const hasInvesti  = investiVals.some(v => v > 0);
   const investiPts  = hasInvesti
     ? displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(investiVals[i]).toFixed(1)}`).join(" ")
