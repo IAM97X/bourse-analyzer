@@ -9434,7 +9434,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       "nom": "Airbus",
       "type": "Action",
       "secteur": "Aéronautique",
-      "action": "ACHETER",
+      "action": "ACHETER",  // VALEURS AUTORISÉES UNIQUEMENT : ACHETER | RENFORCER | SURVEILLER | ALLÉGER | ÉVITER
       "prix": 165.50,
       "var_jour": 1.2,
       "dist_bas52": 12.5,
@@ -9451,6 +9451,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
   "prochaine_revision": "Dans 7 jours"
 }
 
+RÈGLE ACTION : utilise UNIQUEMENT ces 5 valeurs pour le champ "action" : ACHETER (opportunité immédiate), RENFORCER (position existante à étoffer), SURVEILLER (intéressant mais attendre un meilleur point d'entrée), ALLÉGER (prendre des profits), ÉVITER (conditions défavorables). Interdit : ACCUMULER, CONSERVER, HOLD, BUY ou tout autre libellé.
 RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si prix > ${dcaMensuel}€ : montant = 1 titre = prix. Si prix ≤ ${dcaMensuel}€ : montant = floor(${dcaMensuel}/prix) × prix. Jamais en dessous du prix d'un titre.`;
 
       const parsed = await callClaude(system, userMsg, true, 3, true, 4000);
@@ -9467,7 +9468,17 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
 
   const scoreColor = s => s >= 7 ? C.green : s >= 5 ? "#C8972A" : C.red;
   const riskColor  = r => r === "Faible" ? C.green : r === "Modéré" ? "#C8972A" : C.red;
-  const actionColor = a => a === "ACHETER" || a === "RENFORCER" ? C.green : a === "ALLÉGER" ? "#C8972A" : C.red;
+  const ACTION_META = {
+    "ACHETER":    { color: C.green,   label: "Acheter maintenant" },
+    "RENFORCER":  { color: C.green,   label: "Renforcer la position" },
+    "SURVEILLER": { color: "#6366F1", label: "Surveiller — attendre un meilleur point d'entrée" },
+    "ALLÉGER":    { color: "#C8972A", label: "Alléger — prendre des profits partiels" },
+    "ÉVITER":     { color: C.red,     label: "Éviter — conditions défavorables" },
+  };
+  const actionColor = a => {
+    const key = Object.keys(ACTION_META).find(k => a?.toUpperCase().includes(k)) || "";
+    return ACTION_META[key]?.color || "#6366F1";
+  };
 
   return (
     <div style={{ maxWidth: "780px", margin: "0 auto" }}>
@@ -9543,8 +9554,15 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
           )}
 
           {/* Opportunités */}
-          <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "8px" }}>
-            Opportunités · {result.opportunites?.length || 0}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px" }}>
+              Opportunités · {result.opportunites?.length || 0}
+            </div>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              {[["ACHETER", C.green], ["RENFORCER", C.green], ["SURVEILLER", "#6366F1"], ["ALLÉGER", "#C8972A"], ["ÉVITER", C.red]].map(([lbl, col]) => (
+                <span key={lbl} style={{ fontSize: "9px", fontWeight: "700", color: col, background: col + "18", borderRadius: "4px", padding: "2px 6px", letterSpacing: "0.3px" }}>{lbl}</span>
+              ))}
+            </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {(result.opportunites || []).map((op, i) => {
