@@ -3341,7 +3341,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, overflow: "hidden" }}>
                         <div style={{ flexShrink: 0 }}><CompanyAvatar nom={pos.nom} isin={pos.isin} size={26} /></div>
                         <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
-                          <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <div style={{ fontSize: pos.nom.length > 35 ? "9px" : pos.nom.length > 22 ? "10px" : "11px", fontWeight: "700", color: C.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {pos.nom}{concentration && <span style={{ fontSize: "8px", color: C.red, marginLeft: "3px" }}>⚠</span>}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "2px", flexWrap: "nowrap", overflow: "hidden" }}>
