@@ -3348,11 +3348,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                             {pos.isin && <span style={{ fontSize: "8px", color: C.inkSubtle, fontWeight: "500", letterSpacing: "0.3px", flexShrink: 0 }}>{pos.isin}</span>}
                             {sig && <span style={{ fontSize: "8px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "3px", padding: "1px 4px", whiteSpace: "nowrap", flexShrink: 0 }}>{sig}</span>}
                             <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance"
-                              style={{ background: C.navyLight, border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "9px", fontWeight: "700", color: C.navy, fontFamily: "Inter,sans-serif", padding: "1px 5px", lineHeight: "14px", whiteSpace: "nowrap", flexShrink: 0 }}>
+                              style={{ background: "#5F01D1", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "10px", fontWeight: "700", color: "#fff", fontFamily: "Inter,sans-serif", padding: "2px 6px", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>
                               Yahoo
                             </button>
                             {euronextUrl && <a href={euronextUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                              style={{ background: C.navyLight, border: "none", borderRadius: "4px", padding: "1px 5px", color: C.navy, fontSize: "9px", fontWeight: "700", textDecoration: "none", lineHeight: "14px", whiteSpace: "nowrap", flexShrink: 0 }}>Euronext</a>}
+                              style={{ background: "#003087", border: "none", borderRadius: "4px", padding: "2px 6px", color: "#fff", fontSize: "10px", fontWeight: "700", textDecoration: "none", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>Euronext</a>}
                           </div>
                         </div>
                       </div>
@@ -3526,12 +3526,12 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                       const url = getEuronextUrl(pos.isin, pos.nom);
                       return (
                         <a href={url} target="_blank" rel="noopener noreferrer"
-                          style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "8px", padding: "7px 12px", color: C.navy, fontSize: "11px", fontWeight: "700", textDecoration: "none" }}>
+                          style={{ background: "#003087", border: "none", borderRadius: "8px", padding: "7px 14px", color: "#fff", fontSize: "12px", fontWeight: "700", textDecoration: "none" }}>
                           Euronext
                         </a>
                       );
                     })()}
-                    <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance" style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "8px", padding: "7px 12px", color: C.navy, fontSize: "11px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: "700" }}>Yahoo Finance</button>
+                    <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance" style={{ background: "#5F01D1", border: "none", borderRadius: "8px", padding: "7px 14px", color: "#fff", fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: "700" }}>Yahoo Finance</button>
                     <button onClick={() => setSellSimPos(pos)} title="Simuler une vente" style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "8px", padding: "7px 12px", color: C.greenDark, fontSize: "11px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: "700" }}>€ Vendre</button>
                     <button onClick={() => openForm(pos)} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 12px", color: C.inkMuted, fontSize: "11px", fontFamily: "Inter, sans-serif", cursor: "pointer" }}>✏</button>
                     <button onClick={() => setPositions(prev => prev.filter(p => p.id !== pos.id))} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px 12px", color: C.red, fontSize: "11px", fontFamily: "Inter, sans-serif", cursor: "pointer" }}>✕</button>
