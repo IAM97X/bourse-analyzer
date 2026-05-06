@@ -9486,7 +9486,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       "dans_portefeuille": false
     }
   ],
-  "alertes_portefeuille": [],
+  "alertes_portefeuille": [{"titre": "Nom position", "alerte": "Description courte du risque ou signal.", "action": "SURVEILLER"}],
   "prochaine_revision": "Dans 7 jours"
 }
 
@@ -9581,11 +9581,24 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
             <div style={{ background: "rgba(200,151,42,0.06)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", display: "flex", flexDirection: "column", gap: "6px" }}>
               <div style={{ fontSize: "10px", fontWeight: "700", color: "#966F1A", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "2px" }}>Alertes portefeuille</div>
               {result.alertes_portefeuille.map((a, i) => {
-                const txt = typeof a === "string" ? a : (a?.message || JSON.stringify(a));
+                if (typeof a === "string") {
+                  return (
+                    <div key={i} style={{ fontSize: "12px", color: "#7A5A10", lineHeight: 1.5, display: "flex", gap: "8px" }}>
+                      <span style={{ flexShrink: 0 }}>▸</span><span>{a}</span>
+                    </div>
+                  );
+                }
+                const titre  = a?.titre  || a?.nom    || "";
+                const alerte = a?.alerte || a?.message || a?.detail || "";
+                const action = a?.action || "";
+                const actionCol = action === "ÉVITER" ? C.red : action === "SURVEILLER" ? "#6366F1" : "#966F1A";
                 return (
-                  <div key={i} style={{ fontSize: "12px", color: "#7A5A10", lineHeight: 1.5, display: "flex", gap: "8px" }}>
-                    <span style={{ flexShrink: 0, marginTop: "1px" }}>▸</span>
-                    <span>{txt}</span>
+                  <div key={i} style={{ borderLeft: "3px solid rgba(200,151,42,0.4)", paddingLeft: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
+                      {titre && <span style={{ fontSize: "11px", fontWeight: "700", color: "#7A5A10" }}>{titre}</span>}
+                      {action && <span style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: actionCol, borderRadius: "4px", padding: "1px 6px" }}>{action}</span>}
+                    </div>
+                    {alerte && <div style={{ fontSize: "11px", color: "#966F1A", lineHeight: 1.5 }}>{alerte}</div>}
                   </div>
                 );
               })}
