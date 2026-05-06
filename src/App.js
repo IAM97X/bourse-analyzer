@@ -9206,19 +9206,21 @@ const IconChat = () => (
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const NAV_GROUPS = [
   { items: [{ key: TABS.PORTFOLIO, label: "Positions", icon: <IconPositions/> }] },
-  { label: "MARCHÉS", items: [
-    { key: TABS.MARCHE,      label: "Signaux IA",           icon: <IconTrending/> },
-    { key: TABS.DCA,         label: "Plan DCA",             icon: <IconTarget/> },
-    { key: TABS.PROJECTION,  label: "Projection",           icon: <IconWave/> },
+  { label: "PORTEFEUILLE", items: [
+    { key: TABS.HISTORIQUE, label: "Répartition",  icon: <IconPie/> },
+    { key: TABS.OPERATIONS, label: "Transactions", icon: <IconSwap/> },
   ]},
-  { label: "ANALYSE", items: [
-    { key: TABS.HISTORIQUE, label: "Répartition",   icon: <IconPie/> },
-    { key: TABS.OPERATIONS, label: "Transactions",  icon: <IconSwap/> },
-    { key: TABS.CHAT,       label: "Conseiller Privé",  icon: <IconChat/> },
+  { label: "MARCHÉS", items: [
+    { key: TABS.MARCHE,     label: "Signaux IA",  icon: <IconTrending/> },
+    { key: TABS.DCA,        label: "Plan DCA",    icon: <IconTarget/> },
+    { key: TABS.PROJECTION, label: "Projection",  icon: <IconWave/> },
   ]},
   { label: "COMPTE", items: [
-    { key: TABS.PROFIL,    label: "Profil investisseur", icon: <IconUser/> },
-    { key: TABS.SETTINGS,  label: "Paramètres",          icon: <IconGear/> },
+    { key: TABS.PROFIL,   label: "Profil investisseur", icon: <IconUser/> },
+    { key: TABS.SETTINGS, label: "Paramètres",          icon: <IconGear/> },
+  ]},
+  { label: "IA", featured: true, items: [
+    { key: TABS.CHAT, label: "Conseiller Privé", icon: <IconChat/> },
   ]},
 ];
 
@@ -9293,20 +9295,47 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
       {/* Navigation */}
       <div className="ba-sidebar-nav" style={{ flex: 1, overflowY: "auto", padding: "12px 8px", display: "flex", flexDirection: "column" }}>
         {NAV_GROUPS.map((group, gi) => (
-          <div key={gi} style={{ marginBottom: "20px" }}>
-            {group.label && !c && (
-              <div className="ba-sidebar-group-label" style={{ padding: "0 10px", marginBottom: "6px", marginTop: gi > 0 ? "4px" : 0 }}>
+          <div key={gi} style={{ marginBottom: group.featured ? "8px" : "18px" }}>
+            {group.label && !c && !group.featured && (
+              <div className="ba-sidebar-group-label" style={{ padding: "0 10px", marginBottom: "6px", marginTop: gi > 0 ? "2px" : 0, fontSize: "10px", fontWeight: "700", letterSpacing: "1px", color: C.inkMuted, fontFamily: "Inter,sans-serif", textTransform: "uppercase" }}>
                 {group.label}
               </div>
             )}
             {group.items.map(({ key, label, icon }) => {
               const isActive = active === key;
+              const isFeatured = group.featured;
               return (
                 <button key={key} className={`ba-sidebar-item${isActive ? " ba-sidebar-item-active" : ""}`}
                   onClick={() => handleNav(key)} title={c ? label : undefined}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: c ? 0 : "10px", padding: c ? "9px 0" : "9px 12px", justifyContent: c ? "center" : "flex-start", borderRadius: "10px", background: isActive ? "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)" : "transparent", border: "none", cursor: "pointer", color: isActive ? "#FFFFFF" : C.sbText, fontSize: "13px", fontWeight: isActive ? "600" : "400", fontFamily: "'Roboto', sans-serif", textAlign: "left", marginBottom: "3px", transition: "all 0.18s", boxShadow: isActive ? "0 4px 16px rgba(30,58,95,0.40)" : "none" }}>
-                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: "16px", height: "16px", opacity: isActive ? 1 : 0.55 }}>{icon}</span>
-                  {!c && <span style={{ marginLeft: c ? 0 : "2px" }}>{label}</span>}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center",
+                    gap: c ? 0 : "10px",
+                    padding: c ? "9px 0" : isFeatured ? "11px 14px" : "9px 12px",
+                    justifyContent: c ? "center" : "flex-start",
+                    borderRadius: isFeatured ? "12px" : "10px",
+                    background: isActive
+                      ? "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)"
+                      : isFeatured
+                        ? "linear-gradient(135deg, rgba(8,11,15,0.92) 0%, rgba(20,38,65,0.88) 50%, rgba(30,58,95,0.85) 100%)"
+                        : "transparent",
+                    border: isFeatured && !isActive ? "1px solid rgba(45,89,134,0.5)" : "none",
+                    cursor: "pointer",
+                    color: isActive ? "#FFFFFF" : isFeatured ? "#CBD5E1" : C.sbText,
+                    fontSize: isFeatured ? "13.5px" : "13px",
+                    fontWeight: isActive ? "700" : isFeatured ? "600" : "500",
+                    fontFamily: "'Inter', 'Roboto', sans-serif",
+                    textAlign: "left", marginBottom: "3px",
+                    transition: "all 0.18s",
+                    boxShadow: isActive
+                      ? "0 4px 16px rgba(30,58,95,0.40)"
+                      : isFeatured
+                        ? "0 2px 12px rgba(8,11,15,0.35)"
+                        : "none",
+                    letterSpacing: isFeatured ? "-0.01em" : "normal",
+                  }}>
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: "16px", height: "16px", opacity: isActive ? 1 : isFeatured ? 0.9 : 0.65 }}>{icon}</span>
+                  {!c && <span style={{ marginLeft: "2px", flex: 1 }}>{label}</span>}
+                  {!c && isFeatured && !isActive && <span style={{ fontSize: "10px", background: "rgba(45,89,134,0.6)", color: "#93C5FD", borderRadius: "6px", padding: "1px 6px", fontWeight: "700", letterSpacing: "0.5px" }}>IA</span>}
                 </button>
               );
             })}
