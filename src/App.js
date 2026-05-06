@@ -1017,11 +1017,11 @@ function formatExternalContext(nom, analysts, news) {
 // ─── Claude — analyse + structuration JSON ───────────────────────────────────
 // skipChaining=true → Claude direct avec web_search (pour les prix live)
 // skipChaining=false (défaut) → Google+Claude chaining si clés dispo (analyse)
-async function callClaude(system, userMessage, useSearch = false, _retries = 4, skipChaining = false, maxTokens = null) {
+async function callClaude(system, userMessage, useSearch = false, _retries = 4, skipChaining = false, maxTokens = null, model = null) {
   if (useSearch && getKey("google") && getKey("cx") && !skipChaining) {
     return callClaudeChained(system, userMessage);
   }
-  const bodyObj = { model: CLAUDE_MODELS.standard, max_tokens: maxTokens || (useSearch ? 4000 : 1500), system, messages: [{ role: "user", content: userMessage }] };
+  const bodyObj = { model: model || CLAUDE_MODELS.standard, max_tokens: maxTokens || (useSearch ? 4000 : 1500), system, messages: [{ role: "user", content: userMessage }] };
   if (useSearch) bodyObj.tools = [{ type: "web_search_20250305", name: "web_search" }];
   const headers = { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
   if (useSearch) headers["anthropic-beta"] = "web-search-2025-03-05";
@@ -9427,7 +9427,11 @@ function AutopilotIA({ account, profil, hidden }) {
           }).join("\n")
         : "Portefeuille vide";
 
-      const universeList = universe.map(i => `${i.symbol} (${i.nom}, ${i.type}, ${i.secteur})`).join(", ");
+      // Limiter à 20 instruments max pour réduire les tokens d'entrée
+      const universeSlice = universe.length > 20
+        ? [...universe].sort(() => Math.random() - 0.5).slice(0, 20)
+        : universe;
+      const universeList = universeSlice.map(i => `${i.symbol} (${i.nom}, ${i.secteur})`).join(", ");
 
       const profilLabel = { prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" }[risque] || risque;
       const focusInstr = risque === "prudent"
@@ -9448,9 +9452,9 @@ ${portfolioCtx}`;
       const userMsg = `Utilise web_search pour récupérer les cours actuels des instruments les plus pertinents parmi cet univers ${account} adapté au profil ${profilLabel} :
 ${universeList}
 
-Effectue 4 à 6 recherches ciblées sur les instruments les plus prometteurs compte tenu du profil ${profilLabel} (prix, variation du jour, momentum, catalyseurs récents, plus haut/bas 52 semaines).
+Effectue 2 à 3 recherches ciblées sur les instruments les plus prometteurs compte tenu du profil ${profilLabel} (prix, variation du jour, momentum, catalyseurs récents, plus haut/bas 52 semaines).
 
-Identifie les 3 à 5 MEILLEURES OPPORTUNITÉS D'ACHAT IMMÉDIATES pour le profil ${profilLabel}.
+Identifie les 3 MEILLEURES OPPORTUNITÉS D'ACHAT IMMÉDIATES pour le profil ${profilLabel}.
 RÈGLE STRICTE : n'inclure dans "opportunites" QUE les instruments qui méritent d'être achetés ou renforcés MAINTENANT. Le champ "action" doit être ACHETER ou RENFORCER uniquement. Si un instrument est intéressant à long terme mais pas au bon point d'entrée aujourd'hui → ne pas l'inclure du tout.
 ${risque === "dynamique" || risque === "tres-dynamique" ? "PRIORITÉ AUX ACTIONS INDIVIDUELLES avec catalyseur clair (résultats, contrat, secteur en hausse, momentum technique)." : ""}
 
@@ -9484,7 +9488,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 RÈGLE ACTION : utilise UNIQUEMENT ces 5 valeurs pour le champ "action" : ACHETER (opportunité immédiate), RENFORCER (position existante à étoffer), SURVEILLER (intéressant mais attendre un meilleur point d'entrée), ALLÉGER (prendre des profits), ÉVITER (conditions défavorables). Interdit : ACCUMULER, CONSERVER, HOLD, BUY ou tout autre libellé.
 RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si prix > ${dcaMensuel}€ : montant = 1 titre = prix. Si prix ≤ ${dcaMensuel}€ : montant = floor(${dcaMensuel}/prix) × prix. Jamais en dessous du prix d'un titre.`;
 
-      const parsed = await callClaude(system, userMsg, true, 3, true, 4000);
+      const parsed = await callClaude(system, userMsg, true, 2, true, 2000, CLAUDE_MODELS.fast);
       if (!parsed || typeof parsed !== "object") throw new Error("Réponse IA non structurée.");
       const final = { ...parsed, generatedAt: new Date().toISOString(), enrichedCount: universe.length };
       setResult(final);
