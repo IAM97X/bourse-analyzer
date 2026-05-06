@@ -9391,8 +9391,8 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       "prix": 422.30,
       "var_jour": 0.45,
       "dist_bas52": 8.2,
-      "rationale": "Explication en 2 phrases. Pourquoi maintenant.",
-      "catalyseur": "Rebond post-correction",
+      "rationale": "1-2 phrases max.",
+      "catalyseur": "Court (5 mots max)",
       "risque": "Faible",
       "horizon": "Long terme",
       "allocation_pct": 40,
@@ -9404,7 +9404,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
   "prochaine_revision": "Dans 7 jours"
 }`;
 
-      const parsed = await callClaude(system, userMsg, true, 3, true, 3000);
+      const parsed = await callClaude(system, userMsg, true, 3, true, 4000);
       if (!parsed || typeof parsed !== "object") throw new Error("Réponse IA non structurée.");
       const final = { ...parsed, generatedAt: new Date().toISOString(), enrichedCount: universe.length };
       setResult(final);
