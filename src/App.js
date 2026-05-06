@@ -9341,7 +9341,12 @@ function AutopilotIA({ account, profil, hidden }) {
   const positions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === (account || "PEA"));
   const [running, setRunning]   = useState(false);
   const [step, setStep]         = useState("");
-  const [result, setResult]     = useState(() => load("bourse_autopilot_last", null));
+  const [result, setResult]     = useState(() => {
+    const r = load("bourse_autopilot_last", null);
+    // Validate structure — discard corrupted cached results
+    if (!r || !Array.isArray(r.opportunites)) return null;
+    return r;
+  });
   const [error, setError]       = useState(null);
   const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
 
@@ -9481,7 +9486,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
               <div style={{ marginTop: "12px", borderTop: `1px solid ${C.border}`, paddingTop: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
                 {result.alertes_portefeuille.map((a, i) => (
                   <div key={i} style={{ fontSize: "12px", color: "#C8972A", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span>⚠</span><span>{a}</span>
+                    <span>⚠</span><span>{typeof a === "string" ? a : (a?.message || JSON.stringify(a))}</span>
                   </div>
                 ))}
               </div>
