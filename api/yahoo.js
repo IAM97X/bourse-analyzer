@@ -5,38 +5,44 @@ module.exports = async function handler(req, res) {
   const { symbols } = req.query;
   if (!symbols) return res.status(400).json({ error: "symbols required" });
 
+  const symbolList = symbols.split(",").map(s => s.trim()).filter(Boolean);
   const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-  try {
-    // 1 — Récupère cookies Yahoo
-    const homeRes = await fetch("https://finance.yahoo.com/", {
-      headers: { "User-Agent": UA, "Accept-Language": "fr-FR,fr;q=0.9" },
-      redirect: "follow",
-    });
-    const rawCookies = homeRes.headers.getSetCookie
-      ? homeRes.headers.getSetCookie()
-      : (homeRes.headers.get("set-cookie") || "").split(/,(?=[^ ])/);
-    const cookieStr = rawCookies.map(c => c.split(";")[0]).join("; ");
-
-    // 2 — Récupère le crumb
-    const crumbRes = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
-      headers: { "User-Agent": UA, "Cookie": cookieStr },
-    });
-    const crumb = await crumbRes.text();
-
-    if (!crumb || crumb.includes("<")) {
-      return res.status(502).json({ error: "Crumb Yahoo Finance indisponible" });
+  const fetchOne = async (symbol) => {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d&includePrePost=false`;
+      const r = await fetch(url, {
+        headers: {
+          "User-Agent": UA,
+          "Accept": "application/json",
+          "Accept-Language": "fr-FR,fr;q=0.9",
+        },
+      });
+      const data = await r.json();
+      const result = data?.chart?.result?.[0];
+      if (!result) return null;
+      const meta = result.meta;
+      const prev = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
+      const price = meta.regularMarketPrice;
+      return {
+        symbol: meta.symbol || symbol,
+        shortName: meta.shortName || meta.longName || symbol,
+        regularMarketPrice: price,
+        regularMarketChangePercent: prev && prev !== price ? ((price - prev) / prev) * 100 : 0,
+        regularMarketVolume: meta.regularMarketVolume || 0,
+        fiftyTwoWeekLow: meta.fiftyTwoWeekLow || price,
+        fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || price,
+        regularMarketOpen: meta.regularMarketOpen || price,
+      };
+    } catch {
+      return null;
     }
+  };
 
-    // 3 — Requête quote
-    const fields = "symbol,shortName,regularMarketPrice,regularMarketChangePercent,regularMarketVolume,fiftyTwoWeekLow,fiftyTwoWeekHigh,regularMarketOpen";
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}&fields=${fields}&crumb=${encodeURIComponent(crumb)}&lang=fr-FR&region=FR`;
-
-    const quoteRes = await fetch(url, {
-      headers: { "User-Agent": UA, "Cookie": cookieStr, "Accept": "application/json" },
-    });
-    const data = await quoteRes.json();
-    res.status(quoteRes.status).json(data);
+  try {
+    // Parallel fetch — all symbols at once, skip failures
+    const results = (await Promise.all(symbolList.map(fetchOne))).filter(Boolean);
+    res.status(200).json({ quoteResponse: { result: results } });
   } catch (e) {
     res.status(502).json({ error: e.message });
   }
