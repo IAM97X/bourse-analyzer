@@ -9405,10 +9405,8 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
   "prochaine_revision": "Dans 7 jours"
 }`;
 
-      const text = await callClaude(system, userMsg, true, 3, true, 3000);
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("Réponse IA non structurée.");
-      const parsed = JSON.parse(match[0]);
+      const parsed = await callClaude(system, userMsg, true, 3, true, 3000);
+      if (!parsed || typeof parsed !== "object") throw new Error("Réponse IA non structurée.");
       const final = { ...parsed, generatedAt: new Date().toISOString(), enrichedCount: universe.length };
       setResult(final);
       save("bourse_autopilot_last", final);
