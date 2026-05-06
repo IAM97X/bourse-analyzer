@@ -9313,6 +9313,21 @@ const AUTOPILOT_UNIVERSE = {
     { symbol: "PUB.PA",   nom: "Publicis",                    type: "Action", secteur: "Médias/IA",         profil_min: "tres-dynamique" },
     { symbol: "KER.PA",   nom: "Kering",                      type: "Action", secteur: "Luxe",              profil_min: "tres-dynamique" },
     { symbol: "ENGI.PA",  nom: "Engie",                       type: "Action", secteur: "Énergie",           profil_min: "tres-dynamique" },
+    // Small caps PEA — très dynamique uniquement
+    { symbol: "ALWLX.PA", nom: "Wallix Group",                type: "Action", secteur: "Cybersécurité FR",   profil_min: "tres-dynamique" },
+    { symbol: "ALESK.PA", nom: "Esker",                       type: "Action", secteur: "SaaS B2B",           profil_min: "tres-dynamique" },
+    { symbol: "BLV.PA",   nom: "Believe",                     type: "Action", secteur: "Musique numérique",  profil_min: "tres-dynamique" },
+    { symbol: "SWP.PA",   nom: "Sword Group",                 type: "Action", secteur: "IT Services",        profil_min: "tres-dynamique" },
+    { symbol: "ALHAF.PA", nom: "Haffner Energy",              type: "Action", secteur: "Hydrogène vert",     profil_min: "tres-dynamique" },
+    { symbol: "ALXFR.PA", nom: "Crossject",                   type: "Action", secteur: "Pharma/Défense",     profil_min: "tres-dynamique" },
+    { symbol: "ALDRV.PA", nom: "Drone Volt",                  type: "Action", secteur: "Drones",             profil_min: "tres-dynamique" },
+    { symbol: "ALNSE.PA", nom: "Nanobiotix",                  type: "Action", secteur: "Biotech nano",       profil_min: "tres-dynamique" },
+    { symbol: "ALSGD.PA", nom: "Sogeclair",                   type: "Action", secteur: "Ingénierie aéro",    profil_min: "tres-dynamique" },
+    { symbol: "VIRP.PA",  nom: "Virbac",                      type: "Action", secteur: "Santé animale",      profil_min: "tres-dynamique" },
+    { symbol: "ALDBL.PA", nom: "DBT",                         type: "Action", secteur: "Recharge EV",        profil_min: "tres-dynamique" },
+    { symbol: "ALPCV.PA", nom: "Piscines Castorama",          type: "Action", secteur: "Niche loisir",       profil_min: "tres-dynamique" },
+    { symbol: "IFX.DE",   nom: "Infineon",                    type: "Action", secteur: "Semi-conducteurs",   profil_min: "dynamique" },
+    { symbol: "FNAC.PA",  nom: "Fnac Darty",                  type: "Action", secteur: "Retail tech",        profil_min: "tres-dynamique" },
   ],
   CTO: [
     // ETFs → tous profils
@@ -9350,6 +9365,20 @@ const AUTOPILOT_UNIVERSE = {
     { symbol: "SQ",       nom: "Block (Square)",              type: "Action", secteur: "Fintech",           profil_min: "tres-dynamique" },
     { symbol: "RKLB",     nom: "Rocket Lab",                  type: "Action", secteur: "Espace",            profil_min: "tres-dynamique" },
     { symbol: "IONQ",     nom: "IonQ",                        type: "Action", secteur: "Quantique",         profil_min: "tres-dynamique" },
+    // Small/mid caps US — niches à fort potentiel
+    { symbol: "APP",      nom: "AppLovin",                    type: "Action", secteur: "AdTech/IA",          profil_min: "tres-dynamique" },
+    { symbol: "AXON",     nom: "Axon Enterprise",             type: "Action", secteur: "Sécurité publique",  profil_min: "tres-dynamique" },
+    { symbol: "DUOL",     nom: "Duolingo",                    type: "Action", secteur: "EdTech",             profil_min: "tres-dynamique" },
+    { symbol: "MNDY",     nom: "Monday.com",                  type: "Action", secteur: "SaaS productivité",  profil_min: "tres-dynamique" },
+    { symbol: "CELH",     nom: "Celsius Holdings",            type: "Action", secteur: "Boissons santé",     profil_min: "tres-dynamique" },
+    { symbol: "RXRX",     nom: "Recursion Pharma",            type: "Action", secteur: "IA / Drug discovery",profil_min: "tres-dynamique" },
+    { symbol: "LUNR",     nom: "Intuitive Machines",          type: "Action", secteur: "Espace / Lune",      profil_min: "tres-dynamique" },
+    { symbol: "ACHR",     nom: "Archer Aviation",             type: "Action", secteur: "eVTOL / Air taxi",   profil_min: "tres-dynamique" },
+    { symbol: "JOBY",     nom: "Joby Aviation",               type: "Action", secteur: "eVTOL / Air taxi",   profil_min: "tres-dynamique" },
+    { symbol: "HIMS",     nom: "Hims & Hers Health",          type: "Action", secteur: "Santé numérique",    profil_min: "tres-dynamique" },
+    { symbol: "SOUN",     nom: "SoundHound AI",               type: "Action", secteur: "IA vocale",          profil_min: "tres-dynamique" },
+    { symbol: "ALAB",     nom: "Astera Labs",                 type: "Action", secteur: "Semi / IA infra",    profil_min: "tres-dynamique" },
+    { symbol: "CAVA",     nom: "CAVA Group",                  type: "Action", secteur: "Restauration niche", profil_min: "tres-dynamique" },
   ],
 };
 
