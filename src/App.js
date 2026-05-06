@@ -9296,7 +9296,6 @@ const AUTOPILOT_UNIVERSE = {
     { symbol: "CA.PA",    nom: "Carrefour",                   type: "Action", secteur: "Distribution" },
     { symbol: "EL.PA",    nom: "EssilorLuxottica",            type: "Action", secteur: "Santé" },
     { symbol: "LR.PA",    nom: "Legrand",                     type: "Action", secteur: "Industrie" },
-    { symbol: "SAF.PA",   nom: "Safran",                      type: "Action", secteur: "Aéronautique" },
     { symbol: "RNO.PA",   nom: "Renault",                     type: "Action", secteur: "Automobile" },
     { symbol: "STLA.PA",  nom: "Stellantis",                  type: "Action", secteur: "Automobile" },
     { symbol: "ASML.AS",  nom: "ASML Holding",                type: "Action", secteur: "Semi-conducteurs" },
