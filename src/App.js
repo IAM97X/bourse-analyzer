@@ -9480,6 +9480,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       "catalyseur": "5 mots max",
       "risque": "Modéré",
       "horizon": "Moyen terme",
+      "isin": "NL0010273215",
       "allocation_pct": 15,
       "montant_suggere": 1229,
       "dans_portefeuille": false
@@ -9627,8 +9628,16 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "3px" }}>
                           <span style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>{op.nom}</span>
                           <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "4px", padding: "1px 5px", fontWeight: "600" }}>{op.symbol}</span>
+                          {op.isin && <span style={{ fontSize: "10px", color: C.inkSubtle, fontFamily: "monospace" }}>{op.isin}</span>}
                           <span style={{ fontSize: "10px", color: C.inkSubtle }}>{op.secteur}</span>
                           {op.dans_portefeuille && <span style={{ fontSize: "9px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px" }}>En portefeuille</span>}
+                          {/* Liens externes */}
+                          <a href={`https://fr.finance.yahoo.com/quote/${encodeURIComponent(op.symbol)}`} target="_blank" rel="noopener noreferrer"
+                            style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: "#5F01D1", borderRadius: "4px", padding: "2px 6px", textDecoration: "none", flexShrink: 0 }}>Yahoo</a>
+                          {op.isin && /\.(PA|AS|BR|AM|DE|LS|MC)$/.test(op.symbol || "") && (
+                            <a href={getEuronextUrl(op.isin, op.nom)} target="_blank" rel="noopener noreferrer"
+                              style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: "#003087", borderRadius: "4px", padding: "2px 6px", textDecoration: "none", flexShrink: 0 }}>Euronext</a>
+                          )}
                         </div>
                         {catalyseurDisplay && <div style={{ fontSize: "11px", fontWeight: "600", color: "#966F1A", background: "rgba(200,151,42,0.1)", borderRadius: "5px", padding: "2px 8px", display: "inline-block" }}>⚡ {catalyseurDisplay}</div>}
                       </div>
