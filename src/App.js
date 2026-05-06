@@ -11092,7 +11092,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         .ba-content-inner { zoom: 0.94; }
 
         /* ── Mode compact ── */
-        .ba-compact > *:not(:first-child) { zoom: 0.88; }
+        .ba-compact > *:not(:first-child) { zoom: 0.93; }
 
         /* ── Toolbar status ── */
         .ba-toolbar-status { font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; }
