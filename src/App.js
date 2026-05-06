@@ -9335,7 +9335,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                   }}>
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: "16px", height: "16px", opacity: isActive ? 1 : isFeatured ? 0.9 : 0.65 }}>{icon}</span>
                   {!c && <span style={{ marginLeft: "2px", flex: 1 }}>{label}</span>}
-                  {!c && isFeatured && !isActive && <span style={{ fontSize: "10px", background: "rgba(45,89,134,0.6)", color: "#93C5FD", borderRadius: "6px", padding: "1px 6px", fontWeight: "700", letterSpacing: "0.5px" }}>IA</span>}
+                  {!c && isFeatured && !isActive && <span style={{ fontSize: "10px", background: "linear-gradient(135deg, #92610A, #C8972A)", color: "#FEF3C7", borderRadius: "6px", padding: "1px 6px", fontWeight: "700", letterSpacing: "0.5px", boxShadow: "0 1px 6px rgba(200,151,42,0.4)" }}>IA</span>}
                 </button>
               );
             })}
