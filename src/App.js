@@ -9468,79 +9468,91 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       {/* ── Résultat ── */}
       {result && !running && (
         <>
-          {/* Résumé + score */}
-          <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "18px 20px", marginBottom: "16px", boxShadow: shadow.card }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>Contexte marché</div>
-                <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.6 }}>{result.resume}</div>
-              </div>
-              {result.score_marche != null && (
-                <div style={{ textAlign: "center", flexShrink: 0 }}>
-                  <div style={{ fontSize: "28px", fontWeight: "800", color: scoreColor(result.score_marche), lineHeight: 1 }}>{result.score_marche}<span style={{ fontSize: "14px", color: C.inkSubtle }}>/10</span></div>
-                  <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600", marginTop: "2px" }}>Score marché</div>
-                </div>
-              )}
-            </div>
-            {result.alertes_portefeuille?.length > 0 && (
-              <div style={{ marginTop: "12px", borderTop: `1px solid ${C.border}`, paddingTop: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                {result.alertes_portefeuille.map((a, i) => (
-                  <div key={i} style={{ fontSize: "12px", color: "#C8972A", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span>⚠</span><span>{typeof a === "string" ? a : (a?.message || JSON.stringify(a))}</span>
-                  </div>
-                ))}
+          {/* Score + résumé compact */}
+          <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 20px", marginBottom: "12px", boxShadow: shadow.card, display: "flex", gap: "16px", alignItems: "flex-start" }}>
+            {result.score_marche != null && (
+              <div style={{ flexShrink: 0, width: "52px", height: "52px", borderRadius: "14px", background: scoreColor(result.score_marche) + "18", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: scoreColor(result.score_marche), lineHeight: 1 }}>{result.score_marche}</span>
+                <span style={{ fontSize: "8px", color: C.inkSubtle, fontWeight: "600" }}>/10</span>
               </div>
             )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>Contexte marché</div>
+              <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{result.resume}</div>
+            </div>
           </div>
 
+          {/* Alertes portefeuille */}
+          {result.alertes_portefeuille?.length > 0 && (
+            <div style={{ background: "rgba(200,151,42,0.06)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ fontSize: "10px", fontWeight: "700", color: "#966F1A", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "2px" }}>Alertes portefeuille</div>
+              {result.alertes_portefeuille.map((a, i) => {
+                const txt = typeof a === "string" ? a : (a?.message || JSON.stringify(a));
+                return (
+                  <div key={i} style={{ fontSize: "12px", color: "#7A5A10", lineHeight: 1.5, display: "flex", gap: "8px" }}>
+                    <span style={{ flexShrink: 0, marginTop: "1px" }}>▸</span>
+                    <span>{txt}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Opportunités */}
-          <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>
-            Opportunités détectées · {result.opportunites?.length || 0}
+          <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "8px" }}>
+            Opportunités · {result.opportunites?.length || 0}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {(result.opportunites || []).map((op, i) => (
-              <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: shadow.card, ...blurStyle }}>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
-                  {/* Gauche */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "4px" }}>
-                      <span style={{ fontSize: "14px", fontWeight: "800", color: C.ink }}>{op.nom}</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, background: C.snowOff, borderRadius: "4px", padding: "1px 6px" }}>{op.symbol}</span>
-                      {op.dans_portefeuille && <span style={{ fontSize: "10px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px" }}>En portefeuille</span>}
-                      <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle }}>{op.secteur}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {(result.opportunites || []).map((op, i) => {
+              const ac = op.action || "";
+              const acShort = ac.length > 12 ? ac.split(/[\s/]/)[0] : ac;
+              const acColor = actionColor(ac);
+              return (
+                <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: shadow.card, ...blurStyle }}>
+                  {/* Barre top colorée */}
+                  <div style={{ height: "3px", background: acColor, opacity: 0.6 }} />
+                  <div style={{ padding: "14px 16px" }}>
+                    {/* Ligne 1 : nom + badge action + prix */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "14px", fontWeight: "800", color: C.ink, whiteSpace: "nowrap" }}>{op.nom}</span>
+                        <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "4px", padding: "1px 6px", fontWeight: "600", flexShrink: 0 }}>{op.symbol}</span>
+                        <span style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0 }}>{op.secteur}</span>
+                        {op.dans_portefeuille && <span style={{ fontSize: "9px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px", flexShrink: 0 }}>En portefeuille</span>}
+                      </div>
+                      <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", background: acColor, borderRadius: "6px", padding: "3px 10px", whiteSpace: "nowrap" }}>{acShort}</span>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{op.prix ? fmtEur(op.prix) : "—"}</span>
+                        {op.var_jour != null && <span style={{ fontSize: "11px", color: op.var_jour >= 0 ? C.green : C.red, fontWeight: "600" }}>{op.var_jour >= 0 ? "+" : ""}{op.var_jour}% auj.</span>}
+                      </div>
                     </div>
-                    <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.6, marginBottom: "8px" }}>{op.rationale}</div>
-                    <div style={{ fontSize: "11px", fontWeight: "600", color: "#C8972A", background: "rgba(200,151,42,0.1)", borderRadius: "6px", padding: "4px 10px", display: "inline-block" }}>⚡ {op.catalyseur}</div>
-                  </div>
-                  {/* Droite */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0, minWidth: "110px" }}>
-                    <span style={{ fontSize: "20px", fontWeight: "800", color: actionColor(op.action), letterSpacing: "-0.03em" }}>{op.action}</span>
-                    <span style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>{op.prix ? fmtEur(op.prix) : "—"}</span>
-                    <span style={{ fontSize: "11px", color: op.var_jour >= 0 ? C.green : C.red, fontWeight: "600" }}>{op.var_jour >= 0 ? "+" : ""}{op.var_jour}% auj.</span>
+                    {/* Rationale */}
+                    <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55, marginBottom: "8px" }}>{op.rationale}</div>
+                    {/* Catalyseur */}
+                    {op.catalyseur && <div style={{ fontSize: "11px", fontWeight: "600", color: "#966F1A", background: "rgba(200,151,42,0.1)", borderRadius: "6px", padding: "3px 10px", display: "inline-block", marginBottom: "10px" }}>⚡ {op.catalyseur}</div>}
+                    {/* Métriques */}
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", borderTop: `1px solid ${C.border}`, paddingTop: "10px" }}>
+                      {[
+                        { label: "Risque",    val: op.risque,                    color: riskColor(op.risque) },
+                        { label: "Horizon",   val: op.horizon,                   color: C.inkMuted },
+                        { label: "Montant",   val: fmtEur(op.montant_suggere),   color: C.ink },
+                        { label: "Δ bas 52s", val: op.dist_bas52 != null ? `+${op.dist_bas52}%` : "—", color: (op.dist_bas52 || 0) < 10 ? C.green : C.inkSubtle },
+                      ].map(m => (
+                        <div key={m.label} style={{ background: C.snowOff, borderRadius: "6px", padding: "4px 10px" }}>
+                          <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "600", textTransform: "uppercase" }}>{m.label}</div>
+                          <div style={{ fontSize: "12px", fontWeight: "700", color: m.color }}>{m.val}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                {/* Footer métriques */}
-                <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
-                  {[
-                    { label: "Risque",    val: op.risque,    color: riskColor(op.risque) },
-                    { label: "Horizon",   val: op.horizon,   color: C.inkMuted },
-                    { label: "Allocation",val: `${op.allocation_pct}%`, color: C.navy },
-                    { label: "Montant",   val: fmtEur(op.montant_suggere), color: C.ink },
-                    { label: "Δ bas 52s", val: `+${op.dist_bas52}%`, color: op.dist_bas52 < 10 ? C.green : C.inkSubtle },
-                  ].map(m => (
-                    <div key={m.label} style={{ background: C.snowOff, borderRadius: "8px", padding: "5px 10px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <span style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "600", textTransform: "uppercase" }}>{m.label}</span>
-                      <span style={{ fontSize: "12px", fontWeight: "700", color: m.color }}>{m.val}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {result.prochaine_revision && (
-            <div style={{ marginTop: "14px", textAlign: "center", fontSize: "11px", color: C.inkSubtle }}>
-              Prochaine révision suggérée : {result.prochaine_revision} · {result.enrichedCount} instruments scannés
+            <div style={{ marginTop: "12px", textAlign: "center", fontSize: "11px", color: C.inkSubtle }}>
+              Prochaine révision : {result.prochaine_revision} · {result.enrichedCount} instruments scannés
             </div>
           )}
         </>
