@@ -8906,9 +8906,6 @@ function DashboardBar({ onTabChange, hidden, profil, account = "PEA" }) {
       </div>
 
 
-      {/* ── Graphique portefeuille ── */}
-      <PortfolioChart hidden={hidden} account={account} />
-
       {/* ── Bilan hebdomadaire ── */}
       <WeeklySummary positions={positions} totalActuel={totalActuel} totalPV={totalPV} hidden={hidden} />
     </div>
