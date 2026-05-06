@@ -9427,10 +9427,14 @@ function AutopilotIA({ account, profil, hidden }) {
           }).join("\n")
         : "Portefeuille vide";
 
-      // Limiter à 20 instruments max pour réduire les tokens d'entrée
-      const universeSlice = universe.length > 20
-        ? [...universe].sort(() => Math.random() - 0.5).slice(0, 20)
-        : universe;
+      // Sélection de 20 instruments max : priorité aux instruments du niveau du profil
+      const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+      const tierExact  = universe.filter(i => i.profil_min === risque);
+      const tierLower  = universe.filter(i => i.profil_min !== risque);
+      // Pour profils dynamiques : priorité aux instruments du niveau exact (small caps, growth)
+      const primary   = shuffle(tierExact).slice(0, 14);
+      const secondary = shuffle(tierLower).slice(0, 20 - primary.length);
+      const universeSlice = [...primary, ...secondary];
       const universeList = universeSlice.map(i => `${i.symbol} (${i.nom}, ${i.secteur})`).join(", ");
 
       const profilLabel = { prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" }[risque] || risque;
