@@ -268,7 +268,8 @@ function getEuronextUrl(isin, nom) {
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TABS = { PORTFOLIO: "portfolio", MARCHE: "marche", PROJECTION: "projection", HISTORIQUE: "historique", DCA: "dca", OPERATIONS: "operations", CHAT: "chat", AUTOPILOT: "autopilot", PROFIL: "profil", SETTINGS: "settings" };
 const UI   = { IDLE: "idle", LOADING: "loading", RESULT: "result", ERROR: "error" };
-const RISQUE_PCT = { prudent: 0.05, equilibre: 0.10, dynamique: 0.15 };
+const RISQUE_PCT = { prudent: 0.05, equilibre: 0.10, dynamique: 0.15, "tres-dynamique": 0.20 };
+const PROFIL_RANK = { prudent: 0, equilibre: 1, dynamique: 2, "tres-dynamique": 3 };
 const SURV_SECS  = 30 * 60;
 
 const SYSTEM_PROMPT = `Tu es un analyste financier expert. RÈGLE ABSOLUE : appelle en priorité web_search("[NOM] [ISIN] cours bourse site:msn.com") pour le cours temps réel. Si le cours est introuvable, appelle web_search("[NOM] [ISIN] cours site:zonebourse.com"). Pour les analyses et objectifs, appelle web_search("[NOM] [ISIN] analyse objectif site:zonebourse.com OR site:msn.com"). FORMAT PRIX : point décimal UNIQUEMENT (ex: "32.140", jamais "32,140" ni "32 140"). Si cours introuvable : "N/A". Réponds UNIQUEMENT en JSON valide sans markdown.
@@ -1371,7 +1372,7 @@ function PersonalAdvice({ data, profil }) {
   const entree    = parsePrice(data.timing?.point_entree);
   const nbEntree  = entree && entree > 0 ? Math.floor(maxInvest / entree) : null;
   const fraisEntree = nbEntree ? calcFraisCourtage(nbEntree * entree) : 0;
-  const risqueLabel = { prudent: "Prudent · 5% max", equilibre: "Équilibré · 10% max", dynamique: "Dynamique · 15% max" }[profil.risque] || "";
+  const risqueLabel = { prudent: "Prudent · 5% max", equilibre: "Équilibré · 10% max", dynamique: "Dynamique · 15% max", "tres-dynamique": "Très dynamique · 20% max" }[profil.risque] || "";
   return (
     <Card title="Conseil personnalisé — Gestion Libre" icon="💼" accentColor={C.goldDark}>
       <div style={{ fontSize: "11px", color: C.inkMuted, marginBottom: "14px", fontWeight: "500" }}>Profil {risqueLabel} · Capital {fmtEur(capital)}</div>
@@ -3587,7 +3588,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
       {/* ── Analyse de risque ── */}
       {positions.length > 0 && (() => {
-        const seuils = { prudent: 5, equilibre: 10, dynamique: 15 };
+        const seuils = { prudent: 5, equilibre: 10, dynamique: 15, "tres-dynamique": 20 };
         const seuil = seuils[profil?.risque] || 10;
         const risques = positions.map(p => {
           const valeur = (p.dernierCours || p.pru) * p.quantite;
@@ -5691,7 +5692,7 @@ function ProfilTab({ profil, onChange }) {
         <div style={{ marginBottom: "28px" }}>
           <label style={lbl}>Tolérance au risque</label>
           <div style={{ display: "flex", gap: "8px" }}>
-            {[["prudent", "Prudent", "5% / ligne"], ["equilibre", "Équilibré", "10% / ligne"], ["dynamique", "Dynamique", "15% / ligne"]].map(([v, l, sub]) => (
+            {[["prudent", "Prudent", "5% / ligne"], ["equilibre", "Équilibré", "10% / ligne"], ["dynamique", "Dynamique", "15% / ligne"], ["tres-dynamique", "Très dynamique", "20% / ligne"]].map(([v, l, sub]) => (
               <button key={v} style={optBtn(form.risque === v)} onClick={() => setForm(f => ({ ...f, risque: v }))}>
                 <div style={{ fontWeight: "700" }}>{l}</div>
                 <div style={{ fontSize: "10px", opacity: 0.6, marginTop: "3px" }}>{sub}</div>
@@ -9259,72 +9260,96 @@ const IconChat = () => (
 );
 
 // ─── Autopilot IA — univers d'investissement ──────────────────────────────────
+// profil_min : profil minimum requis pour voir cet instrument dans l'univers scanné
 const AUTOPILOT_UNIVERSE = {
   PEA: [
-    { symbol: "CW8.PA",   nom: "Amundi MSCI World",            type: "ETF",    secteur: "ETF Monde" },
-    { symbol: "WPEA.PA",  nom: "Amundi World PEA",             type: "ETF",    secteur: "ETF Monde" },
-    { symbol: "PAEEM.PA", nom: "Amundi MSCI Emerging Markets", type: "ETF",    secteur: "ETF Émergents" },
-    { symbol: "PLEM.PA",  nom: "Amundi EM Low Emissions PEA",  type: "ETF",    secteur: "ETF Émergents" },
-    { symbol: "PUST.PA",  nom: "Amundi PEA S&P 500 ESG",      type: "ETF",    secteur: "ETF USA" },
-    { symbol: "LYPS.PA",  nom: "Amundi S&P 500",              type: "ETF",    secteur: "ETF USA" },
-    { symbol: "PANX.PA",  nom: "Amundi PEA Nasdaq-100",       type: "ETF",    secteur: "ETF Tech" },
-    { symbol: "PCEU.PA",  nom: "Amundi MSCI Europe",          type: "ETF",    secteur: "ETF Europe" },
-    { symbol: "ESE.PA",   nom: "iShares Core MSCI Europe",    type: "ETF",    secteur: "ETF Europe" },
-    { symbol: "EWLD.PA",  nom: "iShares MSCI World Swap PEA", type: "ETF",    secteur: "ETF Monde" },
-    { symbol: "AI.PA",    nom: "Air Liquide",                 type: "Action", secteur: "Industrie" },
-    { symbol: "MC.PA",    nom: "LVMH",                        type: "Action", secteur: "Luxe" },
-    { symbol: "TTE.PA",   nom: "TotalEnergies",               type: "Action", secteur: "Énergie" },
-    { symbol: "SAN.PA",   nom: "Sanofi",                      type: "Action", secteur: "Santé" },
-    { symbol: "OR.PA",    nom: "L'Oréal",                     type: "Action", secteur: "Cosmétiques" },
-    { symbol: "BNP.PA",   nom: "BNP Paribas",                 type: "Action", secteur: "Banque" },
-    { symbol: "RMS.PA",   nom: "Hermès",                      type: "Action", secteur: "Luxe" },
-    { symbol: "AXA.PA",   nom: "AXA",                         type: "Action", secteur: "Assurance" },
-    { symbol: "DG.PA",    nom: "Vinci",                       type: "Action", secteur: "Infrastructure" },
-    { symbol: "SU.PA",    nom: "Schneider Electric",          type: "Action", secteur: "Industrie" },
-    { symbol: "CAP.PA",   nom: "Capgemini",                   type: "Action", secteur: "Tech" },
-    { symbol: "DSY.PA",   nom: "Dassault Systèmes",           type: "Action", secteur: "Tech" },
-    { symbol: "STM.PA",   nom: "STMicroelectronics",          type: "Action", secteur: "Semi-conducteurs" },
-    { symbol: "SAF.PA",   nom: "Safran",                      type: "Action", secteur: "Aéronautique" },
-    { symbol: "AIR.PA",   nom: "Airbus",                      type: "Action", secteur: "Aéronautique" },
-    { symbol: "PUB.PA",   nom: "Publicis",                    type: "Action", secteur: "Médias" },
-    { symbol: "KER.PA",   nom: "Kering",                      type: "Action", secteur: "Luxe" },
-    { symbol: "RI.PA",    nom: "Pernod Ricard",               type: "Action", secteur: "Alimentation" },
-    { symbol: "VIE.PA",   nom: "Veolia",                      type: "Action", secteur: "Utilities" },
-    { symbol: "ENGI.PA",  nom: "Engie",                       type: "Action", secteur: "Énergie" },
-    { symbol: "GLE.PA",   nom: "Société Générale",            type: "Action", secteur: "Banque" },
-    { symbol: "CA.PA",    nom: "Carrefour",                   type: "Action", secteur: "Distribution" },
-    { symbol: "EL.PA",    nom: "EssilorLuxottica",            type: "Action", secteur: "Santé" },
-    { symbol: "LR.PA",    nom: "Legrand",                     type: "Action", secteur: "Industrie" },
-    { symbol: "RNO.PA",   nom: "Renault",                     type: "Action", secteur: "Automobile" },
-    { symbol: "STLA.PA",  nom: "Stellantis",                  type: "Action", secteur: "Automobile" },
-    { symbol: "ASML.AS",  nom: "ASML Holding",                type: "Action", secteur: "Semi-conducteurs" },
-    { symbol: "SAP.DE",   nom: "SAP",                         type: "Action", secteur: "Tech" },
-    { symbol: "SIE.DE",   nom: "Siemens",                     type: "Action", secteur: "Industrie" },
-    { symbol: "MT.AS",    nom: "ArcelorMittal",               type: "Action", secteur: "Métaux" },
+    // ETFs diversifiés → tous profils
+    { symbol: "CW8.PA",   nom: "Amundi MSCI World",            type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
+    { symbol: "WPEA.PA",  nom: "Amundi World PEA",             type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
+    { symbol: "PAEEM.PA", nom: "Amundi MSCI Emerging Markets", type: "ETF",    secteur: "ETF Émergents",     profil_min: "prudent" },
+    { symbol: "PUST.PA",  nom: "Amundi PEA S&P 500 ESG",      type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
+    { symbol: "LYPS.PA",  nom: "Amundi S&P 500",              type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
+    { symbol: "PANX.PA",  nom: "Amundi PEA Nasdaq-100",       type: "ETF",    secteur: "ETF Tech",          profil_min: "prudent" },
+    { symbol: "PCEU.PA",  nom: "Amundi MSCI Europe",          type: "ETF",    secteur: "ETF Europe",        profil_min: "prudent" },
+    { symbol: "ESE.PA",   nom: "iShares Core MSCI Europe",    type: "ETF",    secteur: "ETF Europe",        profil_min: "prudent" },
+    { symbol: "EWLD.PA",  nom: "iShares MSCI World Swap PEA", type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
+    // Blue chips solides → équilibré+
+    { symbol: "AI.PA",    nom: "Air Liquide",                 type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
+    { symbol: "MC.PA",    nom: "LVMH",                        type: "Action", secteur: "Luxe",              profil_min: "equilibre" },
+    { symbol: "TTE.PA",   nom: "TotalEnergies",               type: "Action", secteur: "Énergie",           profil_min: "equilibre" },
+    { symbol: "SAN.PA",   nom: "Sanofi",                      type: "Action", secteur: "Santé",             profil_min: "equilibre" },
+    { symbol: "OR.PA",    nom: "L'Oréal",                     type: "Action", secteur: "Cosmétiques",       profil_min: "equilibre" },
+    { symbol: "BNP.PA",   nom: "BNP Paribas",                 type: "Action", secteur: "Banque",            profil_min: "equilibre" },
+    { symbol: "AXA.PA",   nom: "AXA",                         type: "Action", secteur: "Assurance",         profil_min: "equilibre" },
+    { symbol: "SU.PA",    nom: "Schneider Electric",          type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
+    { symbol: "EL.PA",    nom: "EssilorLuxottica",            type: "Action", secteur: "Santé",             profil_min: "equilibre" },
+    { symbol: "ASML.AS",  nom: "ASML Holding",                type: "Action", secteur: "Semi-conducteurs",  profil_min: "equilibre" },
+    { symbol: "SAP.DE",   nom: "SAP",                         type: "Action", secteur: "Tech",              profil_min: "equilibre" },
+    { symbol: "SIE.DE",   nom: "Siemens",                     type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
+    // Actions plus volatiles → dynamique+
+    { symbol: "CAP.PA",   nom: "Capgemini",                   type: "Action", secteur: "Tech",              profil_min: "dynamique" },
+    { symbol: "DSY.PA",   nom: "Dassault Systèmes",           type: "Action", secteur: "Tech",              profil_min: "dynamique" },
+    { symbol: "STM.PA",   nom: "STMicroelectronics",          type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
+    { symbol: "SAF.PA",   nom: "Safran",                      type: "Action", secteur: "Aéronautique",      profil_min: "dynamique" },
+    { symbol: "AIR.PA",   nom: "Airbus",                      type: "Action", secteur: "Aéronautique",      profil_min: "dynamique" },
+    { symbol: "RMS.PA",   nom: "Hermès",                      type: "Action", secteur: "Luxe",              profil_min: "dynamique" },
+    { symbol: "GLE.PA",   nom: "Société Générale",            type: "Action", secteur: "Banque",            profil_min: "dynamique" },
+    { symbol: "DG.PA",    nom: "Vinci",                       type: "Action", secteur: "Infrastructure",    profil_min: "dynamique" },
+    { symbol: "LR.PA",    nom: "Legrand",                     type: "Action", secteur: "Industrie",         profil_min: "dynamique" },
+    { symbol: "MT.AS",    nom: "ArcelorMittal",               type: "Action", secteur: "Métaux",            profil_min: "dynamique" },
+    { symbol: "IFX.DE",   nom: "Infineon Technologies",       type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
+    { symbol: "UCB.BR",   nom: "UCB Pharma",                  type: "Action", secteur: "Biotech",           profil_min: "dynamique" },
+    // Actions haute volatilité / croissance → très dynamique
+    { symbol: "SOI.PA",   nom: "Soitec",                      type: "Action", secteur: "Semi-conducteurs",  profil_min: "tres-dynamique" },
+    { symbol: "OVH.PA",   nom: "OVHcloud",                    type: "Action", secteur: "Cloud",             profil_min: "tres-dynamique" },
+    { symbol: "ALO.PA",   nom: "Alstom",                      type: "Action", secteur: "Transports",        profil_min: "tres-dynamique" },
+    { symbol: "HO.PA",    nom: "Thales",                      type: "Action", secteur: "Défense",           profil_min: "tres-dynamique" },
+    { symbol: "AM.PA",    nom: "Dassault Aviation",           type: "Action", secteur: "Défense",           profil_min: "tres-dynamique" },
+    { symbol: "ERF.PA",   nom: "Eurofins Scientific",         type: "Action", secteur: "Biotech",           profil_min: "tres-dynamique" },
+    { symbol: "BIOR.PA",  nom: "BioMérieux",                  type: "Action", secteur: "Biotech",           profil_min: "tres-dynamique" },
+    { symbol: "MELE.PA",  nom: "Melexis",                     type: "Action", secteur: "Semi-conducteurs",  profil_min: "tres-dynamique" },
+    { symbol: "RNO.PA",   nom: "Renault",                     type: "Action", secteur: "Automobile",        profil_min: "tres-dynamique" },
+    { symbol: "STLA.PA",  nom: "Stellantis",                  type: "Action", secteur: "Automobile",        profil_min: "tres-dynamique" },
+    { symbol: "PUB.PA",   nom: "Publicis",                    type: "Action", secteur: "Médias/IA",         profil_min: "tres-dynamique" },
+    { symbol: "KER.PA",   nom: "Kering",                      type: "Action", secteur: "Luxe",              profil_min: "tres-dynamique" },
+    { symbol: "ENGI.PA",  nom: "Engie",                       type: "Action", secteur: "Énergie",           profil_min: "tres-dynamique" },
   ],
   CTO: [
-    { symbol: "IWDA.AS",  nom: "iShares Core MSCI World",     type: "ETF",    secteur: "ETF Monde" },
-    { symbol: "VWRA.L",   nom: "Vanguard FTSE All-World",     type: "ETF",    secteur: "ETF Monde" },
-    { symbol: "EIMI.L",   nom: "iShares MSCI Emerging Mkts",  type: "ETF",    secteur: "ETF Émergents" },
-    { symbol: "VUSA.L",   nom: "Vanguard S&P 500 UCITS",      type: "ETF",    secteur: "ETF USA" },
-    { symbol: "SPY",      nom: "SPDR S&P 500 ETF",            type: "ETF",    secteur: "ETF USA" },
-    { symbol: "QQQ",      nom: "Invesco Nasdaq-100",          type: "ETF",    secteur: "ETF Tech" },
-    { symbol: "VTI",      nom: "Vanguard Total Stock Market", type: "ETF",    secteur: "ETF USA" },
-    { symbol: "AAPL",     nom: "Apple",                       type: "Action", secteur: "Tech" },
-    { symbol: "MSFT",     nom: "Microsoft",                   type: "Action", secteur: "Tech" },
-    { symbol: "GOOGL",    nom: "Alphabet",                    type: "Action", secteur: "Tech" },
-    { symbol: "AMZN",     nom: "Amazon",                      type: "Action", secteur: "E-commerce" },
-    { symbol: "NVDA",     nom: "NVIDIA",                      type: "Action", secteur: "Semi-conducteurs" },
-    { symbol: "META",     nom: "Meta Platforms",              type: "Action", secteur: "Tech" },
-    { symbol: "TSLA",     nom: "Tesla",                       type: "Action", secteur: "Automobile" },
-    { symbol: "BRK-B",    nom: "Berkshire Hathaway B",        type: "Action", secteur: "Financier" },
-    { symbol: "JPM",      nom: "JPMorgan Chase",              type: "Action", secteur: "Banque" },
-    { symbol: "V",        nom: "Visa",                        type: "Action", secteur: "Financier" },
-    { symbol: "JNJ",      nom: "Johnson & Johnson",           type: "Action", secteur: "Santé" },
-    { symbol: "PG",       nom: "Procter & Gamble",            type: "Action", secteur: "Consommation" },
-    { symbol: "XOM",      nom: "ExxonMobil",                  type: "Action", secteur: "Énergie" },
-    { symbol: "TSM",      nom: "TSMC",                        type: "Action", secteur: "Semi-conducteurs" },
-    { symbol: "NOVO-B.CO",nom: "Novo Nordisk",                type: "Action", secteur: "Santé" },
+    // ETFs → tous profils
+    { symbol: "IWDA.AS",  nom: "iShares Core MSCI World",     type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
+    { symbol: "VWRA.L",   nom: "Vanguard FTSE All-World",     type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
+    { symbol: "SPY",      nom: "SPDR S&P 500 ETF",            type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
+    { symbol: "QQQ",      nom: "Invesco Nasdaq-100",          type: "ETF",    secteur: "ETF Tech",          profil_min: "prudent" },
+    { symbol: "VTI",      nom: "Vanguard Total Stock Market", type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
+    // Blue chips → équilibré+
+    { symbol: "AAPL",     nom: "Apple",                       type: "Action", secteur: "Tech",              profil_min: "equilibre" },
+    { symbol: "MSFT",     nom: "Microsoft",                   type: "Action", secteur: "Tech",              profil_min: "equilibre" },
+    { symbol: "GOOGL",    nom: "Alphabet",                    type: "Action", secteur: "Tech",              profil_min: "equilibre" },
+    { symbol: "AMZN",     nom: "Amazon",                      type: "Action", secteur: "E-commerce",        profil_min: "equilibre" },
+    { symbol: "BRK-B",    nom: "Berkshire Hathaway B",        type: "Action", secteur: "Financier",         profil_min: "equilibre" },
+    { symbol: "JNJ",      nom: "Johnson & Johnson",           type: "Action", secteur: "Santé",             profil_min: "equilibre" },
+    { symbol: "V",        nom: "Visa",                        type: "Action", secteur: "Financier",         profil_min: "equilibre" },
+    { symbol: "JPM",      nom: "JPMorgan Chase",              type: "Action", secteur: "Banque",            profil_min: "equilibre" },
+    // Croissance → dynamique+
+    { symbol: "NVDA",     nom: "NVIDIA",                      type: "Action", secteur: "Semi-conducteurs/IA",profil_min: "dynamique" },
+    { symbol: "META",     nom: "Meta Platforms",              type: "Action", secteur: "Tech/IA",           profil_min: "dynamique" },
+    { symbol: "TSLA",     nom: "Tesla",                       type: "Action", secteur: "Automobile",        profil_min: "dynamique" },
+    { symbol: "TSM",      nom: "TSMC",                        type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
+    { symbol: "NOVO-B.CO",nom: "Novo Nordisk",                type: "Action", secteur: "Biotech",           profil_min: "dynamique" },
+    { symbol: "AMD",      nom: "Advanced Micro Devices",      type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
+    { symbol: "AVGO",     nom: "Broadcom",                    type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
+    { symbol: "XOM",      nom: "ExxonMobil",                  type: "Action", secteur: "Énergie",           profil_min: "dynamique" },
+    // Haute volatilité / growth → très dynamique
+    { symbol: "PLTR",     nom: "Palantir Technologies",       type: "Action", secteur: "IA/Data",           profil_min: "tres-dynamique" },
+    { symbol: "CRWD",     nom: "CrowdStrike",                 type: "Action", secteur: "Cybersécurité",     profil_min: "tres-dynamique" },
+    { symbol: "SHOP",     nom: "Shopify",                     type: "Action", secteur: "E-commerce",        profil_min: "tres-dynamique" },
+    { symbol: "COIN",     nom: "Coinbase",                    type: "Action", secteur: "Crypto/Finance",    profil_min: "tres-dynamique" },
+    { symbol: "MELI",     nom: "MercadoLibre",                type: "Action", secteur: "E-commerce EM",     profil_min: "tres-dynamique" },
+    { symbol: "SMCI",     nom: "Super Micro Computer",        type: "Action", secteur: "Serveurs IA",       profil_min: "tres-dynamique" },
+    { symbol: "ARM",      nom: "Arm Holdings",                type: "Action", secteur: "Semi-conducteurs",  profil_min: "tres-dynamique" },
+    { symbol: "SQ",       nom: "Block (Square)",              type: "Action", secteur: "Fintech",           profil_min: "tres-dynamique" },
+    { symbol: "RKLB",     nom: "Rocket Lab",                  type: "Action", secteur: "Espace",            profil_min: "tres-dynamique" },
+    { symbol: "IONQ",     nom: "IonQ",                        type: "Action", secteur: "Quantique",         profil_min: "tres-dynamique" },
   ],
 };
 
@@ -9350,9 +9375,14 @@ function AutopilotIA({ account, profil, hidden }) {
   const [error, setError]       = useState(null);
   const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
 
-  const universe = account === "CTO"
-    ? [...AUTOPILOT_UNIVERSE.PEA, ...AUTOPILOT_UNIVERSE.CTO]
-    : AUTOPILOT_UNIVERSE.PEA;
+  const risque = profil?.risque || "equilibre";
+  const profilRank = PROFIL_RANK[risque] ?? 1;
+  const universe = (() => {
+    const all = account === "CTO"
+      ? [...AUTOPILOT_UNIVERSE.PEA, ...AUTOPILOT_UNIVERSE.CTO]
+      : AUTOPILOT_UNIVERSE.PEA;
+    return all.filter(i => (PROFIL_RANK[i.profil_min || "prudent"] ?? 0) <= profilRank);
+  })();
 
   const runAnalysis = async () => {
     setRunning(true); setError(null);
@@ -9369,38 +9399,49 @@ function AutopilotIA({ account, profil, hidden }) {
 
       const universeList = universe.map(i => `${i.symbol} (${i.nom}, ${i.type}, ${i.secteur})`).join(", ");
 
+      const profilLabel = { prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" }[risque] || risque;
+      const focusInstr = risque === "prudent"
+        ? "UNIQUEMENT des ETF diversifiés. Aucune action individuelle."
+        : risque === "equilibre"
+        ? "Un mix d'ETF large (60%) et d'actions blue chip solides (40%)."
+        : risque === "dynamique"
+        ? "Principalement des actions individuelles avec fort potentiel (70%), max 1 ETF sectoriel. Pas d'ETF généralistes."
+        : "EXCLUSIVEMENT des actions individuelles à fort potentiel de croissance ou momentum. Zéro ETF. Privilégie les valeurs technologiques, semi-conducteurs, défense, IA, biotech — les plus dynamiques de l'univers.";
+
       const system = `Tu es un gérant de portefeuille expert spécialisé ${account} français. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
 Tu as accès à la recherche web pour obtenir les cours en temps réel.
-DCA MENSUEL : ${dcaMensuel}€ | ORDRE MINIMUM : 200€ | COURTIER : ${profil?.courtier || "boursobank"}
+PROFIL INVESTISSEUR : ${profilLabel} | DCA MENSUEL : ${dcaMensuel}€ | ORDRE MINIMUM : 200€ | COURTIER : ${profil?.courtier || "boursobank"} | HORIZON : ${profil?.horizon || "moyen terme"}
+RÈGLE ABSOLUE POUR CE PROFIL : ${focusInstr}
 PORTEFEUILLE ACTUEL :
 ${portfolioCtx}`;
 
-      const userMsg = `Utilise web_search pour récupérer les cours actuels des instruments les plus pertinents parmi cet univers ${account} :
+      const userMsg = `Utilise web_search pour récupérer les cours actuels des instruments les plus pertinents parmi cet univers ${account} adapté au profil ${profilLabel} :
 ${universeList}
 
-Effectue 3 à 5 recherches ciblées sur les instruments les plus prometteurs (prix, variation du jour, plus haut/bas 52 semaines).
+Effectue 4 à 6 recherches ciblées sur les instruments les plus prometteurs compte tenu du profil ${profilLabel} (prix, variation du jour, momentum, catalyseurs récents, plus haut/bas 52 semaines).
 
-Puis génère une analyse complète et identifie les 3 à 5 meilleures opportunités d'investissement maintenant.
+Identifie les 4 à 6 meilleures opportunités d'investissement RIGHT NOW, adaptées au profil ${profilLabel}.
+${risque === "dynamique" || risque === "tres-dynamique" ? "PRIORITÉ AUX ACTIONS INDIVIDUELLES avec catalyseur clair (résultats, contrat, secteur en hausse, momentum technique). Les ETF ne sont pertinents que si un secteur spécifique est en forte tendance." : ""}
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {
-  "resume": "Contexte marché en 2-3 phrases",
+  "resume": "Contexte marché et orientation pour profil ${profilLabel} en 2-3 phrases",
   "score_marche": 7,
   "opportunites": [
     {
-      "symbol": "CW8.PA",
-      "nom": "Amundi MSCI World",
-      "type": "ETF",
-      "secteur": "ETF Monde",
+      "symbol": "AIR.PA",
+      "nom": "Airbus",
+      "type": "Action",
+      "secteur": "Aéronautique",
       "action": "ACHETER",
-      "prix": 422.30,
-      "var_jour": 0.45,
-      "dist_bas52": 8.2,
-      "rationale": "1-2 phrases max.",
-      "catalyseur": "Court (5 mots max)",
-      "risque": "Faible",
-      "horizon": "Long terme",
-      "allocation_pct": 40,
+      "prix": 165.50,
+      "var_jour": 1.2,
+      "dist_bas52": 12.5,
+      "rationale": "1-2 phrases max sur le catalyseur précis.",
+      "catalyseur": "5 mots max",
+      "risque": "Modéré",
+      "horizon": "Moyen terme",
+      "allocation_pct": 15,
       "montant_suggere": 200,
       "dans_portefeuille": false
     }
@@ -9437,7 +9478,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
             </div>
             <div>
               <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot IA</div>
-              <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {AUTOPILOT_UNIVERSE[account === "CTO" ? "CTO" : "PEA"].length + (account === "CTO" ? AUTOPILOT_UNIVERSE.PEA.length : 0)} instruments éligibles</div>
+              <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {universe.length} instruments · Profil {({ prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" })[risque] || risque}</div>
             </div>
           </div>
         </div>
@@ -9566,7 +9607,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
         </div>
           <div style={{ fontSize: "16px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Prêt à scanner le marché</div>
           <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "360px", margin: "0 auto 20px" }}>
-            L'agent recherche les cours en temps réel via le web, analyse {universe.length} instruments éligibles {account} et identifie les meilleures opportunités du moment.
+            L'agent scanne {universe.length} instruments {account} adaptés à votre profil {({ prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" })[risque]} et identifie les meilleures opportunités en temps réel.
           </div>
           <button onClick={runAnalysis}
             style={{ padding: "12px 28px", borderRadius: "12px", background: "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
