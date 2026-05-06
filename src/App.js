@@ -10897,12 +10897,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             </>
           ) : (
             <>
-              {/* ── DESKTOP : breadcrumb | contrôles + compte ── */}
+              {/* ── DESKTOP : titre page | contrôles + compte ── */}
               {/* LEFT */}
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
-                <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "400" }}>Dashboard</span>
-                <span style={{ fontSize: "11px", color: C.border }}>›</span>
-                <span style={{ fontSize: "12px", fontWeight: "600", color: C.ink }}>{tabLabel}</span>
+              <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
+                <span style={{ fontSize: "16px", fontWeight: "700", color: C.ink, letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tabLabel}</span>
               </div>
               {/* RIGHT */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
