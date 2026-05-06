@@ -1246,7 +1246,7 @@ function Card({ title, icon, accentColor, children }) {
 function ThinkingSpinner({ size = 22, color = "#1A3A5C" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      style={{ animation: "ba-spin 1s linear infinite", flexShrink: 0 }}>
+      style={{ animation: "spin 0.9s linear infinite", flexShrink: 0 }}>
       {/* Pale haut — opacité max */}
       <path d="M12 1.5C10.8 1.5 9.75 2.1 9.75 3.75C9.75 5.1 10.5 6.3 12 6.75C13.5 6.3 14.25 5.1 14.25 3.75C14.25 2.1 13.2 1.5 12 1.5Z" fill={color} opacity="1"/>
       {/* Pale droite — opacité 0.75 */}
@@ -4042,7 +4042,7 @@ function LiveMarketPanel({ pos, onClose }) {
 
         {loading && (
           <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "rgba(255,255,255,0.5)", padding: "20px 0" }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" style={{ animation: "spin 1s linear infinite" }} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round">
+            <svg width="18" height="18" viewBox="0 0 18 18" style={{ animation: "spin 0.9s linear infinite" }} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round">
               <circle cx="9" cy="9" r="7" strokeOpacity="0.3"/><path d="M9 2 A7 7 0 0 1 16 9"/>
             </svg>
             <span style={{ fontSize: "12px", fontWeight: "600", display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color={C.inkMuted} /> Chargement marché intraday…</span>
@@ -5199,7 +5199,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             disabled={marketScoringUi === UI.LOADING}
             style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
             {marketScoringUi === UI.LOADING
-              ? <><span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", border: "2px solid #aaa", borderTopColor: "transparent", animation: "spin 0.7s linear infinite" }} />Analyse en cours…</>
+              ? <><span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", border: "2px solid #aaa", borderTopColor: "transparent", animation: "spin 0.9s linear infinite" }} />Analyse en cours…</>
               : "Lancer le scoring IA"}
           </button>
         </div>
@@ -5280,7 +5280,6 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
 
       <div style={{ height: "20px" }} />
       <PriceEvolutionChart positions={positions} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -9449,7 +9448,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       {/* ── Étape en cours ── */}
       {running && step && (
         <div style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.15)`, borderRadius: "14px", padding: "16px 20px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "20px", height: "20px", border: `3px solid ${C.navy}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />
+          <div style={{ width: "20px", height: "20px", border: `3px solid ${C.navy}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.9s linear infinite", flexShrink: 0 }} />
           <span style={{ fontSize: "13px", fontWeight: "600", color: C.navy }}>{step}</span>
         </div>
       )}
@@ -11359,7 +11358,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         @keyframes tabFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pulse     { 0%,100% { opacity: 0.3; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); } }
         .ba-tab-accent { animation: tabFadeIn 0.4s ease; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin    { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes ba-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes loadingBounce { 0%,80%,100% { transform: scale(0.5); opacity: 0.35; } 40% { transform: scale(1); opacity: 1; } }
         @keyframes vendreAlarm { 0%,100% { opacity: 1; box-shadow: 0 0 14px rgba(220,38,38,0.45); } 50% { opacity: 0.7; box-shadow: 0 0 28px rgba(220,38,38,0.65); } }
         @keyframes flashGreen { 0% { background: rgba(5,150,105,0.1); } 100% { background: transparent; } }
