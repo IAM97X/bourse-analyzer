@@ -9315,12 +9315,10 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                     borderRadius: isFeatured ? "12px" : "10px",
                     background: isActive
                       ? "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)"
-                      : isFeatured
-                        ? "linear-gradient(135deg, rgba(8,11,15,0.92) 0%, rgba(20,38,65,0.88) 50%, rgba(30,58,95,0.85) 100%)"
-                        : "transparent",
-                    border: isFeatured && !isActive ? "1px solid rgba(45,89,134,0.5)" : "none",
+                      : "transparent",
+                    border: "none",
                     cursor: "pointer",
-                    color: isActive ? "#FFFFFF" : isFeatured ? "#CBD5E1" : C.sbText,
+                    color: isActive ? "#FFFFFF" : C.sbText,
                     fontSize: isFeatured ? "13.5px" : "13px",
                     fontWeight: isActive ? "700" : isFeatured ? "600" : "500",
                     fontFamily: "'Inter', 'Roboto', sans-serif",
