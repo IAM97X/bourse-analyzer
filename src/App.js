@@ -6508,9 +6508,12 @@ function buildVersementsHistory() {
 function calcCapitalVerse() {
   try {
     const ops = JSON.parse(localStorage.getItem("bourse_avis_operes") || "[]");
-    return ops
-      .filter(o => o.type === "ACHAT")
+    const achats = ops.filter(o => o.type === "ACHAT")
       .reduce((s, o) => s + (parseFloat(o.quantite) || 0) * (parseFloat(o.prixUnitaire) || 0), 0);
+    const ventes = ops.filter(o => o.type === "VENTE")
+      .reduce((s, o) => s + (parseFloat(o.quantite) || 0) * (parseFloat(o.prixUnitaire) || 0), 0);
+    // Net capital from outside: purchases minus reinvested sale proceeds
+    return Math.max(0, achats - ventes);
   } catch { return 0; }
 }
 
