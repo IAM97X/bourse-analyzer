@@ -8452,15 +8452,7 @@ async function rebuildPortfolioHistory(account, onProgress) {
   return { count: merged.length, resolved: resolvedIsins.length, total: allIsins.length };
 }
 
-function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) {
-  const peaOuv = profil?.peaOuverture || profil?.pea_ouverture || load("bourse_pea_ouverture", null);
-  const ctoOuv = profil?.ctoOuverture || profil?.cto_ouverture || load("bourse_cto_ouverture", null);
-  const ouverture = account === "CTO" ? ctoOuv : peaOuv;
-
-  const [rebuilding, setRebuilding] = useState(false);
-  const [rebuildMsg, setRebuildMsg] = useState(null);
-  const [snapVersion, setSnapVersion] = useState(0);
-
+function PortfolioChart({ hidden, account }) {
   const PERIODS = [
     { label: "1 S", days: 7   },
     { label: "1 M", days: 30  },
@@ -8469,10 +8461,16 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
     { label: "1 A", days: 365 },
     { label: "Max", days: 9999},
   ];
-  const [pidx, setPidx] = useState(() => { try { return parseInt(localStorage.getItem("bourse_chart_pidx") || "5", 10); } catch { return 5; } });
-  const changePidx = i => { setPidx(i); try { localStorage.setItem("bourse_chart_pidx", String(i)); } catch {} };
-  const [hover, setHover] = useState(null);
+  const [pidx, setPidx]           = useState(() => { try { return parseInt(localStorage.getItem("bourse_chart_pidx") || "5", 10); } catch { return 5; } });
+  const [hover, setHover]         = useState(null);
+  const [rebuilding, setRebuilding] = useState(false);
+  const [rebuildMsg, setRebuildMsg] = useState(null);
+  const [snapVersion, setSnapVersion] = useState(0);
+  const [visibleCurves, setVisibleCurves] = useState({ valeur: true, verse: true, pv: true });
   const svgRef = useRef(null);
+
+  const changePidx = i => { setPidx(i); try { localStorage.setItem("bourse_chart_pidx", String(i)); } catch {} };
+  const toggleCurve = k => setVisibleCurves(v => ({ ...v, [k]: !v[k] }));
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const allSnaps = useMemo(() => load("bourse_snapshots", []), [snapVersion]);
@@ -8480,7 +8478,6 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
   const snaps    = allSnaps.filter(s => new Date(s.date).getTime() >= cutoff);
   const rawSnaps = snaps.length >= 2 ? snaps : (allSnaps.length >= 2 ? allSnaps : null);
 
-  // Filtre anti-parasites : médiane glissante sur fenêtre de 5 points, seuil 20%
   const displaySnaps = useMemo(() => {
     if (!rawSnaps || rawSnaps.length < 3) return rawSnaps || [];
     const gv = s => s.valeur || s.total || 0;
@@ -8492,261 +8489,267 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
         if (j !== i) neighbors.push(gv(arr[j]));
       }
       const sorted = [...neighbors].sort((a, b) => a - b);
-      const median = sorted[Math.floor(sorted.length / 2)];
-      return median === 0 || Math.abs(v - median) / median < 0.20;
+      const med = sorted[Math.floor(sorted.length / 2)];
+      return med === 0 || Math.abs(v - med) / med < 0.20;
     });
   }, [rawSnaps]);
 
-  const VW = 800, VH = 240, ML = 10, MR = 62, MT = 12, MB = 30;
-  const CW = VW - ML - MR, CH = VH - MT - MB;
+  if (displaySnaps.length < 2) return (
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "32px", textAlign: "center", marginTop: "16px", boxShadow: shadow.card }}>
+      <div style={{ fontSize: "28px", marginBottom: "10px" }}>📈</div>
+      <div style={{ fontSize: "14px", fontWeight: "700", color: C.ink, marginBottom: "6px" }}>Historique en construction</div>
+      <div style={{ fontSize: "12px", color: C.inkSubtle, marginBottom: "16px" }}>Clique sur <strong>Reconstituer</strong> pour générer l'historique depuis tes transactions.</div>
+      <button onClick={async () => {
+        setRebuilding(true);
+        try {
+          const r = await rebuildPortfolioHistory(account, m => setRebuildMsg(m));
+          setSnapVersion(v => v + 1);
+          setRebuildMsg(`${r.count} points générés`);
+        } catch (e) { setRebuildMsg("Erreur : " + e.message); }
+        setRebuilding(false);
+      }} disabled={rebuilding} style={{ padding: "10px 24px", borderRadius: "10px", background: C.navy, color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+        {rebuilding ? "Reconstitution…" : "Reconstituer l'historique"}
+      </button>
+      {rebuildMsg && <div style={{ marginTop: "10px", fontSize: "11px", color: C.green, fontWeight: "600" }}>{rebuildMsg}</div>}
+    </div>
+  );
 
+  // ── Données ──────────────────────────────────────────────────────────────────
   const vals  = displaySnaps.map(s => s.valeur || s.total || 0);
   const dates = displaySnaps.map(s => new Date(s.date).getTime());
-  const minV  = Math.min(...vals) * 0.996;
-  const maxV  = Math.max(...vals) * 1.004;
-  const minT  = dates[0], maxT = dates[dates.length - 1];
 
+  // Capital versé — monotone croissant
+  const cvVals = (() => {
+    const raw = displaySnaps.map(s => s.capitalVerse || s.investi || 0);
+    let mx = 0; return raw.map(v => { mx = Math.max(mx, v); return mx; });
+  })();
+  const hasCv = cvVals.some(v => v > 0);
+
+  // Plus-value = valeur − capital versé
+  const pvVals = displaySnaps.map((_, i) => vals[i] - (hasCv ? cvVals[i] : 0));
+
+  // Echelle Y globale (toutes courbes visibles)
+  const allY = [
+    ...vals,
+    ...(hasCv ? cvVals : []),
+    ...(hasCv ? pvVals.filter(v => v > 0) : []),
+  ];
+  const minV = Math.min(...allY) * 0.98;
+  const maxV = Math.max(...allY) * 1.02;
+  const minT = dates[0], maxT = dates[dates.length - 1];
+
+  // ── SVG ──────────────────────────────────────────────────────────────────────
+  const VW = 800, VH = 260, ML = 8, MR = 70, MT = 16, MB = 32;
+  const CW = VW - ML - MR, CH = VH - MT - MB;
   const xS = t => ML + ((t - minT) / (maxT - minT || 1)) * CW;
   const yS = v => MT + CH - ((v - minV) / (maxV - minV || 1)) * CH;
+  const pts = arr => arr.map((v, i) => `${xS(dates[i]).toFixed(1)},${yS(v).toFixed(1)}`).join(" L ");
 
   const first = vals[0], last = vals[vals.length - 1];
   const isUp  = last >= first;
-  const chartColor = isUp ? "#1D7A4A" : "#C0392B";
-  const chartLight = isUp ? "rgba(29,122,74,0.10)" : "rgba(192,57,43,0.09)";
+  const lineColor = isUp ? "#1D7A4A" : "#C0392B";
 
-  const linePts  = displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(vals[i]).toFixed(1)}`).join(" L ");
-  const areaPath = `M ${xS(dates[0]).toFixed(1)},${MT+CH} L ${linePts} L ${xS(dates[dates.length-1]).toFixed(1)},${MT+CH} Z`;
+  // Zone plus-value (entre valeur et capital versé)
+  const pvZone = hasCv ? `M ${vals.map((v, i) => `${xS(dates[i]).toFixed(1)},${yS(v).toFixed(1)}`).join(" L ")} L ${[...displaySnaps].reverse().map((_, ri) => { const i = displaySnaps.length - 1 - ri; return `${xS(dates[i]).toFixed(1)},${yS(cvVals[i]).toFixed(1)}`; }).join(" L ")} Z` : null;
 
-  const lastSnap    = displaySnaps[displaySnaps.length - 1];
-  // Courbe 1 — Capital versé (cumul achats, monotone croissant)
-  const capitalVerseVals = (() => {
-    const raw = displaySnaps.map(s => s.capitalVerse || s.investi || 0);
-    let max = 0;
-    return raw.map(v => { max = Math.max(max, v); return max; });
-  })();
-  // Courbe 2 — Investi (coût de base des positions actuelles, peut baisser si vente)
-  const coutBaseVals = displaySnaps.map(s => s.coutBase || s.investi || 0);
-  // Courbe 3 — Plus-value (valeur - coût de base)
-  const pvVals = displaySnaps.map((s, i) => Math.max(0, vals[i] - coutBaseVals[i]));
+  // Aire sous la courbe valeur
+  const areaPath = `M ${xS(dates[0]).toFixed(1)},${MT+CH} L ${pts(vals)} L ${xS(dates[dates.length-1]).toFixed(1)},${MT+CH} Z`;
 
-  const hasCurves = capitalVerseVals.some(v => v > 0);
-
-  const mkPts = (arr) => displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(arr[i]).toFixed(1)}`).join(" ");
-
-  const capitalVersePts = hasCurves ? mkPts(capitalVerseVals) : null;
-  const coutBasePts     = hasCurves ? mkPts(coutBaseVals) : null;
-  const pvPts           = hasCurves ? mkPts(pvVals) : null;
-
-  // Zone remplissage entre valeur et coût de base
-  const pvZonePath = hasCurves
-    ? `M ${displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(vals[i]).toFixed(1)}`).join(" L ")} L ${[...displaySnaps].reverse().map((s, i, arr) => { const ri = arr.length - 1 - i; return `${xS(dates[ri]).toFixed(1)},${yS(coutBaseVals[ri]).toFixed(1)}`; }).join(" L ")} Z`
-    : null;
-
-  const lastCV  = capitalVerseVals[capitalVerseVals.length - 1] || 0;
-  const lastCB  = coutBaseVals[coutBaseVals.length - 1] || 0;
-  const lastPV  = pvVals[pvVals.length - 1] || 0;
-  const investi = lastCV;
-  const pruVisible = hasCurves && lastCB >= minV && lastCB <= maxV;
-
-  // Grille Y — 5 niveaux, labels à droite
   const gridVals = Array.from({ length: 5 }, (_, i) => minV + (maxV - minV) * i / 4);
+  const xLabels  = Array.from({ length: 5 }, (_, i) => ({ t: minT + (maxT - minT) * i / 4, x: xS(minT + (maxT - minT) * i / 4) }));
+  const xFmt = pidx <= 1 ? { day: "numeric", month: "short" } : { month: "short", year: "2-digit" };
 
-  // Labels X — 5 points
-  const xLabels = Array.from({ length: 5 }, (_, i) => ({
-    t: minT + (maxT - minT) * i / 4,
-    x: xS(minT + (maxT - minT) * i / 4),
-  }));
+  const lastCV = cvVals[cvVals.length - 1] || 0;
+  const lastPV = pvVals[pvVals.length - 1] || 0;
 
-  const handleMouseMove = (e) => {
+  // Variation période
+  const dEur = last - first;
+  const dPct = first > 0 ? (dEur / first) * 100 : 0;
+  const pvEur = hasCv ? (last - lastCV) : 0;
+  const pvPct = hasCv && lastCV > 0 ? (pvEur / lastCV) * 100 : 0;
+  const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
+
+  const handleMouseMove = e => {
     if (!svgRef.current) return;
-    const rect  = svgRef.current.getBoundingClientRect();
-    // Convertir position écran → coordonnées SVG, en tenant compte de ML et CW
-    const svgX  = ((e.clientX - rect.left) / rect.width) * VW;
+    const rect = svgRef.current.getBoundingClientRect();
+    const svgX = ((e.clientX - rect.left) / rect.width) * VW;
     const clamp = Math.max(ML, Math.min(ML + CW, svgX));
-    const t     = minT + ((clamp - ML) / CW) * (maxT - minT);
+    const t = minT + ((clamp - ML) / CW) * (maxT - minT);
     let ci = 0;
     dates.forEach((d, i) => { if (Math.abs(d - t) < Math.abs(dates[ci] - t)) ci = i; });
     const snap = displaySnaps[ci];
     if (!snap) return;
-    const hCV = capitalVerseVals[ci] || 0;
-    const hCB = coutBaseVals[ci] || 0;
-    const hPV = pvVals[ci] || 0;
-    setHover({ x: xS(dates[ci]), y: yS(vals[ci]), val: vals[ci], date: snap.date, investi: hCV, coutBase: hCB, pv: hPV });
+    setHover({ x: xS(dates[ci]), y: yS(vals[ci]), val: vals[ci], date: snap.date, cv: cvVals[ci] || 0, pv: pvVals[ci] || 0 });
   };
 
-  // Variation sur la période sélectionnée (vs premier point de la période)
-  const periodChangeEur = last - first;
-  const periodChangePct = first > 0 ? (periodChangeEur / first) * 100 : 0;
-  // Plus-value réelle vs capital investi (toujours cohérent)
-  const pvEur = last - investi;
-  const pvPct = investi > 0 ? (pvEur / investi) * 100 : 0;
-  // On affiche la variation de période si raisonnable (<500%), sinon PV vs investi
-  const showPeriodVar = Math.abs(periodChangePct) < 500 && pidx < 5;
-  const changeEur = showPeriodVar ? periodChangeEur : pvEur;
-  const changePct = showPeriodVar ? periodChangePct : pvPct;
-  const lastDate  = displaySnaps[displaySnaps.length - 1]?.date;
-  const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
-  const xFmt = pidx <= 1
-    ? { day: "numeric", month: "short" }
-    : { month: "short", year: "2-digit" };
+  const LEGEND = [
+    { key: "valeur", label: "Valeur",        color: lineColor,  dash: false },
+    { key: "verse",  label: "Capital versé", color: "#C8972A",  dash: true  },
+    { key: "pv",     label: "Plus-value",    color: "#059669",  dash: false, fill: true },
+  ];
 
   return (
-    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "18px 20px 14px", marginTop: "14px", boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "20px 22px 16px", marginTop: "16px", boxShadow: shadow.card }}>
 
-      {/* ── Style Yahoo Finance : grande valeur + variation ── */}
-      <div style={{ marginBottom: "4px", ...blurStyle }}>
-        <span style={{ fontSize: "28px", fontWeight: "700", color: C.ink, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums" }}>{fmtEur(last)}</span>
-        <span style={{ fontSize: "15px", fontWeight: "600", color: isUp ? "#1D7A4A" : "#C0392B", marginLeft: "10px" }}>
-          {changeEur >= 0 ? "+" : ""}{fmtEur(changeEur)} ({changePct >= 0 ? "+" : ""}{changePct.toFixed(2)} %)
-        </span>
-        <span style={{ fontSize: "11px", color: C.inkSubtle, marginLeft: "8px", fontWeight: "400" }}>
-          {showPeriodVar ? "sur la période" : "vs capital investi"}
-        </span>
-      </div>
-      <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "14px" }}>
-        {displaySnaps.length >= 2
-          ? <>Du <strong>{new Date(displaySnaps[0].date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</strong> au <strong>{new Date(lastDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</strong></>
-          : "—"}
-        {snaps.length < allSnaps.length && snaps.length >= 2 && (
-          <span style={{ marginLeft: "8px", color: C.accent, fontWeight: "600" }}>· {snaps.length} points</span>
-        )}
-        {snaps.length >= allSnaps.length && pidx < 5 && (
-          <span style={{ marginLeft: "8px", color: C.goldDark, fontWeight: "600" }}>· Toutes les données disponibles ({allSnaps.length} j)</span>
-        )}
-      </div>
+      {/* ── Header ── */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+        <div style={blurStyle}>
+          <div style={{ fontSize: "30px", fontWeight: "800", color: C.ink, letterSpacing: "-0.04em", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{fmtEur(last)}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "14px", fontWeight: "700", color: isUp ? "#1D7A4A" : "#C0392B" }}>
+              {dEur >= 0 ? "+" : ""}{fmtEur(dEur)} ({dPct >= 0 ? "+" : ""}{dPct.toFixed(2)}%)
+            </span>
+            <span style={{ fontSize: "11px", color: C.inkSubtle }}>sur la période</span>
+            {hasCv && <span style={{ fontSize: "11px", color: C.inkSubtle, borderLeft: `1px solid ${C.border}`, paddingLeft: "10px" }}>
+              PV totale <strong style={{ color: pvEur >= 0 ? "#1D7A4A" : "#C0392B" }}>{pvEur >= 0 ? "+" : ""}{fmtEur(pvEur)} ({pvPct >= 0 ? "+" : ""}{pvPct.toFixed(1)}%)</strong>
+            </span>}
+          </div>
+          {displaySnaps.length >= 2 && (
+            <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>
+              {new Date(displaySnaps[0].date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} — {new Date(displaySnaps[displaySnaps.length-1].date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+              <span style={{ marginLeft: "8px", color: C.accent, fontWeight: "600" }}>· {displaySnaps.length} points</span>
+            </div>
+          )}
+        </div>
 
-      {/* Sélecteur de période */}
-      <div style={{ display: "flex", gap: "2px", marginBottom: "10px", flexWrap: "wrap" }}>
-        {PERIODS.map((p, i) => {
-          const periodSnaps = allSnaps.filter(s => new Date(s.date).getTime() >= Date.now() - p.days * 86400000);
-          const isRedundant = i < 5 && periodSnaps.length >= allSnaps.length;
-          return (
-          <button key={p.label} onClick={() => changePidx(i)}
-            style={{ padding: "4px 10px", borderRadius: "6px", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: "600", background: i === pidx ? C.accent : "transparent", color: i === pidx ? "#fff" : isRedundant ? "rgba(148,163,184,0.45)" : C.inkSubtle, transition: "all 0.15s", fontFamily: "Inter,sans-serif" }}>
-            {p.label}
+        {/* Sélecteur période + Reconstituer */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+          <div style={{ display: "flex", gap: "2px", background: C.snowOff, borderRadius: "10px", padding: "3px" }}>
+            {PERIODS.map((p, i) => (
+              <button key={p.label} onClick={() => changePidx(i)}
+                style={{ padding: "5px 11px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: "600", background: i === pidx ? "#fff" : "transparent", color: i === pidx ? C.ink : C.inkSubtle, boxShadow: i === pidx ? "0 1px 4px rgba(0,0,0,0.10)" : "none", transition: "all 0.15s", fontFamily: "Inter,sans-serif" }}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <button onClick={async () => {
+            setRebuilding(true); setRebuildMsg(null);
+            try {
+              const r = await rebuildPortfolioHistory(account, m => setRebuildMsg(m));
+              setSnapVersion(v => v + 1);
+              setRebuildMsg(`${r.count} points · ${r.resolved}/${r.total} ISIN`);
+            } catch (e) { setRebuildMsg("Erreur"); }
+            setRebuilding(false);
+          }} disabled={rebuilding} style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, background: "transparent", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 10px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+            {rebuilding ? "⟳ Reconstitution…" : "⟳ Reconstituer"}
           </button>
-          );
-        })}
-        <button onClick={async () => {
-          setRebuilding(true); setRebuildMsg(null);
-          try {
-            const result = await rebuildPortfolioHistory(account, msg => setRebuildMsg(msg));
-            setSnapVersion(v => v + 1);
-            if (result.count > 0) {
-              setRebuildMsg(`${result.count} jours · ${result.resolved}/${result.total} ISIN résolus`);
-            } else if (result.total === 0) {
-              setRebuildMsg("Aucune transaction importée");
-            } else {
-              setRebuildMsg(`0 jour — ${result.total - result.resolved} ISIN non résolus (configurez les tickers)`);
-            }
-          } catch (e) { setRebuildMsg("Erreur : " + (e.message || "réseau")); }
-          setRebuilding(false);
-        }} disabled={rebuilding}
-          style={{ marginLeft: "8px", padding: "4px 12px", borderRadius: "6px", border: `1px solid ${C.border}`, cursor: rebuilding ? "wait" : "pointer", fontSize: "11px", fontWeight: "600", background: "transparent", color: C.inkSubtle, transition: "all 0.15s", fontFamily: "Inter,sans-serif" }}>
-          {rebuilding ? "..." : "Reconstituer"}
-        </button>
-        {rebuildMsg && <span style={{ fontSize: "10px", color: rebuilding ? C.inkSubtle : C.green, fontWeight: "600", marginLeft: "6px" }}>{rebuildMsg}</span>}
+          {rebuildMsg && <span style={{ fontSize: "9px", color: C.green, fontWeight: "600" }}>{rebuildMsg}</span>}
+        </div>
       </div>
 
-      {/* SVG */}
+      {/* ── SVG Chart ── */}
       <svg ref={svgRef} viewBox={`0 0 ${VW} ${VH}`}
         style={{ width: "100%", height: "auto", cursor: "crosshair", display: "block" }}
         onMouseMove={handleMouseMove} onMouseLeave={() => setHover(null)}>
 
-        {/* Grille horizontale */}
+        {/* Grille */}
         {gridVals.map((v, i) => (
           <g key={i}>
-            <line x1={ML} x2={ML+CW} y1={yS(v)} y2={yS(v)} stroke="rgba(148,163,184,0.18)" strokeWidth="1" strokeDasharray="4,5" />
-            <text x={ML+CW+6} y={yS(v)+4} textAnchor="start" fontSize="9.5" fill="#94A3B8" fontFamily="Inter,sans-serif">
-              {v >= 10000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0)}
+            <line x1={ML} x2={ML+CW} y1={yS(v)} y2={yS(v)} stroke="rgba(148,163,184,0.15)" strokeWidth="1" strokeDasharray="4,6" />
+            <text x={ML+CW+6} y={yS(v)+4} fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">
+              {v >= 10000 ? (v/1000).toFixed(1)+"k" : Math.round(v)}
             </text>
           </g>
         ))}
 
         {/* Labels X */}
         {xLabels.map(({ t, x }, i) => (
-          <text key={i} x={x} y={MT+CH+22}
-            textAnchor={i === 0 ? "start" : i === xLabels.length - 1 ? "end" : "middle"}
-            fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">
+          <text key={i} x={x} y={MT+CH+22} fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif"
+            textAnchor={i === 0 ? "start" : i === 4 ? "end" : "middle"}>
             {new Date(t).toLocaleDateString("fr-FR", xFmt)}
           </text>
         ))}
 
-        {/* Area de fond (valeur totale) */}
-        <path d={areaPath} fill={chartLight} />
+        {/* Aire valeur */}
+        {visibleCurves.valeur && <path d={areaPath} fill={isUp ? "rgba(29,122,74,0.07)" : "rgba(192,57,43,0.07)"} />}
 
-        {/* Zone PV : entre courbe valeur et coût de base */}
-        {hasCurves && pvZonePath && (
-          <path d={pvZonePath} fill="rgba(29,122,74,0.10)" />
+        {/* Zone plus-value (fill entre valeur et capital versé) */}
+        {visibleCurves.pv && hasCv && pvZone && (
+          <path d={pvZone} fill={lastPV >= 0 ? "rgba(5,150,105,0.12)" : "rgba(192,57,43,0.10)"} />
         )}
 
-        {/* Courbe 1 — Capital versé (or, monotone) */}
-        {hasCurves && capitalVersePts && (() => {
-          const y = yS(lastCV);
-          const visible = lastCV >= minV && lastCV <= maxV;
-          return (<>
-            <polyline points={capitalVersePts} fill="none" stroke="#B8920A" strokeWidth="1.5" strokeDasharray="6,4" opacity="0.85" strokeLinejoin="round" />
-            {visible && <><rect x={ML+CW+2} y={y-8} width="58" height="15" rx="3" fill="#B8920A" opacity="0.90" />
-            <text x={ML+CW+31} y={y+3.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">C. Versé</text></>}
-          </>);
+        {/* Courbe capital versé */}
+        {visibleCurves.verse && hasCv && (
+          <>
+            <polyline points={pts(cvVals)} fill="none" stroke="#C8972A" strokeWidth="2" strokeDasharray="7,5" strokeLinejoin="round" strokeLinecap="round" opacity="0.9" />
+            <rect x={ML+CW+4} y={yS(lastCV)-9} width="62" height="18" rx="5" fill="#C8972A" />
+            <text x={ML+CW+35} y={yS(lastCV)+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">C. versé</text>
+          </>
+        )}
+
+        {/* Courbe valeur principale */}
+        {visibleCurves.valeur && (
+          <>
+            <polyline points={pts(vals)} fill="none" stroke={lineColor} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+            <circle cx={xS(dates[dates.length-1])} cy={yS(last)} r="4" fill={lineColor} stroke="#fff" strokeWidth="2" />
+            <rect x={ML+CW+4} y={yS(last)-9} width="62" height="18" rx="5" fill={lineColor} />
+            <text x={ML+CW+35} y={yS(last)+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">Valeur</text>
+          </>
+        )}
+
+        {/* Label plus-value */}
+        {visibleCurves.pv && hasCv && (() => {
+          const pvColor = lastPV >= 0 ? "#059669" : "#C0392B";
+          const yPV = yS(lastPV);
+          const inRange = lastPV >= minV && lastPV <= maxV;
+          return inRange ? (<>
+            <rect x={ML+CW+4} y={yPV-9} width="62" height="18" rx="5" fill={pvColor} />
+            <text x={ML+CW+35} y={yPV+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">PV</text>
+          </>) : null;
         })()}
-
-        {/* Courbe 2 — Investi / Coût de base (bleu marine) */}
-        {hasCurves && coutBasePts && (() => {
-          const y = yS(lastCB);
-          const visible = lastCB >= minV && lastCB <= maxV;
-          return (<>
-            <polyline points={coutBasePts} fill="none" stroke="#2D5986" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.75" strokeLinejoin="round" />
-            {visible && <><rect x={ML+CW+2} y={y-8} width="58" height="15" rx="3" fill="#2D5986" opacity="0.90" />
-            <text x={ML+CW+31} y={y+3.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">Investi</text></>}
-          </>);
-        })()}
-
-        {/* Courbe 3 — Plus-value (vert émeraude) */}
-        {hasCurves && pvPts && (() => {
-          const y = yS(lastPV);
-          const visible = lastPV >= minV && lastPV <= maxV;
-          return (<>
-            <polyline points={pvPts} fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="3,3" opacity="0.80" strokeLinejoin="round" />
-            {visible && <><rect x={ML+CW+2} y={y-8} width="58" height="15" rx="3" fill="#059669" opacity="0.90" />
-            <text x={ML+CW+31} y={y+3.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">+Value</text></>}
-          </>);
-        })()}
-
-        {/* Ligne principale */}
-        <polyline points={linePts.replace(/ L /g, " ")} fill="none" stroke={chartColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-
-        {/* Point final */}
-        <circle cx={xS(dates[dates.length-1])} cy={yS(vals[vals.length-1])} r="3.5" fill={chartColor} stroke="#fff" strokeWidth="1.5" />
 
         {/* Hover */}
         {hover && (
           <>
-            <line x1={hover.x} x2={hover.x} y1={MT} y2={MT+CH} stroke="rgba(148,163,184,0.45)" strokeWidth="1" strokeDasharray="3,3" />
-            <circle cx={hover.x} cy={hover.y} r="4" fill={chartColor} stroke="#fff" strokeWidth="2" />
+            <line x1={hover.x} x2={hover.x} y1={MT} y2={MT+CH} stroke="rgba(148,163,184,0.5)" strokeWidth="1" strokeDasharray="3,3" />
+            <circle cx={hover.x} cy={hover.y} r="4.5" fill={lineColor} stroke="#fff" strokeWidth="2" />
             {(() => {
-              const hasCv = hover.investi > 0;
-              const W = 150, H = hasCv ? 80 : 38;
+              const hasInfo = hover.cv > 0;
+              const W = 160, H = hasInfo ? 88 : 44;
               const tx = Math.max(ML, Math.min(hover.x - W/2, ML + CW - W));
-              const ty = Math.max(MT + 2, hover.y - H - 6);
+              const ty = Math.max(MT+2, hover.y - H - 10);
               const pvColor = hover.pv >= 0 ? "#4ADE80" : "#F87171";
               return (<>
-                <rect x={tx} y={ty} width={W} height={H} rx="7" fill={C.ink} />
-                <text x={tx+W/2} y={ty+14} textAnchor="middle" fontSize="10.5" fill="#fff" fontFamily="Inter,sans-serif" fontWeight="700">{fmtEur(hover.val)}</text>
-                {hasCv && <>
-                  <text x={tx+8} y={ty+30} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Capital versé</text>
-                  <text x={tx+W-8} y={ty+30} textAnchor="end" fontSize="8.5" fill="#D4A017" fontFamily="Inter,sans-serif">{fmtEur(hover.investi)}</text>
-                  <text x={tx+8} y={ty+44} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Investi</text>
-                  <text x={tx+W-8} y={ty+44} textAnchor="end" fontSize="8.5" fill="#93C5FD" fontFamily="Inter,sans-serif">{fmtEur(hover.coutBase)}</text>
-                  <text x={tx+8} y={ty+58} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Plus-value</text>
-                  <text x={tx+W-8} y={ty+58} textAnchor="end" fontSize="8.5" fill={pvColor} fontFamily="Inter,sans-serif" fontWeight="600">{hover.pv >= 0 ? "+" : ""}{fmtEur(hover.pv)}</text>
+                <rect x={tx} y={ty} width={W} height={H} rx="8" fill="#0F172A" opacity="0.96" />
+                <text x={tx+W/2} y={ty+16} textAnchor="middle" fontSize="11" fill="#fff" fontFamily="Inter,sans-serif" fontWeight="800">{fmtEur(hover.val)}</text>
+                {hasInfo && <>
+                  <line x1={tx+10} x2={tx+W-10} y1={ty+24} y2={ty+24} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+                  <text x={tx+10} y={ty+38} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Capital versé</text>
+                  <text x={tx+W-10} y={ty+38} textAnchor="end" fontSize="9" fill="#FCD34D" fontFamily="Inter,sans-serif" fontWeight="600">{fmtEur(hover.cv)}</text>
+                  <text x={tx+10} y={ty+54} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Plus-value</text>
+                  <text x={tx+W-10} y={ty+54} textAnchor="end" fontSize="9" fill={pvColor} fontFamily="Inter,sans-serif" fontWeight="600">{hover.pv >= 0 ? "+" : ""}{fmtEur(hover.pv)}</text>
+                  <text x={tx+10} y={ty+70} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Rendement</text>
+                  <text x={tx+W-10} y={ty+70} textAnchor="end" fontSize="9" fill={pvColor} fontFamily="Inter,sans-serif" fontWeight="600">{hover.cv > 0 ? ((hover.pv/hover.cv)*100).toFixed(1) : "—"}%</text>
                 </>}
-                <text x={tx+W/2} y={ty+H-5} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.4)" fontFamily="Inter,sans-serif">{new Date(hover.date).toLocaleDateString("fr-FR", { day:"numeric", month:"short", year:"numeric" })}</text>
+                <text x={tx+W/2} y={ty+H-6} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.3)" fontFamily="Inter,sans-serif">
+                  {new Date(hover.date).toLocaleDateString("fr-FR", { day:"numeric", month:"long", year:"numeric" })}
+                </text>
               </>);
             })()}
           </>
         )}
       </svg>
+
+      {/* ── Légende cliquable ── */}
+      <div style={{ display: "flex", gap: "18px", justifyContent: "center", marginTop: "14px", flexWrap: "wrap" }}>
+        {LEGEND.map(({ key, label, color, dash, fill }) => (
+          <button key={key} onClick={() => toggleCurve(key)}
+            style={{ display: "flex", alignItems: "center", gap: "7px", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", borderRadius: "8px", opacity: visibleCurves[key] ? 1 : 0.35, transition: "opacity 0.2s", fontFamily: "Inter,sans-serif" }}>
+            <svg width="24" height="10" style={{ flexShrink: 0 }}>
+              {fill
+                ? <rect x="0" y="2" width="24" height="6" rx="2" fill={color} opacity="0.35" />
+                : <line x1="0" y1="5" x2="24" y2="5" stroke={color} strokeWidth="2.5" strokeDasharray={dash ? "7,4" : ""} strokeLinecap="round" />
+              }
+            </svg>
+            <span style={{ fontSize: "11px", fontWeight: "600", color: visibleCurves[key] ? C.ink : C.inkSubtle }}>
+              {label}
+              {key === "valeur" && <span style={{ fontWeight: "400", color: C.inkSubtle, marginLeft: "4px" }}>{fmtEur(last)}</span>}
+              {key === "verse"  && hasCv && <span style={{ fontWeight: "400", color: C.inkSubtle, marginLeft: "4px" }}>{fmtEur(lastCV)}</span>}
+              {key === "pv"     && hasCv && <span style={{ fontWeight: "700", color: lastPV >= 0 ? "#059669" : "#C0392B", marginLeft: "4px" }}>{lastPV >= 0 ? "+" : ""}{fmtEur(lastPV)}</span>}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -8903,6 +8906,9 @@ function DashboardBar({ onTabChange, hidden, profil, account = "PEA" }) {
         </div>
       </div>
 
+
+      {/* ── Graphique portefeuille ── */}
+      <PortfolioChart hidden={hidden} account={account} />
 
       {/* ── Bilan hebdomadaire ── */}
       <WeeklySummary positions={positions} totalActuel={totalActuel} totalPV={totalPV} hidden={hidden} />
