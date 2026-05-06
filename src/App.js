@@ -9421,8 +9421,9 @@ ${universeList}
 
 Effectue 4 à 6 recherches ciblées sur les instruments les plus prometteurs compte tenu du profil ${profilLabel} (prix, variation du jour, momentum, catalyseurs récents, plus haut/bas 52 semaines).
 
-Identifie les 4 à 6 meilleures opportunités d'investissement RIGHT NOW, adaptées au profil ${profilLabel}.
-${risque === "dynamique" || risque === "tres-dynamique" ? "PRIORITÉ AUX ACTIONS INDIVIDUELLES avec catalyseur clair (résultats, contrat, secteur en hausse, momentum technique). Les ETF ne sont pertinents que si un secteur spécifique est en forte tendance." : ""}
+Identifie les 3 à 5 MEILLEURES OPPORTUNITÉS D'ACHAT IMMÉDIATES pour le profil ${profilLabel}.
+RÈGLE STRICTE : n'inclure dans "opportunites" QUE les instruments qui méritent d'être achetés ou renforcés MAINTENANT. Le champ "action" doit être ACHETER ou RENFORCER uniquement. Si un instrument est intéressant à long terme mais pas au bon point d'entrée aujourd'hui → ne pas l'inclure du tout.
+${risque === "dynamique" || risque === "tres-dynamique" ? "PRIORITÉ AUX ACTIONS INDIVIDUELLES avec catalyseur clair (résultats, contrat, secteur en hausse, momentum technique)." : ""}
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {
@@ -9434,7 +9435,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       "nom": "Airbus",
       "type": "Action",
       "secteur": "Aéronautique",
-      "action": "ACHETER",  // VALEURS AUTORISÉES UNIQUEMENT : ACHETER | RENFORCER | SURVEILLER | ALLÉGER | ÉVITER
+      "action": "ACHETER",  // UNIQUEMENT : ACHETER ou RENFORCER — jamais SURVEILLER, ÉVITER, ACCUMULER, CONSERVER
       "prix": 165.50,
       "var_jour": 1.2,
       "dist_bas52": 12.5,
@@ -9556,16 +9557,15 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
           {/* Opportunités */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
             <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px" }}>
-              Opportunités · {result.opportunites?.length || 0}
+              Opportunités à saisir · {(result.opportunites || []).filter(o => ["ACHETER","RENFORCER"].includes((o.action||"").toUpperCase())).length}
             </div>
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-              {[["ACHETER", C.green], ["RENFORCER", C.green], ["SURVEILLER", "#6366F1"], ["ALLÉGER", "#C8972A"], ["ÉVITER", C.red]].map(([lbl, col]) => (
-                <span key={lbl} style={{ fontSize: "9px", fontWeight: "700", color: col, background: col + "18", borderRadius: "4px", padding: "2px 6px", letterSpacing: "0.3px" }}>{lbl}</span>
-              ))}
+            <div style={{ display: "flex", gap: "6px" }}>
+              <span style={{ fontSize: "9px", fontWeight: "700", color: C.green, background: C.green + "18", borderRadius: "4px", padding: "2px 7px" }}>ACHETER</span>
+              <span style={{ fontSize: "9px", fontWeight: "700", color: C.green, background: C.green + "18", borderRadius: "4px", padding: "2px 7px" }}>RENFORCER</span>
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {(result.opportunites || []).map((op, i) => {
+            {(result.opportunites || []).filter(op => ["ACHETER","RENFORCER"].includes((op.action||"").toUpperCase())).map((op, i) => {
               const ac = op.action || "";
               const acShort = ac.length > 12 ? ac.split(/[\s/]/)[0] : ac;
               const acColor = actionColor(ac);
