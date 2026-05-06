@@ -6515,14 +6515,16 @@ function calcCapitalVerse() {
 }
 
 function takeSnapshot(positions) {
-  const valeur  = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
-  const investi = calcCapitalVerse() || positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
+  const valeur       = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
+  const coutBase     = positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
+  const capitalVerse = calcCapitalVerse() || coutBase;
+  const investi      = capitalVerse; // backward compat
   if (valeur === 0) return;
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const snaps = (() => { try { return JSON.parse(localStorage.getItem(SNAPSHOTS_KEY) || "[]"); } catch { return []; } })();
   // Ne pas doublonner le même jour
   const filtered = snaps.filter(s => s.date !== today);
-  filtered.push({ date: today, valeur, investi });
+  filtered.push({ date: today, valeur, investi, coutBase, capitalVerse });
   // Garder les 365 derniers jours
   filtered.sort((a, b) => a.date.localeCompare(b.date));
   localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(filtered.slice(-365)));
@@ -8515,23 +8517,35 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
 
   const lastSnap    = displaySnaps[displaySnaps.length - 1];
   const investi     = lastSnap?.investi || totalInvesti;
-  // Ligne investie dynamique — capital versé cumulatif (ne peut que croître)
-  const investiVals = (() => {
-    const raw = displaySnaps.map(s => s.investi || 0);
+  // Courbe 1 — Capital versé (cumul achats, monotone croissant)
+  const capitalVerseVals = (() => {
+    const raw = displaySnaps.map(s => s.capitalVerse || s.investi || 0);
     let max = 0;
     return raw.map(v => { max = Math.max(max, v); return max; });
   })();
-  const hasInvesti  = investiVals.some(v => v > 0);
-  const investiPts  = hasInvesti
-    ? displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(investiVals[i]).toFixed(1)}`).join(" ")
+  // Courbe 2 — Investi (coût de base des positions actuelles, peut baisser si vente)
+  const coutBaseVals = displaySnaps.map(s => s.coutBase || s.investi || 0);
+  // Courbe 3 — Plus-value (valeur - coût de base)
+  const pvVals = displaySnaps.map((s, i) => Math.max(0, vals[i] - coutBaseVals[i]));
+
+  const hasCurves = capitalVerseVals.some(v => v > 0);
+
+  const mkPts = (arr) => displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(arr[i]).toFixed(1)}`).join(" ");
+
+  const capitalVersePts = hasCurves ? mkPts(capitalVerseVals) : null;
+  const coutBasePts     = hasCurves ? mkPts(coutBaseVals) : null;
+  const pvPts           = hasCurves ? mkPts(pvVals) : null;
+
+  // Zone remplissage entre valeur et coût de base
+  const pvZonePath = hasCurves
+    ? `M ${displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(vals[i]).toFixed(1)}`).join(" L ")} L ${[...displaySnaps].reverse().map((s, i, arr) => { const ri = arr.length - 1 - i; return `${xS(dates[ri]).toFixed(1)},${yS(coutBaseVals[ri]).toFixed(1)}`; }).join(" L ")} Z`
     : null;
-  // Zone PV : polygone entre courbe valeur et courbe investie
-  const pvZonePath = hasInvesti
-    ? `M ${displaySnaps.map((_, i) => `${xS(dates[i]).toFixed(1)},${yS(vals[i]).toFixed(1)}`).join(" L ")} L ${[...displaySnaps].reverse().map((s, i, arr) => { const ri = arr.length - 1 - i; return `${xS(dates[ri]).toFixed(1)},${yS(investiVals[ri]).toFixed(1)}`; }).join(" L ")} Z`
-    : null;
-  // Label à droite sur le dernier point de la ligne
-  const lastInvestiY = hasInvesti ? yS(investi) : null;
-  const pruVisible   = hasInvesti && investi >= minV && investi <= maxV;
+
+  const lastCV  = capitalVerseVals[capitalVerseVals.length - 1] || 0;
+  const lastCB  = coutBaseVals[coutBaseVals.length - 1] || 0;
+  const lastPV  = pvVals[pvVals.length - 1] || 0;
+  const investi = lastCV;
+  const pruVisible = hasCurves && lastCB >= minV && lastCB <= maxV;
 
   // Grille Y — 5 niveaux, labels à droite
   const gridVals = Array.from({ length: 5 }, (_, i) => minV + (maxV - minV) * i / 4);
@@ -8553,9 +8567,10 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
     dates.forEach((d, i) => { if (Math.abs(d - t) < Math.abs(dates[ci] - t)) ci = i; });
     const snap = displaySnaps[ci];
     if (!snap) return;
-    const hInvesti = snap.investi || 0;
-    const hPv      = vals[ci] - hInvesti;
-    setHover({ x: xS(dates[ci]), y: yS(vals[ci]), val: vals[ci], date: snap.date, investi: hInvesti, pv: hPv });
+    const hCV = capitalVerseVals[ci] || 0;
+    const hCB = coutBaseVals[ci] || 0;
+    const hPV = pvVals[ci] || 0;
+    setHover({ x: xS(dates[ci]), y: yS(vals[ci]), val: vals[ci], date: snap.date, investi: hCV, coutBase: hCB, pv: hPV });
   };
 
   // Variation sur la période sélectionnée (vs premier point de la période)
@@ -8659,19 +8674,43 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
         {/* Area de fond (valeur totale) */}
         <path d={areaPath} fill={chartLight} />
 
-        {/* Zone PV : entre courbe valeur et courbe investie */}
-        {pruVisible && pvZonePath && (
-          <path d={pvZonePath} fill="rgba(29,122,74,0.13)" />
+        {/* Zone PV : entre courbe valeur et coût de base */}
+        {hasCurves && pvZonePath && (
+          <path d={pvZonePath} fill="rgba(29,122,74,0.10)" />
         )}
 
-        {/* Ligne capital investi dynamique */}
-        {pruVisible && investiPts && (
-          <>
-            <polyline points={investiPts} fill="none" stroke="#B8920A" strokeWidth="1.5" strokeDasharray="6,4" opacity="0.80" strokeLinejoin="round" />
-            <rect x={ML+CW+2} y={lastInvestiY-8} width="52" height="15" rx="3" fill="#B8920A" opacity="0.90" />
-            <text x={ML+CW+28} y={lastInvestiY+3.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">Investi</text>
-          </>
-        )}
+        {/* Courbe 1 — Capital versé (or, monotone) */}
+        {hasCurves && capitalVersePts && (() => {
+          const y = yS(lastCV);
+          const visible = lastCV >= minV && lastCV <= maxV;
+          return (<>
+            <polyline points={capitalVersePts} fill="none" stroke="#B8920A" strokeWidth="1.5" strokeDasharray="6,4" opacity="0.85" strokeLinejoin="round" />
+            {visible && <><rect x={ML+CW+2} y={y-8} width="58" height="15" rx="3" fill="#B8920A" opacity="0.90" />
+            <text x={ML+CW+31} y={y+3.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">C. Versé</text></>}
+          </>);
+        })()}
+
+        {/* Courbe 2 — Investi / Coût de base (bleu marine) */}
+        {hasCurves && coutBasePts && (() => {
+          const y = yS(lastCB);
+          const visible = lastCB >= minV && lastCB <= maxV;
+          return (<>
+            <polyline points={coutBasePts} fill="none" stroke="#2D5986" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.75" strokeLinejoin="round" />
+            {visible && <><rect x={ML+CW+2} y={y-8} width="58" height="15" rx="3" fill="#2D5986" opacity="0.90" />
+            <text x={ML+CW+31} y={y+3.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">Investi</text></>}
+          </>);
+        })()}
+
+        {/* Courbe 3 — Plus-value (vert émeraude) */}
+        {hasCurves && pvPts && (() => {
+          const y = yS(lastPV);
+          const visible = lastPV >= minV && lastPV <= maxV;
+          return (<>
+            <polyline points={pvPts} fill="none" stroke="#059669" strokeWidth="1.5" strokeDasharray="3,3" opacity="0.80" strokeLinejoin="round" />
+            {visible && <><rect x={ML+CW+2} y={y-8} width="58" height="15" rx="3" fill="#059669" opacity="0.90" />
+            <text x={ML+CW+31} y={y+3.5} textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">+Value</text></>}
+          </>);
+        })()}
 
         {/* Ligne principale */}
         <polyline points={linePts.replace(/ L /g, " ")} fill="none" stroke={chartColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
@@ -8685,18 +8724,21 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
             <line x1={hover.x} x2={hover.x} y1={MT} y2={MT+CH} stroke="rgba(148,163,184,0.45)" strokeWidth="1" strokeDasharray="3,3" />
             <circle cx={hover.x} cy={hover.y} r="4" fill={chartColor} stroke="#fff" strokeWidth="2" />
             {(() => {
-              const W  = 140, H = hover.investi > 0 ? 58 : 38;
+              const hasCv = hover.investi > 0;
+              const W = 150, H = hasCv ? 80 : 38;
               const tx = Math.max(ML, Math.min(hover.x - W/2, ML + CW - W));
               const ty = Math.max(MT + 2, hover.y - H - 6);
               const pvColor = hover.pv >= 0 ? "#4ADE80" : "#F87171";
               return (<>
                 <rect x={tx} y={ty} width={W} height={H} rx="7" fill={C.ink} />
                 <text x={tx+W/2} y={ty+14} textAnchor="middle" fontSize="10.5" fill="#fff" fontFamily="Inter,sans-serif" fontWeight="700">{fmtEur(hover.val)}</text>
-                {hover.investi > 0 && <>
-                  <text x={tx+8} y={ty+30} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.55)" fontFamily="Inter,sans-serif">Investi</text>
-                  <text x={tx+W-8} y={ty+30} textAnchor="end" fontSize="8.5" fill="rgba(255,255,255,0.8)" fontFamily="Inter,sans-serif">{fmtEur(hover.investi)}</text>
-                  <text x={tx+8} y={ty+44} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.55)" fontFamily="Inter,sans-serif">PV</text>
-                  <text x={tx+W-8} y={ty+44} textAnchor="end" fontSize="8.5" fill={pvColor} fontFamily="Inter,sans-serif" fontWeight="600">{hover.pv >= 0 ? "+" : ""}{fmtEur(hover.pv)}</text>
+                {hasCv && <>
+                  <text x={tx+8} y={ty+30} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Capital versé</text>
+                  <text x={tx+W-8} y={ty+30} textAnchor="end" fontSize="8.5" fill="#D4A017" fontFamily="Inter,sans-serif">{fmtEur(hover.investi)}</text>
+                  <text x={tx+8} y={ty+44} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Investi</text>
+                  <text x={tx+W-8} y={ty+44} textAnchor="end" fontSize="8.5" fill="#93C5FD" fontFamily="Inter,sans-serif">{fmtEur(hover.coutBase)}</text>
+                  <text x={tx+8} y={ty+58} textAnchor="start" fontSize="8.5" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Plus-value</text>
+                  <text x={tx+W-8} y={ty+58} textAnchor="end" fontSize="8.5" fill={pvColor} fontFamily="Inter,sans-serif" fontWeight="600">{hover.pv >= 0 ? "+" : ""}{fmtEur(hover.pv)}</text>
                 </>}
                 <text x={tx+W/2} y={ty+H-5} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.4)" fontFamily="Inter,sans-serif">{new Date(hover.date).toLocaleDateString("fr-FR", { day:"numeric", month:"short", year:"numeric" })}</text>
               </>);
