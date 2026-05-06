@@ -8528,14 +8528,16 @@ function PortfolioChart({ hidden, account }) {
   // Plus-value = valeur − capital versé
   const pvVals = displaySnaps.map((_, i) => vals[i] - (hasCv ? cvVals[i] : 0));
 
-  // Echelle Y globale (toutes courbes visibles)
+  // Echelle Y — inclut toutes les courbes visibles + marge au-dessus
   const allY = [
     ...vals,
     ...(hasCv ? cvVals : []),
-    ...(hasCv ? pvVals.filter(v => v > 0) : []),
   ];
-  const minV = Math.min(...allY) * 0.98;
-  const maxV = Math.max(...allY) * 1.02;
+  const rawMin = Math.min(...allY);
+  const rawMax = Math.max(...allY);
+  const span   = rawMax - rawMin || rawMax;
+  const minV   = Math.max(0, rawMin - span * 0.08);
+  const maxV   = rawMax + span * 0.14;
   const minT = dates[0], maxT = dates[dates.length - 1];
 
   // ── SVG ──────────────────────────────────────────────────────────────────────
@@ -8549,8 +8551,9 @@ function PortfolioChart({ hidden, account }) {
   const isUp  = last >= first;
   const lineColor = isUp ? "#1D7A4A" : "#C0392B";
 
-  // Zone plus-value (entre valeur et capital versé)
-  const pvZone = hasCv ? `M ${vals.map((v, i) => `${xS(dates[i]).toFixed(1)},${yS(v).toFixed(1)}`).join(" L ")} L ${[...displaySnaps].reverse().map((_, ri) => { const i = displaySnaps.length - 1 - ri; return `${xS(dates[i]).toFixed(1)},${yS(cvVals[i]).toFixed(1)}`; }).join(" L ")} Z` : null;
+  // Zone gain/perte (entre valeur et capital versé) — clampée dans la zone SVG
+  const clampY = y => Math.max(MT, Math.min(MT + CH, y));
+  const pvZone = hasCv ? `M ${vals.map((v, i) => `${xS(dates[i]).toFixed(1)},${clampY(yS(v)).toFixed(1)}`).join(" L ")} L ${[...displaySnaps].reverse().map((_, ri) => { const i = displaySnaps.length - 1 - ri; return `${xS(dates[i]).toFixed(1)},${clampY(yS(cvVals[i])).toFixed(1)}`; }).join(" L ")} Z` : null;
 
   // Aire sous la courbe valeur
   const areaPath = `M ${xS(dates[0]).toFixed(1)},${MT+CH} L ${pts(vals)} L ${xS(dates[dates.length-1]).toFixed(1)},${MT+CH} Z`;
@@ -8582,10 +8585,12 @@ function PortfolioChart({ hidden, account }) {
     setHover({ x: xS(dates[ci]), y: yS(vals[ci]), val: vals[ci], date: snap.date, cv: cvVals[ci] || 0, pv: pvVals[ci] || 0 });
   };
 
+  const pvLabel = lastPV >= 0 ? "Plus-value" : "Perte";
+  const pvLegColor = lastPV >= 0 ? "#059669" : "#C0392B";
   const LEGEND = [
-    { key: "valeur", label: "Valeur",        color: lineColor,  dash: false },
-    { key: "verse",  label: "Capital versé", color: "#C8972A",  dash: true  },
-    { key: "pv",     label: "Plus-value",    color: "#059669",  dash: false, fill: true },
+    { key: "valeur", label: "Valeur",        color: lineColor,   dash: false },
+    { key: "verse",  label: "Capital versé", color: "#C8972A",   dash: true  },
+    { key: "pv",     label: pvLabel,         color: pvLegColor,  dash: false, fill: true },
   ];
 
   return (
@@ -8601,7 +8606,7 @@ function PortfolioChart({ hidden, account }) {
             </span>
             <span style={{ fontSize: "11px", color: C.inkSubtle }}>sur la période</span>
             {hasCv && <span style={{ fontSize: "11px", color: C.inkSubtle, borderLeft: `1px solid ${C.border}`, paddingLeft: "10px" }}>
-              PV totale <strong style={{ color: pvEur >= 0 ? "#1D7A4A" : "#C0392B" }}>{pvEur >= 0 ? "+" : ""}{fmtEur(pvEur)} ({pvPct >= 0 ? "+" : ""}{pvPct.toFixed(1)}%)</strong>
+              {pvEur >= 0 ? "PV totale" : "Perte totale"} <strong style={{ color: pvEur >= 0 ? "#1D7A4A" : "#C0392B" }}>{pvEur >= 0 ? "+" : ""}{fmtEur(pvEur)} ({pvPct >= 0 ? "+" : ""}{pvPct.toFixed(1)}%)</strong>
             </span>}
           </div>
           {displaySnaps.length >= 2 && (
@@ -8663,39 +8668,30 @@ function PortfolioChart({ hidden, account }) {
         {/* Aire valeur */}
         {visibleCurves.valeur && <path d={areaPath} fill={isUp ? "rgba(29,122,74,0.07)" : "rgba(192,57,43,0.07)"} />}
 
-        {/* Zone plus-value (fill entre valeur et capital versé) */}
+        {/* Zone gain/perte (fill entre valeur et capital versé) */}
         {visibleCurves.pv && hasCv && pvZone && (
-          <path d={pvZone} fill={lastPV >= 0 ? "rgba(5,150,105,0.12)" : "rgba(192,57,43,0.10)"} />
+          <path d={pvZone} fill={lastPV >= 0 ? "rgba(5,150,105,0.13)" : "rgba(200,70,50,0.09)"} />
         )}
 
         {/* Courbe capital versé */}
-        {visibleCurves.verse && hasCv && (
-          <>
+        {visibleCurves.verse && hasCv && (() => {
+          const yCV = Math.max(MT + 10, Math.min(MT + CH - 10, yS(lastCV)));
+          return (<>
             <polyline points={pts(cvVals)} fill="none" stroke="#C8972A" strokeWidth="2" strokeDasharray="7,5" strokeLinejoin="round" strokeLinecap="round" opacity="0.9" />
-            <rect x={ML+CW+4} y={yS(lastCV)-9} width="62" height="18" rx="5" fill="#C8972A" />
-            <text x={ML+CW+35} y={yS(lastCV)+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">C. versé</text>
-          </>
-        )}
+            <rect x={ML+CW+4} y={yCV-9} width="62" height="18" rx="5" fill="#C8972A" />
+            <text x={ML+CW+35} y={yCV+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">C. versé</text>
+          </>);
+        })()}
 
         {/* Courbe valeur principale */}
-        {visibleCurves.valeur && (
-          <>
+        {visibleCurves.valeur && (() => {
+          const yLast = Math.max(MT + 10, Math.min(MT + CH - 10, yS(last)));
+          return (<>
             <polyline points={pts(vals)} fill="none" stroke={lineColor} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
             <circle cx={xS(dates[dates.length-1])} cy={yS(last)} r="4" fill={lineColor} stroke="#fff" strokeWidth="2" />
-            <rect x={ML+CW+4} y={yS(last)-9} width="62" height="18" rx="5" fill={lineColor} />
-            <text x={ML+CW+35} y={yS(last)+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">Valeur</text>
-          </>
-        )}
-
-        {/* Label plus-value */}
-        {visibleCurves.pv && hasCv && (() => {
-          const pvColor = lastPV >= 0 ? "#059669" : "#C0392B";
-          const yPV = yS(lastPV);
-          const inRange = lastPV >= minV && lastPV <= maxV;
-          return inRange ? (<>
-            <rect x={ML+CW+4} y={yPV-9} width="62" height="18" rx="5" fill={pvColor} />
-            <text x={ML+CW+35} y={yPV+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">PV</text>
-          </>) : null;
+            <rect x={ML+CW+4} y={yLast-9} width="62" height="18" rx="5" fill={lineColor} />
+            <text x={ML+CW+35} y={yLast+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">Valeur</text>
+          </>);
         })()}
 
         {/* Hover */}
