@@ -7444,6 +7444,8 @@ function detectSecteurNom(nom) {
   if (n.includes("totalenerg") || n.includes("total energ"))    return "Énergie";
   if (n.includes("smaio") || n.includes("inventiva"))           return "Santé";
   if (n.includes("valneva") || n.includes("median tech"))       return "Santé";
+  if (n.includes("pea monde") || n.includes("msci world"))      return "ETF Monde";
+  if (n.includes("pea emergent") || n.includes("msci emerging") || n.includes("emerging")) return "ETF Émergents";
   if (n.includes("kalray"))                                      return "Technologies";
   if (n.includes("airbus"))                                      return "Industrie";
   if (n.includes("lvmh") || n.includes("hermes") || n.includes("kering")) return "Luxe";
@@ -7461,7 +7463,7 @@ function PortfolioPieChart({ positions }) {
     .map((p, i) => ({
       nom:     p.nom,
       isin:    p.isin || "",
-      secteur: p.secteur || ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || "Autre",
+      secteur: (p.secteur && p.secteur !== "Autre") ? p.secteur : (ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || "Autre"),
       valeur:  (p.dernierCours || p.pru) * p.quantite,
       color:   PIE_COLORS[i % PIE_COLORS.length],
     }))
