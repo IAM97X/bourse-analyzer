@@ -9473,7 +9473,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#1a237e,#283593)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: "18px" }}>🤖</span>
+              <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>AI</span>
             </div>
             <div>
               <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot IA</div>
@@ -9589,7 +9589,9 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       {/* ── État vide ── */}
       {!result && !running && !error && (
         <div style={{ textAlign: "center", padding: "60px 20px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", boxShadow: shadow.card }}>
-          <div style={{ fontSize: "40px", marginBottom: "14px" }}>🤖</div>
+          <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: "linear-gradient(135deg,#1a237e,#283593)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+          <span style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>AI</span>
+        </div>
           <div style={{ fontSize: "16px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Prêt à scanner le marché</div>
           <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "360px", margin: "0 auto 20px" }}>
             L'agent va récupérer les cours en temps réel sur {universe.length} instruments éligibles {account}, puis identifier les meilleures opportunités du moment.
@@ -9711,31 +9713,33 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                   onClick={() => handleNav(key)} title={c ? label : undefined}
                   style={{
                     width: "100%", display: "flex", alignItems: "center",
-                    gap: c ? 0 : "10px",
-                    padding: c ? "9px 0" : isFeatured ? "11px 14px" : "9px 12px",
+                    gap: 0,
+                    padding: c ? "9px 0" : "9px 14px",
                     justifyContent: c ? "center" : "flex-start",
-                    borderRadius: isFeatured ? "12px" : "10px",
+                    borderRadius: "10px",
                     background: isActive
                       ? "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)"
                       : "transparent",
                     border: "none",
                     cursor: "pointer",
-                    color: isActive ? "#FFFFFF" : C.sbText,
-                    fontSize: isFeatured ? "13.5px" : "13px",
-                    fontWeight: isActive ? "700" : isFeatured ? "600" : "500",
+                    color: isActive ? "#FFFFFF" : isFeatured ? C.ink : C.sbText,
+                    fontSize: isFeatured ? "13px" : "13px",
+                    fontWeight: isActive ? "700" : isFeatured ? "600" : "450",
                     fontFamily: "'Inter', 'Roboto', sans-serif",
-                    textAlign: "left", marginBottom: "3px",
-                    transition: "all 0.18s",
-                    boxShadow: isActive
-                      ? "0 4px 16px rgba(30,58,95,0.40)"
-                      : isFeatured
-                        ? "0 2px 12px rgba(8,11,15,0.35)"
-                        : "none",
-                    letterSpacing: isFeatured ? "-0.01em" : "normal",
+                    textAlign: "left", marginBottom: "2px",
+                    transition: "all 0.15s",
+                    boxShadow: isActive ? "0 4px 16px rgba(30,58,95,0.35)" : "none",
+                    letterSpacing: "-0.01em",
+                    position: "relative",
                   }}>
-                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: "16px", height: "16px", opacity: isActive ? 1 : isFeatured ? 0.9 : 0.65 }}>{icon}</span>
-                  {!c && <span style={{ marginLeft: "2px", flex: 1 }}>{label}</span>}
-                  {!c && isFeatured && !isActive && <span style={{ fontSize: "10px", background: "#B07D2E", color: "#FFF8E7", borderRadius: "6px", padding: "2px 7px", fontWeight: "700", letterSpacing: "0.4px" }}>IA</span>}
+                  {!isActive && isFeatured && !c && (
+                    <span style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", width: "3px", height: "18px", borderRadius: "2px", background: "#B07D2E" }} />
+                  )}
+                  {c
+                    ? <span style={{ fontSize: "11px", fontWeight: "700", color: isActive ? "#fff" : C.inkSubtle }}>{label.slice(0,2)}</span>
+                    : <span style={{ flex: 1, paddingLeft: isFeatured && !isActive ? "10px" : 0 }}>{label}</span>
+                  }
+                  {!c && isFeatured && !isActive && <span style={{ fontSize: "10px", background: "#B07D2E", color: "#FFF8E7", borderRadius: "6px", padding: "2px 7px", fontWeight: "700", letterSpacing: "0.4px", flexShrink: 0 }}>IA</span>}
                 </button>
               );
             })}
