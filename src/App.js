@@ -8516,7 +8516,6 @@ function PortfolioChart({ totalActuel, totalInvesti, hidden, profil, account }) 
   const areaPath = `M ${xS(dates[0]).toFixed(1)},${MT+CH} L ${linePts} L ${xS(dates[dates.length-1]).toFixed(1)},${MT+CH} Z`;
 
   const lastSnap    = displaySnaps[displaySnaps.length - 1];
-  const investi     = lastSnap?.investi || totalInvesti;
   // Courbe 1 — Capital versé (cumul achats, monotone croissant)
   const capitalVerseVals = (() => {
     const raw = displaySnaps.map(s => s.capitalVerse || s.investi || 0);
