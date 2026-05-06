@@ -9579,7 +9579,7 @@ const NAV_GROUPS = [
   ]},
   { label: "IA", featured: true, items: [
     { key: TABS.CHAT,      label: "Conseiller Privé", icon: <IconChat/> },
-    { key: TABS.AUTOPILOT, label: "Autopilot IA",     icon: <IconTarget/> },
+    { key: TABS.AUTOPILOT, label: "Autopilot IA",     icon: <IconChat/> },
   ]},
 ];
 
