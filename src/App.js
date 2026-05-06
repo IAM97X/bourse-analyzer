@@ -9353,34 +9353,9 @@ function AutopilotIA({ account, profil, hidden }) {
   const runAnalysis = async () => {
     setRunning(true); setError(null);
     try {
-      // 1 — Cours temps réel
-      setStep("Récupération des cours en temps réel…");
-      const quotes = await fetchYahooPrices(universe.map(u => u.symbol));
-
-      const enriched = universe
-        .map(item => {
-          const q = quotes.find(q => q.symbol === item.symbol);
-          if (!q?.regularMarketPrice) return null;
-          const prix = q.regularMarketPrice;
-          const bas52 = q.fiftyTwoWeekLow || prix;
-          const haut52 = q.fiftyTwoWeekHigh || prix;
-          return {
-            ...item,
-            prix,
-            varJour: +(q.regularMarketChangePercent || 0).toFixed(2),
-            bas52, haut52,
-            distBas52: +(((prix - bas52) / bas52) * 100).toFixed(1),
-            distHaut52: +(((haut52 - prix) / haut52) * 100).toFixed(1),
-          };
-        })
-        .filter(Boolean);
-
-      // 2 — Analyse Claude
-      setStep("Analyse des opportunités par l'IA…");
+      setStep("Recherche des cours et analyse du marché…");
 
       const dcaMensuel = profil?.dcaMensuel || 200;
-      const minOrdre = 200;
-
       const portfolioCtx = positions.length > 0
         ? positions.map(p => {
             const pvPct = p.pru > 0 ? (((p.dernierCours || p.pru) - p.pru) / p.pru * 100).toFixed(1) : "0";
@@ -9388,30 +9363,25 @@ function AutopilotIA({ account, profil, hidden }) {
           }).join("\n")
         : "Portefeuille vide";
 
-      const universeCtx = enriched
-        .map(i => `${i.symbol.padEnd(12)} | ${i.type.padEnd(6)} | ${i.secteur.padEnd(20)} | ${i.prix}€ | Var: ${i.varJour > 0 ? "+" : ""}${i.varJour}% | Δbas52: +${i.distBas52}% | Δhaut52: -${i.distHaut52}%`)
-        .join("\n");
+      const universeList = universe.map(i => `${i.symbol} (${i.nom}, ${i.type}, ${i.secteur})`).join(", ");
 
-      const prompt = `Tu es un gérant de portefeuille expert spécialisé ${account} français. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
+      const system = `Tu es un gérant de portefeuille expert spécialisé ${account} français. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
+Tu as accès à la recherche web pour obtenir les cours en temps réel.
+DCA MENSUEL : ${dcaMensuel}€ | ORDRE MINIMUM : 200€ | COURTIER : ${profil?.courtier || "boursobank"}
+PORTEFEUILLE ACTUEL :
+${portfolioCtx}`;
 
-PORTEFEUILLE ACTUEL (${account}) :
-${portfolioCtx}
+      const userMsg = `Utilise web_search pour récupérer les cours actuels des instruments les plus pertinents parmi cet univers ${account} :
+${universeList}
 
-UNIVERS SCANNÉ — ${enriched.length} instruments avec cours temps réel :
-${universeCtx}
+Effectue 3 à 5 recherches ciblées sur les instruments les plus prometteurs (prix, variation du jour, plus haut/bas 52 semaines).
 
-DCA MENSUEL : ${dcaMensuel}€ | ORDRE MINIMUM : ${minOrdre}€ | COURTIER : ${profil?.courtier || "boursobank"}
-
-MISSION : Détecte les 3 à 5 meilleures opportunités RIGHT NOW dans cet univers. Analyse :
-1. Instruments proches de leurs plus bas 52 semaines (distBas52 faible = possible rebond)
-2. Momentum positif sur la journée (signal de dynamisme)
-3. Lacunes de diversification vs portefeuille actuel
-4. Rapport risque/rendement sur horizon 6-12 mois
+Puis génère une analyse complète et identifie les 3 à 5 meilleures opportunités d'investissement maintenant.
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {
-  "resume": "Contexte marché en 2-3 phrases claires",
-  "score_marche": 6,
+  "resume": "Contexte marché en 2-3 phrases",
+  "score_marche": 7,
   "opportunites": [
     {
       "symbol": "CW8.PA",
@@ -9422,8 +9392,8 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       "prix": 422.30,
       "var_jour": 0.45,
       "dist_bas52": 8.2,
-      "rationale": "Explication précise en 2 phrases. Pourquoi maintenant.",
-      "catalyseur": "Phrase courte (ex: Rebond post-correction, momentum haussier)",
+      "rationale": "Explication en 2 phrases. Pourquoi maintenant.",
+      "catalyseur": "Rebond post-correction",
       "risque": "Faible",
       "horizon": "Long terme",
       "allocation_pct": 40,
@@ -9431,27 +9401,15 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       "dans_portefeuille": false
     }
   ],
-  "alertes_portefeuille": ["alerte sur une position existante si pertinent"],
+  "alertes_portefeuille": [],
   "prochaine_revision": "Dans 7 jours"
 }`;
 
-      const headers = {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.REACT_APP_ANTHROPIC_API_KEY || "",
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true",
-      };
-      const res2 = await fetch(CLAUDE_ENDPOINT, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ model: CLAUDE_MODELS.standard, max_tokens: 2500, messages: [{ role: "user", content: prompt }] }),
-      });
-      const raw = await res2.json();
-      const text = raw?.content?.[0]?.text || "";
+      const text = await callClaude(system, userMsg, true, 3, true, 3000);
       const match = text.match(/\{[\s\S]*\}/);
       if (!match) throw new Error("Réponse IA non structurée.");
       const parsed = JSON.parse(match[0]);
-      const final = { ...parsed, generatedAt: new Date().toISOString(), enrichedCount: enriched.length };
+      const final = { ...parsed, generatedAt: new Date().toISOString(), enrichedCount: universe.length };
       setResult(final);
       save("bourse_autopilot_last", final);
     } catch (e) {
@@ -9594,7 +9552,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
         </div>
           <div style={{ fontSize: "16px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Prêt à scanner le marché</div>
           <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "360px", margin: "0 auto 20px" }}>
-            L'agent va récupérer les cours en temps réel sur {universe.length} instruments éligibles {account}, puis identifier les meilleures opportunités du moment.
+            L'agent recherche les cours en temps réel via le web, analyse {universe.length} instruments éligibles {account} et identifie les meilleures opportunités du moment.
           </div>
           <button onClick={runAnalysis}
             style={{ padding: "12px 28px", borderRadius: "12px", background: "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
