@@ -266,7 +266,7 @@ function getEuronextUrl(isin, nom) {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const TABS = { PORTFOLIO: "portfolio", MARCHE: "marche", PROJECTION: "projection", HISTORIQUE: "historique", DCA: "dca", OPERATIONS: "operations", CHAT: "chat", PROFIL: "profil", SETTINGS: "settings" };
+const TABS = { PORTFOLIO: "portfolio", MARCHE: "marche", PROJECTION: "projection", HISTORIQUE: "historique", DCA: "dca", OPERATIONS: "operations", CHAT: "chat", AUTOPILOT: "autopilot", PROFIL: "profil", SETTINGS: "settings" };
 const UI   = { IDLE: "idle", LOADING: "loading", RESULT: "result", ERROR: "error" };
 const RISQUE_PCT = { prudent: 0.05, equilibre: 0.10, dynamique: 0.15 };
 const SURV_SECS  = 30 * 60;
@@ -9259,6 +9259,352 @@ const IconChat = () => (
   </svg>
 );
 
+// ─── Autopilot IA — univers d'investissement ──────────────────────────────────
+const AUTOPILOT_UNIVERSE = {
+  PEA: [
+    { symbol: "CW8.PA",   nom: "Amundi MSCI World",            type: "ETF",    secteur: "ETF Monde" },
+    { symbol: "WPEA.PA",  nom: "Amundi World PEA",             type: "ETF",    secteur: "ETF Monde" },
+    { symbol: "PAEEM.PA", nom: "Amundi MSCI Emerging Markets", type: "ETF",    secteur: "ETF Émergents" },
+    { symbol: "PLEM.PA",  nom: "Amundi EM Low Emissions PEA",  type: "ETF",    secteur: "ETF Émergents" },
+    { symbol: "PUST.PA",  nom: "Amundi PEA S&P 500 ESG",      type: "ETF",    secteur: "ETF USA" },
+    { symbol: "LYPS.PA",  nom: "Amundi S&P 500",              type: "ETF",    secteur: "ETF USA" },
+    { symbol: "PANX.PA",  nom: "Amundi PEA Nasdaq-100",       type: "ETF",    secteur: "ETF Tech" },
+    { symbol: "PCEU.PA",  nom: "Amundi MSCI Europe",          type: "ETF",    secteur: "ETF Europe" },
+    { symbol: "ESE.PA",   nom: "iShares Core MSCI Europe",    type: "ETF",    secteur: "ETF Europe" },
+    { symbol: "EWLD.PA",  nom: "iShares MSCI World Swap PEA", type: "ETF",    secteur: "ETF Monde" },
+    { symbol: "AI.PA",    nom: "Air Liquide",                 type: "Action", secteur: "Industrie" },
+    { symbol: "MC.PA",    nom: "LVMH",                        type: "Action", secteur: "Luxe" },
+    { symbol: "TTE.PA",   nom: "TotalEnergies",               type: "Action", secteur: "Énergie" },
+    { symbol: "SAN.PA",   nom: "Sanofi",                      type: "Action", secteur: "Santé" },
+    { symbol: "OR.PA",    nom: "L'Oréal",                     type: "Action", secteur: "Cosmétiques" },
+    { symbol: "BNP.PA",   nom: "BNP Paribas",                 type: "Action", secteur: "Banque" },
+    { symbol: "RMS.PA",   nom: "Hermès",                      type: "Action", secteur: "Luxe" },
+    { symbol: "AXA.PA",   nom: "AXA",                         type: "Action", secteur: "Assurance" },
+    { symbol: "DG.PA",    nom: "Vinci",                       type: "Action", secteur: "Infrastructure" },
+    { symbol: "SU.PA",    nom: "Schneider Electric",          type: "Action", secteur: "Industrie" },
+    { symbol: "CAP.PA",   nom: "Capgemini",                   type: "Action", secteur: "Tech" },
+    { symbol: "DSY.PA",   nom: "Dassault Systèmes",           type: "Action", secteur: "Tech" },
+    { symbol: "STM.PA",   nom: "STMicroelectronics",          type: "Action", secteur: "Semi-conducteurs" },
+    { symbol: "SAF.PA",   nom: "Safran",                      type: "Action", secteur: "Aéronautique" },
+    { symbol: "AIR.PA",   nom: "Airbus",                      type: "Action", secteur: "Aéronautique" },
+    { symbol: "PUB.PA",   nom: "Publicis",                    type: "Action", secteur: "Médias" },
+    { symbol: "KER.PA",   nom: "Kering",                      type: "Action", secteur: "Luxe" },
+    { symbol: "RI.PA",    nom: "Pernod Ricard",               type: "Action", secteur: "Alimentation" },
+    { symbol: "VIE.PA",   nom: "Veolia",                      type: "Action", secteur: "Utilities" },
+    { symbol: "ENGI.PA",  nom: "Engie",                       type: "Action", secteur: "Énergie" },
+    { symbol: "GLE.PA",   nom: "Société Générale",            type: "Action", secteur: "Banque" },
+    { symbol: "CA.PA",    nom: "Carrefour",                   type: "Action", secteur: "Distribution" },
+    { symbol: "EL.PA",    nom: "EssilorLuxottica",            type: "Action", secteur: "Santé" },
+    { symbol: "LR.PA",    nom: "Legrand",                     type: "Action", secteur: "Industrie" },
+    { symbol: "SAF.PA",   nom: "Safran",                      type: "Action", secteur: "Aéronautique" },
+    { symbol: "RNO.PA",   nom: "Renault",                     type: "Action", secteur: "Automobile" },
+    { symbol: "STLA.PA",  nom: "Stellantis",                  type: "Action", secteur: "Automobile" },
+    { symbol: "ASML.AS",  nom: "ASML Holding",                type: "Action", secteur: "Semi-conducteurs" },
+    { symbol: "SAP.DE",   nom: "SAP",                         type: "Action", secteur: "Tech" },
+    { symbol: "SIE.DE",   nom: "Siemens",                     type: "Action", secteur: "Industrie" },
+    { symbol: "MT.AS",    nom: "ArcelorMittal",               type: "Action", secteur: "Métaux" },
+  ],
+  CTO: [
+    { symbol: "IWDA.AS",  nom: "iShares Core MSCI World",     type: "ETF",    secteur: "ETF Monde" },
+    { symbol: "VWRA.L",   nom: "Vanguard FTSE All-World",     type: "ETF",    secteur: "ETF Monde" },
+    { symbol: "EIMI.L",   nom: "iShares MSCI Emerging Mkts",  type: "ETF",    secteur: "ETF Émergents" },
+    { symbol: "VUSA.L",   nom: "Vanguard S&P 500 UCITS",      type: "ETF",    secteur: "ETF USA" },
+    { symbol: "SPY",      nom: "SPDR S&P 500 ETF",            type: "ETF",    secteur: "ETF USA" },
+    { symbol: "QQQ",      nom: "Invesco Nasdaq-100",          type: "ETF",    secteur: "ETF Tech" },
+    { symbol: "VTI",      nom: "Vanguard Total Stock Market", type: "ETF",    secteur: "ETF USA" },
+    { symbol: "AAPL",     nom: "Apple",                       type: "Action", secteur: "Tech" },
+    { symbol: "MSFT",     nom: "Microsoft",                   type: "Action", secteur: "Tech" },
+    { symbol: "GOOGL",    nom: "Alphabet",                    type: "Action", secteur: "Tech" },
+    { symbol: "AMZN",     nom: "Amazon",                      type: "Action", secteur: "E-commerce" },
+    { symbol: "NVDA",     nom: "NVIDIA",                      type: "Action", secteur: "Semi-conducteurs" },
+    { symbol: "META",     nom: "Meta Platforms",              type: "Action", secteur: "Tech" },
+    { symbol: "TSLA",     nom: "Tesla",                       type: "Action", secteur: "Automobile" },
+    { symbol: "BRK-B",    nom: "Berkshire Hathaway B",        type: "Action", secteur: "Financier" },
+    { symbol: "JPM",      nom: "JPMorgan Chase",              type: "Action", secteur: "Banque" },
+    { symbol: "V",        nom: "Visa",                        type: "Action", secteur: "Financier" },
+    { symbol: "JNJ",      nom: "Johnson & Johnson",           type: "Action", secteur: "Santé" },
+    { symbol: "PG",       nom: "Procter & Gamble",            type: "Action", secteur: "Consommation" },
+    { symbol: "XOM",      nom: "ExxonMobil",                  type: "Action", secteur: "Énergie" },
+    { symbol: "TSM",      nom: "TSMC",                        type: "Action", secteur: "Semi-conducteurs" },
+    { symbol: "NOVO-B.CO",nom: "Novo Nordisk",                type: "Action", secteur: "Santé" },
+  ],
+};
+
+async function fetchYahooPrices(symbols) {
+  const endpoint = process.env.NODE_ENV === "production" ? "/api/yahoo" : "/api/yahoo";
+  const res = await fetch(`${endpoint}?symbols=${encodeURIComponent(symbols.join(","))}`);
+  if (!res.ok) throw new Error(`Yahoo Finance: ${res.status}`);
+  const data = await res.json();
+  return data?.quoteResponse?.result || [];
+}
+
+// ─── Autopilot IA ─────────────────────────────────────────────────────────────
+function AutopilotIA({ account, profil, hidden }) {
+  const positions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === (account || "PEA"));
+  const [running, setRunning]   = useState(false);
+  const [step, setStep]         = useState("");
+  const [result, setResult]     = useState(() => load("bourse_autopilot_last", null));
+  const [error, setError]       = useState(null);
+  const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
+
+  const universe = account === "CTO"
+    ? [...AUTOPILOT_UNIVERSE.PEA, ...AUTOPILOT_UNIVERSE.CTO]
+    : AUTOPILOT_UNIVERSE.PEA;
+
+  const runAnalysis = async () => {
+    setRunning(true); setError(null);
+    try {
+      // 1 — Cours temps réel
+      setStep("Récupération des cours en temps réel…");
+      const quotes = await fetchYahooPrices(universe.map(u => u.symbol));
+
+      const enriched = universe
+        .map(item => {
+          const q = quotes.find(q => q.symbol === item.symbol);
+          if (!q?.regularMarketPrice) return null;
+          const prix = q.regularMarketPrice;
+          const bas52 = q.fiftyTwoWeekLow || prix;
+          const haut52 = q.fiftyTwoWeekHigh || prix;
+          return {
+            ...item,
+            prix,
+            varJour: +(q.regularMarketChangePercent || 0).toFixed(2),
+            bas52, haut52,
+            distBas52: +(((prix - bas52) / bas52) * 100).toFixed(1),
+            distHaut52: +(((haut52 - prix) / haut52) * 100).toFixed(1),
+          };
+        })
+        .filter(Boolean);
+
+      // 2 — Analyse Claude
+      setStep("Analyse des opportunités par l'IA…");
+
+      const dcaMensuel = profil?.dcaMensuel || 200;
+      const minOrdre = 200;
+
+      const portfolioCtx = positions.length > 0
+        ? positions.map(p => {
+            const pvPct = p.pru > 0 ? (((p.dernierCours || p.pru) - p.pru) / p.pru * 100).toFixed(1) : "0";
+            return `• ${p.nom} (${p.isin}) — ${p.quantite} titres @ PRU ${p.pru}€ — PV: ${pvPct}%`;
+          }).join("\n")
+        : "Portefeuille vide";
+
+      const universeCtx = enriched
+        .map(i => `${i.symbol.padEnd(12)} | ${i.type.padEnd(6)} | ${i.secteur.padEnd(20)} | ${i.prix}€ | Var: ${i.varJour > 0 ? "+" : ""}${i.varJour}% | Δbas52: +${i.distBas52}% | Δhaut52: -${i.distHaut52}%`)
+        .join("\n");
+
+      const prompt = `Tu es un gérant de portefeuille expert spécialisé ${account} français. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
+
+PORTEFEUILLE ACTUEL (${account}) :
+${portfolioCtx}
+
+UNIVERS SCANNÉ — ${enriched.length} instruments avec cours temps réel :
+${universeCtx}
+
+DCA MENSUEL : ${dcaMensuel}€ | ORDRE MINIMUM : ${minOrdre}€ | COURTIER : ${profil?.courtier || "boursobank"}
+
+MISSION : Détecte les 3 à 5 meilleures opportunités RIGHT NOW dans cet univers. Analyse :
+1. Instruments proches de leurs plus bas 52 semaines (distBas52 faible = possible rebond)
+2. Momentum positif sur la journée (signal de dynamisme)
+3. Lacunes de diversification vs portefeuille actuel
+4. Rapport risque/rendement sur horizon 6-12 mois
+
+Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
+{
+  "resume": "Contexte marché en 2-3 phrases claires",
+  "score_marche": 6,
+  "opportunites": [
+    {
+      "symbol": "CW8.PA",
+      "nom": "Amundi MSCI World",
+      "type": "ETF",
+      "secteur": "ETF Monde",
+      "action": "ACHETER",
+      "prix": 422.30,
+      "var_jour": 0.45,
+      "dist_bas52": 8.2,
+      "rationale": "Explication précise en 2 phrases. Pourquoi maintenant.",
+      "catalyseur": "Phrase courte (ex: Rebond post-correction, momentum haussier)",
+      "risque": "Faible",
+      "horizon": "Long terme",
+      "allocation_pct": 40,
+      "montant_suggere": 200,
+      "dans_portefeuille": false
+    }
+  ],
+  "alertes_portefeuille": ["alerte sur une position existante si pertinent"],
+  "prochaine_revision": "Dans 7 jours"
+}`;
+
+      const headers = {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.REACT_APP_ANTHROPIC_API_KEY || "",
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      };
+      const res2 = await fetch(CLAUDE_ENDPOINT, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ model: CLAUDE_MODELS.standard, max_tokens: 2500, messages: [{ role: "user", content: prompt }] }),
+      });
+      const raw = await res2.json();
+      const text = raw?.content?.[0]?.text || "";
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Réponse IA non structurée.");
+      const parsed = JSON.parse(match[0]);
+      const final = { ...parsed, generatedAt: new Date().toISOString(), enrichedCount: enriched.length };
+      setResult(final);
+      save("bourse_autopilot_last", final);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setRunning(false); setStep("");
+    }
+  };
+
+  const scoreColor = s => s >= 7 ? C.green : s >= 5 ? "#C8972A" : C.red;
+  const riskColor  = r => r === "Faible" ? C.green : r === "Modéré" ? "#C8972A" : C.red;
+  const actionColor = a => a === "ACHETER" || a === "RENFORCER" ? C.green : a === "ALLÉGER" ? "#C8972A" : C.red;
+
+  return (
+    <div style={{ maxWidth: "780px", margin: "0 auto" }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#1a237e,#283593)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: "18px" }}>🤖</span>
+            </div>
+            <div>
+              <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot IA</div>
+              <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {AUTOPILOT_UNIVERSE[account === "CTO" ? "CTO" : "PEA"].length + (account === "CTO" ? AUTOPILOT_UNIVERSE.PEA.length : 0)} instruments éligibles</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+          <button onClick={runAnalysis} disabled={running}
+            style={{ padding: "10px 20px", borderRadius: "12px", background: running ? C.inkSubtle : "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
+            {running ? "⟳ Analyse en cours…" : "⚡ Lancer l'analyse"}
+          </button>
+          {result?.generatedAt && <span style={{ fontSize: "10px", color: C.inkSubtle }}>Dernière analyse : {new Date(result.generatedAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+        </div>
+      </div>
+
+      {/* ── Étape en cours ── */}
+      {running && step && (
+        <div style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.15)`, borderRadius: "14px", padding: "16px 20px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ width: "20px", height: "20px", border: `3px solid ${C.navy}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />
+          <span style={{ fontSize: "13px", fontWeight: "600", color: C.navy }}>{step}</span>
+        </div>
+      )}
+
+      {/* ── Erreur ── */}
+      {error && (
+        <div style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "14px", padding: "14px 18px", marginBottom: "16px", color: C.red, fontSize: "13px", fontWeight: "600" }}>
+          ⚠ {error}
+        </div>
+      )}
+
+      {/* ── Résultat ── */}
+      {result && !running && (
+        <>
+          {/* Résumé + score */}
+          <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "18px 20px", marginBottom: "16px", boxShadow: shadow.card }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>Contexte marché</div>
+                <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.6 }}>{result.resume}</div>
+              </div>
+              {result.score_marche != null && (
+                <div style={{ textAlign: "center", flexShrink: 0 }}>
+                  <div style={{ fontSize: "28px", fontWeight: "800", color: scoreColor(result.score_marche), lineHeight: 1 }}>{result.score_marche}<span style={{ fontSize: "14px", color: C.inkSubtle }}>/10</span></div>
+                  <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600", marginTop: "2px" }}>Score marché</div>
+                </div>
+              )}
+            </div>
+            {result.alertes_portefeuille?.length > 0 && (
+              <div style={{ marginTop: "12px", borderTop: `1px solid ${C.border}`, paddingTop: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                {result.alertes_portefeuille.map((a, i) => (
+                  <div key={i} style={{ fontSize: "12px", color: "#C8972A", fontWeight: "600", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>⚠</span><span>{a}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Opportunités */}
+          <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>
+            Opportunités détectées · {result.opportunites?.length || 0}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {(result.opportunites || []).map((op, i) => (
+              <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: shadow.card, ...blurStyle }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
+                  {/* Gauche */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "4px" }}>
+                      <span style={{ fontSize: "14px", fontWeight: "800", color: C.ink }}>{op.nom}</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, background: C.snowOff, borderRadius: "4px", padding: "1px 6px" }}>{op.symbol}</span>
+                      {op.dans_portefeuille && <span style={{ fontSize: "10px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px" }}>En portefeuille</span>}
+                      <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle }}>{op.secteur}</span>
+                    </div>
+                    <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.6, marginBottom: "8px" }}>{op.rationale}</div>
+                    <div style={{ fontSize: "11px", fontWeight: "600", color: "#C8972A", background: "rgba(200,151,42,0.1)", borderRadius: "6px", padding: "4px 10px", display: "inline-block" }}>⚡ {op.catalyseur}</div>
+                  </div>
+                  {/* Droite */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0, minWidth: "110px" }}>
+                    <span style={{ fontSize: "20px", fontWeight: "800", color: actionColor(op.action), letterSpacing: "-0.03em" }}>{op.action}</span>
+                    <span style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>{op.prix ? fmtEur(op.prix) : "—"}</span>
+                    <span style={{ fontSize: "11px", color: op.var_jour >= 0 ? C.green : C.red, fontWeight: "600" }}>{op.var_jour >= 0 ? "+" : ""}{op.var_jour}% auj.</span>
+                  </div>
+                </div>
+                {/* Footer métriques */}
+                <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
+                  {[
+                    { label: "Risque",    val: op.risque,    color: riskColor(op.risque) },
+                    { label: "Horizon",   val: op.horizon,   color: C.inkMuted },
+                    { label: "Allocation",val: `${op.allocation_pct}%`, color: C.navy },
+                    { label: "Montant",   val: fmtEur(op.montant_suggere), color: C.ink },
+                    { label: "Δ bas 52s", val: `+${op.dist_bas52}%`, color: op.dist_bas52 < 10 ? C.green : C.inkSubtle },
+                  ].map(m => (
+                    <div key={m.label} style={{ background: C.snowOff, borderRadius: "8px", padding: "5px 10px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <span style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "600", textTransform: "uppercase" }}>{m.label}</span>
+                      <span style={{ fontSize: "12px", fontWeight: "700", color: m.color }}>{m.val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {result.prochaine_revision && (
+            <div style={{ marginTop: "14px", textAlign: "center", fontSize: "11px", color: C.inkSubtle }}>
+              Prochaine révision suggérée : {result.prochaine_revision} · {result.enrichedCount} instruments scannés
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── État vide ── */}
+      {!result && !running && !error && (
+        <div style={{ textAlign: "center", padding: "60px 20px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", boxShadow: shadow.card }}>
+          <div style={{ fontSize: "40px", marginBottom: "14px" }}>🤖</div>
+          <div style={{ fontSize: "16px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Prêt à scanner le marché</div>
+          <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "360px", margin: "0 auto 20px" }}>
+            L'agent va récupérer les cours en temps réel sur {universe.length} instruments éligibles {account}, puis identifier les meilleures opportunités du moment.
+          </div>
+          <button onClick={runAnalysis}
+            style={{ padding: "12px 28px", borderRadius: "12px", background: "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+            ⚡ Lancer l'analyse
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 const NAV_GROUPS = [
   { items: [{ key: TABS.PORTFOLIO, label: "Positions", icon: <IconPositions/> }] },
@@ -9276,7 +9622,8 @@ const NAV_GROUPS = [
     { key: TABS.SETTINGS, label: "Paramètres",          icon: <IconGear/> },
   ]},
   { label: "IA", featured: true, items: [
-    { key: TABS.CHAT, label: "Conseiller Privé", icon: <IconChat/> },
+    { key: TABS.CHAT,      label: "Conseiller Privé", icon: <IconChat/> },
+    { key: TABS.AUTOPILOT, label: "Autopilot IA",     icon: <IconTarget/> },
   ]},
 ];
 
@@ -11010,6 +11357,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             {activeTab === TABS.DCA        && <StratégieDCATab profil={profil} portfolioVersion={portfolioVersion} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} onSaveProfil={p => { setProfil(p); save("bourse_profil", p); }} account={account} />}
             {activeTab === TABS.OPERATIONS && <OperationsTab account={account} />}
             {activeTab === TABS.CHAT       && <ChatTab profil={profil} account={account} portfolioVersion={portfolioVersion} marketScores={marketScores} />}
+            {activeTab === TABS.AUTOPILOT  && <AutopilotIA account={account} profil={profil} hidden={hiddenValues} />}
             {activeTab === TABS.PROFIL     && <ProfilTab profil={profil} onChange={setProfil} />}
             {activeTab === TABS.SETTINGS   && <ParametresTab />}
           </div>
