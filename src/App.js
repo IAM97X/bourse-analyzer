@@ -9443,13 +9443,15 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       "risque": "Modéré",
       "horizon": "Moyen terme",
       "allocation_pct": 15,
-      "montant_suggere": 200,
+      "montant_suggere": 1229,
       "dans_portefeuille": false
     }
   ],
   "alertes_portefeuille": [],
   "prochaine_revision": "Dans 7 jours"
-}`;
+}
+
+RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si prix > ${dcaMensuel}€ : montant = 1 titre = prix. Si prix ≤ ${dcaMensuel}€ : montant = floor(${dcaMensuel}/prix) × prix. Jamais en dessous du prix d'un titre.`;
 
       const parsed = await callClaude(system, userMsg, true, 3, true, 4000);
       if (!parsed || typeof parsed !== "object") throw new Error("Réponse IA non structurée.");
@@ -9551,7 +9553,13 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
               const acColor = actionColor(ac);
               const isExpanded = expanded[i];
               const dcaMensuel = profil?.dcaMensuel || 200;
-              const montant = op.montant_suggere && op.montant_suggere > 0 ? op.montant_suggere : dcaMensuel;
+              const prix = op.prix || 0;
+              // Nombre de titres entiers achetables avec le budget cible (min 1)
+              const budgetCible = Math.max(dcaMensuel, 200);
+              const nbTitres = prix > 0 ? Math.max(1, Math.floor(budgetCible / prix)) : 1;
+              const montant = op.montant_suggere && op.montant_suggere >= prix && op.montant_suggere > 0
+                ? op.montant_suggere
+                : prix > 0 ? nbTitres * prix : budgetCible;
               const catalyseurDisplay = op.catalyseur && op.catalyseur.length > 55 ? op.catalyseur.slice(0, 52) + "…" : op.catalyseur;
               return (
                 <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: shadow.card, ...blurStyle }}>
@@ -9589,7 +9597,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
                       {[
                         { label: "Risque",    val: op.risque,   color: riskColor(op.risque) },
                         { label: "Horizon",   val: op.horizon,  color: C.inkMuted },
-                        { label: "Montant",   val: fmtEur(montant), color: C.ink },
+                        { label: "Montant",   val: `${fmtEur(montant)} · ${nbTitres} titre${nbTitres > 1 ? "s" : ""}`, color: C.ink },
                         { label: "Δ bas 52s", val: op.dist_bas52 != null ? `+${op.dist_bas52}%` : "—", color: (op.dist_bas52 || 0) < 10 ? C.green : C.inkSubtle },
                       ].map(m => (
                         <div key={m.label} style={{ background: C.snowOff, borderRadius: "6px", padding: "4px 10px" }}>
