@@ -9536,11 +9536,20 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-          <button onClick={runAnalysis} disabled={running}
+          <button onClick={() => { if (window.confirm("Cette analyse consomme environ 0,15 à 0,25 $ de crédits API (recherches web + IA).\n\nConseil : lancez-la 1 à 2 fois par semaine maximum, les opportunités n'évoluent pas en quelques heures.\n\nConfirmer le lancement ?")) runAnalysis(); }} disabled={running}
             style={{ padding: "10px 20px", borderRadius: "12px", background: running ? C.inkSubtle : "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
             {running ? "⟳ Analyse en cours…" : "⚡ Lancer l'analyse"}
           </button>
           {result?.generatedAt && <span style={{ fontSize: "10px", color: C.inkSubtle }}>Dernière analyse : {new Date(result.generatedAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+        </div>
+      </div>
+
+      {/* ── Bandeau coût API ── */}
+      <div style={{ background: "rgba(200,151,42,0.07)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "10px 16px", marginBottom: "16px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
+        <span style={{ fontSize: "14px", flexShrink: 0, marginTop: "1px" }}>💡</span>
+        <div style={{ fontSize: "11px", color: "#7A5A10", lineHeight: 1.6 }}>
+          <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,15–0,25 $ en crédits Anthropic (recherches web en temps réel).<br />
+          Conseil : lancez l'Autopilot <strong>1 à 2 fois par semaine</strong> maximum. Les opportunités de marché n'évoluent pas en quelques heures.
         </div>
       </div>
 
@@ -9713,7 +9722,7 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
           <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "360px", margin: "0 auto 20px" }}>
             L'agent scanne {universe.length} instruments {account} adaptés à votre profil {({ prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" })[risque]} et identifie les meilleures opportunités en temps réel.
           </div>
-          <button onClick={runAnalysis}
+          <button onClick={() => { if (window.confirm("Cette analyse consomme environ 0,15 à 0,25 $ de crédits API.\n\nConseil : 1 à 2 fois par semaine maximum.\n\nConfirmer ?")) runAnalysis(); }}
             style={{ padding: "12px 28px", borderRadius: "12px", background: "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
             ⚡ Lancer l'analyse
           </button>
