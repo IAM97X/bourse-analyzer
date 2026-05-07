@@ -9493,7 +9493,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 RÈGLE ACTION : utilise UNIQUEMENT ces 5 valeurs pour le champ "action" : ACHETER (opportunité immédiate), RENFORCER (position existante à étoffer), SURVEILLER (intéressant mais attendre un meilleur point d'entrée), ALLÉGER (prendre des profits), ÉVITER (conditions défavorables). Interdit : ACCUMULER, CONSERVER, HOLD, BUY ou tout autre libellé.
 RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si prix > ${dcaMensuel}€ : montant = 1 titre = prix. Si prix ≤ ${dcaMensuel}€ : montant = floor(${dcaMensuel}/prix) × prix. Jamais en dessous du prix d'un titre.`;
 
-      const parsed = await callClaude(system, userMsg, true, 2, true, 2000, CLAUDE_MODELS.fast);
+      const parsed = await callClaude(system, userMsg, true, 2, true, 3000, CLAUDE_MODELS.fast);
       if (!parsed || typeof parsed !== "object") throw new Error("Réponse IA non structurée.");
       const final = { ...parsed, generatedAt: new Date().toISOString(), enrichedCount: universe.length };
       setResult(final);
@@ -9553,9 +9553,15 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
       )}
 
       {/* ── Erreur ── */}
-      {error && (
+      {error && !result && (
         <div style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "14px", padding: "14px 18px", marginBottom: "16px", color: C.red, fontSize: "13px", fontWeight: "600" }}>
           ⚠ {error}
+        </div>
+      )}
+      {error && result && (
+        <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 14px", marginBottom: "12px", fontSize: "11px", color: C.inkSubtle, display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ color: "#C8972A" }}>⚠</span>
+          Nouvelle analyse échouée — résultats précédents affichés. Relancez l'analyse.
         </div>
       )}
 
@@ -9591,7 +9597,7 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
                 const titre  = a?.titre  || a?.nom    || "";
                 const alerte = a?.alerte || a?.message || a?.detail || "";
                 const action = a?.action || "";
-                const actionCol = action === "ÉVITER" ? C.red : action === "SURVEILLER" ? "#6366F1" : "#966F1A";
+                const actionCol = action === "ÉVITER" ? C.red : action === "SURVEILLER" ? "#6366F1" : action === "RÉÉQUILIBRER" ? C.navy : "#966F1A";
                 return (
                   <div key={i} style={{ borderLeft: "3px solid rgba(200,151,42,0.4)", paddingLeft: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
