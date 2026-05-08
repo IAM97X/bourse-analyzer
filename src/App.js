@@ -10825,8 +10825,7 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
       ...(s.assistantMsg ? [{ role: "assistant", content: s.assistantMsg }] : []),
     ]).concat({ role: "user", content: userText });
     try {
-      const needsSearch = /isin|cours actuel|prix actuel|cotation|combien vaut|cote aujourd|ticker|cherche.*etf|trouve.*etf|trouve.*action/i.test(userText);
-      const raw = await callClaudeConversation(buildSystemPrompt(), apiMsgs, 3, needsSearch);
+      const raw = await callClaudeConversation(buildSystemPrompt(), apiMsgs, 3, true);
       const { cleanReply, terms } = parseAiTerms(raw);
       setSessions(prev => {
         const updated = prev.map(s => s.id === sid ? { ...s, assistantMsg: cleanReply, terms } : s);
