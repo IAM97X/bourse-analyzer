@@ -10521,7 +10521,7 @@ Règles strictes :
                     {m.content}
                   </div>
                 ) : (
-                  <div style={{ position: "relative", maxWidth: "90%" }}>
+                  <div style={{ maxWidth: "90%", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                     <div style={{
                       padding: "14px 16px",
                       borderRadius: "4px 16px 16px 16px",
@@ -10532,7 +10532,7 @@ Règles strictes :
                       {renderAIMarkdown(m.content)}
                     </div>
                     <button onClick={() => navigator.clipboard?.writeText(m.content)} title="Copier"
-                      style={{ position: "absolute", top: "8px", right: "8px", width: "32px", height: "32px", borderRadius: "8px", border: `1px solid ${C.border}`, background: C.bg, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card }}>
+                      style={{ alignSelf: "flex-end", marginTop: "4px", width: "32px", height: "32px", borderRadius: "8px", border: `1px solid ${C.border}`, background: C.bg, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     </button>
                   </div>
@@ -10690,6 +10690,8 @@ ${opsLine}
 ${scoresLine}
 
 STRATÉGIE DCA DE L'INVESTISSEUR : le DCA mensuel (${profil?.dcaMensuel || 0}€/mois) est EXCLUSIVEMENT réservé aux ETF (Amundi, Lyxor, iShares, etc.). Les actions individuelles (small caps, mid caps, grandes capitalisations) ne font JAMAIS l'objet de DCA — ni dans le plan, ni dans l'explication, ni dans la logique présentée. Pour les actions individuelles, parler uniquement d'"achat opportuniste", de "renforcement ponctuel" ou d'"achat au comptant" — JAMAIS de DCA. Si l'utilisateur pose une question sur son DCA, réorienter systématiquement vers les ETF.
+
+${account === "PEA" ? `RÈGLE ABSOLUE PEA : l'utilisateur est dans son PEA. Ne JAMAIS recommander un instrument non éligible au PEA. Sont INTERDITS dans ce contexte : actions américaines (AAPL, NVDA, TSLA, etc.), ETF domiciliés hors UE (Vanguard FTSE, iShares IE sans équivalent PEA, etc.), obligations, fonds non UCITS, cryptos. Sont AUTORISÉS : actions cotées sur Euronext Paris/Amsterdam/Bruxelles/Lisbonne, ETF UCITS éligibles PEA (Amundi PEA, Lyxor PEA, etc.), actions européennes hors France si éligibles via UCITS. Si l'utilisateur demande un avis sur un instrument non éligible, lui signaler clairement et proposer l'équivalent PEA si disponible.` : `COMPTE CTO : tous les instruments sont accessibles (actions US, ETF monde, etc.).`}
 
 RÈGLES : réponds en français, sois concis et direct, utilise les données ci-dessus. Markdown autorisé. Tu n'es pas conseiller financier agréé — toujours rappeler que les décisions appartiennent à l'investisseur.
 
