@@ -1115,14 +1115,16 @@ async function callClaudeHaiku(system, userMessage) {
 }
 
 // ─── Chat conversationnel multi-tour (retourne du texte brut, pas JSON) ──────
-async function callClaudeConversation(system, messages, _retries = 3) {
+async function callClaudeConversation(system, messages, _retries = 3, useSearch = false) {
   const headers = {
     "Content-Type": "application/json",
     "x-api-key": ANTHROPIC_API_KEY,
     "anthropic-version": "2023-06-01",
     "anthropic-dangerous-direct-browser-access": "true",
   };
-  const bodyObj = { model: CLAUDE_MODELS.fast, max_tokens: 1500, system, messages };
+  if (useSearch) headers["anthropic-beta"] = "web-search-2025-03-05";
+  const bodyObj = { model: useSearch ? CLAUDE_MODELS.standard : CLAUDE_MODELS.fast, max_tokens: useSearch ? 2000 : 1500, system, messages };
+  if (useSearch) bodyObj.tools = [{ type: "web_search_20250305", name: "web_search" }];
   for (let attempt = 0; attempt < _retries; attempt++) {
     let res, data;
     try {
@@ -10695,11 +10697,12 @@ STRATÉGIE DCA DE L'INVESTISSEUR : le DCA mensuel (${profil?.dcaMensuel || 0}€
 
 ${account === "PEA" ? `RÈGLE ABSOLUE PEA : l'utilisateur est dans son PEA. Ne JAMAIS recommander un instrument non éligible au PEA. Sont INTERDITS dans ce contexte : actions américaines (AAPL, NVDA, TSLA, etc.), ETF domiciliés hors UE (Vanguard FTSE, iShares IE sans équivalent PEA, etc.), obligations, fonds non UCITS, cryptos. Sont AUTORISÉS : actions cotées sur Euronext Paris/Amsterdam/Bruxelles/Lisbonne, ETF UCITS éligibles PEA (Amundi PEA, Lyxor PEA, etc.), actions européennes hors France si éligibles via UCITS. Si l'utilisateur demande un avis sur un instrument non éligible, lui signaler clairement et proposer l'équivalent PEA si disponible.` : `COMPTE CTO : tous les instruments sont accessibles (actions US, ETF monde, etc.).`}
 
-RÈGLE ABSOLUE — ZÉRO ISIN, ZÉRO CHIFFRE INVENTÉ :
-- ISIN : tu n'écris JAMAIS un code ISIN. Ni en exemple, ni en suggestion, ni "à confirmer". Les ISINs que tu génères sont statistiquement faux même quand tu crois les connaître. Interdiction totale et absolue d'écrire un ISIN. Si l'utilisateur demande un ISIN, tu réponds : "Je ne fournis pas d'ISIN — cherche le nom exact sur Boursorama ou JustETF."
-- Cours / prix / rendements passés / performances : tu n'inventes aucun chiffre que tu ne peux pas lire dans les données du portefeuille ci-dessus. Si tu ne sais pas, tu dis "je ne sais pas".
-- Noms d'ETF : tu peux citer des noms d'ETF connus (ex : "Amundi MSCI World UCITS ETF") mais sans garantir qu'ils correspondent à un ISIN précis. Dirige systématiquement l'utilisateur vers Boursorama ou JustETF pour confirmer l'éligibilité PEA et le code exact.
-- Principe général : mieux vaut une réponse incomplète et honnête qu'une réponse complète et fausse.
+RÈGLE ABSOLUE — ZÉRO INVENTION :
+- ISIN depuis ta mémoire : INTERDIT. Tes ISINs mémorisés sont statistiquement faux. Tu n'écris JAMAIS un ISIN issu de ta mémoire d'entraînement, même avec "à confirmer".
+- ISIN via web_search : si tu as accès à l'outil web_search, utilise-le pour rechercher l'ISIN exact sur Euronext (euronext.com) ou NYSE pour les actions US. Cite ta source. Ne donne l'ISIN que si tu l'as trouvé via une vraie recherche web, pas depuis ta mémoire.
+- Cours / prix / rendements passés : n'invente aucun chiffre absent des données portefeuille ci-dessus. Utilise web_search si disponible pour les cours actuels.
+- Si web_search n'est pas disponible et que l'utilisateur demande un ISIN ou cours : dis-lui explicitement "Je n'ai pas accès à la recherche web pour ce message — cherche sur Boursorama ou JustETF."
+- Principe : mieux vaut une réponse incomplète et honnête qu'une réponse complète et fausse.
 
 RÈGLES : réponds en français, sois concis et direct, utilise les données ci-dessus. Markdown autorisé. Tu n'es pas conseiller financier agréé — toujours rappeler que les décisions appartiennent à l'investisseur.
 
@@ -10822,7 +10825,8 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
       ...(s.assistantMsg ? [{ role: "assistant", content: s.assistantMsg }] : []),
     ]).concat({ role: "user", content: userText });
     try {
-      const raw = await callClaudeConversation(buildSystemPrompt(), apiMsgs);
+      const needsSearch = /isin|cours actuel|prix actuel|cotation|combien vaut|cote aujourd|ticker|cherche.*etf|trouve.*etf|trouve.*action/i.test(userText);
+      const raw = await callClaudeConversation(buildSystemPrompt(), apiMsgs, 3, needsSearch);
       const { cleanReply, terms } = parseAiTerms(raw);
       setSessions(prev => {
         const updated = prev.map(s => s.id === sid ? { ...s, assistantMsg: cleanReply, terms } : s);
