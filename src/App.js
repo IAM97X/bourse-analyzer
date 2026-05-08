@@ -8828,7 +8828,7 @@ function MarketStatusBar() {
             <div>
               <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>{cfg.nom}</div>
               <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: open ? C.green : C.inkSubtle, display: "inline-block", flexShrink: 0 }} />
+                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: open ? C.green : C.inkSubtle, display: "inline-block", flexShrink: 0, ...(open ? { animation: "marketPulse 1.6s ease-in-out infinite" } : {}) }} />
                 <span style={{ fontSize: "10px", fontWeight: "600", color: open ? C.green : C.inkSubtle }}>{reason}</span>
                 <span style={{ fontSize: "10px", color: C.inkSubtle }}>· {hhmm}</span>
               </div>
@@ -10532,7 +10532,7 @@ Règles strictes :
                       {renderAIMarkdown(m.content)}
                     </div>
                     <button onClick={() => navigator.clipboard?.writeText(m.content)} title="Copier"
-                      style={{ position: "absolute", top: "6px", right: "6px", width: "22px", height: "22px", borderRadius: "6px", border: `1px solid ${C.border}`, background: C.bg, color: C.inkMuted, fontSize: "11px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      style={{ position: "absolute", top: "8px", right: "8px", width: "32px", height: "32px", borderRadius: "8px", border: `1px solid ${C.border}`, background: C.bg, color: C.ink, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card }}>
                       ⎘
                     </button>
                   </div>
@@ -11060,7 +11060,7 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
                           <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>{formatMessage(sess.assistantMsg)}</ul>
                         </div>
                         <button onClick={() => navigator.clipboard?.writeText(sess.assistantMsg)} title="Copier la réponse"
-                          style={{ position: "absolute", top: "6px", right: "6px", width: "22px", height: "22px", borderRadius: "6px", border: `1px solid ${C.border}`, background: C.bg, color: C.inkMuted, fontSize: "11px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: hoveredSession === sess.id ? 1 : 0, transition: "opacity 0.15s" }}>
+                          style={{ position: "absolute", top: "8px", right: "8px", width: "32px", height: "32px", borderRadius: "8px", border: `1px solid ${C.border}`, background: C.bg, color: C.ink, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card, opacity: hoveredSession === sess.id ? 1 : 0, transition: "opacity 0.15s" }}>
                           ⎘
                         </button>
                       </div>
