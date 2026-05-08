@@ -8887,26 +8887,8 @@ function DashboardBar({ onTabChange, hidden, profil, account = "PEA" }) {
     return `M ${pts.join(" L ")}`;
   })();
 
-  // Statut marché (Euronext Paris : lun-ven 9h-17h30, hors jours fériés)
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const cetOffset = now.getTimezoneOffset() / -60; // local UTC offset in hours
-  const cetHour   = now.getHours() + (cetOffset - (now.getMonth() >= 3 && now.getMonth() <= 9 ? 2 : 1)); // approx CET/CEST
-  const mm = now.getMonth() + 1, dd = now.getDate();
-  // Jours fériés fixes Euronext Paris
-  const isFerie = (
-    (mm === 1  && dd === 1)  || // Nouvel An
-    (mm === 5  && dd === 1)  || // Fête du Travail
-    (mm === 5  && dd === 8)  || // Victoire 1945
-    (mm === 7  && dd === 14) || // Fête Nationale
-    (mm === 8  && dd === 15) || // Assomption
-    (mm === 11 && dd === 1)  || // Toussaint
-    (mm === 11 && dd === 11) || // Armistice
-    (mm === 12 && dd === 25) || // Noël
-    (mm === 12 && dd === 26)    // Boxing Day (Euronext fermé)
-  );
-  const isOpen = !isFerie && dayOfWeek >= 1 && dayOfWeek <= 5 && cetHour >= 9 && (cetHour < 17 || (cetHour === 17 && now.getMinutes() <= 30));
-  const marketLabel = isOpen ? "Ouvert" : "Fermé";
+  // Statut Euronext Paris — source unique : getMarketStatus (calendrier Fortuneo)
+  const { open: isOpen, reason: marketLabel } = getMarketStatus(MARKETS_CFG.find(m => m.id === "paris"));
   const marketColor = isOpen ? C.green : C.red;
 
   const blurStyle = hidden ? { filter: "blur(7px)", userSelect: "none", pointerEvents: "none" } : {};
