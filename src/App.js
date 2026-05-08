@@ -1,66 +1,13 @@
 import { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from "react";
 import ReactDOM from "react-dom";
-// pdfjs chargé en lazy (import dynamique) pour réduire le bundle initial
-import { createClient } from "@supabase/supabase-js";
-// workerSrc configuré dynamiquement lors du premier chargement PDF
 import { C, shadow } from "./constants/theme";
 import { SYSTEM_PROMPT, PORTFOLIO_PROMPT, ETF_DCA_PROMPT, MARKET_SCORING_PROMPT, AVIS_PARSE_PROMPT, SUGGESTIONS } from "./constants/prompts";
 import { MARKETS_CFG, MARKET_HOLIDAYS, getMarketStatus } from "./constants/markets";
 import { COURTIERS, COURTIERS_DETAIL, calcFraisCourtage, tauxFraisCourtage } from "./constants/courtiers";
 import { AUTOPILOT_UNIVERSE, fetchYahooPrices } from "./constants/universe";
+import { save, load, supabase, setSyncUserId, pullFromCloud } from "./lib/storage";
+import { delay, CLAUDE_MODELS, getKey, ANTHROPIC_API_KEY, GOOGLE_API_KEY, GOOGLE_CX, ALPHAVANTAGE_KEY, hasClaudeKey, CLAUDE_ENDPOINT, enqueueApi, callClaude, callClaudeHaiku, callClaudeConversation, callGoogleSearch } from "./lib/api";
 
-// ─── Supabase ─────────────────────────────────────────────────────────────────
-const SB_URL  = process.env.REACT_APP_SUPABASE_URL  || "";
-const SB_KEY  = process.env.REACT_APP_SUPABASE_ANON_KEY || "";
-const supabase = SB_URL && SB_KEY ? createClient(SB_URL, SB_KEY) : null;
-
-// Clés à synchroniser dans le cloud (hors clés API sensibles)
-const SYNC_KEYS = [
-  "bourse_portfolio", "bourse_profil", "bourse_dividendes_log",
-  "bourse_pea_ouverture", "bourse_cto_ouverture", "bourse_account",
-  "bourse_dark", "bourse_compact", "bourse_hidden", "bourse_avatar_emoji",
-  "bourse_sidebar_collapsed", "bourse_active_tab",
-  "bourse_avis_operes", "bourse_snapshots", "bourse_dividendes",
-  "bourse_api_keys", "bourse_impot_sortie", "bourse_local_name",
-];
-
-// userId courant pour la sync (module-level mutable ref)
-let _syncUserId = null;
-const _syncQueue = {};
-
-async function pushToCloud(userId, key, value) {
-  if (!supabase || !userId) return;
-  try {
-    await supabase.from("user_data").upsert(
-      { user_id: userId, key, value, updated_at: new Date().toISOString() },
-      { onConflict: "user_id,key" }
-    );
-  } catch {}
-}
-
-function scheduleSync(key, value) {
-  if (!_syncUserId || !SYNC_KEYS.includes(key)) return;
-  clearTimeout(_syncQueue[key]);
-  _syncQueue[key] = setTimeout(() => pushToCloud(_syncUserId, key, value), 1500);
-}
-
-async function pullFromCloud(userId) {
-  if (!supabase || !userId) return;
-  try {
-    const { data } = await supabase
-      .from("user_data").select("key, value").eq("user_id", userId);
-    if (data) data.forEach(({ key, value }) => {
-      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
-    });
-  } catch {}
-}
-
-// ─── Storage ──────────────────────────────────────────────────────────────────
-const load = (key, def) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; } };
-const save = (key, val) => {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
-  scheduleSync(key, val);
-};
 
 
 // ─── Mobile context ───────────────────────────────────────────────────────────
@@ -602,8 +549,6 @@ function fmtPV(eur, pct) {
   const sign = eur >= 0 ? "+" : "";
   return `${sign}${fmtEur(eur).replace(" €", "")} € (${fmtPct(pct)})`;
 }
-const delay = (ms) => new Promise(r => setTimeout(r, ms));
-
 // ─── Price cache (TTL = 15 min) ───────────────────────────────────────────────
 const PRICE_TTL = 15 * 60 * 1000;
 function getCachedCours(key) {
@@ -647,12 +592,6 @@ function sanitizePositions(positions) {
   }).filter(Boolean);
 }
 
-// Modèles Claude — changer ici pour mettre à jour toute l'app
-const CLAUDE_MODELS = {
-  fast:     "claude-haiku-4-5-20251001",
-  standard: "claude-sonnet-4-6",
-};
-
 // Helper corsproxy avec proxy de secours
 const PROXIES = [
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
@@ -667,30 +606,6 @@ async function fetchWithProxy(url, opts = {}) {
   }
   throw new Error("Données de marché indisponibles (proxies CORS inaccessibles)");
 }
-
-// Clés API : localStorage d'abord (par utilisateur), fallback sur .env
-const _ENV = {
-  anthropic:    process.env.REACT_APP_ANTHROPIC_API_KEY    || "",
-  google:       process.env.REACT_APP_GOOGLE_API_KEY       || "",
-  cx:           process.env.REACT_APP_GOOGLE_CX            || "",
-  alphavantage: process.env.REACT_APP_ALPHAVANTAGE_KEY     || "",
-};
-const getKey = (name) => {
-  try { const k = JSON.parse(localStorage.getItem("bourse_api_keys") || "{}"); return k[name] || _ENV[name] || ""; }
-  catch { return _ENV[name] || ""; }
-};
-// Compatibilité avec le reste du code (lecture fraîche à chaque appel via getter)
-const ANTHROPIC_API_KEY    = { toString() { return getKey("anthropic"); } };
-const GOOGLE_API_KEY       = { toString() { return getKey("google"); } };
-const GOOGLE_CX            = { toString() { return getKey("cx"); } };
-const ALPHAVANTAGE_KEY     = { toString() { return getKey("alphavantage"); } };
-const hasClaudeKey = () => !!getKey("anthropic");
-
-// En production (Vercel), les appels Anthropic passent par /api/claude (clé côté serveur).
-// En dev, on appelle directement l'API (setupProxy gère le CORS).
-const CLAUDE_ENDPOINT = process.env.NODE_ENV === "production"
-  ? "/api/claude"
-  : "https://api.anthropic.com/v1/messages";
 
 // Cache des symboles Alpha Vantage (ISIN → symbol) pour éviter les appels répétés
 const _avSymbolCache = {};
@@ -816,30 +731,6 @@ function yahooFinanceUrl(pos) {
   return `https://fr.finance.yahoo.com/recherche?p=${encodeURIComponent(pos.nom)}`;
 }
 
-// File d'attente globale — un seul appel API à la fois
-let _apiQueue = Promise.resolve();
-function enqueueApi(fn) {
-  _apiQueue = _apiQueue.then(fn, fn);
-  return _apiQueue;
-}
-
-// ─── Google Custom Search — recherche web gratuite (100/jour) ────────────────
-async function callGoogleSearch(query, nbResults = 5) {
-  const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&q=${encodeURIComponent(query)}&num=${nbResults}&lr=lang_fr`;
-  let res, data;
-  try {
-    res  = await fetch(url);
-    data = await res.json();
-  } catch (netErr) {
-    throw new Error(`Réseau Google Search : ${netErr.message}`);
-  }
-  if (data.error) throw new Error(data.error.message || "Erreur Google Search");
-  const items = data.items || [];
-  if (!items.length) return `Aucun résultat Google pour : ${query}`;
-  return items.map((it, i) =>
-    `[${i + 1}] ${it.title}\n${it.link}\n${it.snippet || ""}`
-  ).join("\n\n");
-}
 
 // ─── Yahoo Finance — données analystes (consensus, objectif de cours) ────────
 async function fetchYahooAnalysts(ticker) {
@@ -892,174 +783,6 @@ function formatExternalContext(nom, analysts, news) {
   return lines.join("\n");
 }
 
-// ─── Claude — analyse + structuration JSON ───────────────────────────────────
-// skipChaining=true → Claude direct avec web_search (pour les prix live)
-// skipChaining=false (défaut) → Google+Claude chaining si clés dispo (analyse)
-async function callClaude(system, userMessage, useSearch = false, _retries = 4, skipChaining = false, maxTokens = null, model = null) {
-  if (useSearch && getKey("google") && getKey("cx") && !skipChaining) {
-    return callClaudeChained(system, userMessage);
-  }
-  const bodyObj = { model: model || CLAUDE_MODELS.standard, max_tokens: maxTokens || (useSearch ? 4000 : 1500), system, messages: [{ role: "user", content: userMessage }] };
-  if (useSearch) bodyObj.tools = [{ type: "web_search_20250305", name: "web_search" }];
-  const headers = { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
-  if (useSearch) headers["anthropic-beta"] = "web-search-2025-03-05";
-  for (let attempt = 0; attempt < _retries; attempt++) {
-    let res, data;
-    try {
-      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
-      data = await res.json();
-    } catch (networkErr) {
-      if (attempt < _retries - 1) { await delay(2000 * (attempt + 1)); continue; }
-      throw new Error(`Erreur réseau : ${networkErr.message}`);
-    }
-    if (res.status === 429 || data?.error?.type === "rate_limit_error") {
-      if (attempt < _retries - 1) { await delay(8000 * (attempt + 1)); continue; }
-      throw new Error(`Limite de taux (429). Réessayez dans 1 minute.`);
-    }
-    if (res.status === 500 || res.status === 529) {
-      if (attempt < _retries - 1) { await delay(5000 * (attempt + 1)); continue; }
-      const err = new Error("Service temporairement indisponible — Réessayez dans quelques instants.");
-      err.retryable = true; throw err;
-    }
-    if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez REACT_APP_ANTHROPIC_API_KEY dans .env`);
-    if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
-    const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
-    if (!text) throw new Error("Réponse vide.");
-    const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
-    if (s === -1 || e === -1) throw new Error("JSON introuvable dans la réponse.");
-    const jsonStr = clean.substring(s, e + 1);
-    try {
-      return JSON.parse(jsonStr);
-    } catch {
-      // Tentative de réparation : supprimer trailing comma, fermer les tableaux/objets tronqués
-      let repaired = jsonStr
-        .replace(/,\s*([\]}])/g, "$1")   // trailing commas
-        .replace(/[\x00-\x1F\x7F]/g, " "); // control characters
-      // Si JSON tronqué (dernière opération incomplète), tenter de fermer proprement
-      try { return JSON.parse(repaired); } catch {
-        // Couper avant la dernière virgule dans "operations":[...] et refermer
-        const lastComma = repaired.lastIndexOf(",");
-        if (lastComma > 0) {
-          const truncated = repaired.substring(0, lastComma) + "]}";
-          try { return JSON.parse(truncated); } catch { /* ignore */ }
-        }
-        throw new Error(`JSON Parse error: ${text.slice(0, 200)}`);
-      }
-    }
-  }
-  throw new Error("Nombre de tentatives maximum atteint.");
-}
-
-// ─── Haiku : modèle léger pour signaux marché (10x moins cher que Sonnet) ─────
-async function callClaudeHaiku(system, userMessage) {
-  const bodyObj = {
-    model: CLAUDE_MODELS.fast,
-    max_tokens: 2000,
-    system,
-    messages: [{ role: "user", content: userMessage }],
-  };
-  const headers = { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
-  for (let attempt = 0; attempt < 3; attempt++) {
-    let res, data;
-    try {
-      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
-      data = await res.json();
-    } catch (networkErr) {
-      if (attempt < 2) { await delay(3000); continue; }
-      throw new Error(`Erreur réseau : ${networkErr.message}`);
-    }
-    if (res.status === 429 || data?.error?.type === "rate_limit_error") {
-      if (attempt < 2) { await delay(10000 * (attempt + 1)); continue; }
-      throw new Error(`Limite de taux (429). Réessayez dans 1 minute.`);
-    }
-    if (res.status === 500 || res.status === 529) {
-      if (attempt < 2) { await delay(5000 * (attempt + 1)); continue; }
-      const err = new Error("Service temporairement indisponible — Réessayez dans quelques instants.");
-      err.retryable = true; throw err;
-    }
-    if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez REACT_APP_ANTHROPIC_API_KEY dans .env`);
-    if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
-    const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
-    if (!text) throw new Error("Réponse vide.");
-    const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
-    if (s === -1 || e === -1) throw new Error("JSON introuvable dans la réponse.");
-    return JSON.parse(clean.substring(s, e + 1));
-  }
-  throw new Error("Nombre de tentatives maximum atteint.");
-}
-
-// ─── Chat conversationnel multi-tour (retourne du texte brut, pas JSON) ──────
-async function callClaudeConversation(system, messages, _retries = 3) {
-  const headers = {
-    "Content-Type": "application/json",
-    "x-api-key": ANTHROPIC_API_KEY,
-    "anthropic-version": "2023-06-01",
-    "anthropic-dangerous-direct-browser-access": "true",
-  };
-  const bodyObj = { model: CLAUDE_MODELS.fast, max_tokens: 1500, system, messages };
-  for (let attempt = 0; attempt < _retries; attempt++) {
-    let res, data;
-    try {
-      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
-      data = await res.json();
-    } catch (networkErr) {
-      if (attempt < _retries - 1) { await delay(2000 * (attempt + 1)); continue; }
-      throw new Error(`Erreur réseau : ${networkErr.message}`);
-    }
-    if (res.status === 429 || data?.error?.type === "rate_limit_error") {
-      if (attempt < _retries - 1) { await delay(8000 * (attempt + 1)); continue; }
-      throw new Error(`Limite de taux (429). Réessayez dans 1 minute.`);
-    }
-    if (res.status === 500 || res.status === 529) {
-      if (attempt < _retries - 1) { await delay(5000 * (attempt + 1)); continue; }
-      throw new Error("Service temporairement indisponible — Réessayez dans quelques instants.");
-    }
-    if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez REACT_APP_ANTHROPIC_API_KEY dans .env`);
-    if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
-    const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
-    if (!text) throw new Error("Réponse vide.");
-    return text.trim();
-  }
-  throw new Error("Nombre de tentatives maximum atteint.");
-}
-
-// ─── Chaining : Google Search → Claude structure le JSON ─────────────────────
-async function callClaudeChained(system, userMessage) {
-  const [coursData, analyseData] = await Promise.all([
-    callGoogleSearch(`${userMessage} cours bourse`, 5).catch(() => ""),
-    callGoogleSearch(`${userMessage} analyse recommandation`, 5).catch(() => ""),
-  ]);
-  const rawData = [
-    coursData   && `=== COURS & ACTUALITÉS ===\n${coursData}`,
-    analyseData && `=== ANALYSES & RECOMMANDATIONS ===\n${analyseData}`,
-  ].filter(Boolean).join("\n\n") || "Aucune donnée collectée.";
-
-  // Étape 2 — Claude structure en JSON sans faire de recherche web (moins cher)
-  const structuredMsg = `Voici les résultats de recherche collectés via Google :
-
-${rawData}
-
-En te basant sur ces données, génère le JSON demandé. FORMAT PRIX : point décimal (ex: "32.140"). JSON valide sans markdown.`;
-  const bodyObj = {
-    model: CLAUDE_MODELS.standard,
-    max_tokens: 1500,
-    system,
-    messages: [{ role: "user", content: structuredMsg }]
-  };
-  const res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify(bodyObj) });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
-  const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-  const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
-  if (s === -1 || e === -1) throw new Error("JSON introuvable.");
-  return JSON.parse(clean.substring(s, e + 1));
-}
 
 // ─── App Logo SVG ─────────────────────────────────────────────────────────────
 function AppLogo({ size = 28 }) {
@@ -11474,7 +11197,7 @@ function AuthPage({ onSession }) {
       const { data, error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (err) { setError(err.message); setLoading(false); return; }
       const user = data.user;
-      _syncUserId = user.id;
+      setSyncUserId(user.id);
       await pullFromCloud(user.id);
       const name = user.user_metadata?.display_name || email.split("@")[0];
       localStorage.setItem("bourse_session", JSON.stringify({ name, since: Date.now(), uid: user.id }));
@@ -11498,7 +11221,7 @@ function AuthPage({ onSession }) {
         setInfo("Un email de confirmation a été envoyé. Cliquez sur le lien pour activer votre compte.");
         setMode("signin");
       } else if (data.user) {
-        _syncUserId = data.user.id;
+        setSyncUserId(data.user.id);
         localStorage.setItem("bourse_session", JSON.stringify({ name: displayName.trim(), since: Date.now(), uid: data.user.id }));
         setStep(2);
       }
@@ -11759,7 +11482,7 @@ export default function BourseAnalyzer() {
     // Récupérer la session Supabase active
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        _syncUserId = session.user.id;
+        setSyncUserId(session.user.id);
         const name = session.user.user_metadata?.display_name || session.user.email?.split("@")[0] || "Utilisateur";
         setUserName(name);
         await pullFromCloud(session.user.id);
@@ -11776,10 +11499,10 @@ export default function BourseAnalyzer() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_OUT") {
-        _syncUserId = null;
+        setSyncUserId(null);
         setState("auth");
       } else if (event === "TOKEN_REFRESHED" && session?.user) {
-        _syncUserId = session.user.id;
+        setSyncUserId(session.user.id);
       }
     });
     return () => subscription.unsubscribe();
@@ -11796,7 +11519,7 @@ export default function BourseAnalyzer() {
       if (session) await supabase.auth.signOut();
     }
     localStorage.removeItem("bourse_session");
-    _syncUserId = null;
+    setSyncUserId(null);
     setState("auth");
   };
 
