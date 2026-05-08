@@ -3,6 +3,11 @@ import ReactDOM from "react-dom";
 // pdfjs chargé en lazy (import dynamique) pour réduire le bundle initial
 import { createClient } from "@supabase/supabase-js";
 // workerSrc configuré dynamiquement lors du premier chargement PDF
+import { C, shadow } from "./constants/theme";
+import { SYSTEM_PROMPT, PORTFOLIO_PROMPT, ETF_DCA_PROMPT, MARKET_SCORING_PROMPT, AVIS_PARSE_PROMPT, SUGGESTIONS } from "./constants/prompts";
+import { MARKETS_CFG, MARKET_HOLIDAYS, getMarketStatus } from "./constants/markets";
+import { COURTIERS, COURTIERS_DETAIL, calcFraisCourtage, tauxFraisCourtage } from "./constants/courtiers";
+import { AUTOPILOT_UNIVERSE, fetchYahooPrices } from "./constants/universe";
 
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 const SB_URL  = process.env.REACT_APP_SUPABASE_URL  || "";
@@ -57,69 +62,6 @@ const save = (key, val) => {
   scheduleSync(key, val);
 };
 
-// ─── Design tokens — Fintech Minimalist · Deep Navy ──────────────────────────
-const C = {
-  // Text
-  ink:        "#111214",
-  inkSoft:    "#1E2A38",
-  inkMuted:   "#4A5568",
-  inkSubtle:  "#8896A8",
-
-  // Backgrounds
-  snow:       "#FFFFFF",
-  snowOff:    "#F8F9FA",
-  snowDim:    "#EDF0F4",
-
-  // Borders
-  border:     "rgba(17,18,20,0.07)",
-
-  // Gold
-  gold:       "#E6B800",
-  goldDark:   "#B8920A",
-  goldLight:  "rgba(255,215,0,0.10)",
-
-  // Primary
-  navy:       "#111214",
-  navyLight:  "rgba(17,18,20,0.05)",
-  paleBlue:   "rgba(30,58,95,0.08)",
-  navyPill:   "#1E3A5F",
-
-  // Green
-  green:      "#27AE60",
-  greenLight: "rgba(39,174,96,0.08)",
-  greenDark:  "#1E8449",
-
-  // Red
-  red:        "#E74C3C",
-  redLight:   "rgba(231,76,60,0.08)",
-
-  // Accent
-  accent:     "#1E3A5F",
-
-  // Card gradients
-  cardGrad:      "linear-gradient(150deg, #FFFFFF 0%, #EEF4FF 100%)",
-  cardGradGreen: "linear-gradient(150deg, #FFFFFF 0%, #EEFAF4 100%)",
-  cardGradGold:  "linear-gradient(150deg, #FFFFFF 0%, #FFF8EC 100%)",
-  cardGradRed:   "linear-gradient(150deg, #FFFFFF 0%, #FFF1EF 100%)",
-  cardGradPurp:  "linear-gradient(150deg, #FFFFFF 0%, #F4EEFF 100%)",
-
-  // ── Sidebar ──
-  sb:           "#F8F9FA",
-  sbBorder:     "rgba(17,18,20,0.07)",
-  sbText:       "#8896A8",
-  sbTextActive: "#111214",
-  sbHover:      "rgba(30,58,95,0.06)",
-  sbActive:     "rgba(30,58,95,0.09)",
-  sbAccent:     "#1E3A5F",
-};
-
-const shadow = {
-  card:  "0 4px 20px rgba(17,18,20,0.08), 0 1px 4px rgba(17,18,20,0.05)",
-  float: "0 8px 36px rgba(17,18,20,0.11), 0 2px 8px rgba(17,18,20,0.06)",
-  hover: "0 14px 44px rgba(30,58,95,0.22), 0 4px 14px rgba(17,18,20,0.08)",
-  gold:  "0 4px 20px rgba(255,215,0,0.28)",
-  pill:  "0 4px 16px rgba(30,58,95,0.38)",
-};
 
 // ─── Mobile context ───────────────────────────────────────────────────────────
 const MobileCtx = createContext(false);
@@ -272,44 +214,6 @@ const RISQUE_PCT = { prudent: 0.05, equilibre: 0.10, dynamique: 0.15, "tres-dyna
 const PROFIL_RANK = { prudent: 0, equilibre: 1, dynamique: 2, "tres-dynamique": 3 };
 const SURV_SECS  = 30 * 60;
 
-const SYSTEM_PROMPT = `Tu es un analyste financier expert. RÈGLE ABSOLUE : appelle en priorité web_search("[NOM] [ISIN] cours bourse site:msn.com") pour le cours temps réel. Si le cours est introuvable, appelle web_search("[NOM] [ISIN] cours site:zonebourse.com"). Pour les analyses et objectifs, appelle web_search("[NOM] [ISIN] analyse objectif site:zonebourse.com OR site:msn.com"). FORMAT PRIX : point décimal UNIQUEMENT (ex: "32.140", jamais "32,140" ni "32 140"). Si cours introuvable : "N/A". Réponds UNIQUEMENT en JSON valide sans markdown.
-{"nom":"...","isin":"...","secteur":"...","eligible_pea":true,"vue_ensemble":"...","contexte_marche":"...","performance":{"cours_actuel":"32.140","evolution_1an":"+5.2%","plus_haut_52s":"45.200","plus_bas_52s":"28.100"},"fondamentaux":{"per":"...","dividende":"...","capitalisation":"...","dette_nette":"..."},"points_forts":[],"points_vigilance":[],"valorisation":{"objectif_moyen":"40.000","objectif_haut":"50.000","objectif_bas":"30.000","nb_analystes":"...","potentiel":"...","appreciation":"..."},"timing":{"point_entree":"30.000","catalyseurs":[],"recommandation_timing":"..."},"verdict":{"signal":"ACHAT/RENFORCER/ATTENDRE/PRUDENCE/VENDRE","cible_12m":"42.000","justification":"..."}}`;
-
-const PORTFOLIO_PROMPT = `Analyste. JSON uniquement sans markdown.
-{"resume":"...","performance_globale":"...","diversification":{"secteurs":[{"nom":"...","poids":"..."}],"geographie":"...","concentration":"..."},"forces":[],"faiblesses":[],"coherence_profil":"...","recommandations":[],"opportunites":[],"verdict_global":"..."}`;
-
-const ETF_DCA_PROMPT = `Tu es un analyste financier expert en ETF et stratégie DCA. RÈGLES DE RECHERCHE PAR SOURCE :
-1) web_search("[NOM ETF] [ISIN] cours performance site:msn.com") → cours temps réel + performances + actualités.
-2) web_search("[NOM ETF] [ISIN] composition TER éligibilité PEA site:justetf.com") → données ETF : TER, composition géographique/sectorielle, dividende, éligibilité PEA.
-3) web_search("[NOM ETF] [ISIN] analyse site:msn.com OR site:zonebourse.com") → analyses financières et recommandations.
-4) web_search("[NOM ETF] [ISIN] analyse technique site:tradingview.com") → signaux techniques, tendance, supports. FORMAT PRIX : point décimal, jamais d'espace (ex: "5.360"). Réponds UNIQUEMENT en JSON valide sans markdown.
-{"nom":"...","isin":"...","emetteur":"...","indice_suivi":"...","eligible_pea":true,"ter":"0.20%","type":"ETF Monde/Sectoriel/Obligataire","vue_ensemble":"...","contexte_marche":"...","performance":{"cours_actuel":"5.360","evolution_1an":"+X%","evolution_3ans":"+X%","plus_haut_52s":"...","plus_bas_52s":"..."},"fondamentaux":{"capitalisation":"...","nb_composants":"...","dividende":"Capitalisant/Distribuant","devise":"EUR"},"repartition_geo":[{"zone":"Amérique du Nord","poids":"65%"},{"zone":"Europe","poids":"20%"},{"zone":"Asie","poids":"15%"}],"repartition_sectorielle":[{"secteur":"Technologie","poids":"25%"},{"secteur":"Finance","poids":"15%"}],"analyse_technique":{"tendance":"Haussière/Neutre/Baissière","support":"...","resistance":"...","rsi":"...","macd":"...","ma50":"...","ma200":"...","signal_technique":"ACHAT/ATTENDRE/PRUDENCE","commentaire_technique":"..."},"macro":{"impact_taux":"...","impact_croissance_pib":"...","impact_inflation":"...","atouts_diversification":"..."},"points_forts":[],"points_vigilance":[],"dca_conseil":{"argumentaire_principal":"...","comparaison_alternatives":"...","frais_courtage_200eur":"1.99","nb_parts_200eur":"...","cout_total_200eur":"...","impact_frais_pct":"...","potentiel_croissance":"...","horizon_recommande":"...","risques":[],"contrainte_pea_200eur_ok":true},"valorisation":{"objectif_moyen":"...","objectif_haut":"...","objectif_bas":"...","nb_analystes":"...","potentiel":"...","appreciation":"..."},"timing":{"point_entree":"...","catalyseurs":[],"recommandation_timing":"..."},"verdict":{"signal":"ACHAT/RENFORCER/ATTENDRE/PRUDENCE/VENDRE","cible_12m":"...","justification":"..."}}`;
-
-const MARKET_SCORING_PROMPT = `Tu es un analyste financier expert spécialisé PEA. Tu reçois des extraits Google (actualités + analyses) déjà collectés pour chaque valeur du portefeuille. Analyse ces données et évalue chaque ligne pour un investissement DCA ce mois, horizon 10 ans. Pour chaque valeur attribue :
-- signal : ACHAT (fort potentiel, catalyseurs positifs), RENFORCER (tendance positive, bon point d'entrée), ATTENDRE (neutre, pas urgent), PRUDENCE (risques identifiés, éviter ce mois), VENDRE (fondamentaux détériorés, sortir de la position)
-- score_marche : entre 0 et 20 (0=très négatif, 20=très positif)
-- resume : 1-2 phrases concrètes avec les arguments clés
-- catalyseur_cle : principal catalyseur ou risque identifié
-Réponds UNIQUEMENT en JSON valide, sans markdown, sans texte autour :
-{"classement":[{"isin":"...","nom":"...","signal":"ACHAT|RENFORCER|ATTENDRE|PRUDENCE|VENDRE","score_marche":17,"resume":"...","catalyseur_cle":"..."}]}`;
-
-const SUGGESTIONS = ["LVMH", "Apple", "Nvidia", "CAC 40", "ETF World MSCI", "TotalEnergies", "Airbus", "BNP Paribas", "Technip Energies", "Amundi PEA Monde"];
-
-const AVIS_PARSE_PROMPT = `Tu es un expert en analyse de documents financiers français (avis d'opérés, relevés PEA, avis d'exécution).
-Extrais TOUTES les opérations présentes dans ce texte. Retourne UNIQUEMENT un JSON valide sans markdown.
-Règles :
-- date : format YYYY-MM-DD (convertis depuis JJ/MM/AAAA)
-- heure : heure d'exécution format HH:MM ou HH:MM:SS si présente dans le document (ex: "14:32", "09:15:00"), "" si absente
-- type : ACHAT | VENTE | DIVIDENDE | FRAIS | AUTRE
-- titre : nom complet du titre (ex: "Technip Energies", "Amundi PEA Monde MSCI World")
-- isin : code ISIN 12 caractères ou "" si absent
-- quantite : nombre de titres en string (ex: "10", "10.5")
-- prixUnitaire : prix par titre en euros, string avec point décimal (ex: "32.14")
-- frais : commissions/droits en euros string (ex: "1.99"), "0" si non précisé
-- sens : DEBIT (achat, frais) | CREDIT (vente, dividende)
-- reference : numéro de référence unique de l'opération tel qu'il apparaît dans le document (ex: "REF-12345678", "ORD-20240315-001", numéro d'ordre, numéro d'exécution, identifiant transaction). Cherche les champs : "Référence", "N° d'ordre", "Référence de l'ordre", "Référence d'opération", "N° transaction", "Identifiant". Si absent, construis une référence synthétique : "date_isin_type" (ex: "2024-03-15_FR0014005I80_ACHAT").
-Si le PDF contient plusieurs opérations, retourne-les toutes. Si aucune opération lisible, retourne {"operations":[]}.
-{"operations":[{"date":"YYYY-MM-DD","heure":"HH:MM","type":"ACHAT","titre":"...","isin":"...","quantite":"0","prixUnitaire":"0.00","frais":"0.00","sens":"DEBIT","reference":"REF-XXXXX"}]}`;
 
 // ─── Logo database ────────────────────────────────────────────────────────────
 // Maps ISIN codes and company name keywords to Clearbit logo domains
@@ -697,32 +601,6 @@ function fmtPV(eur, pct) {
   if (eur == null) return "—";
   const sign = eur >= 0 ? "+" : "";
   return `${sign}${fmtEur(eur).replace(" €", "")} € (${fmtPct(pct)})`;
-}
-const COURTIERS = {
-  boursobank:    { nom: "Boursobank",     minOrdre: 200,  frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.006, 1.99) },
-  fortuneo:      { nom: "Fortuneo",       minOrdre: 0,    frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
-  bourse_direct: { nom: "Bourse Direct",  minOrdre: 0,    frais: m => m <= 0 ? 0 : m <= 300 ? 0.99 : m <= 2000 ? 1.90 : Math.max(m * 0.00095, 3.00) },
-  trade_rep:     { nom: "Trade Republic", minOrdre: 1,    frais: m => m <= 0 ? 0 : 1.00 },
-  degiro:        { nom: "DEGIRO",         minOrdre: 0,    frais: m => m <= 0 ? 0 : Math.max(0.50 + m * 0.00004, 0.50) },
-  saxo:          { nom: "Saxo Banque",    minOrdre: 0,    frais: m => m <= 0 ? 0 : Math.max(m * 0.0008, 4.00) },
-  autre:         { nom: "Autre",          minOrdre: 0,    frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
-};
-const COURTIERS_DETAIL = {
-  boursobank:    "Boursobank (profil Découverte) — RÈGLES IMPÉRATIVES : (1) MONTANT MINIMUM PAR ORDRE = 200€ obligatoire depuis avril 2026 sur PEA et CTO — tout ordre inférieur à 200€ est IMPOSSIBLE, ne jamais suggérer un montant < 200€. (2) Pas d'achat fractionné : titres entiers uniquement, calculer le nombre entier de titres achetables avec 200€ minimum. (3) Frais : 1,99€ fixe pour ordres ≤500€ ; 0,60% au-delà. (4) Boursomarkets : 0% de frais si ordre ≥200€ sur titres éligibles. (5) TTF : +0,4% sur achats d'actions françaises dont capitalisation > 1 milliard€. (6) Settlement T+2. (7) 0€ de frais de garde. (8) PEA plafond 150 000€. (9) Horaires : 9h-17h30, horaires étendus 17h35-22h00. (10) Types d'ordres : marché, limité, stop, stop limité.",
-  fortuneo:      "Fortuneo — PEA/CTO : 1,99€ fixe ≤500€ ; 0,50% (min 3,99€) au-delà. Pas de minimum d'ordre. Pas de frais de garde. Settlement T+2. Pas d'achat fractionné.",
-  bourse_direct: "Bourse Direct — PEA/CTO : 0,99€ fixe ≤300€ ; 1,90€ ≤2000€ ; 0,095% (min 3€) au-delà. Pas de minimum d'ordre. Settlement T+2. Pas d'achat fractionné.",
-  trade_rep:     "Trade Republic — CTO uniquement (pas de PEA) : 1€ fixe par ordre. Achat fractionné disponible. Settlement T+2. Pas de frais de change sur €.",
-  degiro:        "DEGIRO — CTO uniquement (pas de PEA) : 0,50€ + 0,004% par ordre. ETF gratuits selon liste. Settlement T+2. Frais de change 0,25%. Pas d'achat fractionné.",
-  saxo:          "Saxo Banque — PEA/CTO : 0,08% par ordre (min 4€). Settlement T+2. Pas d'achat fractionné.",
-  autre:         "Courtier non précisé — frais estimés : 1,99€ fixe ≤500€ ; 0,50% (min 3,99€) au-delà. Pas d'achat fractionné.",
-};
-function calcFraisCourtage(montant, courtierKey) {
-  const c = COURTIERS[courtierKey] || COURTIERS.boursobank;
-  return c.frais(montant);
-}
-function tauxFraisCourtage(montant) {
-  const frais = calcFraisCourtage(montant);
-  return montant > 0 ? (frais / montant * 100).toFixed(2) : "0";
 }
 const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -8784,37 +8662,6 @@ function computeRiskScore(positions, totalActuel) {
 }
 
 // ─── Market Status Widget ──────────────────────────────────────────────────────
-const MARKETS_CFG = [
-  { id: "nyse",  nom: "NYSE",      flag: "🇺🇸", tz: "America/New_York", open: [9,30],  close: [16,0],  earlyClose: [] },
-  { id: "paris", nom: "Paris",     flag: "🇫🇷", tz: "Europe/Paris",     open: [9,0],   close: [17,30], earlyClose: ["2026-12-24","2026-12-31"] },
-  { id: "lon",   nom: "Londres",   flag: "🇬🇧", tz: "Europe/London",    open: [8,0],   close: [16,30], earlyClose: [] },
-  { id: "xetra", nom: "Francfort", flag: "🇩🇪", tz: "Europe/Berlin",    open: [9,0],   close: [20,0],  earlyClose: ["2026-12-24","2026-12-31"] },
-  { id: "tokyo", nom: "Tokyo",     flag: "🇯🇵", tz: "Asia/Tokyo",       open: [9,0],   close: [15,30], earlyClose: [] },
-];
-// Source : Euronext / Fortuneo — seules les clôtures officielles, pas tous les jours fériés nationaux
-const MARKET_HOLIDAYS = {
-  nyse:  ["2026-01-01","2026-01-19","2026-02-16","2026-04-03","2026-05-25","2026-06-19","2026-07-03","2026-09-07","2026-11-26","2026-12-25"],
-  paris: ["2026-01-01","2026-04-03","2026-04-06","2026-05-01","2026-12-25"],
-  lon:   ["2026-01-01","2026-04-03","2026-04-06","2026-05-04","2026-05-25","2026-08-31","2026-12-25","2026-12-28"],
-  xetra: ["2026-01-01","2026-04-03","2026-04-06","2026-05-01","2026-12-25"],
-  tokyo: ["2026-01-01","2026-01-12","2026-02-11","2026-02-23","2026-03-20","2026-04-29","2026-05-03","2026-05-04","2026-05-05","2026-07-20","2026-09-21","2026-09-23","2026-10-12","2026-11-03","2026-11-23"],
-};
-function getMarketStatus(cfg, now = new Date()) {
-  const dayOfWeek = new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, weekday: "short" }).format(now);
-  const dateStr   = new Intl.DateTimeFormat("fr-CA", { timeZone: cfg.tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
-  const hhmm      = new Intl.DateTimeFormat("fr-FR", { timeZone: cfg.tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
-  const [hh, mm]  = hhmm.split(":").map(Number);
-  if (dayOfWeek === "Sat" || dayOfWeek === "Sun") return { open: false, reason: "Week-end", hhmm };
-  if ((MARKET_HOLIDAYS[cfg.id] || []).includes(dateStr)) return { open: false, reason: "Férié", hhmm };
-  const cur = hh * 60 + mm;
-  const opn = cfg.open[0] * 60 + cfg.open[1];
-  const isEarlyClose = (cfg.earlyClose || []).includes(dateStr);
-  const cls = isEarlyClose ? 14 * 60 : cfg.close[0] * 60 + cfg.close[1];
-  if (cur < opn) return { open: false, reason: `Ouvre ${cfg.open[0]}h${String(cfg.open[1]).padStart(2,"0")}`, hhmm };
-  if (cur >= cls) return { open: false, reason: "Clôturé", hhmm };
-  if (isEarlyClose) return { open: true, reason: "Ouvert (clôt. 14h)", hhmm };
-  return { open: true, reason: "Ouvert", hhmm };
-}
 function MarketStatusBar() {
   const [now, setNow] = useState(new Date());
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(t); }, []);
@@ -9299,127 +9146,6 @@ const IconChat = () => (
 );
 
 // ─── Autopilot IA — univers d'investissement ──────────────────────────────────
-// profil_min : profil minimum requis pour voir cet instrument dans l'univers scanné
-const AUTOPILOT_UNIVERSE = {
-  PEA: [
-    // ETFs diversifiés → tous profils
-    { symbol: "CW8.PA",   isin: "FR0010315150", nom: "Amundi MSCI World",            type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
-    { symbol: "WPEA.PA",  isin: "FR0013412285", nom: "Amundi World PEA",             type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
-    { symbol: "PAEEM.PA", isin: "FR0013412020", nom: "Amundi MSCI Emerging Markets", type: "ETF",    secteur: "ETF Émergents",     profil_min: "prudent" },
-    { symbol: "PUST.PA",  isin: "FR0013412683", nom: "Amundi PEA S&P 500 ESG",      type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
-    { symbol: "LYPS.PA",  isin: "LU1781541179", nom: "Amundi S&P 500",              type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
-    { symbol: "PANX.PA",  isin: "FR0011871110", nom: "Amundi PEA Nasdaq-100",       type: "ETF",    secteur: "ETF Tech",          profil_min: "prudent" },
-    { symbol: "PCEU.PA",  isin: "FR0010261198", nom: "Amundi MSCI Europe",          type: "ETF",    secteur: "ETF Europe",        profil_min: "prudent" },
-    { symbol: "ESE.PA",   isin: "IE00B4L5Y983", nom: "iShares Core MSCI Europe",    type: "ETF",    secteur: "ETF Europe",        profil_min: "prudent" },
-    { symbol: "EWLD.PA",  isin: "IE00B4L5YX21", nom: "iShares MSCI World Swap PEA", type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
-    // Blue chips solides → équilibré+
-    { symbol: "AI.PA",    isin: "FR0000120073", nom: "Air Liquide",                 type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
-    { symbol: "MC.PA",    isin: "FR0000121014", nom: "LVMH",                        type: "Action", secteur: "Luxe",              profil_min: "equilibre" },
-    { symbol: "TTE.PA",   isin: "FR0014000MR3", nom: "TotalEnergies",               type: "Action", secteur: "Énergie",           profil_min: "equilibre" },
-    { symbol: "SAN.PA",   isin: "FR0000120578", nom: "Sanofi",                      type: "Action", secteur: "Santé",             profil_min: "equilibre" },
-    { symbol: "OR.PA",    isin: "FR0000120321", nom: "L'Oréal",                     type: "Action", secteur: "Cosmétiques",       profil_min: "equilibre" },
-    { symbol: "BNP.PA",   isin: "FR0000131104", nom: "BNP Paribas",                 type: "Action", secteur: "Banque",            profil_min: "equilibre" },
-    { symbol: "AXA.PA",   isin: "FR0000120628", nom: "AXA",                         type: "Action", secteur: "Assurance",         profil_min: "equilibre" },
-    { symbol: "SU.PA",    isin: "FR0000121972", nom: "Schneider Electric",          type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
-    { symbol: "EL.PA",    isin: "FR0000121667", nom: "EssilorLuxottica",            type: "Action", secteur: "Santé",             profil_min: "equilibre" },
-    { symbol: "ASML.AS",  isin: "NL0010273215", nom: "ASML Holding",                type: "Action", secteur: "Semi-conducteurs",  profil_min: "equilibre" },
-    { symbol: "SAP.DE",   isin: "DE0007164600", nom: "SAP",                         type: "Action", secteur: "Tech",              profil_min: "equilibre" },
-    { symbol: "SIE.DE",   isin: "DE0007236101", nom: "Siemens",                     type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
-    // Actions plus volatiles → dynamique+
-    { symbol: "CAP.PA",   isin: "FR0000125338", nom: "Capgemini",                   type: "Action", secteur: "Tech",              profil_min: "dynamique" },
-    { symbol: "DSY.PA",   isin: "FR0014003TT8", nom: "Dassault Systèmes",           type: "Action", secteur: "Tech",              profil_min: "dynamique" },
-    { symbol: "STM.PA",   isin: "NL0000226223", nom: "STMicroelectronics",          type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
-    { symbol: "SAF.PA",   isin: "FR0000073272", nom: "Safran",                      type: "Action", secteur: "Aéronautique",      profil_min: "dynamique" },
-    { symbol: "AIR.PA",   isin: "NL0000235190", nom: "Airbus",                      type: "Action", secteur: "Aéronautique",      profil_min: "dynamique" },
-    { symbol: "RMS.PA",   isin: "FR0000052292", nom: "Hermès",                      type: "Action", secteur: "Luxe",              profil_min: "dynamique" },
-    { symbol: "GLE.PA",   isin: "FR0000130809", nom: "Société Générale",            type: "Action", secteur: "Banque",            profil_min: "dynamique" },
-    { symbol: "DG.PA",    isin: "FR0000125486", nom: "Vinci",                       type: "Action", secteur: "Infrastructure",    profil_min: "dynamique" },
-    { symbol: "LR.PA",    isin: "FR0010307819", nom: "Legrand",                     type: "Action", secteur: "Industrie",         profil_min: "dynamique" },
-    { symbol: "MT.AS",    isin: "LU1598757687", nom: "ArcelorMittal",               type: "Action", secteur: "Métaux",            profil_min: "dynamique" },
-    { symbol: "IFX.DE",   isin: "DE0006231004", nom: "Infineon Technologies",       type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
-    { symbol: "UCB.BR",   isin: "BE0003739530", nom: "UCB Pharma",                  type: "Action", secteur: "Biotech",           profil_min: "dynamique" },
-    // Actions haute volatilité / croissance → très dynamique
-    { symbol: "SOI.PA",   isin: "FR0012451430", nom: "Soitec",                      type: "Action", secteur: "Semi-conducteurs",  profil_min: "tres-dynamique" },
-    { symbol: "OVH.PA",   isin: "FR0014005HJ9", nom: "OVHcloud",                    type: "Action", secteur: "Cloud",             profil_min: "tres-dynamique" },
-    { symbol: "ALO.PA",   isin: "FR0010220475", nom: "Alstom",                      type: "Action", secteur: "Transports",        profil_min: "tres-dynamique" },
-    { symbol: "HO.PA",    isin: "FR0000120271", nom: "Thales",                      type: "Action", secteur: "Défense",           profil_min: "tres-dynamique" },
-    { symbol: "AM.PA",    isin: "FR0014004L86", nom: "Dassault Aviation",           type: "Action", secteur: "Défense",           profil_min: "tres-dynamique" },
-    { symbol: "ERF.PA",   isin: "FR0014000MR3", nom: "Eurofins Scientific",         type: "Action", secteur: "Biotech",           profil_min: "tres-dynamique" },
-    { symbol: "BIOR.PA",  isin: "FR0013280286", nom: "BioMérieux",                  type: "Action", secteur: "Biotech",           profil_min: "tres-dynamique" },
-    { symbol: "MELE.PA",  isin: "BE0165385973", nom: "Melexis",                     type: "Action", secteur: "Semi-conducteurs",  profil_min: "tres-dynamique" },
-    { symbol: "RNO.PA",   isin: "FR0000131906", nom: "Renault",                     type: "Action", secteur: "Automobile",        profil_min: "tres-dynamique" },
-    { symbol: "STLA.PA",  isin: "NL00150001Q9", nom: "Stellantis",                  type: "Action", secteur: "Automobile",        profil_min: "tres-dynamique" },
-    { symbol: "PUB.PA",   isin: "FR0000130577", nom: "Publicis",                    type: "Action", secteur: "Médias/IA",         profil_min: "tres-dynamique" },
-    { symbol: "KER.PA",   isin: "FR0000121485", nom: "Kering",                      type: "Action", secteur: "Luxe",              profil_min: "tres-dynamique" },
-    { symbol: "ENGI.PA",  isin: "FR0010208488", nom: "Engie",                       type: "Action", secteur: "Énergie",           profil_min: "tres-dynamique" },
-    // Small caps PEA
-    { symbol: "ALWLX.PA", isin: "FR0014000TB2", nom: "Wallix Group",                type: "Action", secteur: "Cybersécurité FR",   profil_min: "tres-dynamique" },
-    { symbol: "BLV.PA",   isin: "FR0014003FE9", nom: "Believe",                     type: "Action", secteur: "Musique numérique",  profil_min: "tres-dynamique" },
-    { symbol: "SWP.PA",   isin: "FR0004188670", nom: "Sword Group",                 type: "Action", secteur: "IT Services",        profil_min: "tres-dynamique" },
-    { symbol: "ALHAF.PA", isin: "FR0014007T10", nom: "Haffner Energy",              type: "Action", secteur: "Hydrogène vert",     profil_min: "tres-dynamique" },
-    { symbol: "ALNSE.PA", isin: "FR0004054427", nom: "Nanobiotix",                  type: "Action", secteur: "Biotech nano",       profil_min: "tres-dynamique" },
-    { symbol: "VIRP.PA",  isin: "FR0000031577", nom: "Virbac",                      type: "Action", secteur: "Santé animale",      profil_min: "tres-dynamique" },
-    { symbol: "FNAC.PA",  isin: "FR0012097166", nom: "Fnac Darty",                  type: "Action", secteur: "Retail tech",        profil_min: "tres-dynamique" },
-  ],
-  CTO: [
-    // ETFs → tous profils
-    { symbol: "IWDA.AS",  isin: "IE00B4L5Y983", nom: "iShares Core MSCI World",     type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
-    { symbol: "VWRA.L",   isin: "IE00BK5BQT80", nom: "Vanguard FTSE All-World",     type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
-    { symbol: "SPY",      isin: "US78462F1030", nom: "SPDR S&P 500 ETF",            type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
-    { symbol: "QQQ",      isin: "US46090E1038", nom: "Invesco Nasdaq-100",          type: "ETF",    secteur: "ETF Tech",          profil_min: "prudent" },
-    { symbol: "VTI",      isin: "US9229087690", nom: "Vanguard Total Stock Market", type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
-    // Blue chips → équilibré+
-    { symbol: "AAPL",     isin: "US0378331005", nom: "Apple",                       type: "Action", secteur: "Tech",              profil_min: "equilibre" },
-    { symbol: "MSFT",     isin: "US5949181045", nom: "Microsoft",                   type: "Action", secteur: "Tech",              profil_min: "equilibre" },
-    { symbol: "GOOGL",    isin: "US02079K3059", nom: "Alphabet",                    type: "Action", secteur: "Tech",              profil_min: "equilibre" },
-    { symbol: "AMZN",     isin: "US0231351067", nom: "Amazon",                      type: "Action", secteur: "E-commerce",        profil_min: "equilibre" },
-    { symbol: "BRK-B",    isin: "US0846707026", nom: "Berkshire Hathaway B",        type: "Action", secteur: "Financier",         profil_min: "equilibre" },
-    { symbol: "JNJ",      isin: "US4781601046", nom: "Johnson & Johnson",           type: "Action", secteur: "Santé",             profil_min: "equilibre" },
-    { symbol: "V",        isin: "US92826C8394", nom: "Visa",                        type: "Action", secteur: "Financier",         profil_min: "equilibre" },
-    { symbol: "JPM",      isin: "US46625H1005", nom: "JPMorgan Chase",              type: "Action", secteur: "Banque",            profil_min: "equilibre" },
-    // Croissance → dynamique+
-    { symbol: "NVDA",     isin: "US67066G1040", nom: "NVIDIA",                      type: "Action", secteur: "Semi-conducteurs/IA",profil_min: "dynamique" },
-    { symbol: "META",     isin: "US30303M1027", nom: "Meta Platforms",              type: "Action", secteur: "Tech/IA",           profil_min: "dynamique" },
-    { symbol: "TSLA",     isin: "US88160R1014", nom: "Tesla",                       type: "Action", secteur: "Automobile",        profil_min: "dynamique" },
-    { symbol: "TSM",      isin: "US8740391003", nom: "TSMC",                        type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
-    { symbol: "AMD",      isin: "US0079031078", nom: "Advanced Micro Devices",      type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
-    { symbol: "AVGO",     isin: "US11135F1012", nom: "Broadcom",                    type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
-    { symbol: "XOM",      isin: "US30231G1022", nom: "ExxonMobil",                  type: "Action", secteur: "Énergie",           profil_min: "dynamique" },
-    // Haute volatilité / growth → très dynamique
-    { symbol: "PLTR",     isin: "US69608A1088", nom: "Palantir Technologies",       type: "Action", secteur: "IA/Data",           profil_min: "tres-dynamique" },
-    { symbol: "CRWD",     isin: "US2270461096", nom: "CrowdStrike",                 type: "Action", secteur: "Cybersécurité",     profil_min: "tres-dynamique" },
-    { symbol: "SHOP",     isin: "CA82509L1076", nom: "Shopify",                     type: "Action", secteur: "E-commerce",        profil_min: "tres-dynamique" },
-    { symbol: "COIN",     isin: "US19260Q1076", nom: "Coinbase",                    type: "Action", secteur: "Crypto/Finance",    profil_min: "tres-dynamique" },
-    { symbol: "MELI",     isin: "US58733R1023", nom: "MercadoLibre",                type: "Action", secteur: "E-commerce EM",     profil_min: "tres-dynamique" },
-    { symbol: "SMCI",     isin: "US86800U1043", nom: "Super Micro Computer",        type: "Action", secteur: "Serveurs IA",       profil_min: "tres-dynamique" },
-    { symbol: "ARM",      isin: "US0420682058", nom: "Arm Holdings",                type: "Action", secteur: "Semi-conducteurs",  profil_min: "tres-dynamique" },
-    { symbol: "SQ",       isin: "US8522341036", nom: "Block (Square)",              type: "Action", secteur: "Fintech",           profil_min: "tres-dynamique" },
-    { symbol: "RKLB",     isin: "US7731341043", nom: "Rocket Lab",                  type: "Action", secteur: "Espace",            profil_min: "tres-dynamique" },
-    { symbol: "IONQ",     isin: "US4624881017", nom: "IonQ",                        type: "Action", secteur: "Quantique",         profil_min: "tres-dynamique" },
-    // Small/mid caps US — niches à fort potentiel
-    { symbol: "APP",      isin: "US03783C1009", nom: "AppLovin",                    type: "Action", secteur: "AdTech/IA",          profil_min: "tres-dynamique" },
-    { symbol: "AXON",     isin: "US05464C1018", nom: "Axon Enterprise",             type: "Action", secteur: "Sécurité publique",  profil_min: "tres-dynamique" },
-    { symbol: "DUOL",     isin: "US26617R2094", nom: "Duolingo",                    type: "Action", secteur: "EdTech",             profil_min: "tres-dynamique" },
-    { symbol: "MNDY",     isin: "IL0011294286", nom: "Monday.com",                  type: "Action", secteur: "SaaS productivité",  profil_min: "tres-dynamique" },
-    { symbol: "CELH",     isin: "SE0083615104", nom: "Celsius Holdings",            type: "Action", secteur: "Boissons santé",     profil_min: "tres-dynamique" },
-    { symbol: "RXRX",     isin: "US75629W2080", nom: "Recursion Pharma",            type: "Action", secteur: "IA / Drug discovery",profil_min: "tres-dynamique" },
-    { symbol: "LUNR",     isin: "US46125F1049", nom: "Intuitive Machines",          type: "Action", secteur: "Espace / Lune",      profil_min: "tres-dynamique" },
-    { symbol: "ACHR",     isin: "US03945R1023", nom: "Archer Aviation",             type: "Action", secteur: "eVTOL / Air taxi",   profil_min: "tres-dynamique" },
-    { symbol: "JOBY",     isin: "US4771552089", nom: "Joby Aviation",               type: "Action", secteur: "eVTOL / Air taxi",   profil_min: "tres-dynamique" },
-    { symbol: "HIMS",     isin: "US4330001060", nom: "Hims & Hers Health",          type: "Action", secteur: "Santé numérique",    profil_min: "tres-dynamique" },
-    { symbol: "SOUN",     isin: "US83602V1061", nom: "SoundHound AI",               type: "Action", secteur: "IA vocale",          profil_min: "tres-dynamique" },
-    { symbol: "ALAB",     isin: "US04626L1035", nom: "Astera Labs",                 type: "Action", secteur: "Semi / IA infra",    profil_min: "tres-dynamique" },
-    { symbol: "CAVA",     isin: "US14965Q1067", nom: "CAVA Group",                  type: "Action", secteur: "Restauration niche", profil_min: "tres-dynamique" },
-  ],
-};
-
-async function fetchYahooPrices(symbols) {
-  const endpoint = process.env.NODE_ENV === "production" ? "/api/yahoo" : "/api/yahoo";
-  const res = await fetch(`${endpoint}?symbols=${encodeURIComponent(symbols.join(","))}`);
-  if (!res.ok) throw new Error(`Yahoo Finance: ${res.status}`);
-  const data = await res.json();
-  return data?.quoteResponse?.result || [];
-}
 
 // ─── Autopilot IA ─────────────────────────────────────────────────────────────
 function AutopilotIA({ account, profil, hidden }) {
