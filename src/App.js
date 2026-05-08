@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { C, shadow } from "./constants/theme";
 import { SYSTEM_PROMPT, PORTFOLIO_PROMPT, ETF_DCA_PROMPT, MARKET_SCORING_PROMPT, AVIS_PARSE_PROMPT, SUGGESTIONS } from "./constants/prompts";
@@ -7,29 +7,16 @@ import { COURTIERS, COURTIERS_DETAIL, calcFraisCourtage, tauxFraisCourtage } fro
 import { AUTOPILOT_UNIVERSE, fetchYahooPrices } from "./constants/universe";
 import { LOGO_DB, resolveLogoUrl, avatarColor, deriveBaseName, buildLogoSources } from "./constants/logos";
 import CompanyAvatar from "./components/CompanyAvatar";
+import MarketStatusBar from "./components/MarketStatusBar";
+import DashboardBar from "./components/DashboardBar";
+import { MobileCtx, TabletCtx, useIsMobile, useIsTablet, MobileProvider } from "./context/mobile";
 import { save, load, supabase, setSyncUserId, pullFromCloud } from "./lib/storage";
+import { parsePrice, fmtEur, fmtCours, fmtPct, fmtPV, getCachedCours, setCachedCours, sanitizePositions, isETFName, computeRiskScore } from "./lib/finance";
 import { delay, CLAUDE_MODELS, getKey, ANTHROPIC_API_KEY, GOOGLE_API_KEY, GOOGLE_CX, ALPHAVANTAGE_KEY, hasClaudeKey, CLAUDE_ENDPOINT, enqueueApi, callClaude, callClaudeHaiku, callClaudeConversation, callGoogleSearch } from "./lib/api";
 
 
 
-// ─── Mobile context ───────────────────────────────────────────────────────────
-const MobileCtx = createContext(false);
-const TabletCtx  = createContext(false);
-const useIsMobile = () => useContext(MobileCtx);
-const useIsTablet = () => useContext(TabletCtx);
-function MobileProvider({ children }) {
-  const [mobile, setMobile]   = useState(() => window.innerWidth < 768);
-  const [tablet, setTablet]   = useState(() => window.innerWidth >= 768 && window.innerWidth < 1200);
-  useEffect(() => {
-    const handler = () => {
-      setMobile(window.innerWidth < 768);
-      setTablet(window.innerWidth >= 768 && window.innerWidth < 1200);
-    };
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return <MobileCtx.Provider value={mobile}><TabletCtx.Provider value={tablet}>{children}</TabletCtx.Provider></MobileCtx.Provider>;
-}
+
 
 // ─── Swipeable card (mobile delete gesture) ───────────────────────────────────
 function SwipeableCard({ children, onSwipeLeft, disabled }) {
@@ -270,99 +257,6 @@ function parseBoursobankCSV(text) {
   return results;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function parsePrice(str) {
-  if (!str) return null;
-  // Normalise: strip currency symbols and trailing whitespace
-  const s = String(str).replace(/[€$£%\u00A0\u202F]/g, " ").trim();
-  // Priority 1 — dot decimal: "32.140" or "1 234.56" or "32.14"
-  const dotM = s.match(/(\d[\d ]*\.\d+)/);
-  if (dotM) {
-    const v = parseFloat(dotM[1].replace(/ /g, ""));
-    if (v > 0 && v < 100000) return Math.round(v * 1000) / 1000;
-  }
-  // Priority 2 — comma decimal: "32,140" or "1 234,56"
-  const commaM = s.match(/^([\d ]+),([\d]{1,4})$/);
-  if (commaM) {
-    const v = parseFloat(commaM[1].replace(/ /g, "") + "." + commaM[2]);
-    if (v > 0 && v < 100000) return Math.round(v * 1000) / 1000;
-  }
-  // Priority 3 — plain integer or spaced thousands: "3240" or "3 240"
-  const plain = s.replace(/ /g, "").replace(",", ".");
-  const plainM = plain.match(/^[\d.]+/);
-  if (plainM) {
-    const v = parseFloat(plainM[0]);
-    if (v > 0 && v < 100000) return Math.round(v * 1000) / 1000;
-  }
-  return null;
-}
-// Format a monetary amount with 2 decimals (totals, investments)
-function fmtEur(n) {
-  if (n == null || isNaN(n)) return "—";
-  const [i, d] = Math.abs(n).toFixed(2).split(".");
-  const iF = i.replace(/\B(?=(\d{3})+(?!\d))/g, "\u202F");
-  return (n < 0 ? "−" : "") + iF + "," + d + " €";
-}
-// Format a stock price with 3 decimals (cours, PRU, objectifs)
-function fmtCours(n) {
-  if (n == null || isNaN(n)) return "—";
-  const num = typeof n === "number" ? n : parseFloat(n);
-  if (isNaN(num)) return "—";
-  const [i, d] = Math.abs(num).toFixed(3).split(".");
-  const iF = i.replace(/\B(?=(\d{3})+(?!\d))/g, "\u202F");
-  return (num < 0 ? "−" : "") + iF + "," + d + " €";
-}
-function fmtPct(n) {
-  if (n == null || isNaN(n)) return "—";
-  return (n >= 0 ? "+" : "") + n.toFixed(2) + " %";
-}
-function fmtPV(eur, pct) {
-  if (eur == null) return "—";
-  const sign = eur >= 0 ? "+" : "";
-  return `${sign}${fmtEur(eur).replace(" €", "")} € (${fmtPct(pct)})`;
-}
-// ─── Price cache (TTL = 15 min) ───────────────────────────────────────────────
-const PRICE_TTL = 15 * 60 * 1000;
-function getCachedCours(key) {
-  const cache = load("bourse_cours_cache_v2", {});
-  const entry = cache[key];
-  if (!entry || Date.now() - entry.ts > PRICE_TTL) return null;
-  return entry.cours;
-}
-function setCachedCours(key, cours) {
-  const cache = load("bourse_cours_cache_v2", {});
-  cache[key] = { cours, ts: Date.now() };
-  // Limit cache size to 50 entries
-  const keys = Object.keys(cache);
-  if (keys.length > 50) delete cache[keys[0]];
-  save("bourse_cours_cache_v2", cache);
-}
-// Sanitize stored positions: remove impossibly large cours values (parse artefacts)
-function sanitizePositions(positions) {
-  if (!Array.isArray(positions)) return [];
-  return positions.map(p => {
-    if (!p || typeof p !== "object") return null;
-    const pru      = Number(p.pru)      || 0;
-    const quantite = Number(p.quantite) || 0;
-    let dernierCours = Number(p.dernierCours) || 0;
-    // Filtre valeur aberrante (cours > 20× PRU et > 1000€)
-    if (dernierCours && pru && dernierCours > pru * 20 && dernierCours > 1000) dernierCours = 0;
-    return {
-      nom: p.nom || "Inconnu",
-      isin: p.isin || "",
-      ticker: p.ticker || "",
-      secteur: p.secteur || "Autre",
-      compte: p.compte || "PEA",
-      pru,
-      quantite,
-      dernierCours: dernierCours || null,
-      alerteHaute: Number(p.alerteHaute) || null,
-      alerteBasse: Number(p.alerteBasse) || null,
-      ...p,
-      pru, quantite, dernierCours: dernierCours || null,
-    };
-  }).filter(Boolean);
-}
 
 // Helper corsproxy avec proxy de secours
 const PROXIES = [
@@ -1256,7 +1150,6 @@ function PortfolioResult({ data, timestamp }) {
 }
 
 // ─── DCA Strategy ─────────────────────────────────────────────────────────────
-const isETFName = (nom) => /etf|tracker|ucits|msci|world|amundi|lyxor|ishares|bnp.*easy|vanguard|s&p|sp500|nasdaq|cac|dax/i.test(nom || "");
 const MOIS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
 function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunScoring, onSaveProfil }) {
@@ -8126,278 +8019,6 @@ function PortfolioChart({ hidden, account }) {
   );
 }
 
-// ─── Dashboard Bar — 4 cards essentielles ────────────────────────────────────
-function computeRiskScore(positions, totalActuel) {
-  if (!positions.length) return null;
-  let score = 5;
-  const nbPositions = positions.length;
-  const nbETF = positions.filter(p => isETFName(p.nom)).length;
-  const totalInvest = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
-  const totalVal = totalActuel || totalInvest;
-
-  // Concentration
-  positions.forEach(p => {
-    const poids = totalVal > 0 ? (((p.dernierCours || p.pru) * p.quantite) / totalVal) * 100 : 0;
-    if (poids > 30) score += 2;
-    else if (poids > 20) score += 1;
-  });
-  // Diversification
-  if (nbPositions <= 2) score += 2;
-  else if (nbPositions <= 4) score += 1;
-  else if (nbPositions >= 10) score -= 1;
-  // ETF = moins de risque titre spécifique
-  if (nbETF / nbPositions > 0.5) score -= 1;
-  // Performance globale
-  const pvPct = totalInvest > 0 ? ((totalVal - totalInvest) / totalInvest) * 100 : 0;
-  if (pvPct < -20) score += 2;
-  else if (pvPct < -10) score += 1;
-  else if (pvPct > 30) score -= 1;
-
-  return Math.min(10, Math.max(1, Math.round(score)));
-}
-
-// ─── Market Status Widget ──────────────────────────────────────────────────────
-function MarketStatusBar() {
-  const [now, setNow] = useState(new Date());
-  useEffect(() => { const t = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(t); }, []);
-  return (
-    <div style={{ display: "flex", gap: "8px", overflowX: "auto", marginBottom: "16px", paddingBottom: "2px" }}>
-      {MARKETS_CFG.map(cfg => {
-        const { open, reason, hhmm } = getMarketStatus(cfg, now);
-        return (
-          <div key={cfg.id} style={{ flexShrink: 0, background: C.snow, border: `1px solid ${open ? "rgba(22,163,74,0.25)" : C.border}`, borderRadius: "10px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "8px", boxShadow: shadow.card }}>
-            <span style={{ fontSize: "16px" }}>{cfg.flag}</span>
-            <div>
-              <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>{cfg.nom}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: open ? C.green : C.inkSubtle, display: "inline-block", flexShrink: 0, ...(open ? { animation: "marketPulse 3s ease-in-out infinite" } : {}) }} />
-                <span style={{ fontSize: "10px", fontWeight: "600", color: open ? C.green : C.inkSubtle }}>{reason}</span>
-                <span style={{ fontSize: "10px", color: C.inkSubtle }}>· {hhmm}</span>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function DashboardBar({ onTabChange, hidden, profil, account = "PEA" }) {
-  const isMobile  = useIsMobile();
-  const allPos    = load("bourse_portfolio", []);
-  const positions = allPos.filter(p => (p.compte || "PEA") === account);
-  if (positions.length === 0) return null;
-
-  const capitalInvesti = account === "PEA" ? (Number(profil?.capitalPEA) || 0) : (Number(profil?.capitalCTO) || 0);
-  const totalActuel    = positions.reduce((s, p) => s + ((p.dernierCours || p.pru || 0)) * (p.quantite || 0), 0);
-  const totalInvesti   = positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
-  const totalPV        = totalActuel - totalInvesti;
-  const totalPVpct     = totalInvesti > 0 ? (totalPV / totalInvesti) * 100 : 0;
-
-  const riskScore = computeRiskScore(positions, totalActuel);
-  const riskColor = riskScore <= 3 ? C.green : riskScore <= 6 ? C.goldDark : C.red;
-  const riskLabel = riskScore <= 3 ? "Risque faible" : riskScore <= 6 ? "Risque modéré" : "Risque élevé";
-
-  const varJourEur = positions.some(p => p.intradayVariation != null)
-    ? positions.reduce((s, p) => {
-        if (p.intradayVariation == null) return s;
-        const cours = p.dernierCours || p.pru;
-        const hier  = cours / (1 + p.intradayVariation / 100);
-        return s + (cours - hier) * p.quantite;
-      }, 0)
-    : null;
-  const varJourPct = varJourEur != null && totalActuel > 0
-    ? (varJourEur / (totalActuel - (varJourEur || 0))) * 100 : null;
-
-  // Top / Flop
-  const sorted = [...positions].map(p => ({
-    ...p, pvPct: p.pru > 0 ? ((p.dernierCours || p.pru) - p.pru) / p.pru * 100 : 0,
-  })).sort((a, b) => b.pvPct - a.pvPct);
-  const best  = sorted[0];
-  const worst = sorted[sorted.length - 1];
-
-  // Sparkline depuis snapshots
-  const snapshots = load("bourse_snapshots", []);
-  const snap30 = snapshots.slice(-30);
-  const sparkPath = (() => {
-    if (snap30.length < 2) return null;
-    const vals = snap30.map(s => s.total || 0);
-    const min = Math.min(...vals), max = Math.max(...vals);
-    const range = max - min || 1;
-    const W = 200, H = 50;
-    const pts = vals.map((v, i) => `${(i / (vals.length - 1)) * W},${H - ((v - min) / range) * H}`);
-    return `M ${pts.join(" L ")}`;
-  })();
-
-  // Statut Euronext Paris — source unique : getMarketStatus (calendrier Fortuneo)
-  const { open: isOpen, reason: marketLabel } = getMarketStatus(MARKETS_CFG.find(m => m.id === "paris"));
-  const marketColor = isOpen ? C.green : C.red;
-
-  const blurStyle = hidden ? { filter: "blur(7px)", userSelect: "none", pointerEvents: "none" } : {};
-
-  return (
-    <div style={{ marginBottom: "24px" }}>
-
-      <style>{`@keyframes marketPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.85)} }`}</style>
-
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "17px", fontWeight: "700", color: C.ink, letterSpacing: "-0.03em" }}>Portefeuille</span>
-          <span style={{ fontSize: "10px", fontWeight: "600", color: account === "PEA" ? C.accent : "#7C3AED", background: account === "PEA" ? "rgba(59,130,246,0.08)" : "rgba(124,58,237,0.08)", borderRadius: "5px", padding: "2px 8px" }}>{account}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: marketColor, display: "inline-block", animation: isOpen ? "marketPulse 2.5s ease-in-out infinite" : "none" }} />
-            <span style={{ fontSize: "11px", color: marketColor, fontWeight: "600" }}>{marketLabel}</span>
-          </span>
-          <span style={{ fontSize: "11px", color: C.inkSubtle }}>{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</span>
-        </div>
-      </div>
-
-      {/* KPI strip — 4 cartes horizontales */}
-      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: "-4px", marginRight: "-4px", paddingLeft: "4px", paddingRight: "4px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(4, 150px)" : "repeat(4, 1fr)", gap: "10px", minWidth: isMobile ? "620px" : "auto" }}>
-          {[
-            { label: account === "CTO" ? "Capital investi CTO" : "Capital investi PEA", main: capitalInvesti > 0 ? fmtEur(capitalInvesti) : "—", sub: null, color: C.inkMuted, numColor: C.ink, subSmall: capitalInvesti === 0 },
-            { label: "Plus-value latente", main: (totalPV >= 0 ? "+" : "") + fmtEur(totalPV), sub: (totalPVpct >= 0 ? "+" : "") + totalPVpct.toFixed(2) + "%", color: totalPV >= 0 ? C.green : C.red, numColor: totalPV >= 0 ? C.green : C.red },
-            { label: "Variation du jour", main: varJourEur != null ? (varJourEur >= 0 ? "+" : "") + fmtEur(varJourEur) : "—", sub: varJourPct != null ? (varJourPct >= 0 ? "+" : "") + varJourPct.toFixed(2) + "%" : null, color: varJourEur == null ? C.inkSubtle : varJourEur >= 0 ? C.green : C.red, numColor: varJourEur == null ? C.inkMuted : varJourEur >= 0 ? C.green : C.red },
-            { label: "Score de risque", main: riskScore !== null ? `${riskScore} / 10` : "—", sub: riskLabel, color: riskColor, numColor: riskColor, isRisk: true },
-          ].map((card) => (
-            <div key={card.label} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: card.color, borderRadius: "16px 16px 0 0" }} />
-              <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "10px" }}>{card.label}</div>
-              <div style={{ fontSize: isMobile ? "20px" : "22px", fontWeight: "700", color: card.numColor || C.ink, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", lineHeight: 1, ...blurStyle }}>{card.main}</div>
-              {card.isRisk && riskScore !== null && (
-                <div style={{ marginTop: "8px", background: C.snowOff, borderRadius: "4px", height: "4px", overflow: "hidden" }}>
-                  <div style={{ width: `${riskScore * 10}%`, height: "100%", background: riskColor, borderRadius: "4px", transition: "width 0.5s ease" }} />
-                </div>
-              )}
-              {card.sub && (
-                <div style={{ marginTop: "8px", display: "inline-flex", alignItems: "center", background: card.color === C.green ? C.greenLight : card.color === C.red ? C.redLight : C.snowDim, borderRadius: "6px", padding: "2px 8px" }}>
-                  <span style={{ fontSize: "10px", fontWeight: "700", color: card.color, fontVariantNumeric: "tabular-nums", ...blurStyle }}>{card.sub}</span>
-                </div>
-              )}
-              {card.subSmall && (
-                <div style={{ marginTop: "8px", background: C.snowDim, borderRadius: "6px", padding: "4px 9px", fontSize: "10px", color: C.inkMuted, fontWeight: "600", display: "inline-block" }}>À renseigner dans Profil</div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-
-      {/* ── Bilan hebdomadaire ── */}
-      <WeeklySummary positions={positions} totalActuel={totalActuel} totalPV={totalPV} hidden={hidden} />
-    </div>
-  );
-}
-
-// ─── Bilan hebdomadaire ───────────────────────────────────────────────────────
-const WEEKLY_KEY = "bourse_weekly_seen";
-
-function isJourFerie(d) {
-  const mm = d.getMonth() + 1, dd = d.getDate();
-  return (mm===1&&dd===1)||(mm===5&&dd===1)||(mm===5&&dd===8)||(mm===7&&dd===14)||
-         (mm===8&&dd===15)||(mm===11&&dd===1)||(mm===11&&dd===11)||(mm===12&&dd===25)||(mm===12&&dd===26);
-}
-function isJourMarche(d) {
-  const j = d.getDay();
-  return j >= 1 && j <= 5 && !isJourFerie(d);
-}
-
-function WeeklySummary({ positions, totalActuel, totalPV, hidden }) {
-  const today = new Date();
-  const currentWeek = Math.floor(Date.now() / (7 * 24 * 3600 * 1000));
-  const [dismissed, setDismiss] = useState(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem(WEEKLY_KEY) || "{}");
-      return stored.week >= currentWeek && stored.date === today.toISOString().slice(0, 10);
-    } catch { return false; }
-  });
-
-  // Vérifier si aujourd'hui est le premier ou dernier jour de marché de la semaine
-  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-  const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1);
-  const isFirstJourMarche = isJourMarche(today) && !isJourMarche(yesterday);
-  const isLastJourMarche  = isJourMarche(today) && !isJourMarche(tomorrow);
-  const shouldShow = isFirstJourMarche || isLastJourMarche;
-
-  if (dismissed || positions.length === 0 || !shouldShow) return null;
-
-  const totalInvest = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
-  const pvPct = totalInvest > 0 ? (totalPV / totalInvest) * 100 : 0;
-
-  const sorted = [...positions].map(p => ({
-    ...p,
-    pv: ((p.dernierCours || p.pru) - p.pru) * p.quantite,
-    pvPct: p.pru > 0 ? ((p.dernierCours || p.pru) - p.pru) / p.pru * 100 : 0,
-  })).sort((a, b) => b.pvPct - a.pvPct);
-
-  const best   = sorted[0];
-  const worst  = sorted[sorted.length - 1];
-  const nbHausse = sorted.filter(p => p.pvPct > 0).length;
-  const dateStr  = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-
-  const blurStyle = hidden ? { filter: "blur(7px)", userSelect: "none" } : {};
-
-  const dismiss = () => {
-    try { localStorage.setItem(WEEKLY_KEY, JSON.stringify({ week: currentWeek, date: today.toISOString().slice(0, 10) })); } catch {}
-    setDismiss(true);
-  };
-
-  return (
-    <div style={{ background: "linear-gradient(135deg, #0C1829 0%, #1E3A5F 100%)", borderRadius: "20px", padding: "20px 24px", marginTop: "16px", boxShadow: shadow.float, position: "relative", overflow: "hidden" }}>
-      {/* Background pattern */}
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 50%, rgba(74,158,219,0.15) 0%, transparent 60%)", pointerEvents: "none" }} />
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", position: "relative" }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-            <div style={{ fontSize: "16px" }}>📅</div>
-            <div>
-              <div style={{ fontSize: "11px", fontWeight: "800", color: "rgba(255,255,255,0.9)", letterSpacing: "0.5px" }}>Bilan hebdomadaire</div>
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.45)", marginTop: "1px" }}>{dateStr}</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            {/* Total */}
-            <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "12px", padding: "10px 14px", minWidth: "110px" }}>
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", fontWeight: "600", letterSpacing: "0.8px", marginBottom: "4px" }}>PORTEFEUILLE</div>
-              <div style={{ fontSize: "16px", fontWeight: "800", color: "#fff", ...blurStyle }}>{fmtEur(totalActuel)}</div>
-              <div style={{ fontSize: "10px", fontWeight: "700", color: pvPct >= 0 ? "#6EE7B7" : "#FCA5A5", marginTop: "2px", ...blurStyle }}>{pvPct >= 0 ? "+" : ""}{pvPct.toFixed(2)}% global</div>
-            </div>
-            {/* Lignes en hausse */}
-            <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "12px", padding: "10px 14px", minWidth: "110px" }}>
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", fontWeight: "600", letterSpacing: "0.8px", marginBottom: "4px" }}>EN HAUSSE</div>
-              <div style={{ fontSize: "16px", fontWeight: "800", color: "#6EE7B7" }}>{nbHausse} / {positions.length}</div>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>positions positives</div>
-            </div>
-            {/* Meilleure perf */}
-            {best && (
-              <div style={{ background: "rgba(110,231,183,0.12)", borderRadius: "12px", padding: "10px 14px", minWidth: "130px", border: "1px solid rgba(110,231,183,0.2)" }}>
-                <div style={{ fontSize: "9px", color: "rgba(110,231,183,0.7)", fontWeight: "600", letterSpacing: "0.8px", marginBottom: "4px" }}>🏆 MEILLEURE</div>
-                <div style={{ fontSize: "12px", fontWeight: "800", color: "#fff", ...blurStyle }}>{best.nom.split(" ")[0]}</div>
-                <div style={{ fontSize: "10px", fontWeight: "700", color: "#6EE7B7", marginTop: "2px", ...blurStyle }}>+{best.pvPct.toFixed(1)}%</div>
-              </div>
-            )}
-            {/* Pire perf (si différente de la meilleure) */}
-            {worst && worst.id !== best?.id && worst.pvPct < 0 && (
-              <div style={{ background: "rgba(252,165,165,0.10)", borderRadius: "12px", padding: "10px 14px", minWidth: "130px", border: "1px solid rgba(252,165,165,0.2)" }}>
-                <div style={{ fontSize: "9px", color: "rgba(252,165,165,0.7)", fontWeight: "600", letterSpacing: "0.8px", marginBottom: "4px" }}>⚠ À SURVEILLER</div>
-                <div style={{ fontSize: "12px", fontWeight: "800", color: "#fff", ...blurStyle }}>{worst.nom.split(" ")[0]}</div>
-                <div style={{ fontSize: "10px", fontWeight: "700", color: "#FCA5A5", marginTop: "2px", ...blurStyle }}>{worst.pvPct.toFixed(1)}%</div>
-              </div>
-            )}
-          </div>
-        </div>
-        <button onClick={dismiss}
-          style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "8px", padding: "6px 10px", color: "rgba(255,255,255,0.6)", fontSize: "11px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
-          ✕ Fermer
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // ─── Helpers techniques ──────────────────────────────────────────────────────
 
