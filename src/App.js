@@ -10532,8 +10532,8 @@ Règles strictes :
                       {renderAIMarkdown(m.content)}
                     </div>
                     <button onClick={() => navigator.clipboard?.writeText(m.content)} title="Copier"
-                      style={{ position: "absolute", top: "8px", right: "8px", width: "32px", height: "32px", borderRadius: "8px", border: `1px solid ${C.border}`, background: C.bg, color: C.ink, fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card }}>
-                      ⎘
+                      style={{ position: "absolute", top: "8px", right: "8px", width: "32px", height: "32px", borderRadius: "8px", border: `1px solid ${C.border}`, background: C.bg, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     </button>
                   </div>
                 )}
@@ -11060,8 +11060,8 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
                           <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>{formatMessage(sess.assistantMsg)}</ul>
                         </div>
                         <button onClick={() => navigator.clipboard?.writeText(sess.assistantMsg)} title="Copier la réponse"
-                          style={{ position: "absolute", top: "8px", right: "8px", width: "32px", height: "32px", borderRadius: "8px", border: `1px solid ${C.border}`, background: C.bg, color: C.ink, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card, opacity: hoveredSession === sess.id ? 1 : 0, transition: "opacity 0.15s" }}>
-                          ⎘
+                          style={{ position: "absolute", top: "8px", right: "8px", width: "32px", height: "32px", borderRadius: "8px", border: `1px solid ${C.border}`, background: C.bg, color: C.ink, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card, opacity: hoveredSession === sess.id ? 1 : 0, transition: "opacity 0.15s" }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         </button>
                       </div>
                       {/* Chips termes techniques */}
