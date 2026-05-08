@@ -8783,6 +8783,62 @@ function computeRiskScore(positions, totalActuel) {
   return Math.min(10, Math.max(1, Math.round(score)));
 }
 
+// ─── Market Status Widget ──────────────────────────────────────────────────────
+const MARKETS_CFG = [
+  { id: "nyse",    nom: "NYSE",      flag: "🇺🇸", tz: "America/New_York", open: [9,30],  close: [16,0]  },
+  { id: "paris",   nom: "Paris",     flag: "🇫🇷", tz: "Europe/Paris",     open: [9,0],   close: [17,30] },
+  { id: "london",  nom: "Londres",   flag: "🇬🇧", tz: "Europe/London",    open: [8,0],   close: [16,30] },
+  { id: "xetra",   nom: "Francfort", flag: "🇩🇪", tz: "Europe/Berlin",    open: [9,0],   close: [17,30] },
+  { id: "tokyo",   nom: "Tokyo",     flag: "🇯🇵", tz: "Asia/Tokyo",       open: [9,0],   close: [15,30] },
+];
+const MARKET_HOLIDAYS = {
+  nyse:   ["2026-01-01","2026-01-19","2026-02-16","2026-04-03","2026-05-25","2026-06-19","2026-07-03","2026-09-07","2026-11-26","2026-12-25"],
+  paris:  ["2026-01-01","2026-04-06","2026-05-01","2026-05-08","2026-05-14","2026-05-25","2026-07-14","2026-08-15","2026-11-01","2026-11-11","2026-12-25"],
+  london: ["2026-01-01","2026-04-03","2026-04-06","2026-05-04","2026-05-25","2026-08-31","2026-12-25","2026-12-28"],
+  xetra:  ["2026-01-01","2026-04-03","2026-04-06","2026-05-01","2026-12-24","2026-12-25","2026-12-31"],
+  tokyo:  ["2026-01-01","2026-01-12","2026-02-11","2026-02-23","2026-03-20","2026-04-29","2026-05-03","2026-05-04","2026-05-05","2026-07-20","2026-09-21","2026-09-23","2026-10-12","2026-11-03","2026-11-23"],
+};
+function getMarketStatus(cfg, now = new Date()) {
+  const fmt = f => new Intl.DateTimeFormat("fr-FR", { timeZone: cfg.tz, ...f }).format(now);
+  const hhmm = fmt({ hour: "2-digit", minute: "2-digit", hour12: false });
+  const [hh, mm] = hhmm.split(":").map(Number);
+  const weekday  = parseInt(new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, weekday: "short" }).format(now) === "Sat" ? 6 : new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, weekday: "short" }).format(now) === "Sun" ? 0 : 1);
+  const dayOfWeek = new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, weekday: "short" }).format(now);
+  const dateStr   = new Intl.DateTimeFormat("fr-CA", { timeZone: cfg.tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  if (dayOfWeek === "Sat" || dayOfWeek === "Sun") return { open: false, reason: "Week-end", hhmm };
+  if ((MARKET_HOLIDAYS[cfg.id] || []).includes(dateStr)) return { open: false, reason: "Férié", hhmm };
+  const cur = hh * 60 + mm;
+  const opn = cfg.open[0]  * 60 + cfg.open[1];
+  const cls = cfg.close[0] * 60 + cfg.close[1];
+  if (cur < opn) return { open: false, reason: `Ouvre ${cfg.open[0]}h${String(cfg.open[1]).padStart(2,"0")}`, hhmm };
+  if (cur >= cls) return { open: false, reason: "Clôturé", hhmm };
+  return { open: true, reason: "Ouvert", hhmm };
+}
+function MarketStatusBar() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(t); }, []);
+  return (
+    <div style={{ display: "flex", gap: "8px", overflowX: "auto", marginBottom: "16px", paddingBottom: "2px" }}>
+      {MARKETS_CFG.map(cfg => {
+        const { open, reason, hhmm } = getMarketStatus(cfg, now);
+        return (
+          <div key={cfg.id} style={{ flexShrink: 0, background: C.snow, border: `1px solid ${open ? "rgba(22,163,74,0.25)" : C.border}`, borderRadius: "10px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "8px", boxShadow: shadow.card }}>
+            <span style={{ fontSize: "16px" }}>{cfg.flag}</span>
+            <div>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>{cfg.nom}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: open ? C.green : C.inkSubtle, display: "inline-block", flexShrink: 0 }} />
+                <span style={{ fontSize: "10px", fontWeight: "600", color: open ? C.green : C.inkSubtle }}>{reason}</span>
+                <span style={{ fontSize: "10px", color: C.inkSubtle }}>· {hhmm}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DashboardBar({ onTabChange, hidden, profil, account = "PEA" }) {
   const isMobile  = useIsMobile();
   const allPos    = load("bourse_portfolio", []);
@@ -11471,7 +11527,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </a>
             </div>
           )}
-            {activeTab === TABS.PORTFOLIO  && <><DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} /><PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} /></>}
+            {activeTab === TABS.PORTFOLIO  && <><MarketStatusBar /><DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} /><PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} /></>}
 {activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
             {activeTab === TABS.PROJECTION && <ProjectionTab profil={profil} account={account} />}
             {activeTab === TABS.HISTORIQUE && <HistoriqueTab portfolioVersion={portfolioVersion} account={account} />}
