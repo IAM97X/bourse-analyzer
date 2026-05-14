@@ -1,5 +1,19 @@
 export const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
+const PROXIES = [
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+];
+export async function fetchWithProxy(url, opts = {}) {
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(url), { signal: AbortSignal.timeout(10000), ...opts });
+      if (res.ok || res.status < 500) return res;
+    } catch {}
+  }
+  throw new Error("Données de marché indisponibles (proxies CORS inaccessibles)");
+}
+
 export const CLAUDE_MODELS = {
   fast:     "claude-haiku-4-5-20251001",
   standard: "claude-sonnet-4-6",
@@ -77,7 +91,7 @@ export async function callClaude(system, userMessage, useSearch = false, _retrie
       err.retryable = true; throw err;
     }
     if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez REACT_APP_ANTHROPIC_API_KEY dans .env`);
+    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez votre clé Anthropic dans les Paramètres.`);
     if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
     const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
     if (!text) throw new Error("Réponse vide.");
@@ -131,7 +145,7 @@ export async function callClaudeHaiku(system, userMessage) {
       err.retryable = true; throw err;
     }
     if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez REACT_APP_ANTHROPIC_API_KEY dans .env`);
+    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez votre clé Anthropic dans les Paramètres.`);
     if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
     const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
     if (!text) throw new Error("Réponse vide.");
@@ -169,7 +183,7 @@ export async function callClaudeConversation(system, messages, _retries = 3) {
       throw new Error("Service temporairement indisponible — Réessayez dans quelques instants.");
     }
     if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez REACT_APP_ANTHROPIC_API_KEY dans .env`);
+    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez votre clé Anthropic dans les Paramètres.`);
     if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
     const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
     if (!text) throw new Error("Réponse vide.");

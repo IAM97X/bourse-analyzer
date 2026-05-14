@@ -1,8 +1,8 @@
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return res.status(500).json({ error: "Clé API manquante côté serveur." });
+  const key = req.headers["x-api-key"];
+  if (!key) return res.status(401).json({ error: "Clé API manquante. Configurez votre clé Anthropic dans les Paramètres." });
 
   try {
     const body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
