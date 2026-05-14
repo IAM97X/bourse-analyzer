@@ -975,23 +975,28 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           ? dcaMensuel * ((Math.pow(1 + rNeutreMois, nMois) - 1) / rNeutreMois) : dcaMensuel * nMois;
         const projNeutreTotal = projNeutrePositions + dcaNeutreFV;
 
-        // 1. Trajectoire neutre vs objectif (aucune influence IA)
+        // 1. Trajectoire — IA si disponible, neutre sinon
+        const useIAProj = valProjeteeIA > 0;
+        const projUsed  = useIAProj ? valProjeteeIA : projNeutreTotal;
+        const trajLabel = useIAProj ? "Trajectoire (IA)" : "Trajectoire (neutre)";
+        const trajSuffix = useIAProj && cagrIA != null ? ` · CAGR IA ~${cagrIA.toFixed(1)}%/an` : (useIAProj ? "" : " — scénario conservateur");
         if (objectifEuros > 0) {
-          const couv = projNeutreTotal / objectifEuros;
-          if      (couv >= 1.3) { score += 3; factors.push({ label: "Trajectoire (neutre)", detail: `${fmtEur(Math.round(projNeutreTotal))} projetés · marge +${Math.round((couv-1)*100)}% — scénario conservateur`, delta: +3, ok: true }); }
-          else if (couv >= 1.1) { score += 2; factors.push({ label: "Trajectoire (neutre)", detail: `${fmtEur(Math.round(projNeutreTotal))} projetés · ${Math.round(couv*100)}% de l'objectif`, delta: +2, ok: true }); }
-          else if (couv >= 1.0) { score += 1; factors.push({ label: "Trajectoire (neutre)", detail: `Objectif atteint à ${Math.round(couv*100)}% — marge de sécurité faible`, delta: +1, ok: true }); }
-          else if (couv >= 0.7) { score -= 1; factors.push({ label: "Trajectoire (neutre)", detail: `${Math.round(couv*100)}% de l'objectif en scénario conservateur`, delta: -1, ok: false }); }
-          else if (couv >= 0.4) { score -= 2; factors.push({ label: "Trajectoire (neutre)", detail: `Seulement ${Math.round(couv*100)}% de l'objectif — objectif trop ambitieux ou portefeuille insuffisant`, delta: -2, ok: false }); }
-          else                  { score -= 3; factors.push({ label: "Trajectoire (neutre)", detail: `Trajectoire insuffisante · ${Math.round(couv*100)}% de l'objectif`, delta: -3, ok: false }); }
+          const couv = projUsed / objectifEuros;
+          if      (couv >= 1.3) { score += 3; factors.push({ label: trajLabel, detail: `${fmtEur(Math.round(projUsed))} projetés · marge +${Math.round((couv-1)*100)}%${trajSuffix}`, delta: +3, ok: true }); }
+          else if (couv >= 1.1) { score += 2; factors.push({ label: trajLabel, detail: `${fmtEur(Math.round(projUsed))} projetés · ${Math.round(couv*100)}% de l'objectif${trajSuffix}`, delta: +2, ok: true }); }
+          else if (couv >= 1.0) { score += 1; factors.push({ label: trajLabel, detail: `Objectif atteint à ${Math.round(couv*100)}% — marge de sécurité faible${trajSuffix}`, delta: +1, ok: true }); }
+          else if (couv >= 0.7) { score -= 1; factors.push({ label: trajLabel, detail: `${Math.round(couv*100)}% de l'objectif${trajSuffix}`, delta: -1, ok: false }); }
+          else if (couv >= 0.4) { score -= 2; factors.push({ label: trajLabel, detail: `Seulement ${Math.round(couv*100)}% de l'objectif — objectif trop ambitieux ou portefeuille insuffisant${trajSuffix}`, delta: -2, ok: false }); }
+          else                  { score -= 3; factors.push({ label: trajLabel, detail: `Trajectoire insuffisante · ${Math.round(couv*100)}% de l'objectif${trajSuffix}`, delta: -3, ok: false }); }
         } else {
-          // Sans objectif : score selon CAGR neutre du portefeuille
           const cagrNeutrePF = positions.length > 0
             ? positions.reduce((s, p) => s + cagrBasePos(p) * (p.dernierCours || p.pru) * p.quantite, 0) / Math.max(totalVal, 1) * 100
             : 6;
-          if      (cagrNeutrePF >= 7) { score += 1; factors.push({ label: "Trajectoire (neutre)", detail: `CAGR base ~${cagrNeutrePF.toFixed(1)}%/an · fixez un objectif pour affiner`, delta: +1, ok: true }); }
-          else if (cagrNeutrePF >= 5) {             factors.push({ label: "Trajectoire (neutre)", detail: `CAGR base ~${cagrNeutrePF.toFixed(1)}%/an · fixez un objectif patrimonial`, delta: 0, ok: null }); }
-          else                        { score -= 1; factors.push({ label: "Trajectoire (neutre)", detail: `CAGR base faible ~${cagrNeutrePF.toFixed(1)}%/an`, delta: -1, ok: false }); }
+          const cagrAff = useIAProj && cagrIA != null ? cagrIA : cagrNeutrePF;
+          const cagrLbl = useIAProj && cagrIA != null ? "CAGR IA" : "CAGR base";
+          if      (cagrAff >= 7) { score += 1; factors.push({ label: trajLabel, detail: `${cagrLbl} ~${cagrAff.toFixed(1)}%/an · fixez un objectif pour affiner`, delta: +1, ok: true }); }
+          else if (cagrAff >= 5) {             factors.push({ label: trajLabel, detail: `${cagrLbl} ~${cagrAff.toFixed(1)}%/an · fixez un objectif patrimonial`, delta: 0, ok: null }); }
+          else                   { score -= 1; factors.push({ label: trajLabel, detail: `${cagrLbl} faible ~${cagrAff.toFixed(1)}%/an`, delta: -1, ok: false }); }
         }
 
         // 2. Alpha IA pondéré par conviction (score marché) × poids portefeuille
