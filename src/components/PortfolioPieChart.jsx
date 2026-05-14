@@ -8,7 +8,7 @@ const SECTOR_COLORS = ["#2E7D52","#1A3A5C","#C0392B","#C8972A","#5B4A8A","#1A7A8
 export const ISIN_SECTEUR = {
   "NL0014559478": "Énergie",
   "FR0014005I80": "Santé",
-  "FR0014004362": "Énergie",
+  "FR0004004362": "Énergie",
   "FR001400U5Q4": "ETF Monde",
   "FR0013233012": "Santé",
   "FR0004056851": "Santé",
@@ -95,7 +95,7 @@ function DonutChart({ slices, total, CX = 110, CY = 110, R = 90, R_INNER = 44, h
   );
 }
 
-function detectSecteurNom(nom) {
+export function detectSecteurNom(nom) {
   const n = (nom || "").toLowerCase();
   if (n.includes("emergent") || n.includes("emerging"))                          return "ETF Émergents";
   if (n.includes("monde") || n.includes("world") || n.includes("msci world"))   return "ETF Monde";

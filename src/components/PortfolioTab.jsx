@@ -8,7 +8,7 @@ import { UI, DEFAULT_POSITIONS, SIGNAL_CONFIG, translateSecteur } from "../const
 import { fetchCoursAlphaVantage, parseBoursobankCSV, openLink, yahooFinanceUrl } from "../lib/market";
 import { ThinkingSpinner } from "./UI";
 import { LiveMarketPanel, SellSimulator, PriceRangeBar } from "./StockPanels";
-import PortfolioPieChart, { ISIN_SECTEUR } from "./PortfolioPieChart";
+import PortfolioPieChart, { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
 import DividendesCard from "./DividendesCard";
 import CompanyAvatar from "./CompanyAvatar";
 import CapturesPanel, { makeCapture, downloadCapture, CAPTURES_KEY } from "./CapturesPanel";
@@ -296,7 +296,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
             const q = qMap[sym];
             if (!q?.regularMarketPrice) { errors.push(`${p.nom} : cours indisponible`); return p; }
             const sectorRaw = q.sector || null;
-            const secteur = sectorRaw ? translateSecteur(sectorRaw) : (p.secteur || ISIN_SECTEUR[p.isin] || null);
+            const secteur = sectorRaw ? translateSecteur(sectorRaw) : (p.secteur || ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || null);
             if (p.dernierCours && q.regularMarketPrice !== p.dernierCours) {
               newFlash[p.id] = q.regularMarketPrice > p.dernierCours ? "green" : "red";
             }
@@ -1067,7 +1067,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         // Secteurs détectés
         const secteurMap = {};
         positions.forEach(p => {
-          const sec = p.secteur || ISIN_SECTEUR[p.isin] || (isETFName(p.nom) ? "ETF" : "Autre");
+          const sec = p.secteur || ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || (isETFName(p.nom) ? "ETF" : "Autre");
           const v = (p.dernierCours || p.pru) * p.quantite;
           secteurMap[sec] = (secteurMap[sec] || 0) + v;
         });
