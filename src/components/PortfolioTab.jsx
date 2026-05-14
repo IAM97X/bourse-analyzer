@@ -1092,7 +1092,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const displayLabel = displayScore >= 8 ? "Excellent" : displayScore >= 7 ? "Très bon" : displayScore >= 5 ? "Correct" : displayScore >= 3 ? "Faible" : "Critique";
         const displaySource = (() => {
           if (objectifEuros > 0 && valProjeteeIA > 0)
-            return `Objectif ${fmtEur(objectifEuros)} · projeté ${fmtEur(valProjeteeIA)} sur ${horizonAns} ans`;
+            return `Objectif ${fmtEur(objectifEuros)} · projeté ${fmtEur(valProjeteeIA)} sur ${horizonAns} ans${cagrIA != null ? ` · CAGR IA ~${cagrIA.toFixed(1)}%/an` : ""}`;
           if (cagrIA != null && valProjeteeIA > 0)
             return `Projection ${fmtEur(valProjeteeIA)} sur ${horizonAns} ans · CAGR ~${cagrIA.toFixed(1)}%/an`;
           return `Score structurel · analysez dans Signaux IA pour enrichir`;
