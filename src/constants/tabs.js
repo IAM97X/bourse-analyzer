@@ -1,4 +1,5 @@
 export const TABS = {
+  HOME:       "home",
   PORTFOLIO:  "portfolio",
   MARCHE:     "marche",
   PROJECTION: "projection",

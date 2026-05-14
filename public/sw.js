@@ -1,7 +1,7 @@
 // Bourse Analyzer — Service Worker
 // Cache-first pour le shell React, network-first pour les APIs externes
 
-const CACHE_NAME = "bourse-analyzer-v1";
+const CACHE_NAME = "bourse-analyzer-v2";
 
 // Ressources du shell à mettre en cache à l'installation
 const SHELL_URLS = ["/", "/index.html", "/manifest.json"];
@@ -15,9 +15,15 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches.keys().then(async (keys) => {
+      const oldCaches = keys.filter((k) => k !== CACHE_NAME);
+      await Promise.all(oldCaches.map((k) => caches.delete(k)));
+      // Si c'est une mise à jour (anciens caches présents), recharger tous les onglets ouverts
+      if (oldCaches.length > 0) {
+        const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        clients.forEach((client) => client.navigate(client.url));
+      }
+    })
   );
   self.clients.claim();
 });

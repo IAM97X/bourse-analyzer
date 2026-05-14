@@ -66,8 +66,18 @@ export const IconChat = () => (
   </svg>
 );
 
+const IconHome = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 7L8 2l6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z"/>
+    <path d="M6 14V9h4v5"/>
+  </svg>
+);
+
 export const NAV_GROUPS = [
-  { items: [{ key: TABS.PORTFOLIO, label: "Positions", icon: <IconPositions/> }] },
+  { items: [
+    { key: TABS.HOME,      label: "Accueil",   icon: <IconHome/> },
+    { key: TABS.PORTFOLIO, label: "Positions", icon: <IconPositions/> },
+  ]},
   { label: "PORTEFEUILLE", items: [
     { key: TABS.HISTORIQUE, label: "Répartition",  icon: <IconPie/> },
     { key: TABS.OPERATIONS, label: "Transactions", icon: <IconSwap/> },
@@ -77,13 +87,13 @@ export const NAV_GROUPS = [
     { key: TABS.DCA,        label: "Plan DCA",    icon: <IconTarget/> },
     { key: TABS.PROJECTION, label: "Projection",  icon: <IconWave/> },
   ]},
-  { label: "COMPTE", items: [
-    { key: TABS.PROFIL,   label: "Profil investisseur", icon: <IconUser/> },
-    { key: TABS.SETTINGS, label: "Paramètres",          icon: <IconGear/> },
-  ]},
   { label: "IA", featured: true, items: [
     { key: TABS.CHAT,      label: "Conseiller Privé", icon: <IconChat/> },
     { key: TABS.AUTOPILOT, label: "Autopilot IA",     icon: <IconChat/> },
+  ]},
+  { label: "COMPTE", items: [
+    { key: TABS.PROFIL,   label: "Profil investisseur", icon: <IconUser/> },
+    { key: TABS.SETTINGS, label: "Paramètres",          icon: <IconGear/> },
   ]},
 ];
 

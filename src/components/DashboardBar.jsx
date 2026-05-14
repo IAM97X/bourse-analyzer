@@ -109,7 +109,7 @@ export default function DashboardBar({ onTabChange, hidden, profil, account = "P
   const positions = allPos.filter(p => (p.compte || "PEA") === account);
   if (positions.length === 0) return null;
 
-  const capitalInvesti = account === "PEA" ? (Number(profil?.capitalPEA) || 0) : (Number(profil?.capitalCTO) || 0);
+  const capitalInvesti = account === "PEA" ? (Number(profil?.versementsPEA) || 0) : (Number(profil?.versementsCTO) || 0);
   const totalActuel    = positions.reduce((s, p) => s + ((p.dernierCours || p.pru || 0)) * (p.quantite || 0), 0);
   const totalInvesti   = positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
   const totalPV        = totalActuel - totalInvesti;

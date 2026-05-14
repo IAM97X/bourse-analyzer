@@ -80,13 +80,10 @@ export function sanitizePositions(positions) {
       ticker: p.ticker || "",
       secteur: p.secteur || "Autre",
       compte: p.compte || "PEA",
-      pru,
-      quantite,
-      dernierCours: dernierCours || null,
       alerteHaute: Number(p.alerteHaute) || null,
       alerteBasse: Number(p.alerteBasse) || null,
       ...p,
-      pru, quantite, dernierCours: dernierCours || null,
+      pru, quantite, dernierCours: dernierCours ?? null,
     };
   }).filter(Boolean);
 }
@@ -117,4 +114,62 @@ export function computeRiskScore(positions, totalActuel) {
   else if (pvPct > 30) score -= 1;
 
   return Math.min(10, Math.max(1, Math.round(score)));
+}
+
+export const PROFIL_RANK = { prudent: 0, equilibre: 1, dynamique: 2, "tres-dynamique": 3 };
+
+const NL_SUR_PARIS = new Set(["NL0014559478","NL00150001Q9","NL0000235190","NL0010273215","NL0011794037"]);
+export function getMIC(isin) {
+  if (!isin) return "XPAR";
+  if (NL_SUR_PARIS.has(isin)) return "XPAR";
+  if (isin.startsWith("BE")) return "XBRU";
+  if (isin.startsWith("NL")) return "XAMS";
+  return "XPAR";
+}
+export function getEuronextUrl(isin, nom) {
+  if (!isin) return null;
+  const mic  = getMIC(isin);
+  const type = isETFName(nom) ? "etfs" : "equities";
+  return `https://live.euronext.com/fr/product/${type}/${isin}-${mic}`;
+}
+
+export function linReg(xs, ys) {
+  const n = xs.length;
+  if (n < 2) return { a: ys[0] || 0, b: 0, sigma: 0 };
+  const mx = xs.reduce((s, v) => s + v, 0) / n;
+  const my = ys.reduce((s, v) => s + v, 0) / n;
+  const ssxx = xs.reduce((s, v) => s + (v - mx) ** 2, 0);
+  const ssxy = xs.reduce((s, v, i) => s + (v - mx) * (ys[i] - my), 0);
+  const b = ssxy / ssxx;
+  const a = my - b * mx;
+  const residuals = xs.map((x, i) => ys[i] - (a + b * x));
+  const sigma = Math.sqrt(residuals.reduce((s, r) => s + r * r, 0) / Math.max(n - 2, 1));
+  return { a, b, sigma };
+}
+
+export function computeMA(prices, win) {
+  return prices.map((_, i) => {
+    if (i < win - 1) return null;
+    return prices.slice(i - win + 1, i + 1).reduce((s, v) => s + v, 0) / win;
+  });
+}
+
+export function computeRSI(prices, period = 14) {
+  const result = new Array(prices.length).fill(null);
+  if (prices.length <= period) return result;
+  let avgGain = 0, avgLoss = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = prices[i] - prices[i - 1];
+    if (d >= 0) avgGain += d; else avgLoss -= d;
+  }
+  avgGain /= period; avgLoss /= period;
+  result[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  for (let i = period + 1; i < prices.length; i++) {
+    const d = prices[i] - prices[i - 1];
+    const gain = d >= 0 ? d : 0, loss = d < 0 ? -d : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    result[i] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+  return result;
 }
