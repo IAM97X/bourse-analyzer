@@ -419,7 +419,8 @@ export default function ChatTab({ profil, account, portfolioVersion, marketScore
     const opsLine = ops.length > 0
       ? `10 dernières transactions : ${ops.map(o => `${o.date} ${o.type} ${o.quantite}×${o.titre} à ${o.prixUnitaire}€`).join(" | ")}`
       : "Aucune transaction.";
-    const scores = Array.isArray(marketScores) ? marketScores : [];
+    const accountNames = new Set(positions.map(p => p.nom));
+    const scores = (Array.isArray(marketScores) ? marketScores : []).filter(s => accountNames.has(s.nom));
     const scoresLine = scores.length > 0
       ? `Signaux IA marché : ${scores.map(s => `${s.nom}→${s.signal}(${s.score_marche}/20)`).join(", ")}`
       : "Pas de signaux IA.";
