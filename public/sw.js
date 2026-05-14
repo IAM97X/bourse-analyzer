@@ -1,7 +1,7 @@
 // Bourse Analyzer — Service Worker
 // Cache-first pour le shell React, network-first pour les APIs externes
 
-const CACHE_NAME = "bourse-analyzer-v2";
+const CACHE_NAME = "bourse-analyzer-v3";
 
 // Ressources du shell à mettre en cache à l'installation
 const SHELL_URLS = ["/", "/index.html", "/manifest.json"];
