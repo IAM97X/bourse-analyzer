@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { sanitizePositions, fmtEur, isETFName } from "../lib/finance";
+import { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
 import { load, save } from "../lib/storage";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
@@ -123,7 +124,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             const summary = positions.map(p => {
               const sig = scores.find(s => s.isin === p.isin || s.nom === p.nom);
               return {
-                nom: p.nom, isin: p.isin || null, secteur: p.secteur || null,
+                nom: p.nom, isin: p.isin || null, secteur: p.secteur || ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || null,
                 pru: p.pru, quantite: p.quantite, cours: p.dernierCours || p.pru,
                 pv_pct: p.pru > 0 ? +((( p.dernierCours || p.pru) - p.pru) / p.pru * 100).toFixed(1) : 0,
                 signal_ia: sig?.signal || null, resume_ia: sig?.resume || null,
