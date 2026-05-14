@@ -994,19 +994,24 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           else                        { score -= 1; factors.push({ label: "Trajectoire (neutre)", detail: `CAGR base faible ~${cagrNeutrePF.toFixed(1)}%/an`, delta: -1, ok: false }); }
         }
 
-        // 2. Alpha IA pondéré par conviction (score marché) — écart vs base × conviction
+        // 2. Alpha IA pondéré par conviction (score marché) × poids portefeuille
         if (posProjections.length > 0) {
-          const alphasPonderes = posProjections.map(p => {
+          const alphaItems = posProjections.map(p => {
             const pos = positions.find(pos => pos.nom === p.nom);
             const base = pos ? cagrBasePos(pos) * 100 : cagrActionBase * 100;
             const rawAlpha = (p.cagr || 0) - base;
-            // Conviction = score_marche / 20 (entre 0.1 et 1.0), défaut 0.5 si absent
             const sig = scores.find(s => s.nom === p.nom || (pos?.isin && s.isin === pos.isin));
             const conviction = sig?.score_marche != null ? Math.max(0.1, sig.score_marche / 20) : 0.5;
-            return rawAlpha * conviction;
+            const valPos = pos ? (pos.dernierCours || pos.pru) * pos.quantite : 0;
+            const poidsPF = totalVal > 0 ? valPos / totalVal : 1 / posProjections.length;
+            const weight = conviction * poidsPF;
+            return { alpha: rawAlpha, weight };
           });
-          const avgAlphaPondere = alphasPonderes.reduce((s, a) => s + a, 0) / alphasPonderes.length;
-          const nbAlphaFort = alphasPonderes.filter(a => a >= 6).length;
+          const sumWeights = alphaItems.reduce((s, i) => s + i.weight, 0);
+          const avgAlphaPondere = sumWeights > 0
+            ? alphaItems.reduce((s, i) => s + i.alpha * i.weight, 0) / sumWeights
+            : 0;
+          const nbAlphaFort = alphaItems.filter(i => i.alpha >= 6).length;
           if      (nbAlphaFort >= 2 || avgAlphaPondere >= 5) { score += 2; factors.push({ label: "Alpha IA (pondéré)", detail: `${nbAlphaFort} ligne(s) à fort alpha · moy. pondéré +${avgAlphaPondere.toFixed(1)}%`, delta: +2, ok: true }); }
           else if (nbAlphaFort >= 1 || avgAlphaPondere >= 2) { score += 1; factors.push({ label: "Alpha IA (pondéré)", detail: `Alpha modéré · moy. pondéré +${avgAlphaPondere.toFixed(1)}%`, delta: +1, ok: true }); }
           else if (avgAlphaPondere >= 0)                     {             factors.push({ label: "Alpha IA (pondéré)", detail: `Alpha faible · +${avgAlphaPondere.toFixed(1)}% pondéré`, delta: 0, ok: null }); }
