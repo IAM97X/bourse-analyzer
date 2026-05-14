@@ -177,7 +177,7 @@ Données positions : ${JSON.stringify(summary)}
 Pour chaque position, estime un CAGR réaliste selon son type (ETF, small cap, large cap), secteur, signal IA.
 Calcule valeur_projetee_position = valeur_actuelle × (1 + CAGR/100)^${horizonAns}.
 Calcule cagr_portefeuille = CAGR moyen pondéré par valeur de toutes les positions.
-Pour la valeur projetée TOTALE avec DCA, utilise CE MÊME cagr_portefeuille (pas un CAGR générique) : valeur_projetee_avec_dca = valeur_projetee_positions + DCA × ((1+r)^n - 1) / r avec r=cagr_portefeuille/100/12, n=${horizonAns*12}. Mets cagr_dca = cagr_portefeuille.
+Pour la valeur projetée TOTALE avec DCA, utilise un CAGR DCA pondéré entre le CAGR des positions ETF et celui des actions selon la composition du portefeuille : valeur_projetee_avec_dca = valeur_projetee_positions + DCA × ((1+r)^n - 1) / r avec r=cagr_dca/100/12, n=${horizonAns*12}. Le cagr_dca doit être un juste milieu entre cagr_portefeuille et le CAGR ETF (~${cagrETF}%/an) selon la part ETF du portefeuille (${repart.etfPct}%). Suggestion : cagr_dca ≈ ${dcaCagr}%.
 
 Retourne ce JSON exact (aucun texte autour) :
 {"score":7,"label":"Très bon","resume":"2-3 phrases synthèse incluant l'effet DCA et le profil ${risque}","valeur_actuelle":${Math.round(totalVal)},"valeur_projetee":12500,"valeur_projetee_avec_dca":45000,"cagr_portefeuille":6.5,"cagr_dca":${dcaCagr},"points_forts":["point 1","point 2"],"points_faibles":["point 1","point 2"],"positions":[{"nom":"nom exact","valeur_actuelle":1500,"cagr":8.5,"valeur_projetee":3240,"impact":"positif","raison":"courte raison"}]}`;
