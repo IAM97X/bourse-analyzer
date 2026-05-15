@@ -165,8 +165,8 @@ function ProfilTab({ profil, onChange }) {
           <div style={{ marginBottom: "22px" }}>
             <label style={lbl}>Horizon d'investissement</label>
             <div style={{ display: "flex", gap: "8px" }}>
-              {[["court", "Court", "< 2 ans"], ["moyen", "Moyen", "2–5 ans"], ["long", "Long", "5–10 ans"], ["tres-long", "Très long", "> 10 ans"]].map(([v, l, sub]) => (
-                <button key={v} style={optBtn(form.horizon === v)} onClick={() => setForm(f => ({ ...f, horizon: v }))}>
+              {[["court", "Court", "< 2 ans", 24], ["moyen", "Moyen", "2–5 ans", 48], ["long", "Long", "5–10 ans", 96], ["tres-long", "Très long", "> 10 ans", 180]].map(([v, l, sub, mois]) => (
+                <button key={v} style={optBtn(form.horizon === v)} onClick={() => setForm(f => ({ ...f, horizon: v, dcaDuree: mois }))}>
                   <div style={{ fontWeight: "700" }}>{l}</div>
                   <div style={{ fontSize: "10px", opacity: 0.6, marginTop: "3px" }}>{sub}</div>
                 </button>
@@ -196,7 +196,11 @@ function ProfilTab({ profil, onChange }) {
               </div>
               <div>
                 <label style={lbl}>Durée DCA (mois)</label>
-                <input style={inp} type="number" min="1" max="360" placeholder="12" value={form.dcaDuree || ""} onChange={e => setForm(f => ({ ...f, dcaDuree: e.target.value }))} />
+                <input style={inp} type="number" min="1" max="360" placeholder="12" value={form.dcaDuree || ""} onChange={e => {
+                  const mois = parseInt(e.target.value) || 0;
+                  const horizon = mois <= 24 ? "court" : mois <= 48 ? "moyen" : mois <= 96 ? "long" : "tres-long";
+                  setForm(f => ({ ...f, dcaDuree: e.target.value, horizon }));
+                }} />
               </div>
             </div>
           </Section>
