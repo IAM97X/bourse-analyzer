@@ -1043,15 +1043,17 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           factors.push({ label: "Signaux directionnels", detail: "Non analysé", delta: 0, ok: null });
         }
 
-        // 4. Catalyseurs — pondérés par poids
+        // 4. Catalyseurs — pondérés par poids (poids x2 vs avant)
         if (nbAnalyzed > 0) {
           const totalValAnalyzed = analyzed.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
           const poidsCat = analyzed.filter(p => p._sig.catalyseur_cle?.trim().length > 5)
             .reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
           const ratioCatVal = totalValAnalyzed > 0 ? poidsCat / totalValAnalyzed : 0;
-          if      (ratioCatVal >= 0.75) { score += 1; factors.push({ label: "Catalyseurs", detail: `${Math.round(ratioCatVal*100)}% du capital avec catalyseur identifié`, delta: +1, ok: true }); }
-          else if (ratioCatVal === 0)   { score -= 1; factors.push({ label: "Catalyseurs", detail: "Aucun catalyseur identifié", delta: -1, ok: false }); }
-          else                          { factors.push({ label: "Catalyseurs", detail: `${Math.round(ratioCatVal*100)}% du capital avec catalyseur`, delta: 0, ok: null }); }
+          const pctCat = Math.round(ratioCatVal * 100);
+          if      (ratioCatVal >= 0.75) { score += 2; factors.push({ label: "Catalyseurs", detail: `${pctCat}% du capital avec catalyseur identifié`, delta: +2, ok: true }); }
+          else if (ratioCatVal >= 0.4)  { score += 1; factors.push({ label: "Catalyseurs", detail: `${pctCat}% du capital avec catalyseur`, delta: +1, ok: true }); }
+          else if (ratioCatVal === 0)   { score -= 2; factors.push({ label: "Catalyseurs", detail: "Aucun catalyseur identifié — risque de thèse sans déclencheur", delta: -2, ok: false }); }
+          else                          { score -= 1; factors.push({ label: "Catalyseurs", detail: `Seulement ${pctCat}% du capital avec catalyseur`, delta: -1, ok: false }); }
         } else {
           factors.push({ label: "Catalyseurs", detail: "Lancez le scoring IA", delta: 0, ok: null });
         }
