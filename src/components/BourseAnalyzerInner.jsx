@@ -97,7 +97,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     if (!lastRefresh) return;
     const update = () => {
       const diff = Math.round((Date.now() - lastRefresh) / 60000);
-      setRefreshAgo(diff < 1 ? "à l'instant" : `il y a ${diff} min`);
+      const ago = diff < 1 ? "à l'instant" : diff < 60 ? `il y a ${diff} min` : diff < 1440 ? `il y a ${Math.floor(diff/60)}h${diff%60 > 0 ? (diff%60)+"min" : ""}` : `il y a ${Math.floor(diff/1440)}j`;
+      setRefreshAgo(ago);
     };
     update();
     const t = setInterval(update, 30000);
