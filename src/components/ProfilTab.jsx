@@ -132,6 +132,22 @@ function ProfilTab({ profil, onChange }) {
       versementsCTO:  parseFloat(String(form.versementsCTO  || "0").replace(",", ".")) || 0,
     };
     onChange(p); save("bourse_profil", p);
+    // Sauvegarder la baseline de projection si objectif défini et pas encore de ref
+    if (p.objectifEuros > 0) {
+      const existingRef = (() => { try { return JSON.parse(localStorage.getItem("bourse_projection_ref") || "null"); } catch { return null; } })();
+      if (!existingRef) {
+        const positions = (() => { try { return JSON.parse(localStorage.getItem("bourse_portfolio") || "[]"); } catch { return []; } })();
+        const valeur = positions.reduce((s, pos) => s + (pos.dernierCours || pos.pru || 0) * (pos.quantite || 0), 0);
+        if (valeur > 0) {
+          const horizonAns = { court: 2, moyen: 4, long: 8, "tres-long": 15 }[p.horizon] || 8;
+          localStorage.setItem("bourse_projection_ref", JSON.stringify({
+            date: new Date().toISOString().slice(0, 10),
+            valeur, dcaMensuel: p.dcaMensuel || 0,
+            objectif: p.objectifEuros, horizonAns,
+          }));
+        }
+      }
+    }
     setSaved(true); setTimeout(() => setSaved(false), 2200);
   };
 

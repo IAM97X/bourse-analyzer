@@ -9,6 +9,113 @@ import { StatBox, ThinkingSpinner } from "./UI";
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 const DEFAULT_POSITIONS = [];
 
+// ─── Suivi Réel vs Projeté ────────────────────────────────────────────────────
+function SuiviHistorique() {
+  const ref  = (() => { try { return JSON.parse(localStorage.getItem("bourse_projection_ref") || "null"); } catch { return null; } })();
+  const snaps = (() => { try { return JSON.parse(localStorage.getItem("bourse_snapshots") || "[]"); } catch { return []; } })()
+    .filter(s => s.valeur > 0 && s.date >= (ref?.date || ""));
+
+  if (!ref || snaps.length < 2) return (
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "24px", boxShadow: shadow.card }}>
+      <div style={{ fontSize: "12px", fontWeight: "700", color: C.inkSubtle, marginBottom: "6px" }}>SUIVI RÉEL VS PROJETÉ</div>
+      <div style={{ fontSize: "13px", color: C.inkSubtle }}>
+        {!ref ? "Sauvegardez votre profil avec un objectif pour démarrer le suivi." : "Pas encore assez de données — revenez dans quelques jours."}
+      </div>
+    </div>
+  );
+
+  const monthDiff = (d1, d2) => {
+    const a = new Date(d1), b = new Date(d2);
+    return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  };
+  const projRef = (mois) => {
+    const r = Math.pow(1.07, 1 / 12) - 1;
+    return ref.valeur * Math.pow(1 + r, mois) + (ref.dcaMensuel > 0 ? ref.dcaMensuel * (Math.pow(1 + r, mois) - 1) / r : 0);
+  };
+
+  const points = snaps.map(s => {
+    const mois = Math.max(0, monthDiff(ref.date, s.date));
+    return { date: s.date, reel: s.valeur, projete: projRef(mois), mois };
+  });
+
+  // SVG mini-chart
+  const W = 600, H = 180, ML = 64, MR = 16, MT = 16, MB = 32;
+  const CW = W - ML - MR, CH = H - MT - MB;
+  const allVals = points.flatMap(p => [p.reel, p.projete]);
+  const minV = Math.min(...allVals) * 0.95, maxV = Math.max(...allVals) * 1.05;
+  const xS = i => ML + (i / Math.max(1, points.length - 1)) * CW;
+  const yS = v => MT + (1 - (v - minV) / (maxV - minV)) * CH;
+  const fmtK = v => v >= 1000 ? `${(v / 1000).toFixed(1)}k€` : `${Math.round(v)}€`;
+  const dateLabel = d => { const dt = new Date(d); return `${dt.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}`; };
+
+  const pathD = (pts, key) => pts.map((p, i) => `${i === 0 ? "M" : "L"} ${xS(i).toFixed(1)} ${yS(p[key]).toFixed(1)}`).join(" ");
+
+  return (
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "20px 24px", boxShadow: shadow.card }}>
+      <div style={{ fontSize: "12px", fontWeight: "700", color: C.inkSubtle, marginBottom: "4px", letterSpacing: "1px" }}>SUIVI RÉEL VS PROJETÉ</div>
+      <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "14px" }}>Depuis le {new Date(ref.date).toLocaleDateString("fr-FR")} · scénario réaliste 7%/an + {fmtEur(ref.dcaMensuel)}/mois DCA</div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W, display: "block" }}>
+        {/* Grille */}
+        {[0, 0.25, 0.5, 0.75, 1].map(r => {
+          const v = minV + r * (maxV - minV);
+          const y = yS(v);
+          return <g key={r}>
+            <line x1={ML} x2={W - MR} y1={y} y2={y} stroke={C.border} strokeWidth="1" />
+            <text x={ML - 6} y={y + 4} fontSize="9" fill={C.inkSubtle} textAnchor="end">{fmtK(v)}</text>
+          </g>;
+        })}
+        {/* Ligne projetée (tirets) */}
+        <path d={pathD(points, "projete")} fill="none" stroke={C.navy} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.6" />
+        {/* Ligne réelle */}
+        <path d={pathD(points, "reel")} fill="none" stroke={C.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Dots réels */}
+        {points.map((p, i) => {
+          const aboveProj = p.reel >= p.projete;
+          return <g key={i}>
+            <circle cx={xS(i)} cy={yS(p.reel)} r="4" fill={aboveProj ? C.green : C.red} stroke={C.snow} strokeWidth="1.5" />
+            <text x={xS(i)} y={H - 4} fontSize="9" fill={C.inkSubtle} textAnchor="middle">{dateLabel(p.date)}</text>
+          </g>;
+        })}
+      </svg>
+
+      {/* Légende */}
+      <div style={{ display: "flex", gap: "16px", marginTop: "8px", fontSize: "11px" }}>
+        <span><span style={{ color: C.green, fontWeight: "700" }}>──</span> Valeur réelle</span>
+        <span><span style={{ color: C.navy, opacity: 0.6 }}>- - -</span> Projection réaliste</span>
+      </div>
+
+      {/* Table */}
+      <div style={{ marginTop: "14px", overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+          <thead>
+            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+              {["Date", "Réel", "Projeté", "Écart"].map(h => (
+                <th key={h} style={{ padding: "4px 8px", textAlign: "right", color: C.inkSubtle, fontWeight: "600", fontSize: "10px" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {points.map((p, i) => {
+              const delta = p.reel - p.projete;
+              return (
+                <tr key={i} style={{ borderBottom: `1px solid ${C.border}`, opacity: 0.9 }}>
+                  <td style={{ padding: "5px 8px", color: C.inkSubtle, fontSize: "11px" }}>{new Date(p.date).toLocaleDateString("fr-FR")}</td>
+                  <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: "700" }}>{fmtEur(p.reel)}</td>
+                  <td style={{ padding: "5px 8px", textAlign: "right", color: C.inkSubtle }}>{fmtEur(Math.round(p.projete))}</td>
+                  <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: "700", color: delta >= 0 ? C.green : C.red }}>
+                    {delta >= 0 ? "+" : ""}{fmtEur(Math.round(delta))}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ─── Projection Tab ───────────────────────────────────────────────────────────
 const INFLATION_RATE = 0.025; // CPI européen ~2,5 %/an
 
@@ -685,6 +792,9 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
           </div>
         );
       })()}
+
+      {/* Suivi réel vs projeté */}
+      <SuiviHistorique />
     </div>
   );
 }
