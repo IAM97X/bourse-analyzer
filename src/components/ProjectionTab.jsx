@@ -11,15 +11,16 @@ const DEFAULT_POSITIONS = [];
 
 // ─── Suivi Réel vs Projeté ────────────────────────────────────────────────────
 function SuiviHistorique() {
-  const ref  = (() => { try { return JSON.parse(localStorage.getItem("bourse_projection_ref") || "null"); } catch { return null; } })();
-  const snaps = (() => { try { return JSON.parse(localStorage.getItem("bourse_snapshots") || "[]"); } catch { return []; } })()
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const ref   = (() => { try { return JSON.parse(localStorage.getItem("bourse_projection_ref") || "null"); } catch { return null; } })();
+  const allSnaps = (() => { try { return JSON.parse(localStorage.getItem("bourse_snapshots") || "[]"); } catch { return []; } })()
     .filter(s => s.valeur > 0 && s.date >= (ref?.date || ""));
 
-  if (!ref || snaps.length < 2) return (
-    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "24px", boxShadow: shadow.card }}>
-      <div style={{ fontSize: "12px", fontWeight: "700", color: C.inkSubtle, marginBottom: "6px" }}>SUIVI RÉEL VS PROJETÉ</div>
+  if (!ref || allSnaps.length < 2) return (
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "28px 24px", boxShadow: shadow.card }}>
+      <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, letterSpacing: "1px", marginBottom: "8px" }}>ÉVOLUTION RÉELLE DU PORTEFEUILLE</div>
       <div style={{ fontSize: "13px", color: C.inkSubtle }}>
-        {!ref ? "Sauvegardez votre profil avec un objectif pour démarrer le suivi." : "Pas encore assez de données — revenez dans quelques jours."}
+        {!ref ? "💡 Sauvegardez votre profil avec un objectif pour démarrer le suivi automatique." : "Pas encore assez de données · revenez dans quelques jours."}
       </div>
     </div>
   );
@@ -32,85 +33,155 @@ function SuiviHistorique() {
     const r = Math.pow(1.07, 1 / 12) - 1;
     return ref.valeur * Math.pow(1 + r, mois) + (ref.dcaMensuel > 0 ? ref.dcaMensuel * (Math.pow(1 + r, mois) - 1) / r : 0);
   };
+  const capitalInvesti = (mois) => ref.valeur + ref.dcaMensuel * mois;
+
+  // Réduire à max 60 points (1 par semaine si données denses)
+  const thin = (arr, max) => {
+    if (arr.length <= max) return arr;
+    const step = Math.ceil(arr.length / max);
+    return arr.filter((_, i) => i % step === 0 || i === arr.length - 1);
+  };
+  const snaps = thin(allSnaps, 60);
 
   const points = snaps.map(s => {
     const mois = Math.max(0, monthDiff(ref.date, s.date));
-    return { date: s.date, reel: s.valeur, projete: projRef(mois), mois };
+    return { date: s.date, reel: s.valeur, projete: projRef(mois), investi: capitalInvesti(mois), mois };
   });
 
-  // SVG mini-chart
-  const W = 600, H = 180, ML = 64, MR = 16, MT = 16, MB = 32;
+  const last    = points[points.length - 1];
+  const first   = points[0];
+  const delta   = last.reel - last.projete;
+  const perfPct = first.reel > 0 ? (last.reel - first.reel) / first.reel * 100 : 0;
+
+  // SVG
+  const W = 720, H = 240, ML = 68, MR = 20, MT = 20, MB = 36;
   const CW = W - ML - MR, CH = H - MT - MB;
-  const allVals = points.flatMap(p => [p.reel, p.projete]);
-  const minV = Math.min(...allVals) * 0.95, maxV = Math.max(...allVals) * 1.05;
+  const allVals = points.flatMap(p => [p.reel, p.projete, p.investi]);
+  const minV = Math.min(...allVals) * 0.96;
+  const maxV = Math.max(...allVals) * 1.04;
   const xS = i => ML + (i / Math.max(1, points.length - 1)) * CW;
   const yS = v => MT + (1 - (v - minV) / (maxV - minV)) * CH;
-  const fmtK = v => v >= 1000 ? `${(v / 1000).toFixed(1)}k€` : `${Math.round(v)}€`;
-  const dateLabel = d => { const dt = new Date(d); return `${dt.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}`; };
+  const fmtK = v => v >= 1000000 ? `${(v/1000000).toFixed(1)}M€` : v >= 1000 ? `${(v/1000).toFixed(0)}k€` : `${Math.round(v)}€`;
 
-  const pathD = (pts, key) => pts.map((p, i) => `${i === 0 ? "M" : "L"} ${xS(i).toFixed(1)} ${yS(p[key]).toFixed(1)}`).join(" ");
+  const linePath = (key) => points.map((p, i) => `${i === 0 ? "M" : "L"}${xS(i).toFixed(1)},${yS(p[key]).toFixed(1)}`).join(" ");
+  const areaPath = (key) => {
+    const base = yS(minV);
+    return points.map((p, i) => `${i === 0 ? "M" : "L"}${xS(i).toFixed(1)},${yS(p[key]).toFixed(1)}`).join(" ")
+      + ` L${xS(points.length-1).toFixed(1)},${base} L${xS(0).toFixed(1)},${base} Z`;
+  };
+
+  // Labels dates : afficher 5-6 dates max
+  const labelStep = Math.max(1, Math.floor(points.length / 5));
+  const labelPoints = points.filter((_, i) => i % labelStep === 0 || i === points.length - 1);
+
+  const hovP = hoverIdx !== null ? points[hoverIdx] : null;
 
   return (
-    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "20px 24px", boxShadow: shadow.card }}>
-      <div style={{ fontSize: "12px", fontWeight: "700", color: C.inkSubtle, marginBottom: "4px", letterSpacing: "1px" }}>SUIVI RÉEL VS PROJETÉ</div>
-      <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "14px" }}>Depuis le {new Date(ref.date).toLocaleDateString("fr-FR")} · scénario réaliste 7%/an + {fmtEur(ref.dcaMensuel)}/mois DCA</div>
-
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W, display: "block" }}>
-        {/* Grille */}
-        {[0, 0.25, 0.5, 0.75, 1].map(r => {
-          const v = minV + r * (maxV - minV);
-          const y = yS(v);
-          return <g key={r}>
-            <line x1={ML} x2={W - MR} y1={y} y2={y} stroke={C.border} strokeWidth="1" />
-            <text x={ML - 6} y={y + 4} fontSize="9" fill={C.inkSubtle} textAnchor="end">{fmtK(v)}</text>
-          </g>;
-        })}
-        {/* Ligne projetée (tirets) */}
-        <path d={pathD(points, "projete")} fill="none" stroke={C.navy} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.6" />
-        {/* Ligne réelle */}
-        <path d={pathD(points, "reel")} fill="none" stroke={C.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Dots réels */}
-        {points.map((p, i) => {
-          const aboveProj = p.reel >= p.projete;
-          return <g key={i}>
-            <circle cx={xS(i)} cy={yS(p.reel)} r="4" fill={aboveProj ? C.green : C.red} stroke={C.snow} strokeWidth="1.5" />
-            <text x={xS(i)} y={H - 4} fontSize="9" fill={C.inkSubtle} textAnchor="middle">{dateLabel(p.date)}</text>
-          </g>;
-        })}
-      </svg>
-
-      {/* Légende */}
-      <div style={{ display: "flex", gap: "16px", marginTop: "8px", fontSize: "11px" }}>
-        <span><span style={{ color: C.green, fontWeight: "700" }}>──</span> Valeur réelle</span>
-        <span><span style={{ color: C.navy, opacity: 0.6 }}>- - -</span> Projection réaliste</span>
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "24px", boxShadow: shadow.card }}>
+      {/* En-tête */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "20px" }}>
+        <div>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, letterSpacing: "1px", marginBottom: "4px" }}>ÉVOLUTION RÉELLE DU PORTEFEUILLE</div>
+          <div style={{ fontSize: "11px", color: C.inkSubtle }}>Depuis le {new Date(ref.date).toLocaleDateString("fr-FR")} · référence 7%/an + {fmtEur(ref.dcaMensuel)}/mois</div>
+        </div>
+        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+          {[
+            { label: "Valeur actuelle", val: fmtEur(last.reel), color: C.navy },
+            { label: "vs Projection", val: `${delta >= 0 ? "+" : ""}${fmtEur(Math.round(delta))}`, color: delta >= 0 ? C.green : C.red },
+            { label: "Perf. période", val: `${perfPct >= 0 ? "+" : ""}${perfPct.toFixed(1)}%`, color: perfPct >= 0 ? C.green : C.red },
+          ].map(({ label, val, color }) => (
+            <div key={label} style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600" }}>{label}</div>
+              <div style={{ fontSize: "16px", fontWeight: "800", color }}>{val}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Table */}
-      <div style={{ marginTop: "14px", overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-          <thead>
-            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-              {["Date", "Réel", "Projeté", "Écart"].map(h => (
-                <th key={h} style={{ padding: "4px 8px", textAlign: "right", color: C.inkSubtle, fontWeight: "600", fontSize: "10px" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {points.map((p, i) => {
-              const delta = p.reel - p.projete;
-              return (
-                <tr key={i} style={{ borderBottom: `1px solid ${C.border}`, opacity: 0.9 }}>
-                  <td style={{ padding: "5px 8px", color: C.inkSubtle, fontSize: "11px" }}>{new Date(p.date).toLocaleDateString("fr-FR")}</td>
-                  <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: "700" }}>{fmtEur(p.reel)}</td>
-                  <td style={{ padding: "5px 8px", textAlign: "right", color: C.inkSubtle }}>{fmtEur(Math.round(p.projete))}</td>
-                  <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: "700", color: delta >= 0 ? C.green : C.red }}>
-                    {delta >= 0 ? "+" : ""}{fmtEur(Math.round(delta))}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {/* SVG Chart */}
+      <div style={{ position: "relative" }}>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block" }}
+          onMouseLeave={() => setHoverIdx(null)}>
+          <defs>
+            <linearGradient id="gradReel" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#22c55e" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#22c55e" stopOpacity="0.01" />
+            </linearGradient>
+            <linearGradient id="gradProj" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={C.navy} stopOpacity="0.07" />
+              <stop offset="100%" stopColor={C.navy} stopOpacity="0.01" />
+            </linearGradient>
+          </defs>
+
+          {/* Grille horizontale */}
+          {[0, 0.25, 0.5, 0.75, 1].map(r => {
+            const v = minV + r * (maxV - minV);
+            const y = yS(v);
+            return <g key={r}>
+              <line x1={ML} x2={W - MR} y1={y} y2={y} stroke="#e5e7eb" strokeWidth="1" />
+              <text x={ML - 8} y={y + 4} fontSize="10" fill={C.inkSubtle} textAnchor="end" fontFamily="Inter,sans-serif">{fmtK(v)}</text>
+            </g>;
+          })}
+
+          {/* Zone capital investi */}
+          <path d={areaPath("investi")} fill="rgba(200,200,200,0.15)" />
+          <path d={linePath("investi")} fill="none" stroke="#ccc" strokeWidth="1.5" strokeDasharray="4,3" />
+
+          {/* Zone projetée */}
+          <path d={areaPath("projete")} fill="url(#gradProj)" />
+          <path d={linePath("projete")} fill="none" stroke={C.navy} strokeWidth="1.5" strokeDasharray="6,3" opacity="0.5" />
+
+          {/* Zone réelle */}
+          <path d={areaPath("reel")} fill="url(#gradReel)" />
+          <path d={linePath("reel")} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+          {/* Labels dates */}
+          {labelPoints.map((p, i) => {
+            const idx = points.indexOf(p);
+            const dt = new Date(p.date);
+            const lbl = dt.toLocaleDateString("fr-FR", { month: "short", year: points.length > 30 ? "2-digit" : undefined });
+            return <text key={i} x={xS(idx)} y={H - 6} fontSize="10" fill={C.inkSubtle} textAnchor="middle" fontFamily="Inter,sans-serif">{lbl}</text>;
+          })}
+
+          {/* Zone hover invisible */}
+          {points.map((p, i) => (
+            <rect key={i} x={xS(i) - CW / points.length / 2} y={MT} width={CW / points.length} height={CH}
+              fill="transparent" onMouseEnter={() => setHoverIdx(i)} />
+          ))}
+
+          {/* Tooltip hover */}
+          {hovP && (() => {
+            const idx = points.indexOf(hovP);
+            const cx = xS(idx), cy = yS(hovP.reel);
+            const d = hovP.reel - hovP.projete;
+            const flip = cx > W * 0.65;
+            const bx = flip ? cx - 148 : cx + 10;
+            return <g>
+              <line x1={cx} x2={cx} y1={MT} y2={MT + CH} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="3,2" />
+              <circle cx={cx} cy={cy} r="5" fill="#16a34a" stroke="white" strokeWidth="2" />
+              <circle cx={xS(idx)} cy={yS(hovP.projete)} r="4" fill={C.navy} stroke="white" strokeWidth="1.5" opacity="0.6" />
+              <rect x={bx} y={cy - 38} width="140" height="70" rx="8" fill="white" stroke="#e5e7eb" strokeWidth="1" filter="drop-shadow(0 2px 6px rgba(0,0,0,0.08))" />
+              <text x={bx + 10} y={cy - 20} fontSize="10" fill={C.inkSubtle} fontFamily="Inter,sans-serif">{new Date(hovP.date).toLocaleDateString("fr-FR")}</text>
+              <text x={bx + 10} y={cy - 5} fontSize="12" fontWeight="700" fill="#16a34a" fontFamily="Inter,sans-serif">Réel : {fmtEur(Math.round(hovP.reel))}</text>
+              <text x={bx + 10} y={cy + 10} fontSize="11" fill={C.navy} fontFamily="Inter,sans-serif" opacity="0.7">Projeté : {fmtEur(Math.round(hovP.projete))}</text>
+              <text x={bx + 10} y={cy + 25} fontSize="11" fontWeight="700" fill={d >= 0 ? "#16a34a" : C.red} fontFamily="Inter,sans-serif">{d >= 0 ? "+" : ""}{fmtEur(Math.round(d))}</text>
+            </g>;
+          })()}
+        </svg>
+      </div>
+
+      {/* Légende */}
+      <div style={{ display: "flex", gap: "20px", marginTop: "10px", fontSize: "11px", flexWrap: "wrap" }}>
+        {[
+          { color: "#16a34a", dash: false, label: "Valeur réelle" },
+          { color: C.navy, dash: true, label: "Projection réaliste (7%/an)" },
+          { color: "#ccc", dash: true, label: "Capital investi" },
+        ].map(({ color, dash, label }) => (
+          <span key={label} style={{ display: "flex", alignItems: "center", gap: "5px", color: C.inkSubtle }}>
+            <svg width="24" height="10"><line x1="0" y1="5" x2="24" y2="5" stroke={color} strokeWidth="2" strokeDasharray={dash ? "4,2" : "none"} /></svg>
+            {label}
+          </span>
+        ))}
       </div>
     </div>
   );
