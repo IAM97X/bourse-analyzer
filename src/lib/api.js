@@ -35,6 +35,8 @@ export const ANTHROPIC_API_KEY = { toString() { return getKey("anthropic"); } };
 export const GOOGLE_API_KEY    = { toString() { return getKey("google"); } };
 export const GOOGLE_CX         = { toString() { return getKey("cx"); } };
 export const ALPHAVANTAGE_KEY  = { toString() { return getKey("alphavantage"); } };
+export const FMP_KEY           = { toString() { return getKey("fmp"); } };
+export const hasFMPKey         = () => !!getKey("fmp");
 export const hasClaudeKey = () => !!getKey("anthropic");
 
 export const CLAUDE_ENDPOINT = process.env.NODE_ENV === "production"

@@ -1,4 +1,37 @@
-import { ALPHAVANTAGE_KEY, GOOGLE_API_KEY, GOOGLE_CX, fetchWithProxy } from "./api";
+import { ALPHAVANTAGE_KEY, GOOGLE_API_KEY, GOOGLE_CX, FMP_KEY, fetchWithProxy } from "./api";
+
+// ─── Financial Modeling Prep — cours temps réel par ISIN ─────────────────────
+export async function fetchFMPQuote(isin) {
+  const key = String(FMP_KEY);
+  if (!key) throw new Error("Clé FMP manquante");
+  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(isin)}?apikey=${key}`;
+  const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);
+  const data = await res.json();
+  const q = Array.isArray(data) ? data[0] : data;
+  if (!q?.price) throw new Error("FMP: prix introuvable");
+  return {
+    price:           q.price,
+    changePercent:   q.changesPercentage ?? null,
+    name:            q.name ?? null,
+  };
+}
+
+// ─── Financial Modeling Prep — historique journalier par ISIN ─────────────────
+export async function fetchFMPHistorical(isin, fromDate, toDate) {
+  const key = String(FMP_KEY);
+  if (!key) throw new Error("Clé FMP manquante");
+  const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${encodeURIComponent(isin)}?from=${fromDate}&to=${toDate}&apikey=${key}`;
+  const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);
+  const data = await res.json();
+  const historical = data?.historical || [];
+  // FMP retourne du plus récent au plus ancien — on trie croissant
+  return historical
+    .filter(d => d.date && d.close != null)
+    .map(d => ({ date: d.date, close: d.close }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 

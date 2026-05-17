@@ -5,7 +5,7 @@ import { load, save } from "../lib/storage";
 import { getKey, enqueueApi, callClaude, fetchWithProxy } from "../lib/api";
 import { useIsMobile, useIsTablet } from "../context/mobile";
 import { UI, DEFAULT_POSITIONS, SIGNAL_CONFIG, translateSecteur } from "../constants/config";
-import { fetchCoursAlphaVantage, parseBoursobankCSV, openLink, yahooFinanceUrl } from "../lib/market";
+import { fetchCoursAlphaVantage, fetchFMPQuote, parseBoursobankCSV, openLink, yahooFinanceUrl } from "../lib/market";
 import { ThinkingSpinner } from "./UI";
 import { LiveMarketPanel, SellSimulator, PriceRangeBar } from "./StockPanels";
 import PortfolioPieChart, { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
@@ -99,6 +99,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   const [editCoursVal, setEditCoursVal]   = useState("");
   const [sellSimPos, setSellSimPos]       = useState(null);
   const [vendreDisclaimer, setVendreDisclaimer] = useState(null); // { pos, resume }
+  const [showPotentielInfo, setShowPotentielInfo] = useState(false);
 
   const positionsRef      = useRef(allPositions);
   const countRef          = useRef(null);
@@ -139,9 +140,17 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     setFetchingIds(prev => new Set([...prev, pos.id]));
     setFetchErrors(prev => { const n = { ...prev }; delete n[pos.id]; return n; });
     try {
-      // Alpha Vantage en priorité (gratuit, fiable) — fallback Claude si indispo
+      // FMP en priorité (ISIN direct) → Alpha Vantage → fallback Claude
       let cours = null;
-      if (getKey("alphavantage")) {
+      if (getKey("fmp") && pos.isin) {
+        try {
+          const q = await fetchFMPQuote(pos.isin);
+          cours = q.price;
+        } catch (fmpErr) {
+          console.warn("FMP:", fmpErr.message, "→ fallback Alpha Vantage");
+        }
+      }
+      if (!cours && getKey("alphavantage")) {
         try {
           cours = await fetchCoursAlphaVantage(pos.nom, pos.isin);
         } catch (avErr) {
@@ -1139,7 +1148,33 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                 <div style={{ fontSize: "9px", fontWeight: "700", color: displayColor, letterSpacing: "0.5px" }}>/10</div>
               </div>
               <div>
-                <div style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>Potentiel du portefeuille</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <div style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>Potentiel du portefeuille</div>
+                  <div style={{ position: "relative", display: "inline-flex" }}>
+                    <div onClick={() => setShowPotentielInfo(v => !v)}
+                      style={{ width: "15px", height: "15px", borderRadius: "50%", background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "700", color: "#6366f1", cursor: "pointer", flexShrink: 0 }}>
+                      i
+                    </div>
+                    {showPotentielInfo && (
+                      <div onClick={() => setShowPotentielInfo(false)}
+                        style={{ position: "absolute", left: "20px", top: "-4px", zIndex: 99, width: "280px", background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px 14px", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", cursor: "default" }}>
+                        <div style={{ fontSize: "11px", fontWeight: "800", color: "#1e293b", marginBottom: "6px" }}>C'est quoi ce score ?</div>
+                        <div style={{ fontSize: "11px", color: "#475569", lineHeight: "1.6", marginBottom: "8px" }}>
+                          Une note sur 10 qui résume <strong>la santé de votre portefeuille</strong> : êtes-vous trop concentré sur un seul secteur ? Vos frais sont-ils raisonnables ? Votre niveau de risque correspond-il à votre objectif ?
+                        </div>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#1e293b", marginBottom: "4px" }}>À quoi ça sert ?</div>
+                        <div style={{ fontSize: "11px", color: "#475569", lineHeight: "1.6", marginBottom: "8px" }}>
+                          À repérer simplement ce qui peut être amélioré — <strong>sans avoir besoin d'être expert</strong>. Plus le score est élevé, mieux votre portefeuille est équilibré pour le long terme.
+                        </div>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: "#1e293b", marginBottom: "4px" }}>Comment l'obtenir ?</div>
+                        <div style={{ fontSize: "11px", color: "#475569", lineHeight: "1.6" }}>
+                          <div>① Importez votre fichier CSV — le score se calcule <strong>automatiquement</strong></div>
+                          <div style={{ marginTop: "3px" }}>② Pour une analyse encore plus précise, activez <strong>Signaux IA</strong> (nécessite une clé Claude)</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div style={{ fontSize: "11px", fontWeight: "700", color: displayColor, marginTop: "3px" }}>{displayLabel}</div>
                 <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px" }}>{displaySource}</div>
               </div>

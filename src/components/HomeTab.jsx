@@ -3,9 +3,36 @@ import { sanitizePositions, fmtEur } from "../lib/finance";
 import { load } from "../lib/storage";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
 import { TABS } from "../constants/tabs";
-import { fetchWithProxy } from "../lib/api";
+import { fetchWithProxy, hasFMPKey, FMP_KEY } from "../lib/api";
+import { fetchFMPHistorical } from "../lib/market";
 
-const SNAPSHOTS_KEY = "bourse_snapshots";
+const SNAPSHOTS_KEY      = "bourse_snapshots";
+const TICKER_CACHE_KEY   = "bourse_isin_ticker_cache";
+
+// Résout une liste d'ISINs en tickers Yahoo — utilise le cache, résout les manquants via Yahoo Search
+async function resolveISINsToTickers(isins) {
+  const cache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY) || "{}"); } catch { return {}; } })();
+  const missing = isins.filter(isin => isin && !cache[isin]);
+  if (missing.length) {
+    await Promise.all(missing.map(async (isin) => {
+      try {
+        const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(isin)}&quotesCount=5&newsCount=0`;
+        const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) return;
+        const json = await res.json();
+        const quotes = json?.quotes || [];
+        // Préférer les actions/ETF sur marchés européens
+        const best = quotes.find(q => q.symbol && (q.exchDisp?.includes("Paris") || q.exchDisp?.includes("Amsterdam") || q.exchDisp?.includes("Euronext")))
+          || quotes.find(q => q.symbol && q.quoteType === "EQUITY")
+          || quotes.find(q => q.symbol && q.quoteType === "ETF")
+          || quotes[0];
+        if (best?.symbol) cache[isin] = best.symbol;
+      } catch {}
+    }));
+    try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(cache)); } catch {}
+  }
+  return cache;
+}
 
 
 function calcCapitalVerse(account) {
@@ -25,14 +52,53 @@ function fmtPct(v) {
   return (v >= 0 ? "+" : "") + v.toFixed(2) + " %";
 }
 
+// Fetche l'historique journalier pour un ISIN — FMP en priorité, Yahoo en fallback
+async function fetchHistoricalByISIN(isin, ticker, fromDate, toDate) {
+  // 1. FMP (ISIN direct, données Euronext fiables)
+  if (hasFMPKey()) {
+    try {
+      const rows = await fetchFMPHistorical(isin, fromDate, toDate);
+      if (rows.length > 0) {
+        const map = {};
+        for (const r of rows) map[r.date] = r.close;
+        return map;
+      }
+    } catch {}
+  }
+  // 2. Yahoo Finance (fallback, nécessite ticker résolu)
+  if (!ticker) return {};
+  try {
+    const rangeParam = (() => {
+      const days = (new Date(toDate) - new Date(fromDate)) / 86400000;
+      return days <= 35 ? "1mo" : days <= 95 ? "3mo" : days <= 190 ? "6mo" : days <= 370 ? "1y" : "5y";
+    })();
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=${rangeParam}&interval=1d`;
+    const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
+    if (!res.ok) return {};
+    const json = await res.json();
+    const result = json?.chart?.result?.[0];
+    const timestamps = result?.timestamp || [];
+    const closes     = result?.indicators?.quote?.[0]?.close || [];
+    const map = {};
+    for (let i = 0; i < timestamps.length; i++) {
+      if (closes[i] != null) {
+        const date = new Date(timestamps[i] * 1000).toISOString().slice(0, 10);
+        if (date >= fromDate && date <= toDate) map[date] = closes[i];
+      }
+    }
+    return map;
+  } catch { return {}; }
+}
+
 // ── Cellule label / valeur ─────────────────────────────────────────────────────
-function Row({ label, value, color, last }) {
+function Row({ label, value, color, last, debug }) {
   return (
-    <div style={{
+    <div title={debug || undefined} style={{
       display: "flex", justifyContent: "space-between", alignItems: "flex-start",
       gap: "12px",
       padding: "10px 0",
       borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.08)",
+      cursor: debug ? "help" : undefined,
     }}>
       <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.65)", fontWeight: "400", lineHeight: "1.4", flex: "1" }}>
         {label}
@@ -186,64 +252,85 @@ function ColPerfs({ positions, account, profil }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Reconstitue le portefeuille à une date passée en annulant les transactions postérieures,
-  // puis fetche les prix historiques Yahoo pour calculer V0 avec les bonnes lignes
+  // Reconstruction V0 (Jan 1 + mois 1) via Yahoo historique + transactions (approche forward)
   useEffect(() => {
     let cancelled = false;
     async function computeHistoricalRefs() {
       try {
-        const now = new Date();
+        const now  = new Date();
         const yyyy = now.getFullYear();
         const mm   = String(now.getMonth() + 1).padStart(2, "0");
-        const targets = [
-          { key: "jan1",  date: `${yyyy}-01-01` },
-          { key: "mois1", date: `${yyyy}-${mm}-01` },
-        ];
-        const tickerCache = (() => { try { return JSON.parse(localStorage.getItem("bourse_isin_ticker_cache") || "{}"); } catch { return {}; } })();
+        const jan1Date  = `${yyyy}-01-01`;
+        const mois1Date = `${yyyy}-${mm}-01`;
+
         const allOps = (() => { try { return JSON.parse(localStorage.getItem("bourse_avis_operes") || "[]").filter(o => !account || (o.compte || "PEA") === account); } catch { return []; } })();
 
-        const computeV0 = async (targetDate) => {
-          // Reconstituer les quantités à targetDate : partir de l'état actuel et annuler les ops postérieures
+        // Tous les ISINs connus (positions actuelles + transactions historiques)
+        const rawISINs = [...new Set([
+          ...positions.map(p => p.isin),
+          ...allOps.map(o => o.isin),
+        ].filter(Boolean))];
+
+        // Résolution ISIN → ticker (cache + Yahoo Search pour les manquants)
+        const tickerCache = await resolveISINsToTickers(rawISINs);
+        const allISINs = rawISINs.filter(isin => tickerCache[isin]);
+
+        if (!allISINs.length) { if (!cancelled) setHistRefs({ jan1: null, mois1: null, loading: false }); return; }
+
+        // Fetch prix historiques YTD — FMP (ISIN direct) prioritaire, Yahoo en fallback
+        const now2 = new Date();
+        const fromDate = `${now2.getFullYear()}-01-01`;
+        const toDate   = now2.toISOString().slice(0, 10);
+        const priceByIsin = {};
+        await Promise.all(allISINs.map(async (isin) => {
+          const map = await fetchHistoricalByISIN(isin, tickerCache[isin], fromDate, toDate);
+          if (Object.keys(map).length > 0) priceByIsin[isin] = map;
+        }));
+
+        if (cancelled) return;
+
+        // Calcule V0 à une date cible — approche BACKWARD :
+        // On part des quantités ACTUELLES (connues exactement) et on annule
+        // les transactions postérieures à targetDate (données récentes, donc plus complètes).
+        const computeV0 = (targetDate) => {
+          const getPriceAt = (isin) => {
+            const prices = priceByIsin[isin];
+            if (!prices) return null;
+            let best = null, bestDiff = Infinity;
+            for (const [d, p] of Object.entries(prices)) {
+              const diff = (new Date(d) - new Date(targetDate)) / 86400000;
+              if (diff >= 0 && diff <= 7 && diff < bestDiff) { best = p; bestDiff = diff; }
+            }
+            return best;
+          };
+
+          // Initialiser avec les quantités actuelles
           const qtyMap = {};
           for (const p of positions) {
-            if (p.isin) qtyMap[p.isin] = { isin: p.isin, nom: p.nom, quantite: p.quantite };
+            if (p.isin) qtyMap[p.isin] = p.quantite;
           }
-          for (const op of allOps.filter(o => o.date > targetDate)) {
-            const isin = op.isin; if (!isin) continue;
-            const qty = parseFloat(op.quantite) || 0;
-            if (!qtyMap[isin]) qtyMap[isin] = { isin, nom: op.titre || op.nom || isin, quantite: 0 };
-            if (op.type === "ACHAT")  qtyMap[isin].quantite -= qty; // annuler l'achat
-            if (op.type === "VENTE")  qtyMap[isin].quantite += qty; // annuler la vente
+          // Annuler toutes les transactions APRÈS targetDate
+          for (const op of allOps) {
+            if (op.date <= targetDate || !op.isin) continue;
+            const q = parseFloat(op.quantite) || 0;
+            if (!qtyMap[op.isin]) qtyMap[op.isin] = 0;
+            if (op.type === "ACHAT")  qtyMap[op.isin] -= q; // annuler l'achat
+            if (op.type === "VENTE")  qtyMap[op.isin] += q; // annuler la vente
           }
-          const hist = Object.values(qtyMap).filter(p => p.quantite > 0.001 && p.isin && tickerCache[p.isin]);
-          if (!hist.length) return null;
 
-          const targetTs = Math.floor(new Date(targetDate).getTime() / 1000);
-          const results = await Promise.all(hist.map(async (pos) => {
-            try {
-              const ticker = tickerCache[pos.isin];
-              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${targetTs - 86400 * 5}&period2=${targetTs + 86400 * 5}&interval=1d`;
-              const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
-              if (!res.ok) return null;
-              const json = await res.json();
-              const result = json?.chart?.result?.[0];
-              const timestamps = result?.timestamp || [];
-              const closes = result?.indicators?.quote?.[0]?.close || [];
-              let best = null, bestDiff = Infinity;
-              for (let i = 0; i < timestamps.length; i++) {
-                const diff = Math.abs(timestamps[i] - targetTs);
-                if (diff < bestDiff && closes[i] != null) { bestDiff = diff; best = closes[i]; }
-              }
-              return bestDiff <= 7 * 86400 ? best * pos.quantite : null;
-            } catch { return null; }
-          }));
-
-          const valid = results.filter(r => r != null);
-          // Exiger au moins 50% de couverture
-          return valid.length >= hist.length * 0.5 ? valid.reduce((s, v) => s + v, 0) : null;
+          let total = 0, covered = 0;
+          for (const [isin, qty] of Object.entries(qtyMap)) {
+            if (qty <= 0.001) continue;
+            const price = getPriceAt(isin);
+            if (!price) continue;
+            total += qty * price;
+            covered++;
+          }
+          return covered > 0 ? total : null;
         };
 
-        const [jan1, mois1] = await Promise.all(targets.map(t => computeV0(t.date)));
+        const jan1  = computeV0(jan1Date);
+        const mois1 = computeV0(mois1Date);
         if (!cancelled) setHistRefs({ jan1, mois1, loading: false });
       } catch {
         if (!cancelled) setHistRefs({ jan1: null, mois1: null, loading: false });
@@ -251,7 +338,7 @@ function ColPerfs({ positions, account, profil }) {
     }
     computeHistoricalRefs();
     return () => { cancelled = true; };
-  }, [positions, account]);
+  }, [account]);
 
   const snapshots = useMemo(() => {
     try { return JSON.parse(localStorage.getItem(SNAPSHOTS_KEY) || "[]"); } catch { return []; }
@@ -266,10 +353,12 @@ function ColPerfs({ positions, account, profil }) {
   const moisLabel = now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
   // Modified Dietz : (V1 - V0 - ΔCF) / V0
-  const modifiedDietz = (v0, fromDate) => {
+  const modifiedDietz = (v0, fromDate, label) => {
     if (!v0 || v0 <= 0) return null;
     const cf = calcDeltaCapital(account, fromDate, today);
-    return (currentValue - v0 - cf) / v0 * 100;
+    const result = (currentValue - v0 - cf) / v0 * 100;
+    console.log(`[Perf ${label}] V1=${currentValue.toFixed(2)}€  V0=${v0.toFixed(2)}€  ΔCF=${cf.toFixed(2)}€  → ${result.toFixed(2)}%`);
+    return result;
   };
 
   // Priorité : manuel (Profil) > Yahoo historique reconstruit > snapshot CSV > snapshot auto
@@ -284,8 +373,8 @@ function ColPerfs({ positions, account, profil }) {
   const loadingYtd  = !refJan1  && histRefs.loading;
   const loadingMois = !refMois1 && histRefs.loading;
 
-  const pfYtd  = modifiedDietz(v0Jan1,  `${yyyy}-01-01`);
-  const pfMois = modifiedDietz(v0Mois1, `${yyyy}-${mm}-01`);
+  const pfYtd  = modifiedDietz(v0Jan1,  `${yyyy}-01-01`, "YTD");
+  const pfMois = modifiedDietz(v0Mois1, `${yyyy}-${mm}-01`, "Mois");
 
   // Performance de la veille : intradayVariation Yahoo (la plus fiable)
   const posWithIntraday = positions.filter(p => p.intradayVariation != null && (p.dernierCours || p.pru) > 0);
@@ -315,8 +404,10 @@ function ColPerfs({ positions, account, profil }) {
 
   return (
     <Card>
-      <Row label={`Ma performance ${yyyy}`}        value={loadingYtd  ? "…" : fmtPct(pfYtd)}  color={pctColor(pfYtd)}  />
-      <Row label={`Ma performance ${moisLabel}`}   value={loadingMois ? "…" : fmtPct(pfMois)} color={pctColor(pfMois)} />
+      <Row label={`Ma performance ${yyyy}`}        value={loadingYtd  ? "…" : fmtPct(pfYtd)}  color={pctColor(pfYtd)}
+        debug={v0Jan1  ? `V1=${currentValue.toFixed(0)}€  V0 jan.1=${v0Jan1.toFixed(0)}€  ΔCF=${calcDeltaCapital(account,`${yyyy}-01-01`,today).toFixed(0)}€` : undefined} />
+      <Row label={`Ma performance ${moisLabel}`}   value={loadingMois ? "…" : fmtPct(pfMois)} color={pctColor(pfMois)}
+        debug={v0Mois1 ? `V1=${currentValue.toFixed(0)}€  V0 mois.1=${v0Mois1.toFixed(0)}€  ΔCF=${calcDeltaCapital(account,`${yyyy}-${mm}-01`,today).toFixed(0)}€` : undefined} />
       <Row label="Ma performance de la veille"     value={fmtPct(pfVeille)} color={pctColor(pfVeille)} />
       <div style={{ height: "1px", background: "rgba(255,255,255,0.12)", margin: "4px 0" }} />
       <Row label={`Performance ${yyyy} du CAC 40`} value={cac.loading ? "…" : fmtPct(cac.ytd)}   color={pctColor(cac.ytd)}  />
@@ -334,30 +425,127 @@ const PERIODS = [
   { label: "Tout", days: 9999 },
 ];
 
-function CourbeEvolution({ hidden }) {
-  const [period, setPeriod] = useState(30);
-  const [hover, setHover]   = useState(null); // { idx, x, y }
+function CourbeEvolution({ hidden, positions, account }) {
+  const [period, setPeriod]     = useState(30);
+  const [hover, setHover]       = useState(null);
+  const [yahooPoints, setYahooPoints] = useState(null);  // null = not loaded, [] = loading, [...] = done
+  const [yahooLoading, setYahooLoading] = useState(false);
   const svgRef = useRef(null);
   const blur = hidden ? { filter: "blur(6px)", userSelect: "none", pointerEvents: "none" } : {};
 
-  const { points, current, first, investi } = useMemo(() => {
+  // Reconstruction depuis Yahoo + transactions
+  useEffect(() => {
+    let cancelled = false;
+    setYahooLoading(true);
+    async function buildYahooChart() {
+      try {
+        const allOps = (() => { try { return JSON.parse(localStorage.getItem("bourse_avis_operes") || "[]").filter(o => !account || (o.compte || "PEA") === account); } catch { return []; } })();
+
+        // Tous les ISINs connus (positions actuelles + historique transactions)
+        const rawISINs = [...new Set([
+          ...(positions || []).map(p => p.isin),
+          ...allOps.map(o => o.isin),
+        ].filter(Boolean))];
+
+        // Résolution ISIN → ticker (cache + Yahoo Search pour les manquants)
+        const tickerCache = await resolveISINsToTickers(rawISINs);
+        const isinTickers = {};
+        for (const isin of rawISINs) {
+          if (tickerCache[isin]) isinTickers[isin] = tickerCache[isin];
+        }
+        if (!Object.keys(isinTickers).length) { if (!cancelled) { setYahooPoints(null); setYahooLoading(false); } return; }
+
+        const rangeParam = period >= 9999 ? "5y" : period >= 365 ? "1y" : period >= 180 ? "6mo" : period >= 90 ? "3mo" : "1mo";
+
+        // Fetch prix historiques — FMP (ISIN direct) prioritaire, Yahoo en fallback
+        const chartFromDate = new Date(Date.now() - (period >= 9999 ? 5 * 365 : period) * 86400000).toISOString().slice(0, 10);
+        const chartToDate   = new Date().toISOString().slice(0, 10);
+        const priceByIsin = {};
+        await Promise.all(Object.keys(isinTickers).map(async (isin) => {
+          const map = await fetchHistoricalByISIN(isin, isinTickers[isin], chartFromDate, chartToDate);
+          if (Object.keys(map).length > 0) priceByIsin[isin] = map;
+        }));
+
+        if (cancelled) return;
+
+        // Union de toutes les dates disponibles
+        const allDates = [...new Set(Object.values(priceByIsin).flatMap(m => Object.keys(m)))].sort();
+        if (allDates.length < 2) { if (!cancelled) { setYahooPoints(null); setYahooLoading(false); } return; }
+
+        // Pour chaque date, reconstruire la valeur du portefeuille
+        const cutoff = new Date(Date.now() - period * 86400000).toISOString().slice(0, 10);
+        const dates = period >= 9999 ? allDates : allDates.filter(d => d >= cutoff);
+        if (dates.length < 2) { if (!cancelled) { setYahooPoints(null); setYahooLoading(false); } return; }
+
+        // Approche BACKWARD pour chaque date :
+        // quantité à date D = qty_actuelle - (achats après D) + (ventes après D)
+        const currentQty = {};
+        for (const p of (positions || [])) {
+          if (p.isin) currentQty[p.isin] = p.quantite;
+        }
+
+        const lastPrice = {};
+        const points = [];
+        for (const date of dates) {
+          let valeur = 0;
+          for (const [isin, prices] of Object.entries(priceByIsin)) {
+            if (prices[date] != null) lastPrice[isin] = prices[date];
+            const price = lastPrice[isin];
+            if (!price) continue;
+
+            // Quantité à cette date (backward)
+            let qty = currentQty[isin] || 0;
+            for (const op of allOps) {
+              if (op.isin !== isin || op.date <= date) continue;
+              const q = parseFloat(op.quantite) || 0;
+              if (op.type === "ACHAT")  qty -= q;
+              else if (op.type === "VENTE") qty += q;
+            }
+            qty = Math.max(0, qty);
+            if (qty > 0) valeur += qty * price;
+          }
+          if (valeur > 0) points.push({ date, valeur });
+        }
+
+        if (!cancelled) { setYahooPoints(points.length >= 2 ? points : null); setYahooLoading(false); }
+      } catch { if (!cancelled) { setYahooPoints(null); setYahooLoading(false); } }
+    }
+    buildYahooChart();
+    return () => { cancelled = true; };
+  }, [period, account]); // positions intentionnellement exclus pour éviter les re-fetch
+
+  // Fallback : snapshots localStorage
+  const snapPoints = useMemo(() => {
     try {
       const snaps = JSON.parse(localStorage.getItem(SNAPSHOTS_KEY) || "[]");
       const cutoff = new Date(Date.now() - period * 86400000).toISOString().slice(0, 10);
       const filtered = snaps.filter(s => period >= 9999 || s.date >= cutoff);
-      if (filtered.length < 2) return { points: null };
-      return {
-        points:  filtered,
-        current: filtered[filtered.length - 1].valeur,
-        first:   filtered[0].valeur,
-        investi: filtered[filtered.length - 1].capitalVerse || filtered[filtered.length - 1].investi || 0,
-      };
-    } catch { return { points: null }; }
+      return filtered.length >= 2 ? filtered : null;
+    } catch { return null; }
   }, [period]);
+
+  const rawPoints = yahooPoints ?? snapPoints;
+
+  const { points, current, first, investi } = useMemo(() => {
+    if (!rawPoints || rawPoints.length < 2) return { points: null };
+    const last = rawPoints[rawPoints.length - 1];
+    return {
+      points:  rawPoints,
+      current: last.valeur,
+      first:   rawPoints[0].valeur,
+      investi: last.capitalVerse || last.investi || 0,
+    };
+  }, [rawPoints]);
+
+  if (yahooLoading && !snapPoints) return (
+    <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.45)", fontSize: "12px" }}>
+      Reconstruction depuis l'historique des transactions…
+    </div>
+  );
 
   if (!points) return (
     <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "12px" }}>
-      Aucun snapshot · prenez-en un depuis l'onglet Historique.
+      Aucune donnée disponible · importez votre CSV et actualisez les cours.
     </div>
   );
 
@@ -390,13 +578,20 @@ function CourbeEvolution({ hidden }) {
         <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "1.4px", textTransform: "uppercase" }}>
           Évolution du portefeuille
         </div>
-        <div style={{ display: "flex", gap: "2px" }}>
-          {PERIODS.map(({ label, days }) => (
-            <button key={days} onClick={() => setPeriod(days)}
-              style={{ padding: "3px 8px", borderRadius: "6px", border: "none", background: period === days ? "rgba(255,255,255,0.14)" : "transparent", color: period === days ? "#fff" : "rgba(255,255,255,0.3)", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
-              {label}
-            </button>
-          ))}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          {yahooPoints ? (
+            <span style={{ fontSize: "9px", color: "rgba(110,231,183,0.7)", fontWeight: "600", letterSpacing: "0.5px" }}>● Yahoo</span>
+          ) : (
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.2)", fontWeight: "600", letterSpacing: "0.5px" }}>● Snapshots</span>
+          )}
+          <div style={{ display: "flex", gap: "2px" }}>
+            {PERIODS.map(({ label, days }) => (
+              <button key={days} onClick={() => setPeriod(days)}
+                style={{ padding: "3px 8px", borderRadius: "6px", border: "none", background: period === days ? "rgba(255,255,255,0.14)" : "transparent", color: period === days ? "#fff" : "rgba(255,255,255,0.3)", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -572,7 +767,7 @@ export default function HomeTab({ account = "PEA", onTabChange, hidden, profil: 
         <ColValeur  positions={positions} especes={especes} cumul={cumul} hidden={hidden} />
         <ColPerfs   positions={positions} account={account} profil={profil} />
       </div>
-      <CourbeEvolution hidden={hidden} />
+      <CourbeEvolution hidden={hidden} positions={positions} account={account} />
     </div>
   );
 }

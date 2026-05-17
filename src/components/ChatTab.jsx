@@ -87,6 +87,37 @@ function renderAIMarkdown(text) {
       out.push(<ul key={`list-${i}`} style={{ margin: "4px 0 8px", padding: 0, listStyle: "none" }}>{items}</ul>);
       continue;
     }
+    if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+      const tableLines = [];
+      while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+        tableLines.push(lines[i]); i++;
+      }
+      const isSep = (l) => /^\|[\s\-:|]+\|$/.test(l.trim());
+      const rows = tableLines.filter(l => !isSep(l));
+      if (rows.length > 0) {
+        out.push(
+          <div key={`tbl-${i}`} style={{ overflowX: "auto", margin: "10px 0", borderRadius: "8px", border: `1px solid ${C.border}` }}>
+            <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "12px" }}>
+              <tbody>
+                {rows.map((row, ri) => {
+                  const cells = row.trim().replace(/^\||\|$/g, "").split("|");
+                  return (
+                    <tr key={ri} style={{ background: ri === 0 ? "rgba(30,58,95,0.05)" : ri % 2 === 0 ? "rgba(30,58,95,0.02)" : "transparent" }}>
+                      {cells.map((cell, ci) => (
+                        <td key={ci} style={{ padding: "7px 12px", borderBottom: ri < rows.length - 1 ? `1px solid ${C.border}` : "none", fontWeight: ri === 0 ? "700" : "400", color: ri === 0 ? C.ink : C.inkMuted, whiteSpace: "nowrap" }}>
+                          {inlineFormat(cell.trim())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      continue;
+    }
     if (line.trim() === "") { out.push(<div key={i} style={{ height: "5px" }} />); i++; continue; }
     out.push(<p key={i} style={{ margin: "2px 0 4px", fontSize: "12.5px", color: C.inkMuted, lineHeight: "1.6" }}>{inlineFormat(line)}</p>);
     i++;
