@@ -231,43 +231,41 @@ Retourne ce JSON exact (aucun texte autour) :
                 )}
                 {ap.valeur_projetee > 0 && (
                   <div style={{ background: "linear-gradient(135deg,rgba(5,150,105,0.06) 0%,rgba(30,58,95,0.06) 100%)", border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "12px", padding: "12px 16px", marginBottom: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", marginBottom: ap.valeur_projetee_avec_dca ? "10px" : 0 }}>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Valeur actuelle</div>
-                        <div style={{ fontSize: "16px", fontWeight: "800", color: C.ink }}>{fmtEur(ap.valeur_actuelle || totalVal)}</div>
+                    {/* En-tête : horizon + CAGR */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", flexWrap: "wrap", gap: "6px" }}>
+                      <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600" }}>
+                        Horizon <strong style={{ color: C.ink }}>{horizonInfo.annees} ans</strong>
+                        {" · "}CAGR estimé <strong style={{ color: C.green }}>+{ap.cagr_portefeuille?.toFixed(1)}%/an</strong>
                       </div>
-                      <div style={{ fontSize: "20px", color: C.inkSubtle }}>→</div>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: "9px", color: C.green, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Positions seules · {horizonInfo.annees} ans</div>
-                        <div style={{ fontSize: "18px", fontWeight: "800", color: C.green }}>{fmtEur(ap.valeur_projetee)}</div>
-                      </div>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>CAGR estimé</div>
-                        <div style={{ fontSize: "16px", fontWeight: "800", color: C.navy }}>+{ap.cagr_portefeuille?.toFixed(1)}%/an</div>
-                      </div>
+                      {Number(profil?.objectifEuros) > 0 && ap.valeur_projetee_avec_dca > 0 && (
+                        <div style={{
+                          fontSize: "11px", fontWeight: "800", padding: "2px 10px", borderRadius: "20px",
+                          background: ap.valeur_projetee_avec_dca >= Number(profil.objectifEuros) ? "rgba(5,150,105,0.12)" : "rgba(220,38,38,0.10)",
+                          color: ap.valeur_projetee_avec_dca >= Number(profil.objectifEuros) ? C.green : C.red,
+                        }}>
+                          {Math.round(ap.valeur_projetee_avec_dca / Number(profil.objectifEuros) * 100)}% de l'objectif
+                        </div>
+                      )}
                     </div>
-                    {ap.valeur_projetee_avec_dca > 0 && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", borderTop: `1px solid rgba(5,150,105,0.15)`, paddingTop: "10px" }}>
-                        <div style={{ fontSize: "10px", fontWeight: "700", color: C.navy }}>+ DCA {fmtEur(Number(profil?.dcaMensuel)||0)}/mois · ~{ap.cagr_dca ?? "?"}%/an ({profil?.risque || "équilibré"})</div>
-                        <div style={{ fontSize: "20px", color: C.inkSubtle }}>→</div>
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: "9px", color: C.navy, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Valeur projetée avec DCA · {horizonInfo.annees} ans</div>
-                          <div style={{ fontSize: "22px", fontWeight: "900", color: C.navy }}>{fmtEur(ap.valeur_projetee_avec_dca)}</div>
-                        </div>
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Multiplicateur</div>
-                          <div style={{ fontSize: "16px", fontWeight: "800", color: C.navy }}>×{(ap.valeur_projetee_avec_dca / (ap.valeur_actuelle || totalVal)).toFixed(1)}</div>
-                        </div>
-                        {Number(profil?.objectifEuros) > 0 && (
-                          <div style={{ textAlign: "center" }}>
-                            <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>vs Objectif</div>
-                            <div style={{ fontSize: "16px", fontWeight: "800", color: ap.valeur_projetee_avec_dca >= Number(profil.objectifEuros) ? C.green : C.red }}>
-                              {ap.valeur_projetee_avec_dca >= Number(profil.objectifEuros) ? "✓ " : ""}{Math.round(ap.valeur_projetee_avec_dca / Number(profil.objectifEuros) * 100)}%
-                            </div>
-                          </div>
-                        )}
+                    {/* Grille 2 colonnes : sans DCA / avec DCA */}
+                    <div style={{ display: "grid", gridTemplateColumns: ap.valeur_projetee_avec_dca > 0 ? "1fr 1fr" : "1fr", gap: "10px" }}>
+                      <div style={{ background: "rgba(5,150,105,0.06)", borderRadius: "10px", padding: "10px 14px" }}>
+                        <div style={{ fontSize: "9px", fontWeight: "700", color: C.green, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>Positions seules</div>
+                        <div style={{ fontSize: "20px", fontWeight: "900", color: C.green, lineHeight: 1 }}>{fmtEur(ap.valeur_projetee)}</div>
+                        <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>depuis {fmtEur(ap.valeur_actuelle || totalVal)} actuels</div>
                       </div>
-                    )}
+                      {ap.valeur_projetee_avec_dca > 0 && (
+                        <div style={{ background: "rgba(30,58,95,0.07)", borderRadius: "10px", padding: "10px 14px" }}>
+                          <div style={{ fontSize: "9px", fontWeight: "700", color: C.navy, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>
+                            + DCA {fmtEur(Number(profil?.dcaMensuel)||0)}/mois
+                          </div>
+                          <div style={{ fontSize: "22px", fontWeight: "900", color: C.navy, lineHeight: 1 }}>{fmtEur(ap.valeur_projetee_avec_dca)}</div>
+                          <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>
+                            ×{(ap.valeur_projetee_avec_dca / (ap.valeur_actuelle || totalVal)).toFixed(1)} votre mise initiale
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 {((ap.points_forts?.length > 0) || (ap.points_faibles?.length > 0)) && (
