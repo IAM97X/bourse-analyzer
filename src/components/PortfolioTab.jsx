@@ -297,10 +297,17 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
             if (!q?.regularMarketPrice) { errors.push(`${p.nom} : cours indisponible`); return p; }
             const sectorRaw = q.sector || null;
             const secteur = sectorRaw ? translateSecteur(sectorRaw) : (p.secteur || ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || null);
-            if (p.dernierCours && q.regularMarketPrice !== p.dernierCours) {
-              newFlash[p.id] = q.regularMarketPrice > p.dernierCours ? "green" : "red";
+            const newPrice = q.regularMarketPrice;
+            const prevPrice = p.dernierCours || p.pru;
+            const deviation = prevPrice > 0 ? Math.abs(newPrice - prevPrice) / prevPrice : 0;
+            if (deviation > 0.20) {
+              errors.push(`${p.nom} : prix Yahoo suspect (${newPrice.toFixed(2)} vs ${prevPrice.toFixed(2)}, écart ${(deviation * 100).toFixed(0)}%) — ignoré`);
+              return p;
             }
-            return { ...p, dernierCours: q.regularMarketPrice, intradayVariation: q.regularMarketChangePercent ?? null, lastFetch: Date.now(), dividendeAnnuel: q.trailingAnnualDividendRate ?? p.dividendeAnnuel ?? null, rendementDividende: q.trailingAnnualDividendYield != null ? q.trailingAnnualDividendYield * 100 : (p.rendementDividende ?? null), ...(secteur && !p.secteur ? { secteur } : {}) };
+            if (p.dernierCours && newPrice !== p.dernierCours) {
+              newFlash[p.id] = newPrice > p.dernierCours ? "green" : "red";
+            }
+            return { ...p, dernierCours: newPrice, intradayVariation: q.regularMarketChangePercent ?? null, lastFetch: Date.now(), dividendeAnnuel: q.trailingAnnualDividendRate ?? p.dividendeAnnuel ?? null, rendementDividende: q.trailingAnnualDividendYield != null ? q.trailingAnnualDividendYield * 100 : (p.rendementDividende ?? null), ...(secteur && !p.secteur ? { secteur } : {}) };
           });
           if (Object.keys(newFlash).length > 0) {
             setFlashIds(newFlash);
@@ -383,6 +390,19 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         });
       }
     }
+    // Snapshot CSV : fiable car vient directement de Boursorama
+    try {
+      const valeurCsv = next.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
+      const investiCsv = next.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
+      if (valeurCsv > 0) {
+        const today = new Date().toISOString().slice(0, 10);
+        let snaps = (() => { try { return JSON.parse(localStorage.getItem("bourse_snapshots") || "[]"); } catch { return []; } })();
+        snaps = snaps.filter(s => s.date !== today);
+        snaps.push({ date: today, valeur: valeurCsv, investi: investiCsv, coutBase: investiCsv, capitalVerse: investiCsv, source: "csv" });
+        snaps.sort((a, b) => a.date.localeCompare(b.date));
+        localStorage.setItem("bourse_snapshots", JSON.stringify(snaps.slice(-365)));
+      }
+    } catch {}
     const now = Date.now(); setLastImport(now); save("bourse_last_import", now);
     const removedMsg = removed > 0 ? `, ${removed} supprimée(s)` : "";
     const alertMsg   = newAlerts.length > 0 ? ` — ⚠ ${newAlerts.length} alerte(s) !` : "";

@@ -6,70 +6,74 @@ import { fmtEur, sanitizePositions } from "../lib/finance";
 import { useIsMobile } from "../context/mobile";
 import AppLogo from "./AppLogo";
 
+const IconHome = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 1.5L1.5 7v7.5h4.5V10h4v4.5H14.5V7L8 1.5z" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+    <path d="M6 14.5v-4.5h4v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 const IconPositions = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="2" width="5" height="5" rx="1.2"/>
-    <rect x="9" y="2" width="5" height="5" rx="1.2"/>
-    <rect x="2" y="9" width="5" height="5" rx="1.2"/>
-    <rect x="9" y="9" width="5" height="5" rx="1.2"/>
-  </svg>
-);
-const IconTrending = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="1.5,11.5 5.5,7.5 8.5,9.5 14.5,3.5"/>
-    <polyline points="10.5,3.5 14.5,3.5 14.5,7.5"/>
-  </svg>
-);
-const IconTarget = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="8" cy="8" r="6"/>
-    <circle cx="8" cy="8" r="3"/>
-    <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/>
-  </svg>
-);
-const IconWave = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 11 C2.5 11 3.5 5 5.5 6 C7.5 7 8.5 12 10.5 9 C12.5 6 13.5 7.5 15 6.5"/>
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <rect x="1.5" y="9" width="3" height="5.5" rx="1" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.3"/>
+    <rect x="6.5" y="5.5" width="3" height="9" rx="1" fill="currentColor" fillOpacity="0.3" stroke="currentColor" strokeWidth="1.3"/>
+    <rect x="11.5" y="1.5" width="3" height="13" rx="1" fill="currentColor" fillOpacity="0.5" stroke="currentColor" strokeWidth="1.3"/>
   </svg>
 );
 const IconPie = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M8 2 A6 6 0 0 1 14 8 L8 8 Z" fill="currentColor" stroke="none" opacity="0.25"/>
-    <circle cx="8" cy="8" r="6"/>
-    <line x1="8" y1="8" x2="8" y2="2"/>
-    <line x1="8" y1="8" x2="14" y2="8"/>
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 8 L8 2 A6 6 0 0 1 14 8 Z" fill="currentColor" fillOpacity="0.5"/>
+    <path d="M8 8 L14 8 A6 6 0 1 1 8 2 Z" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.3"/>
   </svg>
 );
 const IconSwap = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3.5 6 L12.5 6 M10 3.5 L12.5 6 L10 8.5"/>
-    <path d="M12.5 10 L3.5 10 M6 7.5 L3.5 10 L6 12.5"/>
+    <path d="M2 5h10M9 2.5L12 5l-3 2.5"/>
+    <path d="M14 11H4M7 8.5L4 11l3 2.5"/>
   </svg>
 );
-const IconGear = () => (
+const IconTrending = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="8" cy="8" r="2.5"/>
-    <path d="M8 1.5 L8 3 M8 13 L8 14.5 M1.5 8 L3 8 M13 8 L14.5 8 M3.4 3.4 L4.5 4.5 M11.5 11.5 L12.6 12.6 M12.6 3.4 L11.5 4.5 M4.5 11.5 L3.4 12.6"/>
+    <polyline points="1.5,12 5,8 8,10 14.5,3.5"/>
+    <polyline points="10.5,3.5 14.5,3.5 14.5,7.5"/>
+    <line x1="1.5" y1="14.5" x2="14.5" y2="14.5" strokeOpacity="0.3"/>
   </svg>
 );
-const IconUser = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="8" cy="5.5" r="2.5"/>
-    <path d="M2.5 13.5 C2.5 11 5 9 8 9 C11 9 13.5 11 13.5 13.5"/>
+const IconTarget = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" fillOpacity="0"/>
+    <circle cx="8" cy="8" r="3.5" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.3"/>
+    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+  </svg>
+);
+const IconWave = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M1 11.5 C3 11.5 3.5 4.5 6 5.5 C8.5 6.5 8.5 12.5 11 9.5 C13 7 13.5 8 15 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
+    <path d="M1 11.5 C3 11.5 3.5 4.5 6 5.5 C8.5 6.5 8.5 12.5 11 9.5 C13 7 13.5 8 15 7 L15 14.5 L1 14.5 Z" fill="currentColor" fillOpacity="0.1"/>
   </svg>
 );
 export const IconChat = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 3.5 C2 2.67 2.67 2 3.5 2 L12.5 2 C13.33 2 14 2.67 14 3.5 L14 9.5 C14 10.33 13.33 11 12.5 11 L9 11 L6 14 L6 11 L3.5 11 C2.67 11 2 10.33 2 9.5 Z"/>
-    <line x1="5" y1="5.5" x2="11" y2="5.5"/>
-    <line x1="5" y1="8" x2="9" y2="8"/>
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M2 3.5C2 2.67 2.67 2 3.5 2h9C13.33 2 14 2.67 14 3.5v6c0 .83-.67 1.5-1.5 1.5H9L6.5 14V11H3.5C2.67 11 2 10.33 2 9.5z" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+    <circle cx="5.5" cy="6.5" r="0.8" fill="currentColor"/>
+    <circle cx="8" cy="6.5" r="0.8" fill="currentColor"/>
+    <circle cx="10.5" cy="6.5" r="0.8" fill="currentColor"/>
   </svg>
 );
-
-const IconHome = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 7L8 2l6 5v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7z"/>
-    <path d="M6 14V9h4v5"/>
+const IconAutopilot = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M9.5 1.5 L5.5 8.5 H8.5 L6.5 14.5 L13 7 H9.5 L12 1.5 Z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round"/>
+  </svg>
+);
+const IconGear = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+    <circle cx="8" cy="8" r="2.2"/>
+    <path d="M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.6 3.6l.9.9M11.5 11.5l.9.9M12.4 3.6l-.9.9M4.5 11.5l-.9.9"/>
+  </svg>
+);
+const IconUser = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <circle cx="8" cy="5.5" r="2.8" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.3"/>
+    <path d="M2 14c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="currentColor" fillOpacity="0.1"/>
   </svg>
 );
 
@@ -78,18 +82,18 @@ export const NAV_GROUPS = [
     { key: TABS.HOME,      label: "Accueil",   icon: <IconHome/> },
     { key: TABS.PORTFOLIO, label: "Positions", icon: <IconPositions/> },
   ]},
-  { label: "PORTEFEUILLE", items: [
+  { label: "ANALYSE", items: [
     { key: TABS.HISTORIQUE, label: "Répartition",  icon: <IconPie/> },
     { key: TABS.OPERATIONS, label: "Transactions", icon: <IconSwap/> },
   ]},
-  { label: "MARCHÉS", items: [
+  { label: "STRATÉGIE", items: [
     { key: TABS.MARCHE,     label: "Signaux IA",  icon: <IconTrending/> },
     { key: TABS.DCA,        label: "Plan DCA",    icon: <IconTarget/> },
     { key: TABS.PROJECTION, label: "Projection",  icon: <IconWave/> },
   ]},
   { label: "IA", featured: true, items: [
     { key: TABS.CHAT,      label: "Conseiller Privé", icon: <IconChat/> },
-    { key: TABS.AUTOPILOT, label: "Autopilot IA",     icon: <IconChat/> },
+    { key: TABS.AUTOPILOT, label: "Autopilot IA",     icon: <IconAutopilot/> },
   ]},
   { label: "COMPTE", items: [
     { key: TABS.PROFIL,   label: "Profil investisseur", icon: <IconUser/> },
@@ -201,7 +205,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                     <span style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", width: "3px", height: "18px", borderRadius: "2px", background: "#B07D2E" }} />
                   )}
                   {c
-                    ? <span style={{ fontSize: "11px", fontWeight: "700", color: isActive ? "#fff" : C.inkSubtle }}>{label.slice(0,2)}</span>
+                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", color: isActive ? "#fff" : C.inkSubtle, opacity: isActive ? 1 : 0.6 }}>{icon}</span>
                     : <span style={{ flex: 1, paddingLeft: isFeatured && !isActive ? "10px" : 0 }}>{label}</span>
                   }
                   {!c && isFeatured && !isActive && <span style={{ fontSize: "10px", background: "#B07D2E", color: "#FFF8E7", borderRadius: "6px", padding: "2px 7px", fontWeight: "700", letterSpacing: "0.4px", flexShrink: 0 }}>IA</span>}

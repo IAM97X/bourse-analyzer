@@ -92,6 +92,48 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     return () => window.removeEventListener("portfolioUpdated", handler);
   }, []);
 
+  // Auto-snapshot journalier — sauvegarde la valeur du PF à chaque visite de l'app
+  useEffect(() => {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const positions = load("bourse_portfolio", []);
+      const valeur = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
+      if (valeur <= 0) return;
+      const coutBase = positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
+      let snaps = (() => { try { return JSON.parse(localStorage.getItem("bourse_snapshots") || "[]"); } catch { return []; } })();
+
+      // Nettoyage des snapshots aberrants : supprime tout snapshot qui s'écarte de >15%
+      // d'au moins un de ses deux voisins (prev ET next)
+      snaps = snaps.sort((a, b) => a.date.localeCompare(b.date));
+      snaps = snaps.filter((s, i) => {
+        const prev = snaps[i - 1];
+        const next = snaps[i + 1];
+        const SEUIL = 0.15;
+        if (prev?.valeur > 0 && next?.valeur > 0) {
+          // Aberrant si au-delà du seuil PAR RAPPORT aux deux voisins
+          const dPrev = Math.abs(s.valeur - prev.valeur) / prev.valeur;
+          const dNext = Math.abs(s.valeur - next.valeur) / next.valeur;
+          return !(dPrev > SEUIL && dNext > SEUIL);
+        }
+        const ref = prev || next;
+        if (!ref?.valeur) return true;
+        return Math.abs(s.valeur - ref.valeur) / ref.valeur <= SEUIL;
+      });
+
+      if (snaps.some(s => s.date === today)) {
+        localStorage.setItem("bourse_snapshots", JSON.stringify(snaps.slice(-365)));
+        return;
+      }
+      // Détection d'anomalie sur le nouveau snapshot
+      const recent = [...snaps].reverse().find(s => (new Date(today) - new Date(s.date)) / 86400000 <= 7);
+      if (recent && recent.valeur > 0 && Math.abs(valeur - recent.valeur) / recent.valeur > 0.15) return;
+
+      snaps.push({ date: today, valeur, investi: coutBase, coutBase, capitalVerse: coutBase });
+      snaps.sort((a, b) => a.date.localeCompare(b.date));
+      localStorage.setItem("bourse_snapshots", JSON.stringify(snaps.slice(-365)));
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Mise à jour de l'affichage "il y a X min"
   useEffect(() => {
     if (!lastRefresh) return;
@@ -398,7 +440,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
         {/* Content */}
         <div className="ba-content" style={{ flex: 1, overflowY: "auto", padding: "32px 36px", position: "relative" }}>
-          <div className="ba-content-inner" style={{ position: "relative", maxWidth: "1200px" }}>
+          <div className="ba-content-inner" style={{ position: "relative", maxWidth: "1200px", margin: "0 auto" }}>
           {/* Bannière sans clé Claude */}
           {!hasClaudeKey() && (
             <div style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "18px", padding: "14px 20px", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>

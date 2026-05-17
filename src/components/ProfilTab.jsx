@@ -130,6 +130,8 @@ function ProfilTab({ profil, onChange }) {
       objectifEuros:  parseFloat(String(form.objectifEuros  || "0").replace(",", ".")) || 0,
       versementsPEA:  parseFloat(String(form.versementsPEA  || "0").replace(",", ".")) || 0,
       versementsCTO:  parseFloat(String(form.versementsCTO  || "0").replace(",", ".")) || 0,
+      valeurJan1:     parseFloat(String(form.valeurJan1  || "0").replace(",", ".")) || 0,
+      valeurMois1:    parseFloat(String(form.valeurMois1 || "0").replace(",", ".")) || 0,
     };
     onChange(p); save("bourse_profil", p);
     // Sauvegarder la baseline de projection si objectif défini et pas encore de ref
@@ -161,6 +163,21 @@ function ProfilTab({ profil, onChange }) {
       <div style={{ maxWidth: "560px", margin: "0 auto" }}>
         <div style={{ background: C.cardGradPurp, border: `1px solid ${C.border}`, borderRadius: "22px", padding: "28px", boxShadow: shadow.card }}>
           <div style={{ fontSize: "13px", color: C.ink, fontWeight: "800", marginBottom: "22px" }}>Mon profil investisseur</div>
+
+          {/* Année de naissance */}
+          <div style={{ marginBottom: "22px" }}>
+            <label style={lbl}>Année de naissance</label>
+            <input style={{ ...inp, fontSize: "13px" }} type="number" min="1940" max={new Date().getFullYear() - 10}
+              placeholder="ex : 1997" value={form.anneeNaissance || ""}
+              onChange={e => setForm(f => ({ ...f, anneeNaissance: e.target.value }))} />
+            {form.anneeNaissance && (() => {
+              const age = new Date().getFullYear() - parseInt(form.anneeNaissance);
+              const retrait = 65 - age;
+              return <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>
+                {age} ans · retraite dans <strong style={{ color: C.navy }}>{retrait} ans</strong> (65 ans)
+              </div>;
+            })()}
+          </div>
 
           {/* Courtier */}
           <div style={{ marginBottom: "22px" }}>
@@ -205,19 +222,45 @@ function ProfilTab({ profil, onChange }) {
 
           {/* Capital + DCA */}
           <Section title="Comptes & DCA">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
               <div>
-                <label style={lbl}>DCA mensuel (€)</label>
+                <label style={lbl}>DCA mensuel initial (€)</label>
                 <input style={inp} type="number" min="0" placeholder="0" value={form.dcaMensuel || ""} onChange={e => setForm(f => ({ ...f, dcaMensuel: e.target.value }))} />
               </div>
               <div>
                 <label style={lbl}>Durée DCA (mois)</label>
-                <input style={inp} type="number" min="1" max="360" placeholder="12" value={form.dcaDuree || ""} onChange={e => {
+                <input style={inp} type="number" min="1" max="480" placeholder="120" value={form.dcaDuree || ""} onChange={e => {
                   const mois = parseInt(e.target.value) || 0;
                   const horizon = mois <= 24 ? "court" : mois <= 48 ? "moyen" : mois <= 96 ? "long" : "tres-long";
                   setForm(f => ({ ...f, dcaDuree: e.target.value, horizon }));
                 }} />
               </div>
+            </div>
+            {/* Revalorisation DCA */}
+            <div style={{ background: C.snowOff, borderRadius: "12px", padding: "12px 14px", border: `1px solid ${C.border}` }}>
+              <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "10px" }}>Revalorisation du DCA (optionnel)</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={lbl}>Augmentation (€)</label>
+                  <input style={inp} type="number" min="0" step="10" placeholder="ex : 50"
+                    value={form.dcaCroissanceMontant || ""}
+                    onChange={e => setForm(f => ({ ...f, dcaCroissanceMontant: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={lbl}>Tous les N ans</label>
+                  <input style={inp} type="number" min="1" max="10" step="1" placeholder="ex : 2"
+                    value={form.dcaCroissancePeriode || ""}
+                    onChange={e => setForm(f => ({ ...f, dcaCroissancePeriode: e.target.value }))} />
+                </div>
+              </div>
+              {form.dcaCroissanceMontant > 0 && form.dcaCroissancePeriode > 0 && (() => {
+                const dca0 = parseFloat(form.dcaMensuel) || 0;
+                const aug  = parseFloat(form.dcaCroissanceMontant);
+                const per  = parseFloat(form.dcaCroissancePeriode);
+                return <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "8px" }}>
+                  Ex : {dca0}€ → {dca0 + aug}€ après {per} ans → {dca0 + aug*2}€ après {per*2} ans…
+                </div>;
+              })()}
             </div>
           </Section>
 
@@ -268,6 +311,22 @@ function ProfilTab({ profil, onChange }) {
                     </div>}
                   </>;
                 })()}
+              </div>
+            </div>
+          </Section>
+
+          {/* Référence performance */}
+          <Section title={`Référence performance ${new Date().getFullYear()}`}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div>
+                <label style={lbl}>Valeur au 1er janvier {new Date().getFullYear()} (€)</label>
+                <input style={inp} type="number" min="0" placeholder="Ex : 2 889" value={form.valeurJan1 || ""} onChange={e => setForm(f => ({ ...f, valeurJan1: e.target.value }))} />
+                <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Pour le calcul YTD — visible sur Boursorama au 1er jan</div>
+              </div>
+              <div>
+                <label style={lbl}>Valeur au 1er {new Date().toLocaleDateString("fr-FR", { month: "long" })} (€)</label>
+                <input style={inp} type="number" min="0" placeholder="Ex : 3 330" value={form.valeurMois1 || ""} onChange={e => setForm(f => ({ ...f, valeurMois1: e.target.value }))} />
+                <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Pour la perf mensuelle — à mettre à jour chaque 1er du mois</div>
               </div>
             </div>
           </Section>

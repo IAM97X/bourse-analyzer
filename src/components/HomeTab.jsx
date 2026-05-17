@@ -7,10 +7,6 @@ import { fetchWithProxy } from "../lib/api";
 
 const SNAPSHOTS_KEY = "bourse_snapshots";
 
-function findSnap(snapshots, targetDate) {
-  const before = snapshots.filter(s => s.date <= targetDate);
-  return before.length ? before[before.length - 1] : null;
-}
 
 function calcCapitalVerse(account) {
   try {
@@ -132,8 +128,39 @@ function ColCompte({ account, profil }) {
 }
 
 // ── Colonne 3 : Performances ───────────────────────────────────────────────────
-function ColPerfs({ positions, account }) {
-  const [cac, setCac] = useState({ ytd: null, mois: null, veille: null, loading: true });
+// Trouve le meilleur snapshot autour d'une date — préfère source CSV
+function findBestSnap(snapshots, targetDate, toleranceDays = 7) {
+  const target = new Date(targetDate).getTime();
+  const candidates = snapshots.filter(s => {
+    const diff = Math.abs(new Date(s.date).getTime() - target) / 86400000;
+    return diff <= toleranceDays;
+  });
+  if (!candidates.length) return null;
+  // Préférer CSV, puis le plus proche
+  const csv = candidates.filter(s => s.source === "csv");
+  const pool = csv.length ? csv : candidates;
+  return pool.reduce((best, s) => {
+    const d = Math.abs(new Date(s.date).getTime() - target);
+    const bd = Math.abs(new Date(best.date).getTime() - target);
+    return d < bd ? s : best;
+  });
+}
+
+// Calcule le capital net investi (achats - ventes) entre deux dates
+function calcDeltaCapital(account, fromDate, toDate) {
+  try {
+    const ops = JSON.parse(localStorage.getItem("bourse_avis_operes") || "[]")
+      .filter(o => (!account || (o.compte || "PEA") === account) && o.date >= fromDate && o.date <= toDate);
+    return ops.reduce((s, o) => {
+      const montant = (parseFloat(o.quantite) || 0) * (parseFloat(o.prixUnitaire) || 0);
+      return s + (o.type === "ACHAT" ? montant : o.type === "VENTE" ? -montant : 0);
+    }, 0);
+  } catch { return 0; }
+}
+
+function ColPerfs({ positions, account, profil }) {
+  const [cac, setCac] = useState({ ytd: null, mois: null, loading: true });
+  const [histRefs, setHistRefs] = useState({ jan1: null, mois1: null, loading: true });
 
   useEffect(() => {
     let cancelled = false;
@@ -147,9 +174,8 @@ function ColPerfs({ positions, account }) {
         if (!closes || closes.length < 2) return;
         const n = closes.length;
         if (!cancelled) setCac({
-          ytd:    (closes[n-1] - closes[0]) / closes[0] * 100,
-          mois:   n >= 22 ? (closes[n-1] - closes[n-22]) / closes[n-22] * 100 : null,
-          veille: (closes[n-1] - closes[n-2]) / closes[n-2] * 100,
+          ytd:  (closes[n-1] - closes[0]) / closes[0] * 100,
+          mois: n >= 22 ? (closes[n-1] - closes[n-22]) / closes[n-22] * 100 : null,
           loading: false,
         });
       } catch {
@@ -160,28 +186,137 @@ function ColPerfs({ positions, account }) {
     return () => { cancelled = true; };
   }, []);
 
+  // Reconstitue le portefeuille à une date passée en annulant les transactions postérieures,
+  // puis fetche les prix historiques Yahoo pour calculer V0 avec les bonnes lignes
+  useEffect(() => {
+    let cancelled = false;
+    async function computeHistoricalRefs() {
+      try {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm   = String(now.getMonth() + 1).padStart(2, "0");
+        const targets = [
+          { key: "jan1",  date: `${yyyy}-01-01` },
+          { key: "mois1", date: `${yyyy}-${mm}-01` },
+        ];
+        const tickerCache = (() => { try { return JSON.parse(localStorage.getItem("bourse_isin_ticker_cache") || "{}"); } catch { return {}; } })();
+        const allOps = (() => { try { return JSON.parse(localStorage.getItem("bourse_avis_operes") || "[]").filter(o => !account || (o.compte || "PEA") === account); } catch { return []; } })();
+
+        const computeV0 = async (targetDate) => {
+          // Reconstituer les quantités à targetDate : partir de l'état actuel et annuler les ops postérieures
+          const qtyMap = {};
+          for (const p of positions) {
+            if (p.isin) qtyMap[p.isin] = { isin: p.isin, nom: p.nom, quantite: p.quantite };
+          }
+          for (const op of allOps.filter(o => o.date > targetDate)) {
+            const isin = op.isin; if (!isin) continue;
+            const qty = parseFloat(op.quantite) || 0;
+            if (!qtyMap[isin]) qtyMap[isin] = { isin, nom: op.titre || op.nom || isin, quantite: 0 };
+            if (op.type === "ACHAT")  qtyMap[isin].quantite -= qty; // annuler l'achat
+            if (op.type === "VENTE")  qtyMap[isin].quantite += qty; // annuler la vente
+          }
+          const hist = Object.values(qtyMap).filter(p => p.quantite > 0.001 && p.isin && tickerCache[p.isin]);
+          if (!hist.length) return null;
+
+          const targetTs = Math.floor(new Date(targetDate).getTime() / 1000);
+          const results = await Promise.all(hist.map(async (pos) => {
+            try {
+              const ticker = tickerCache[pos.isin];
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${targetTs - 86400 * 5}&period2=${targetTs + 86400 * 5}&interval=1d`;
+              const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
+              if (!res.ok) return null;
+              const json = await res.json();
+              const result = json?.chart?.result?.[0];
+              const timestamps = result?.timestamp || [];
+              const closes = result?.indicators?.quote?.[0]?.close || [];
+              let best = null, bestDiff = Infinity;
+              for (let i = 0; i < timestamps.length; i++) {
+                const diff = Math.abs(timestamps[i] - targetTs);
+                if (diff < bestDiff && closes[i] != null) { bestDiff = diff; best = closes[i]; }
+              }
+              return bestDiff <= 7 * 86400 ? best * pos.quantite : null;
+            } catch { return null; }
+          }));
+
+          const valid = results.filter(r => r != null);
+          // Exiger au moins 50% de couverture
+          return valid.length >= hist.length * 0.5 ? valid.reduce((s, v) => s + v, 0) : null;
+        };
+
+        const [jan1, mois1] = await Promise.all(targets.map(t => computeV0(t.date)));
+        if (!cancelled) setHistRefs({ jan1, mois1, loading: false });
+      } catch {
+        if (!cancelled) setHistRefs({ jan1: null, mois1: null, loading: false });
+      }
+    }
+    computeHistoricalRefs();
+    return () => { cancelled = true; };
+  }, [positions, account]);
+
   const snapshots = useMemo(() => {
     try { return JSON.parse(localStorage.getItem(SNAPSHOTS_KEY) || "[]"); } catch { return []; }
   }, []);
 
   const currentValue = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
-  const now  = new Date();
-  const yyyy = now.getFullYear();
-  const mm   = String(now.getMonth() + 1).padStart(2, "0");
-  const yest = new Date(now - 86400000).toISOString().slice(0, 10);
+  const now   = new Date();
+  const yyyy  = now.getFullYear();
+  const mm    = String(now.getMonth() + 1).padStart(2, "0");
+  const today = now.toISOString().slice(0, 10);
+  const yest  = new Date(now - 86400000).toISOString().slice(0, 10);
   const moisLabel = now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
-  const perf = snap => snap?.valeur > 0 ? (currentValue - snap.valeur) / snap.valeur * 100 : null;
-  const pfYtd    = perf(findSnap(snapshots, `${yyyy}-01-01`));
-  const pfMois   = perf(findSnap(snapshots, `${yyyy}-${mm}-01`));
-  const pfVeille = perf(findSnap(snapshots, yest));
+  // Modified Dietz : (V1 - V0 - ΔCF) / V0
+  const modifiedDietz = (v0, fromDate) => {
+    if (!v0 || v0 <= 0) return null;
+    const cf = calcDeltaCapital(account, fromDate, today);
+    return (currentValue - v0 - cf) / v0 * 100;
+  };
+
+  // Priorité : manuel (Profil) > Yahoo historique reconstruit > snapshot CSV > snapshot auto
+  const refJan1  = profil?.valeurJan1  > 0 ? profil.valeurJan1  : null;
+  const refMois1 = profil?.valeurMois1 > 0 ? profil.valeurMois1 : null;
+  const snapJan1  = findBestSnap(snapshots, `${yyyy}-01-01`, 7);
+  const snapMois1 = findBestSnap(snapshots, `${yyyy}-${mm}-01`, 5);
+  const snapYest  = findBestSnap(snapshots, yest, 3);
+
+  const v0Jan1  = refJan1  ?? histRefs.jan1  ?? snapJan1?.valeur  ?? null;
+  const v0Mois1 = refMois1 ?? histRefs.mois1 ?? snapMois1?.valeur ?? null;
+  const loadingYtd  = !refJan1  && histRefs.loading;
+  const loadingMois = !refMois1 && histRefs.loading;
+
+  const pfYtd  = modifiedDietz(v0Jan1,  `${yyyy}-01-01`);
+  const pfMois = modifiedDietz(v0Mois1, `${yyyy}-${mm}-01`);
+
+  // Performance de la veille : intradayVariation Yahoo (la plus fiable)
+  const posWithIntraday = positions.filter(p => p.intradayVariation != null && (p.dernierCours || p.pru) > 0);
+  const pfVeille = (() => {
+    if (posWithIntraday.length > 0 && posWithIntraday.length >= positions.length * 0.5) {
+      let valeurAujourd = 0, valeurHier = 0;
+      for (const p of positions) {
+        const cours = p.dernierCours || p.pru;
+        const qty   = p.quantite || 0;
+        valeurAujourd += cours * qty;
+        if (p.intradayVariation != null) {
+          valeurHier += (cours / (1 + p.intradayVariation / 100)) * qty;
+        } else {
+          valeurHier += cours * qty;
+        }
+      }
+      return valeurHier > 0 ? (valeurAujourd - valeurHier) / valeurHier * 100 : null;
+    }
+    // Fallback : snapshot de la veille
+    const v0 = snapYest?.valeur ?? null;
+    if (!v0) return null;
+    const cf = calcDeltaCapital(account, yest, today);
+    return (currentValue - v0 - cf) / v0 * 100;
+  })();
 
   const pctColor = v => v === null || v === undefined ? "#fff" : v >= 0 ? "#4ade80" : "#f87171";
 
   return (
     <Card>
-      <Row label={`Ma performance ${yyyy}`}        value={fmtPct(pfYtd)}    color={pctColor(pfYtd)}    />
-      <Row label={`Ma performance ${moisLabel}`}   value={fmtPct(pfMois)}   color={pctColor(pfMois)}   />
+      <Row label={`Ma performance ${yyyy}`}        value={loadingYtd  ? "…" : fmtPct(pfYtd)}  color={pctColor(pfYtd)}  />
+      <Row label={`Ma performance ${moisLabel}`}   value={loadingMois ? "…" : fmtPct(pfMois)} color={pctColor(pfMois)} />
       <Row label="Ma performance de la veille"     value={fmtPct(pfVeille)} color={pctColor(pfVeille)} />
       <div style={{ height: "1px", background: "rgba(255,255,255,0.12)", margin: "4px 0" }} />
       <Row label={`Performance ${yyyy} du CAC 40`} value={cac.loading ? "…" : fmtPct(cac.ytd)}   color={pctColor(cac.ytd)}  />
@@ -435,7 +570,7 @@ export default function HomeTab({ account = "PEA", onTabChange, hidden, profil: 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "12px", marginBottom: "16px" }}>
         <ColCompte  account={account} profil={profil} />
         <ColValeur  positions={positions} especes={especes} cumul={cumul} hidden={hidden} />
-        <ColPerfs   positions={positions} account={account} />
+        <ColPerfs   positions={positions} account={account} profil={profil} />
       </div>
       <CourbeEvolution hidden={hidden} />
     </div>

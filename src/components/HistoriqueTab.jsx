@@ -489,7 +489,7 @@ function BenchmarkComparaison() {
   );
 
   return (
-    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "18px 22px", marginBottom: "20px", boxShadow: shadow.card }}>
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "18px 22px", boxShadow: shadow.card }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
         <div>
@@ -1091,7 +1091,7 @@ function PerformanceGlobale({ positions, account = "PEA" }) {
   const pctFmt   = (v) => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
 
   return (
-    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "22px", overflow: "hidden", boxShadow: shadow.card, marginBottom: "20px" }}>
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "22px", overflow: "hidden", boxShadow: shadow.card }}>
       {/* Header */}
       <div style={{ padding: "16px 22px", borderBottom: `1px solid ${C.border}`, background: C.navyLight, display: "flex", alignItems: "center", gap: "10px" }}>
         <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -1311,7 +1311,7 @@ function CorrelationMatrix({ positions }) {
   if (eligible.length < 2) return null;
 
   return (
-    <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: shadow.card, marginTop: "24px" }}>
+    <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: shadow.card }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", background: C.snow, borderBottom: `1px solid ${C.border}` }}>
         <div>
@@ -1492,41 +1492,39 @@ function DividendTracker({ account = "PEA", positions = [] }) {
   const inp = { padding: "8px 12px", borderRadius: "10px", border: `1px solid ${C.border}`, fontSize: "12px", fontFamily: "Inter,sans-serif", background: C.snowOff, color: C.ink, outline: "none", width: "100%", boxSizing: "border-box" };
 
   return (
-    <div style={{ background: C.cardGradGreen, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "20px", marginBottom: "20px", boxShadow: shadow.card }}>
+    <div style={{ background: C.cardGradGreen, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: shadow.card }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "18px" }}>💰</span>
-            <span style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>Dividendes reçus</span>
-            <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "5px", padding: "2px 7px" }}>{accountDivs.length}</span>
-          </div>
-          <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "3px", marginLeft: "26px" }}>Revenus encaissés · {account}</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "16px" }}>💰</span>
+          <span style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>Dividendes reçus</span>
+          <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "5px", padding: "2px 6px" }}>{accountDivs.length}</span>
+          <span style={{ fontSize: "10px", color: C.inkSubtle }}>· {account}</span>
         </div>
         <button onClick={() => setShowForm(v => !v)}
-          style={{ background: C.green, color: "#fff", border: "none", borderRadius: "20px", padding: "7px 14px", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          style={{ background: C.green, color: "#fff", border: "none", borderRadius: "16px", padding: "5px 14px", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
           {showForm ? "Annuler" : "+ Ajouter"}
         </button>
       </div>
 
-      {/* KPI */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px", marginBottom: "16px" }}>
+      {/* KPIs compacts en ligne */}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
         {[
           { label: "Total brut", val: fmtEur(totalBrut), color: C.green },
-          { label: account === "CTO" ? "Impôt estimé (30%)" : "Exonéré (PEA)", val: account === "CTO" ? `− ${fmtEur(impotEst)}` : "0 €", color: account === "CTO" ? C.red : C.green },
+          { label: account === "CTO" ? "Impôt (30%)" : "Exonéré (PEA)", val: account === "CTO" ? `− ${fmtEur(impotEst)}` : "0 €", color: account === "CTO" ? C.red : C.green },
           { label: "Net encaissé", val: fmtEur(totalNet), color: C.ink, bold: true },
         ].map((k, i) => (
-          <div key={i} style={{ background: C.snow, borderRadius: "14px", padding: "12px 14px", boxShadow: shadow.card }}>
-            <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>{k.label}</div>
-            <div style={{ fontSize: "15px", fontWeight: k.bold ? "800" : "700", color: k.color }}>{k.val}</div>
+          <div key={i} style={{ background: C.snow, borderRadius: "10px", padding: "8px 12px", boxShadow: shadow.card, flex: "1 1 120px" }}>
+            <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "3px" }}>{k.label}</div>
+            <div style={{ fontSize: "13px", fontWeight: k.bold ? "800" : "700", color: k.color }}>{k.val}</div>
           </div>
         ))}
       </div>
 
       {/* Formulaire ajout */}
       {showForm && (
-        <div style={{ background: C.snow, borderRadius: "14px", padding: "14px 16px", marginBottom: "14px", border: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink, marginBottom: "10px" }}>Nouveau dividende</div>
+        <div style={{ background: C.snow, borderRadius: "12px", padding: "12px 14px", marginBottom: "12px", border: `1px solid ${C.border}` }}>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Nouveau dividende</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
             <div>
               <div style={{ fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>Titre</div>
@@ -1550,7 +1548,7 @@ function DividendTracker({ account = "PEA", positions = [] }) {
               <input type="number" style={inp} placeholder={positions.find(p=>p.nom===form.titre)?.quantite || ""} value={form.nb} onChange={e => setForm(f => ({ ...f, nb: e.target.value }))} />
             </div>
           </div>
-          <button onClick={add} style={{ width: "100%", background: C.green, color: "#fff", border: "none", borderRadius: "10px", padding: "10px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          <button onClick={add} style={{ width: "100%", background: C.green, color: "#fff", border: "none", borderRadius: "10px", padding: "9px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
             Enregistrer le dividende
           </button>
         </div>
@@ -1558,41 +1556,41 @@ function DividendTracker({ account = "PEA", positions = [] }) {
 
       {/* Liste par titre */}
       {titreDivs.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "12px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "10px" }}>
           {titreDivs.map((t, i) => (
-            <div key={i} style={{ background: C.snow, borderRadius: "12px", padding: "10px 14px", display: "flex", alignItems: "center", gap: "10px", boxShadow: shadow.card }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{t.titre}</div>
+            <div key={i} style={{ background: C.snow, borderRadius: "10px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>{t.titre}</div>
                 {t.isin && <div style={{ fontSize: "9px", color: C.inkSubtle }}>{t.isin}</div>}
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "13px", fontWeight: "800", color: C.green }}>{fmtEur(t.total)}</div>
-                {t.rendement != null && <div style={{ fontSize: "10px", color: C.inkSubtle }}>Rdt/coût : {t.rendement.toFixed(2)}%</div>}
+                <div style={{ fontSize: "12px", fontWeight: "800", color: C.green }}>{fmtEur(t.total)}</div>
+                {t.rendement != null && <div style={{ fontSize: "9px", color: C.inkSubtle }}>Rdt/coût : {t.rendement.toFixed(2)}%</div>}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Historique */}
+      {/* Historique compact */}
       {accountDivs.length > 0 && (
-        <div style={{ borderRadius: "12px", overflow: "hidden", border: `1px solid ${C.border}` }}>
-          <div style={{ background: "linear-gradient(135deg,#0C1829,#1A3558)", padding: "8px 14px", display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px" }}>Historique</span>
+        <div style={{ borderRadius: "10px", overflow: "hidden", border: `1px solid ${C.border}` }}>
+          <div style={{ background: "linear-gradient(135deg,#0C1829,#1A3558)", padding: "6px 12px" }}>
+            <span style={{ fontSize: "9px", fontWeight: "700", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.8px" }}>Historique</span>
           </div>
           {[...accountDivs].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 10).map((d, i) => (
-            <div key={d.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 14px", borderBottom: i < accountDivs.length - 1 ? `1px solid ${C.border}` : "none", background: i % 2 === 0 ? C.snow : C.snowOff }}>
+            <div key={d.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "6px 12px", borderBottom: i < accountDivs.length - 1 ? `1px solid ${C.border}` : "none", background: i % 2 === 0 ? C.snow : C.snowOff }}>
               <span style={{ fontSize: "10px", color: C.inkSubtle, width: "76px", flexShrink: 0 }}>{new Date(d.date).toLocaleDateString("fr-FR")}</span>
               <span style={{ fontSize: "11px", fontWeight: "600", color: C.ink, flex: 1 }}>{d.titre}</span>
               <span style={{ fontSize: "12px", fontWeight: "700", color: C.green }}>{fmtEur(d.montant)}</span>
-              <button onClick={() => del(d.id)} style={{ background: "none", border: "none", color: C.inkSubtle, cursor: "pointer", fontSize: "11px", padding: "2px 6px" }}>✕</button>
+              <button onClick={() => del(d.id)} style={{ background: "none", border: "none", color: C.inkSubtle, cursor: "pointer", fontSize: "11px", padding: "2px 4px" }}>✕</button>
             </div>
           ))}
         </div>
       )}
 
       {accountDivs.length === 0 && !showForm && (
-        <div style={{ textAlign: "center", padding: "20px 0", color: C.inkSubtle, fontSize: "12px" }}>
+        <div style={{ textAlign: "center", padding: "12px 0", color: C.inkSubtle, fontSize: "12px" }}>
           Aucun dividende enregistré · Cliquez sur <strong>+ Ajouter</strong> pour commencer
         </div>
       )}
@@ -1620,12 +1618,13 @@ export default function HistoriqueTab({ portfolioVersion, account = "PEA" }) {
   );
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <DividendTracker account={account} positions={positions} />
       <PortfolioPieChart positions={positions} />
-      <CorrelationMatrix positions={positions} />
-      <BenchmarkComparaison />
-      <StatistiquesHistorique />
+      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 400px", minWidth: 0, display: "flex", flexDirection: "column" }}><CorrelationMatrix positions={positions} /></div>
+        <div style={{ flex: "1 1 300px", minWidth: 0, display: "flex", flexDirection: "column" }}><BenchmarkComparaison /></div>
+      </div>
     </div>
   );
 }
@@ -1634,8 +1633,9 @@ export function OperationsTab({ account = "PEA" }) {
   const allPositions = sanitizePositions(load("bourse_portfolio", DEFAULT_POSITIONS));
   const positions    = allPositions.filter(p => (p.compte || "PEA") === account);
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <PerformanceGlobale positions={positions} account={account} />
+      <StatistiquesHistorique />
       <FeeWarnings account={account} />
       <Reconciliation account={account} />
       <PEAAvisOperes account={account} />

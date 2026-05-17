@@ -167,47 +167,44 @@ export default function PortfolioPieChart({ positions }) {
     .sort((a, b) => b.valeur - a.valeur);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "20px", boxShadow: shadow.card }}>
-        <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "14px" }}>
+    <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "18px", boxShadow: shadow.card, flex: "1 1 340px", minWidth: 0 }}>
+        <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "12px" }}>
           Répartition par titre
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "28px", flexWrap: "wrap" }}>
-          <DonutChart slices={enriched} total={total} hovered={hovPos} setHovered={setHovPos} />
-          <div style={{ display: "flex", flexDirection: "column", gap: "7px", flex: 1, minWidth: "180px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
+          <DonutChart slices={enriched} total={total} hovered={hovPos} setHovered={setHovPos} CX={80} CY={80} R={66} R_INNER={32} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, minWidth: 0 }}>
             {enriched.map((sl, i) => (
-              <div
-                key={i}
-                style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", opacity: hovPos !== null && hovPos !== i ? 0.4 : 1, transition: "opacity 0.15s" }}
-                onMouseEnter={() => setHovPos(i)}
-                onMouseLeave={() => setHovPos(null)}
-              >
-                <div style={{ width: "10px", height: "10px", borderRadius: "3px", background: sl.color, flexShrink: 0 }} />
+              <div key={i}
+                style={{ display: "flex", alignItems: "center", gap: "7px", cursor: "pointer", opacity: hovPos !== null && hovPos !== i ? 0.4 : 1, transition: "opacity 0.15s" }}
+                onMouseEnter={() => setHovPos(i)} onMouseLeave={() => setHovPos(null)}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: sl.color, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "11px", color: C.ink, fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sl.nom}</div>
-                  <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "500", marginTop: "1px" }}>{sl.secteur}</div>
+                  <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "1px" }}>{sl.secteur}</div>
                 </div>
                 <div style={{ fontSize: "11px", color: sl.color, fontWeight: "700", flexShrink: 0 }}>{(sl.valeur / total * 100).toFixed(1)}%</div>
-                <div style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0, minWidth: "62px", textAlign: "right" }}>{fmtEur(sl.valeur)}</div>
+                <div style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0, minWidth: "56px", textAlign: "right" }}>{fmtEur(sl.valeur)}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "20px", boxShadow: shadow.card }}>
-        <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "14px" }}>Répartition par secteur</div>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
-          <DonutChart slices={secteurSlices} total={total} hovered={hovSecteur} setHovered={setHovSecteur} />
-          <div style={{ display: "flex", flexDirection: "column", gap: "9px", flex: 1, minWidth: "140px" }}>
+      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "18px", boxShadow: shadow.card, flex: "1 1 280px", minWidth: 0 }}>
+        <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "12px" }}>Répartition par secteur</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
+          <DonutChart slices={secteurSlices} total={total} hovered={hovSecteur} setHovered={setHovSecteur} CX={80} CY={80} R={66} R_INNER={32} centerLabel={`${(secteurSlices[0]?.valeur / total * 100).toFixed(1)}%`} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1, minWidth: 0 }}>
             {secteurSlices.map((sl, i) => (
               <div key={i}
-                style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", opacity: hovSecteur !== null && hovSecteur !== i ? 0.4 : 1, transition: "opacity 0.15s" }}
+                style={{ display: "flex", alignItems: "center", gap: "7px", cursor: "pointer", opacity: hovSecteur !== null && hovSecteur !== i ? 0.4 : 1, transition: "opacity 0.15s" }}
                 onMouseEnter={() => setHovSecteur(i)} onMouseLeave={() => setHovSecteur(null)}>
-                <div style={{ width: "10px", height: "10px", borderRadius: "3px", background: sl.color, flexShrink: 0 }} />
-                <div style={{ flex: 1, fontSize: "12px", color: C.ink, fontWeight: "600" }}>{sl.nom}</div>
+                <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: sl.color, flexShrink: 0 }} />
+                <div style={{ flex: 1, fontSize: "11px", color: C.ink, fontWeight: "600" }}>{sl.nom}</div>
                 <div style={{ fontSize: "11px", color: sl.color, fontWeight: "700", flexShrink: 0 }}>{(sl.valeur / total * 100).toFixed(1)}%</div>
-                <div style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0, minWidth: "58px", textAlign: "right" }}>{fmtEur(sl.valeur)}</div>
+                <div style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0, minWidth: "56px", textAlign: "right" }}>{fmtEur(sl.valeur)}</div>
               </div>
             ))}
           </div>
