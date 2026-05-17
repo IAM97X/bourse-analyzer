@@ -1,10 +1,29 @@
 import { ALPHAVANTAGE_KEY, GOOGLE_API_KEY, GOOGLE_CX, FMP_KEY, fetchWithProxy } from "./api";
 
+// ─── FMP — cache ISIN → ticker ────────────────────────────────────────────────
+const _fmpTickerCache = {};
+
+async function resolveFMPTicker(isin) {
+  if (_fmpTickerCache[isin]) return _fmpTickerCache[isin];
+  const key = String(FMP_KEY);
+  const url = `https://financialmodelingprep.com/api/v3/search?query=${encodeURIComponent(isin)}&apikey=${key}`;
+  const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`FMP search HTTP ${res.status}`);
+  const data = await res.json();
+  if (!Array.isArray(data) || !data.length) throw new Error(`FMP: ticker introuvable pour ${isin}`);
+  // Préférer marchés européens (suffixe .PA .AS .BR .MI .MC)
+  const euroSuffixes = [".PA", ".AS", ".BR", ".MI", ".MC", ".L", ".DE", ".SW"];
+  const best = data.find(r => euroSuffixes.some(s => r.symbol?.endsWith(s))) || data[0];
+  _fmpTickerCache[isin] = best.symbol;
+  return best.symbol;
+}
+
 // ─── Financial Modeling Prep — cours temps réel par ISIN ─────────────────────
 export async function fetchFMPQuote(isin) {
   const key = String(FMP_KEY);
   if (!key) throw new Error("Clé FMP manquante");
-  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(isin)}?apikey=${key}`;
+  const ticker = await resolveFMPTicker(isin);
+  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(ticker)}?apikey=${key}`;
   const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);
   const data = await res.json();
@@ -21,12 +40,12 @@ export async function fetchFMPQuote(isin) {
 export async function fetchFMPHistorical(isin, fromDate, toDate) {
   const key = String(FMP_KEY);
   if (!key) throw new Error("Clé FMP manquante");
-  const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${encodeURIComponent(isin)}?from=${fromDate}&to=${toDate}&apikey=${key}`;
+  const ticker = await resolveFMPTicker(isin);
+  const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${encodeURIComponent(ticker)}?from=${fromDate}&to=${toDate}&apikey=${key}`;
   const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);
   const data = await res.json();
   const historical = data?.historical || [];
-  // FMP retourne du plus récent au plus ancien — on trie croissant
   return historical
     .filter(d => d.date && d.close != null)
     .map(d => ({ date: d.date, close: d.close }))
