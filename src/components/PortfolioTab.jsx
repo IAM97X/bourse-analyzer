@@ -988,25 +988,35 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const horizonAns     = horizonInfo.annees;
         const objectifEuros  = parseFloat(profil?.objectifEuros) || 0;
 
-        // ── Projection neutre locale (SANS influence IA) ──────────────────────
-        // CAGRs conservateurs par type : ETF 5%, actions selon profil risque (6-9%)
-        // Profil dynamique = portefeuille small caps → base plus haute mais encore conservatrice
+        // ── Projection locale — même formule que ProjectionTab (DCA croissant) ──
         const cagrActionBase = { prudent: 0.06, equilibre: 0.07, dynamique: 0.08, "tres-dynamique": 0.09 }[profil?.risque || "equilibre"] ?? 0.07;
         const cagrBasePos = p => isETFName(p.nom) ? 0.05 : cagrActionBase;
-        const projNeutrePositions = positions.reduce((s, p) => {
-          const v = (p.dernierCours || p.pru) * p.quantite;
-          return s + v * Math.pow(1 + cagrBasePos(p), horizonAns);
-        }, 0);
-        const dcaMensuel = Number(profil?.dcaMensuel) || 0;
-        const rNeutreMois = 0.06 / 12; // 6%/an neutre pour DCA
+        const cagrMoyenBase = positions.length > 0
+          ? positions.reduce((s, p) => s + cagrBasePos(p) * (p.dernierCours || p.pru) * p.quantite, 0) / Math.max(totalVal, 1)
+          : 0.07;
+        const dcaMensuel          = Number(profil?.dcaMensuel) || 0;
+        const dcaCroissanceMontant = parseFloat(profil?.dcaCroissanceMontant) || 0;
+        const dcaCroissancePeriode = parseFloat(profil?.dcaCroissancePeriode) || 0;
+        const dcaAtMois = (m) => {
+          if (dcaMensuel <= 0) return 0;
+          if (dcaCroissanceMontant <= 0 || dcaCroissancePeriode <= 0) return dcaMensuel;
+          const paliers = Math.floor(m / Math.round(dcaCroissancePeriode * 12));
+          return dcaMensuel + paliers * dcaCroissanceMontant;
+        };
         const nMois = horizonAns * 12;
-        const dcaNeutreFV = dcaMensuel > 0 && rNeutreMois > 0
-          ? dcaMensuel * ((Math.pow(1 + rNeutreMois, nMois) - 1) / rNeutreMois) : dcaMensuel * nMois;
-        const projNeutreTotal = projNeutrePositions + dcaNeutreFV;
+        // Simulation mois par mois (identique à ProjectionTab)
+        const projSimul = (taux) => {
+          const r = Math.pow(1 + taux, 1 / 12) - 1;
+          let v = totalVal;
+          for (let m = 0; m < nMois; m++) v = v * (1 + r) + dcaAtMois(m);
+          return v;
+        };
+        const projNeutreTotal = projSimul(cagrMoyenBase);
 
-        // 1. Trajectoire — IA si disponible, neutre sinon
-        const useIAProj = valProjeteeIA > 0;
-        const projUsed  = useIAProj ? valProjeteeIA : projNeutreTotal;
+        // 1. Trajectoire — projection locale (DCA croissant) ; CAGR IA si dispo
+        const cagrUsed  = cagrIA != null ? cagrIA / 100 : cagrMoyenBase;
+        const projUsed  = projSimul(cagrUsed); // toujours cohérent avec le graphique
+        const useIAProj = cagrIA != null;
         const trajLabel = useIAProj ? "Trajectoire (IA)" : "Trajectoire (neutre)";
         const trajSuffix = useIAProj && cagrIA != null ? ` · CAGR IA ~${cagrIA.toFixed(1)}%/an` : (useIAProj ? "" : " — scénario conservateur");
         if (objectifEuros > 0) {
@@ -1132,10 +1142,10 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const displayColor = displayScore >= 7 ? C.green : displayScore >= 5 ? C.gold : C.red;
         const displayLabel = displayScore >= 8 ? "Excellent" : displayScore >= 7 ? "Très bon" : displayScore >= 5 ? "Correct" : displayScore >= 3 ? "Faible" : "Critique";
         const displaySource = (() => {
-          if (objectifEuros > 0 && valProjeteeIA > 0)
-            return `Objectif ${fmtEur(objectifEuros)} · projeté ${fmtEur(valProjeteeIA)} sur ${horizonAns} ans${cagrIA != null ? ` · CAGR IA ~${cagrIA.toFixed(1)}%/an` : ""}`;
-          if (cagrIA != null && valProjeteeIA > 0)
-            return `Projection ${fmtEur(valProjeteeIA)} sur ${horizonAns} ans · CAGR ~${cagrIA.toFixed(1)}%/an`;
+          if (objectifEuros > 0)
+            return `Objectif ${fmtEur(objectifEuros)} · projeté ${fmtEur(Math.round(projUsed))} sur ${horizonAns} ans${cagrIA != null ? ` · CAGR IA ~${cagrIA.toFixed(1)}%/an` : ""}`;
+          if (projUsed > 0)
+            return `Projeté ${fmtEur(Math.round(projUsed))} sur ${horizonAns} ans${cagrIA != null ? ` · CAGR IA ~${cagrIA.toFixed(1)}%/an` : ""}`;
           return `Score structurel · analysez dans Signaux IA pour enrichir`;
         })();
 
