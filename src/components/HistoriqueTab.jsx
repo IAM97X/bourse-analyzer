@@ -1236,11 +1236,15 @@ function CorrelationMatrix({ positions }) {
       let ticker = (p.isin && tickerCache[p.isin]) || p.ticker || null;
       if (!ticker && p.isin) {
         try {
-          const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(p.isin)}&quotesCount=3&newsCount=0`;
+          const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(p.isin)}&quotesCount=5&newsCount=0`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
           if (res.ok) {
             const j = await res.json();
-            const hit = (j.quotes || []).find(q => ["EQUITY","ETF","MUTUALFUND"].includes(q.quoteType));
+            const quotes = (j.quotes || []).filter(q => ["EQUITY","ETF","MUTUALFUND"].includes(q.quoteType));
+            const euroSuffixes = [".PA", ".AS", ".BR", ".MI", ".MC", ".L", ".DE", ".SW"];
+            const hit = quotes.find(q => euroSuffixes.some(s => q.symbol?.endsWith(s)))
+              || quotes.find(q => q.exchDisp?.toLowerCase().includes("paris") || q.exchDisp?.toLowerCase().includes("amsterdam") || q.exchDisp?.toLowerCase().includes("euronext"))
+              || quotes[0];
             if (hit) { ticker = hit.symbol; tickerCache[p.isin] = ticker; }
           }
         } catch {}
@@ -1275,7 +1279,11 @@ function CorrelationMatrix({ positions }) {
     const labels = resolved.filter(p => seriesMap[p.nom]).map(p => p.nom);
     const n = labels.length;
 
-    if (n < 2) { setError("Données insuffisantes — vérifiez que les tickers Yahoo Finance sont configurés (icône ✏ dans le tableau)."); setLoading(false); return; }
+    if (n < 2) {
+      const missing = resolved.filter(p => !seriesMap[p.nom]).map(p => p.nom).join(", ");
+      setError(`Données insuffisantes — impossible de récupérer l'historique pour : ${missing || "certaines positions"}. Réessayez ou vérifiez la connexion.`);
+      setLoading(false); return;
+    }
 
     // Aligner les séries (longueur minimale commune)
     const minLen = Math.min(...labels.map(l => seriesMap[l].length));
