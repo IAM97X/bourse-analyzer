@@ -54,10 +54,13 @@ export const AUTOPILOT_UNIVERSE = {
     { symbol: "ALWLX.PA", isin: "FR0014000TB2", nom: "Wallix Group",                type: "Action", secteur: "Cybersécurité FR",   profil_min: "tres-dynamique" },
     { symbol: "BLV.PA",   isin: "FR0014003FE9", nom: "Believe",                     type: "Action", secteur: "Musique numérique",  profil_min: "tres-dynamique" },
     { symbol: "SWP.PA",   isin: "FR0004188670", nom: "Sword Group",                 type: "Action", secteur: "IT Services",        profil_min: "tres-dynamique" },
-    { symbol: "ALHAF.PA", isin: "FR0014007T10", nom: "Haffner Energy",              type: "Action", secteur: "Hydrogène vert",     profil_min: "tres-dynamique" },
-    { symbol: "ALNSE.PA", isin: "FR0004054427", nom: "Nanobiotix",                  type: "Action", secteur: "Biotech nano",       profil_min: "tres-dynamique" },
-    { symbol: "VIRP.PA",  isin: "FR0000031577", nom: "Virbac",                      type: "Action", secteur: "Santé animale",      profil_min: "tres-dynamique" },
-    { symbol: "FNAC.PA",  isin: "FR0012097166", nom: "Fnac Darty",                  type: "Action", secteur: "Retail tech",        profil_min: "tres-dynamique" },
+    { symbol: "ORA.PA",   isin: "FR0000133308", nom: "Orange",                      type: "Action", secteur: "Télécoms",          profil_min: "equilibre" },
+    { symbol: "CA.PA",    isin: "FR0000120172", nom: "Carrefour",                   type: "Action", secteur: "Distribution",       profil_min: "equilibre" },
+    { symbol: "ALNSE.PA", isin: "FR0004054427", nom: "Nanobiotix",                  type: "Action", secteur: "Biotech",            profil_min: "tres-dynamique" },
+    { symbol: "VIRP.PA",  isin: "FR0000031577", nom: "Virbac",                      type: "Action", secteur: "Santé",              profil_min: "tres-dynamique" },
+    // Compléments pour atteindre 100 instruments total
+    { symbol: "OBLIG.PA", isin: "FR0010754168", nom: "Lyxor Euro Govt Bond",        type: "ETF",    secteur: "ETF Obligataire",   profil_min: "prudent" },
+    { symbol: "TEP.PA",   isin: "FR0000131708", nom: "Teleperformance",             type: "Action", secteur: "Tech Services",     profil_min: "dynamique" },
   ],
   CTO: [
     // ETFs → tous profils
@@ -99,7 +102,7 @@ export const AUTOPILOT_UNIVERSE = {
     { symbol: "AXON",     isin: "US05464C1018", nom: "Axon Enterprise",             type: "Action", secteur: "Sécurité publique",  profil_min: "tres-dynamique" },
     { symbol: "DUOL",     isin: "US26617R2094", nom: "Duolingo",                    type: "Action", secteur: "EdTech",             profil_min: "tres-dynamique" },
     { symbol: "MNDY",     isin: "IL0011294286", nom: "Monday.com",                  type: "Action", secteur: "SaaS productivité",  profil_min: "tres-dynamique" },
-    { symbol: "CELH",     isin: "SE0083615104", nom: "Celsius Holdings",            type: "Action", secteur: "Boissons santé",     profil_min: "tres-dynamique" },
+    { symbol: "KO",       isin: "US1912161007", nom: "Coca-Cola",                    type: "Action", secteur: "Consommation",      profil_min: "equilibre" },
     { symbol: "RXRX",     isin: "US75629W2080", nom: "Recursion Pharma",            type: "Action", secteur: "IA / Drug discovery",profil_min: "tres-dynamique" },
     { symbol: "LUNR",     isin: "US46125F1049", nom: "Intuitive Machines",          type: "Action", secteur: "Espace / Lune",      profil_min: "tres-dynamique" },
     { symbol: "ACHR",     isin: "US03945R1023", nom: "Archer Aviation",             type: "Action", secteur: "eVTOL / Air taxi",   profil_min: "tres-dynamique" },
@@ -107,7 +110,9 @@ export const AUTOPILOT_UNIVERSE = {
     { symbol: "HIMS",     isin: "US4330001060", nom: "Hims & Hers Health",          type: "Action", secteur: "Santé numérique",    profil_min: "tres-dynamique" },
     { symbol: "SOUN",     isin: "US83602V1061", nom: "SoundHound AI",               type: "Action", secteur: "IA vocale",          profil_min: "tres-dynamique" },
     { symbol: "ALAB",     isin: "US04626L1035", nom: "Astera Labs",                 type: "Action", secteur: "Semi / IA infra",    profil_min: "tres-dynamique" },
-    { symbol: "CAVA",     isin: "US14965Q1067", nom: "CAVA Group",                  type: "Action", secteur: "Restauration niche", profil_min: "tres-dynamique" },
+    { symbol: "WMT",      isin: "US9311421039", nom: "Walmart",                      type: "Action", secteur: "Distribution",       profil_min: "equilibre" },
+    { symbol: "SNOW",     isin: "US8334451098", nom: "Snowflake",                    type: "Action", secteur: "Cloud",              profil_min: "tres-dynamique" },
+    { symbol: "DDOG",     isin: "US23804L1035", nom: "Datadog",                      type: "Action", secteur: "Cloud",              profil_min: "tres-dynamique" },
   ],
 };
 

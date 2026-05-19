@@ -1,25 +1,127 @@
 import { useState } from "react";
 import { C, shadow } from "../constants/theme";
-import { AUTOPILOT_UNIVERSE } from "../constants/universe";
+import { AUTOPILOT_UNIVERSE, fetchYahooPrices } from "../constants/universe";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur, PROFIL_RANK, getEuronextUrl } from "../lib/finance";
 import { callClaude, CLAUDE_MODELS } from "../lib/api";
 
+// ─── Catégories d'allocation ───────────────────────────────────────────────
+const ALLOC_CATS = [
+  { key: "ETF Monde",        label: "ETF Monde",        color: "#1E3A5F" },
+  { key: "ETF Sectoriel",    label: "ETF Sectoriel",    color: "#2563EB" },
+  { key: "Tech / IA",        label: "Tech / IA",        color: "#7C3AED" },
+  { key: "Semi-conducteurs", label: "Semi-conducteurs", color: "#6D28D9" },
+  { key: "Santé",            label: "Santé",            color: "#059669" },
+  { key: "Industrie",        label: "Industrie / Déf.", color: "#D97706" },
+  { key: "Énergie",          label: "Énergie",          color: "#B45309" },
+  { key: "Luxe",             label: "Luxe / Conso",     color: "#BE185D" },
+  { key: "Finance",          label: "Finance",          color: "#0369A1" },
+  { key: "Autres",           label: "Autres",           color: "#64748B" },
+];
+
+const SECTOR_TO_CAT = {
+  "ETF Monde":"ETF Monde","ETF USA":"ETF Monde","ETF Europe":"ETF Monde",
+  "ETF Émergents":"ETF Monde","ETF Obligataire":"ETF Monde",
+  "ETF Tech":"ETF Sectoriel",
+  "Tech":"Tech / IA","Tech Services":"Tech / IA","Cybersécurité":"Tech / IA",
+  "Cybersécurité FR":"Tech / IA","Cloud":"Tech / IA","IA/Data":"Tech / IA",
+  "SaaS productivité":"Tech / IA","AdTech/IA":"Tech / IA","Médias/IA":"Tech / IA",
+  "Semi-conducteurs":"Semi-conducteurs","Semi-conducteurs/IA":"Semi-conducteurs",
+  "Serveurs IA":"Semi-conducteurs","Semi / IA infra":"Semi-conducteurs",
+  "Santé":"Santé","Biotech":"Santé","Biotech nano":"Santé","Santé animale":"Santé",
+  "Santé numérique":"Santé","IA / Drug discovery":"Santé",
+  "Industrie":"Industrie","Aéronautique":"Industrie","Infrastructure":"Industrie",
+  "Transports":"Industrie","Défense":"Industrie","Espace":"Industrie",
+  "eVTOL / Air taxi":"Industrie","Espace / Lune":"Industrie",
+  "Énergie":"Énergie","Hydrogène vert":"Énergie",
+  "Luxe":"Luxe","Cosmétiques":"Luxe",
+  "Banque":"Finance","Assurance":"Finance","Financier":"Finance",
+  "Fintech":"Finance","Crypto/Finance":"Finance",
+  "Télécoms":"Autres","Distribution":"Autres","Consommation":"Autres",
+  "Automobile":"Autres","Métaux":"Autres","E-commerce":"Autres",
+  "E-commerce EM":"Autres","Musique numérique":"Autres","IT Services":"Autres",
+  "Retail tech":"Autres","Boissons santé":"Autres","Restauration niche":"Autres",
+  "EdTech":"Autres","Quantique":"Autres","IA vocale":"Autres","Sécurité publique":"Autres",
+  "IA/Data":"Tech / IA","Serveurs IA":"Semi-conducteurs","Semi-conducteurs/IA":"Semi-conducteurs",
+  "Semi / IA infra":"Semi-conducteurs","AdTech/IA":"Tech / IA","SaaS productivité":"Tech / IA",
+  "Santé numérique":"Santé","IA / Drug discovery":"Santé","Biotech nano":"Santé",
+  "Santé animale":"Santé","Hydrogène vert":"Énergie","Espace":"Industrie","Espace / Lune":"Industrie",
+  "eVTOL / Air taxi":"Industrie","Tech/IA":"Tech / IA",
+};
+
+const DEFAULT_ALLOC = {
+  "prudent":        { "ETF Monde": 75, "ETF Sectoriel": 20, "Santé": 5 },
+  "equilibre":      { "ETF Monde": 50, "ETF Sectoriel": 15, "Tech / IA": 15, "Santé": 10, "Industrie": 10 },
+  "dynamique":      { "ETF Monde": 20, "ETF Sectoriel": 10, "Tech / IA": 25, "Semi-conducteurs": 15, "Santé": 15, "Industrie": 15 },
+  "tres-dynamique": { "Tech / IA": 30, "Semi-conducteurs": 25, "Santé": 15, "Industrie": 15, "Finance": 5, "Autres": 10 },
+};
+
+const getCat = s => SECTOR_TO_CAT[s] || "Autres";
+const catColor = key => ALLOC_CATS.find(c => c.key === key)?.color || "#64748B";
+
+// ─── Composant allocation bar ──────────────────────────────────────────────
+function AllocBar({ cat, tgt, cur, onChange }) {
+  const color = catColor(cat.key);
+  const gap = Math.max(0, tgt - cur);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0" }}>
+      <div style={{ width: "120px", fontSize: "11px", color: C.inkMuted, fontWeight: "600", flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cat.label}</div>
+      <div style={{ flex: 1, position: "relative", height: "18px", background: C.snowOff, borderRadius: "4px", overflow: "hidden" }}>
+        {/* current */}
+        {cur > 0 && <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100,cur)}%`, background: color + "40", borderRadius: "4px" }} />}
+        {/* target */}
+        {tgt > 0 && <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100,tgt)}%`, background: color + "22", borderRadius: "4px", border: `1px solid ${color}60` }} />}
+      </div>
+      <input
+        type="number" min="0" max="100" step="5"
+        value={tgt || ""}
+        onChange={e => onChange(cat.key, e.target.value)}
+        style={{ width: "46px", textAlign: "center", border: `1px solid ${tgt > 0 ? color : C.border}`, borderRadius: "6px", padding: "3px 4px", fontSize: "12px", fontWeight: "700", color: tgt > 0 ? color : C.inkSubtle, background: tgt > 0 ? color + "08" : "transparent", fontFamily: "Inter,sans-serif", outline: "none" }}
+      />
+      <span style={{ fontSize: "10px", color: C.inkSubtle, width: "14px" }}>%</span>
+      {gap > 0 && <span style={{ fontSize: "10px", fontWeight: "700", color: color, background: color + "15", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>↑{gap}%</span>}
+    </div>
+  );
+}
+
+// ─── Composant principal ───────────────────────────────────────────────────
 export default function AutopilotIA({ account, profil, hidden }) {
   const positions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === (account || "PEA"));
-  const [running, setRunning]   = useState(false);
-  const [step, setStep]         = useState("");
-  const [expanded, setExpanded] = useState({});
-  const [result, setResult]     = useState(() => {
+  const [running, setRunning]         = useState(false);
+  const [step, setStep]               = useState("");
+  const [expanded, setExpanded]       = useState({});
+  const [showAllocEditor, setShowAllocEditor] = useState(false);
+  const [result, setResult]           = useState(() => {
     const r = load("bourse_autopilot_last", null);
     if (!r || !Array.isArray(r.opportunites)) return null;
     return r;
   });
-  const [error, setError]       = useState(null);
+  const [error, setError]             = useState(null);
   const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
 
-  const risque = profil?.risque || "equilibre";
+  const risque     = profil?.risque || "equilibre";
   const profilRank = PROFIL_RANK[risque] ?? 1;
+
+  const allocKey = `bourse_autopilot_alloc_${account || "PEA"}_${risque}`;
+  const [allocCibles, setAllocCibles] = useState(() => load(allocKey, null) || DEFAULT_ALLOC[risque] || { "ETF Monde": 50, "Tech / IA": 30, "Santé": 20 });
+
+  const allocTotal = Object.values(allocCibles).reduce((a, b) => a + Number(b || 0), 0);
+
+  const updateAlloc = (key, val) => {
+    const v = Math.max(0, Math.min(100, Number(val) || 0));
+    const next = { ...allocCibles };
+    if (v === 0) delete next[key]; else next[key] = v;
+    setAllocCibles(next);
+    save(allocKey, next);
+  };
+
+  const resetAlloc = () => {
+    const def = DEFAULT_ALLOC[risque] || { "ETF Monde": 100 };
+    setAllocCibles(def);
+    save(allocKey, def);
+  };
+
+  // Universe filtered by profile
   const universe = (() => {
     const all = account === "CTO"
       ? [...AUTOPILOT_UNIVERSE.PEA, ...AUTOPILOT_UNIVERSE.CTO]
@@ -27,12 +129,98 @@ export default function AutopilotIA({ account, profil, hidden }) {
     return all.filter(i => (PROFIL_RANK[i.profil_min || "prudent"] ?? 0) <= profilRank);
   })();
 
+  // Current portfolio allocation by category
+  const calcCurrentAlloc = () => {
+    if (!positions.length) return {};
+    const bycat = {};
+    let totalVal = 0;
+    positions.forEach(p => {
+      const val = (p.quantite || 0) * (p.dernierCours || p.pru || 0);
+      const cat = getCat(p.secteur || "");
+      bycat[cat] = (bycat[cat] || 0) + val;
+      totalVal += val;
+    });
+    if (totalVal === 0) return {};
+    const pct = {};
+    Object.entries(bycat).forEach(([k, v]) => { pct[k] = Math.round(v / totalVal * 100); });
+    return pct;
+  };
+
+  const profilLabel = { prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" }[risque] || risque;
+
   const runAnalysis = async () => {
     setRunning(true); setError(null);
     try {
-      setStep("Recherche des cours et analyse du marché…");
-
+      setStep("Sélection des instruments…");
       const dcaMensuel = profil?.dcaMensuel || 200;
+      const currentAlloc = calcCurrentAlloc();
+
+      // Gaps : catégories sous-pondérées
+      const gaps = {};
+      Object.entries(allocCibles).forEach(([cat, tgt]) => {
+        const cur = currentAlloc[cat] || 0;
+        const gap = Number(tgt) - cur;
+        if (gap > 0) gaps[cat] = gap;
+      });
+
+      // Sélection de 20 instruments proportionnelle aux écarts
+      const TOTAL = 20;
+      const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+      const nonZero = Object.entries(allocCibles).filter(([, v]) => Number(v) > 0);
+      let universeSlice;
+
+      if (nonZero.length === 0) {
+        universeSlice = shuffle(universe).slice(0, TOTAL);
+      } else {
+        const weights = {};
+        nonZero.forEach(([cat, tgt]) => {
+          weights[cat] = positions.length > 0 ? (gaps[cat] || 1) : Number(tgt);
+        });
+        const totalW = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
+        const selected = new Set();
+        nonZero
+          .sort(([a], [b]) => (weights[b] || 0) - (weights[a] || 0))
+          .forEach(([cat]) => {
+            const count = Math.max(1, Math.round((weights[cat] || 0) / totalW * TOTAL));
+            shuffle(universe.filter(i => getCat(i.secteur) === cat))
+              .slice(0, count)
+              .forEach(i => selected.add(i));
+          });
+        const rem = shuffle(universe.filter(i => !selected.has(i)));
+        rem.slice(0, Math.max(0, TOTAL - selected.size)).forEach(i => selected.add(i));
+        universeSlice = [...selected].slice(0, TOTAL);
+      }
+
+      // ── Pre-fetch cours Yahoo Finance (gratuit, parallèle) ──────────────
+      setStep("Récupération des cours Yahoo Finance…");
+      const symbols = universeSlice.map(i => i.symbol).filter(Boolean);
+      let pricesMap = {};
+      let fetchedCount = 0;
+      try {
+        const priceData = await fetchYahooPrices(symbols);
+        priceData.forEach(q => { if (q?.symbol) pricesMap[q.symbol] = q; });
+        fetchedCount = priceData.length;
+      } catch {
+        // Fallback : Claude fera ses propres recherches si nécessaire
+      }
+
+      // ── Construction du prompt avec cours intégrés ───────────────────────
+      const universeList = universeSlice.map(i => {
+        const q = pricesMap[i.symbol];
+        const cat = getCat(i.secteur);
+        const gapPct = gaps[cat] ? `écart:+${gaps[cat]}%` : "";
+        if (q?.regularMarketPrice) {
+          const prix = q.regularMarketPrice;
+          const chg  = (q.regularMarketChangePercent || 0);
+          const bas  = q.fiftyTwoWeekLow  || prix;
+          const haut = q.fiftyTwoWeekHigh || prix;
+          const distBas = bas > 0 ? ((prix - bas) / bas * 100).toFixed(1) : "?";
+          const distHaut = haut > 0 ? ((haut - prix) / prix * 100).toFixed(1) : "?";
+          return `${i.isin} | ${i.nom} | ${i.symbol} | ${i.secteur} | cat:${cat} | ${gapPct} | COURS:${prix.toFixed(2)} | VAR:${chg >= 0 ? "+" : ""}${chg.toFixed(2)}% | 52s:[${bas.toFixed(2)}–${haut.toFixed(2)}] | dist_bas:+${distBas}% | potentiel_haut:+${distHaut}%`;
+        }
+        return `${i.isin} | ${i.nom} | ${i.symbol} | ${i.secteur} | cat:${cat} | ${gapPct} | COURS:N/A`;
+      }).join("\n");
+
       const portfolioCtx = positions.length > 0
         ? positions.map(p => {
             const pvPct = p.pru > 0 ? (((p.dernierCours || p.pru) - p.pru) / p.pru * 100).toFixed(1) : "0";
@@ -40,73 +228,102 @@ export default function AutopilotIA({ account, profil, hidden }) {
           }).join("\n")
         : "Portefeuille vide";
 
-      const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
-      const tierExact  = universe.filter(i => i.profil_min === risque);
-      const tierLower  = universe.filter(i => i.profil_min !== risque);
-      const primary   = shuffle(tierExact).slice(0, 14);
-      const secondary = shuffle(tierLower).slice(0, 20 - primary.length);
-      const universeSlice = [...primary, ...secondary];
-      const universeList = universeSlice.map(i => i.isin ? `${i.isin} – ${i.nom} (${i.symbol}, ${i.secteur})` : `${i.symbol} – ${i.nom} (${i.secteur})`).join("\n");
+      const allocCibleStr = nonZero.map(([k, v]) => `  ${k}: ${v}%`).join("\n");
+      const allocGapStr = nonZero.length > 0 && positions.length > 0
+        ? nonZero.map(([k, v]) => {
+            const cur = currentAlloc[k] || 0;
+            const gap = Number(v) - cur;
+            const tag = gap > 2 ? `↑ SOUS-PONDÉRÉ (+${gap}%)` : gap < -2 ? `↓ SUR-PONDÉRÉ (${gap}%)` : "≈ OK";
+            return `  ${k}: actuel ${cur}% → cible ${v}% [${tag}]`;
+          }).join("\n")
+        : "Premier investissement — respecter la répartition cible";
 
-      const profilLabel = { prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" }[risque] || risque;
-      const focusInstr = risque === "prudent"
-        ? "UNIQUEMENT des ETF diversifiés. Aucune action individuelle."
-        : risque === "equilibre"
-        ? "Un mix d'ETF large (60%) et d'actions blue chip solides (40%)."
-        : risque === "dynamique"
-        ? "Principalement des actions individuelles avec fort potentiel (70%), max 1 ETF sectoriel. Pas d'ETF généralistes."
-        : "EXCLUSIVEMENT des actions individuelles à fort potentiel de croissance ou momentum. Zéro ETF. Privilégie les valeurs technologiques, semi-conducteurs, défense, IA, biotech — les plus dynamiques de l'univers.";
-
-      const system = `Tu es un gérant de portefeuille expert spécialisé ${account} français. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
-Tu as accès à la recherche web pour obtenir les cours en temps réel.
-PROFIL INVESTISSEUR : ${profilLabel} | DCA MENSUEL : ${dcaMensuel}€ | ORDRE MINIMUM : 200€ | COURTIER : ${profil?.courtier || "boursobank"} | HORIZON : ${profil?.horizon || "moyen terme"}
-RÈGLE ABSOLUE POUR CE PROFIL : ${focusInstr}
+      const system = `Tu es un gérant de portefeuille expert spécialisé ${account}. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
+PROFIL : ${profilLabel} | DCA : ${dcaMensuel}€/mois | COURTIER : ${profil?.courtier || "boursobank"} | HORIZON : ${profil?.horizon || "moyen terme"}
 PORTEFEUILLE ACTUEL :
-${portfolioCtx}`;
+${portfolioCtx}
+RÉPARTITION CIBLE :
+${allocCibleStr}
+ÉCARTS (actuel → cible) :
+${allocGapStr}`;
 
-      const userMsg = `Utilise web_search pour récupérer les cours actuels des instruments les plus pertinents parmi cet univers ${account} adapté au profil ${profilLabel} :
+      setStep("Analyse IA et recherche d'actualités…");
+
+      const hasPrices = fetchedCount > 0;
+      const userMsg = `Voici les ${universeSlice.length} instruments sélectionnés pour combler les écarts de ta répartition cible.
+${hasPrices ? `✅ Les cours temps réel ont déjà été récupérés via Yahoo Finance (${fetchedCount}/${universeSlice.length} instruments).` : "⚠ Cours non disponibles — utilise web_search pour les récupérer."}
+
+INSTRUMENTS + COURS :
 ${universeList}
 
-Effectue 2 à 3 recherches web ciblées en utilisant l'ISIN de chaque instrument pour obtenir le cours exact, la variation du jour, le plus haut/bas 52 semaines et les catalyseurs récents. Exemple de recherche : "FR0000073272 Safran cours bourse mai 2026".
+${hasPrices
+  ? `Les cours sont fournis — NE PAS faire de web_search pour les prix.
+Utilise web_search pour UNIQUEMENT les actualités et catalyseurs récents des 2-3 meilleures opportunités identifiées (1 recherche max par instrument finaliste).`
+  : `Utilise web_search pour récupérer les cours manquants et les actualités des meilleures opportunités.`}
 
-Identifie les 3 MEILLEURES OPPORTUNITÉS D'ACHAT IMMÉDIATES pour le profil ${profilLabel}.
-RÈGLE STRICTE : n'inclure dans "opportunites" QUE les instruments qui méritent d'être achetés ou renforcés MAINTENANT. Le champ "action" doit être ACHETER ou RENFORCER uniquement. Si un instrument est intéressant à long terme mais pas au bon point d'entrée aujourd'hui → ne pas l'inclure du tout.
-${risque === "dynamique" || risque === "tres-dynamique" ? "PRIORITÉ AUX ACTIONS INDIVIDUELLES avec catalyseur clair (résultats, contrat, secteur en hausse, momentum technique)." : ""}
+Identifie les 3 MEILLEURES OPPORTUNITÉS qui comblent prioritairement les catégories SOUS-PONDÉRÉES.
+Critères de sélection : cours proche du bas 52 semaines, dist_bas faible, catalyseur récent, secteur sous-pondéré.
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {
-  "resume": "Contexte marché et orientation pour profil ${profilLabel} en 2-3 phrases",
+  "resume": "Analyse des écarts et contexte marché pour profil ${profilLabel} en 2-3 phrases",
   "score_marche": 7,
   "opportunites": [
     {
-      "symbol": "AIR.PA",
-      "nom": "Airbus",
-      "type": "Action",
-      "secteur": "Aéronautique",
+      "symbol": "CW8.PA",
+      "nom": "Amundi MSCI World",
+      "type": "ETF",
+      "secteur": "ETF Monde",
+      "categorie_cible": "ETF Monde",
       "action": "ACHETER",
-      "prix": 165.50,
-      "var_jour": 1.2,
-      "dist_bas52": 12.5,
-      "rationale": "1-2 phrases max sur le catalyseur précis.",
+      "prix": 450.50,
+      "var_jour": 0.3,
+      "dist_bas52": 8.5,
+      "rationale": "Comble l'écart ETF Monde (+X%). Catalyseur précis en 1-2 phrases.",
       "catalyseur": "5 mots max",
-      "risque": "Modéré",
-      "horizon": "Moyen terme",
-      "isin": "NL0010273215",
-      "allocation_pct": 15,
-      "montant_suggere": 1229,
+      "risque": "Faible",
+      "horizon": "Long terme",
+      "isin": "FR0010315150",
+      "allocation_pct": 50,
+      "montant_suggere": ${dcaMensuel},
       "dans_portefeuille": false
     }
   ],
-  "alertes_portefeuille": [{"titre": "Nom position", "alerte": "Description courte du risque ou signal.", "action": "SURVEILLER"}],
+  "alertes_portefeuille": [],
   "prochaine_revision": "Dans 7 jours"
 }
 
-RÈGLE ACTION : utilise UNIQUEMENT ces 5 valeurs pour le champ "action" : ACHETER (opportunité immédiate), RENFORCER (position existante à étoffer), SURVEILLER (intéressant mais attendre un meilleur point d'entrée), ALLÉGER (prendre des profits), ÉVITER (conditions défavorables). Interdit : ACCUMULER, CONSERVER, HOLD, BUY ou tout autre libellé.
-RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si prix > ${dcaMensuel}€ : montant = 1 titre = prix. Si prix ≤ ${dcaMensuel}€ : montant = floor(${dcaMensuel}/prix) × prix. Jamais en dessous du prix d'un titre.`;
+RÈGLE ACTION : ACHETER ou RENFORCER uniquement.
+RÈGLE MONTANT : montant_suggere = floor(${dcaMensuel}/prix) × prix, minimum 1 titre × prix.`;
 
-      const parsed = await callClaude(system, userMsg, true, 2, true, 3000, CLAUDE_MODELS.fast);
+      const parsed = await callClaude(system, userMsg, true, 2, true, 2500, CLAUDE_MODELS.fast);
       if (!parsed || typeof parsed !== "object") throw new Error("Réponse IA non structurée.");
-      const final = { ...parsed, generatedAt: new Date().toISOString(), enrichedCount: universe.length };
+
+      // Enrichir les opportunités avec les cours pre-fetchés si l'IA n'en a pas
+      const enriched = (parsed.opportunites || []).map(op => {
+        const q = pricesMap[op.symbol];
+        if (q && (!op.prix || op.prix === 0)) {
+          const bas = q.fiftyTwoWeekLow || q.regularMarketPrice;
+          const prix = q.regularMarketPrice;
+          return {
+            ...op,
+            prix,
+            var_jour: parseFloat((q.regularMarketChangePercent || 0).toFixed(2)),
+            dist_bas52: bas > 0 ? parseFloat(((prix - bas) / bas * 100).toFixed(1)) : op.dist_bas52,
+          };
+        }
+        return op;
+      });
+
+      const final = {
+        ...parsed,
+        opportunites: enriched,
+        generatedAt: new Date().toISOString(),
+        enrichedCount: universe.length,
+        fetchedCount,
+        allocCibles,
+        currentAlloc,
+      };
       setResult(final);
       save("bourse_autopilot_last", final);
     } catch (e) {
@@ -121,49 +338,99 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
   const ACTION_META = {
     "ACHETER":    { color: C.green,   label: "Acheter maintenant" },
     "RENFORCER":  { color: C.green,   label: "Renforcer la position" },
-    "SURVEILLER": { color: "#6366F1", label: "Surveiller — attendre un meilleur point d'entrée" },
-    "ALLÉGER":    { color: "#C8972A", label: "Alléger — prendre des profits partiels" },
-    "ÉVITER":     { color: C.red,     label: "Éviter — conditions défavorables" },
+    "SURVEILLER": { color: "#6366F1", label: "Surveiller" },
+    "ALLÉGER":    { color: "#C8972A", label: "Alléger" },
+    "ÉVITER":     { color: C.red,     label: "Éviter" },
   };
   const actionColor = a => {
     const key = Object.keys(ACTION_META).find(k => a?.toUpperCase().includes(k)) || "";
     return ACTION_META[key]?.color || "#6366F1";
   };
 
-  const profilLabel = { prudent: "Prudent", equilibre: "Équilibré", dynamique: "Dynamique", "tres-dynamique": "Très dynamique" }[risque] || risque;
+  const currentAlloc = calcCurrentAlloc();
+  const allocOk = Math.abs(allocTotal - 100) <= 2;
 
   return (
     <div style={{ maxWidth: "780px", margin: "0 auto" }}>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#1a237e,#283593)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>AI</span>
-            </div>
-            <div>
-              <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot IA</div>
-              <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {universe.length} instruments · Profil {profilLabel}</div>
-            </div>
+      {/* ── Header ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#1a237e,#283593)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>AI</span>
+          </div>
+          <div>
+            <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot IA</div>
+            <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {universe.length} instruments · Profil {profilLabel}</div>
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-          <button onClick={() => { if (window.confirm("Cette analyse consomme environ 0,15 à 0,25 $ de crédits API (recherches web + IA).\n\nConseil : lancez-la 1 à 2 fois par semaine maximum, les opportunités n'évoluent pas en quelques heures.\n\nConfirmer le lancement ?")) runAnalysis(); }} disabled={running}
-            style={{ padding: "10px 20px", borderRadius: "12px", background: running ? C.inkSubtle : "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={() => { if (window.confirm("Cette analyse consomme environ 0,15 à 0,25 $ de crédits API.\n\nConseil : 1 à 2 fois par semaine maximum.\n\nConfirmer le lancement ?")) runAnalysis(); }}
+            disabled={running || !allocOk}
+            style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
             {running ? "⟳ Analyse en cours…" : "⚡ Lancer l'analyse"}
           </button>
           {result?.generatedAt && <span style={{ fontSize: "10px", color: C.inkSubtle }}>Dernière analyse : {new Date(result.generatedAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
         </div>
       </div>
 
+      {/* ── Allocation cible ── */}
+      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", marginBottom: "14px", overflow: "hidden" }}>
+        <button
+          onClick={() => setShowAllocEditor(v => !v)}
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "none", border: "none", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>Répartition cible</span>
+            {/* mini pills */}
+            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+              {Object.entries(allocCibles).filter(([, v]) => v > 0).map(([k, v]) => (
+                <span key={k} style={{ fontSize: "9px", fontWeight: "700", color: catColor(k), background: catColor(k) + "18", borderRadius: "4px", padding: "1px 5px" }}>{k.split(" ")[0]} {v}%</span>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", color: allocOk ? C.green : C.red }}>{allocTotal}%</span>
+            <span style={{ fontSize: "11px", color: C.inkSubtle }}>{showAllocEditor ? "▲" : "▼"}</span>
+          </div>
+        </button>
+
+        {showAllocEditor && (
+          <div style={{ padding: "4px 16px 14px", borderTop: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "10px", marginTop: "8px" }}>
+              Définissez votre répartition cible par catégorie. L'Autopilot priorisera les catégories sous-pondérées dans votre portefeuille actuel.
+              {!allocOk && <span style={{ color: C.red, fontWeight: "700" }}> Total : {allocTotal}% (doit être 100%)</span>}
+            </div>
+            {ALLOC_CATS.map(cat => (
+              <AllocBar
+                key={cat.key}
+                cat={cat}
+                tgt={allocCibles[cat.key] || 0}
+                cur={currentAlloc[cat.key] || 0}
+                onChange={updateAlloc}
+              />
+            ))}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px" }}>
+              <span style={{ fontSize: "10px", color: C.inkSubtle }}>Barre bleue = actuel · contour = cible · ↑ = sous-pondéré</span>
+              <button onClick={resetAlloc}
+                style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                Réinitialiser
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Warning API ── */}
       <div style={{ background: "rgba(200,151,42,0.07)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "10px 16px", marginBottom: "16px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
         <span style={{ fontSize: "14px", flexShrink: 0, marginTop: "1px" }}>💡</span>
         <div style={{ fontSize: "11px", color: "#7A5A10", lineHeight: 1.6 }}>
-          <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,15–0,25 $ en crédits Anthropic (recherches web en temps réel).<br />
-          Conseil : lancez l'Autopilot <strong>1 à 2 fois par semaine</strong> maximum. Les opportunités de marché n'évoluent pas en quelques heures.
+          <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,15–0,25 $ en crédits Anthropic.<br />
+          Conseil : lancez l'Autopilot <strong>1 à 2 fois par semaine</strong> maximum.
         </div>
       </div>
 
+      {/* ── Loading ── */}
       {running && step && (
         <div style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.15)`, borderRadius: "14px", padding: "16px 20px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
           <div style={{ width: "20px", height: "20px", border: `3px solid ${C.navy}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.9s linear infinite", flexShrink: 0 }} />
@@ -171,6 +438,7 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
         </div>
       )}
 
+      {/* ── Errors ── */}
       {error && !result && (
         <div style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "14px", padding: "14px 18px", marginBottom: "16px", color: C.red, fontSize: "13px", fontWeight: "600" }}>
           ⚠ {error}
@@ -183,8 +451,10 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
         </div>
       )}
 
+      {/* ── Résultats ── */}
       {result && !running && (
         <>
+          {/* Score + résumé */}
           <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 20px", marginBottom: "12px", boxShadow: shadow.card, display: "flex", gap: "16px", alignItems: "flex-start" }}>
             {result.score_marche != null && (
               <div style={{ flexShrink: 0, width: "52px", height: "52px", borderRadius: "14px", background: scoreColor(result.score_marche) + "18", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -194,21 +464,51 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>Contexte marché</div>
-              <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{result.resume}</div>
+              <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55 }}>{result.resume}</div>
             </div>
           </div>
 
+          {/* Analyse allocation (si résultat contient les données) */}
+          {result.allocCibles && (
+            <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "14px 16px", marginBottom: "12px", boxShadow: shadow.card }}>
+              <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>
+                Répartition analysée
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                {Object.entries(result.allocCibles).filter(([, v]) => Number(v) > 0).map(([cat, tgt]) => {
+                  const cur = (result.currentAlloc || {})[cat] || 0;
+                  const gap = Number(tgt) - cur;
+                  const color = catColor(cat);
+                  return (
+                    <div key={cat} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div style={{ width: "120px", fontSize: "10px", color: C.inkMuted, fontWeight: "600", flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {ALLOC_CATS.find(c => c.key === cat)?.label || cat}
+                      </div>
+                      <div style={{ flex: 1, height: "14px", background: C.snowOff, borderRadius: "4px", position: "relative", overflow: "hidden" }}>
+                        {cur > 0 && <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, cur)}%`, background: color + "50", borderRadius: "4px" }} />}
+                        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, Number(tgt))}%`, background: "transparent", border: `1px solid ${color}`, borderRadius: "4px" }} />
+                      </div>
+                      <span style={{ fontSize: "10px", fontWeight: "700", color: cur > 0 ? C.ink : C.inkSubtle, width: "28px", textAlign: "right" }}>{cur}%</span>
+                      <span style={{ fontSize: "10px", color: C.inkSubtle }}>→</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", color: color, width: "28px" }}>{tgt}%</span>
+                      {gap > 2 && <span style={{ fontSize: "9px", fontWeight: "700", color: color, background: color + "15", borderRadius: "4px", padding: "1px 4px" }}>↑{gap}%</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Alertes portefeuille */}
           {result.alertes_portefeuille?.length > 0 && (
             <div style={{ background: "rgba(200,151,42,0.06)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", display: "flex", flexDirection: "column", gap: "6px" }}>
               <div style={{ fontSize: "10px", fontWeight: "700", color: "#966F1A", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "2px" }}>Alertes portefeuille</div>
               {result.alertes_portefeuille.map((a, i) => {
-                if (typeof a === "string") {
-                  return (
-                    <div key={i} style={{ fontSize: "12px", color: "#7A5A10", lineHeight: 1.5, display: "flex", gap: "8px" }}>
-                      <span style={{ flexShrink: 0 }}>▸</span><span>{a}</span>
-                    </div>
-                  );
-                }
+                if (typeof a === "string") return (
+                  <div key={i} style={{ fontSize: "12px", color: "#7A5A10", lineHeight: 1.5, display: "flex", gap: "8px" }}>
+                    <span style={{ flexShrink: 0 }}>▸</span><span>{a}</span>
+                  </div>
+                );
                 const titre  = a?.titre  || a?.nom    || "";
                 const alerte = a?.alerte || a?.message || a?.detail || "";
                 const action = a?.action || "";
@@ -226,39 +526,43 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
             </div>
           )}
 
+          {/* Opportunités */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
             <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px" }}>
-              Opportunités à saisir · {(result.opportunites || []).filter(o => ["ACHETER","RENFORCER"].includes((o.action||"").toUpperCase())).length}
+              Opportunités à saisir · {(result.opportunites || []).filter(o => ["ACHETER", "RENFORCER"].includes((o.action || "").toUpperCase())).length}
             </div>
             <div style={{ display: "flex", gap: "6px" }}>
               <span style={{ fontSize: "9px", fontWeight: "700", color: C.green, background: C.green + "18", borderRadius: "4px", padding: "2px 7px" }}>ACHETER</span>
               <span style={{ fontSize: "9px", fontWeight: "700", color: C.green, background: C.green + "18", borderRadius: "4px", padding: "2px 7px" }}>RENFORCER</span>
             </div>
           </div>
+
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {(result.opportunites || []).filter(op => ["ACHETER","RENFORCER"].includes((op.action||"").toUpperCase())).map((op, i) => {
+            {(result.opportunites || []).filter(op => ["ACHETER", "RENFORCER"].includes((op.action || "").toUpperCase())).map((op, i) => {
               const ac = op.action || "";
               const acShort = ac.length > 12 ? ac.split(/[\s/]/)[0] : ac;
               const acColor = actionColor(ac);
               const isExpanded = expanded[i];
               const dcaMensuel = profil?.dcaMensuel || 200;
               const prix = op.prix || 0;
-              const budgetCible = Math.max(dcaMensuel, 200);
-              // Toujours dériver nbTitres depuis le budget réel (pas depuis montant_suggere IA qui peut être faux)
-              const nbTitres = prix > 0 ? Math.max(1, Math.floor(budgetCible / prix)) : 1;
-              const montant = nbTitres * prix || budgetCible;
+              const nbTitres = prix > 0 ? Math.max(1, Math.floor(Math.max(dcaMensuel, 200) / prix)) : 1;
+              const montant = nbTitres * prix || dcaMensuel;
               const catalyseurDisplay = op.catalyseur && op.catalyseur.length > 55 ? op.catalyseur.slice(0, 52) + "…" : op.catalyseur;
+              const catCible = op.categorie_cible || getCat(op.secteur || "");
+              const catCol = catColor(catCible);
+
               return (
                 <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: shadow.card, ...blurStyle }}>
                   <div style={{ height: "3px", background: acColor }} />
                   <div style={{ padding: "14px 16px" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "8px" }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "3px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "4px" }}>
                           <span style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>{op.nom}</span>
                           <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "4px", padding: "1px 5px", fontWeight: "600" }}>{op.symbol}</span>
                           {op.isin && <span style={{ fontSize: "10px", color: C.inkSubtle, fontFamily: "monospace" }}>{op.isin}</span>}
-                          <span style={{ fontSize: "10px", color: C.inkSubtle }}>{op.secteur}</span>
+                          {/* Catégorie cible badge */}
+                          <span style={{ fontSize: "9px", fontWeight: "700", color: catCol, background: catCol + "18", borderRadius: "4px", padding: "1px 6px" }}>{catCible}</span>
                           {op.dans_portefeuille && <span style={{ fontSize: "9px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px" }}>En portefeuille</span>}
                           <a href={`https://fr.finance.yahoo.com/quote/${encodeURIComponent(op.symbol)}`} target="_blank" rel="noopener noreferrer"
                             style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: "#5F01D1", borderRadius: "4px", padding: "2px 6px", textDecoration: "none", flexShrink: 0 }}>Yahoo</a>
@@ -267,6 +571,13 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
                               style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: "#003087", borderRadius: "4px", padding: "2px 6px", textDecoration: "none", flexShrink: 0 }}>Euronext</a>
                           )}
                         </div>
+                        {/* Allocation gap indicator */}
+                        {op.allocation_pct > 0 && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                            <div style={{ height: "4px", width: `${Math.min(100, op.allocation_pct)}%`, maxWidth: "120px", background: catCol, borderRadius: "2px", opacity: 0.7 }} />
+                            <span style={{ fontSize: "10px", fontWeight: "700", color: catCol }}>{op.allocation_pct}% cible</span>
+                          </div>
+                        )}
                         {catalyseurDisplay && <div style={{ fontSize: "11px", fontWeight: "600", color: "#966F1A", background: "rgba(200,151,42,0.1)", borderRadius: "5px", padding: "2px 8px", display: "inline-block" }}>⚡ {catalyseurDisplay}</div>}
                       </div>
                       <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
@@ -276,8 +587,9 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
                       </div>
                     </div>
                     <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55, marginBottom: "6px",
-                      ...(!isExpanded ? { overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } : {}) }}
-                    >{op.rationale}</div>
+                      ...(!isExpanded ? { overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } : {}) }}>
+                      {op.rationale}
+                    </div>
                     <button onClick={() => setExpanded(e => ({ ...e, [i]: !e[i] }))}
                       style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: "none", padding: "0 0 8px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
                       {isExpanded ? "▲ Réduire" : "▼ Lire plus"}
@@ -304,24 +616,29 @@ RÈGLE MONTANT : montant_suggere = nombre_entier_de_titres × prix_unitaire. Si 
           {result.prochaine_revision && (
             <div style={{ marginTop: "12px", textAlign: "center", fontSize: "11px", color: C.inkSubtle }}>
               Prochaine révision : {result.prochaine_revision} · {result.enrichedCount} instruments scannés
+              {result.fetchedCount > 0 && <span style={{ color: C.green, marginLeft: "6px" }}>· {result.fetchedCount} cours pre-fetchés via Yahoo</span>}
             </div>
           )}
         </>
       )}
 
+      {/* ── État vide ── */}
       {!result && !running && !error && (
         <div style={{ textAlign: "center", padding: "60px 20px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", boxShadow: shadow.card }}>
           <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: "linear-gradient(135deg,#1a237e,#283593)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
             <span style={{ fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>AI</span>
           </div>
           <div style={{ fontSize: "16px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Prêt à scanner le marché</div>
-          <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "360px", margin: "0 auto 20px" }}>
-            L'agent scanne {universe.length} instruments {account} adaptés à votre profil {profilLabel} et identifie les meilleures opportunités en temps réel.
+          <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "380px", margin: "0 auto 20px" }}>
+            L'agent analyse les écarts entre votre répartition actuelle et la cible, puis identifie les meilleures opportunités Euronext pour les combler.
           </div>
-          <button onClick={() => { if (window.confirm("Cette analyse consomme environ 0,15 à 0,25 $ de crédits API.\n\nConseil : 1 à 2 fois par semaine maximum.\n\nConfirmer ?")) runAnalysis(); }}
-            style={{ padding: "12px 28px", borderRadius: "12px", background: "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          <button
+            onClick={() => { if (window.confirm("Cette analyse consomme environ 0,15 à 0,25 $ de crédits API.\n\nConseil : 1 à 2 fois par semaine maximum.\n\nConfirmer ?")) runAnalysis(); }}
+            disabled={!allocOk}
+            style={{ padding: "12px 28px", borderRadius: "12px", background: allocOk ? "linear-gradient(135deg,#1a237e,#283593)" : C.inkSubtle, color: "#fff", border: "none", fontSize: "14px", fontWeight: "700", cursor: allocOk ? "pointer" : "not-allowed", fontFamily: "Inter,sans-serif" }}>
             ⚡ Lancer l'analyse
           </button>
+          {!allocOk && <div style={{ marginTop: "8px", fontSize: "11px", color: C.red }}>Répartition cible = {allocTotal}% (ajustez pour atteindre 100%)</div>}
         </div>
       )}
     </div>
