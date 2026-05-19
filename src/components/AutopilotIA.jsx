@@ -161,6 +161,8 @@ export default function AutopilotIA({ account, profil, hidden }) {
     try {
       setStep("Sélection des instruments…");
       const dcaMensuel = budget;
+      // Nb d'opportunités selon budget : 1 ligne par tranche de 200€, max 3
+      const nbOppMax = Math.min(3, Math.max(1, Math.floor(budget / 200)));
       const currentAlloc = calcCurrentAlloc();
 
       // Gaps : catégories sous-pondérées
@@ -269,8 +271,11 @@ ${hasPrices
 Utilise web_search pour UNIQUEMENT les actualités et catalyseurs récents des 2-3 meilleures opportunités identifiées (1 recherche max par instrument finaliste).`
   : `Utilise web_search pour récupérer les cours manquants et les actualités des meilleures opportunités.`}
 
-Identifie les 3 MEILLEURES OPPORTUNITÉS qui comblent prioritairement les catégories SOUS-PONDÉRÉES.
-Critères de sélection : cours proche du bas 52 semaines, dist_bas faible, catalyseur récent, secteur sous-pondéré.
+BUDGET : ${dcaMensuel}€ au total → propose EXACTEMENT ${nbOppMax} opportunité${nbOppMax > 1 ? "s" : ""}.
+${nbOppMax === 1
+  ? `Budget unique : les ${dcaMensuel}€ vont sur 1 seule ligne. Choisis l'instrument qui permet d'acheter le plus de parts possible avec ce budget (prix × floor(${dcaMensuel}/prix) titres). Priorité aux ETF ou actions < ${dcaMensuel}€/titre.`
+  : `Répartis le budget entre ${nbOppMax} lignes UNIQUEMENT si chaque ligne peut acheter au moins 1 titre (prix ≤ ${Math.round(dcaMensuel / nbOppMax)}€/titre). Si une ligne coûte trop cher, ramène à ${nbOppMax - 1} opportunité(s). Utilise allocation_pct pour pondérer.`}
+Critères : cours proche du bas 52 semaines, dist_bas faible, catalyseur récent, secteur sous-pondéré.
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {
@@ -302,7 +307,10 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 }
 
 RÈGLE ACTION : ACHETER ou RENFORCER uniquement.
-RÈGLE MONTANT : budget total = ${dcaMensuel}€. Pour chaque opportunité, montant_suggere = floor((allocation_pct/100 × ${dcaMensuel}) / prix) × prix, minimum 1 titre × prix.`;
+RÈGLE MONTANT : ${nbOppMax === 1
+  ? `montant_suggere = floor(${dcaMensuel} / prix) × prix (tout le budget sur 1 ligne).`
+  : `montant_suggere par ligne = floor((allocation_pct/100 × ${dcaMensuel}) / prix) × prix. Si allocation_pct absent : split équitable floor(${dcaMensuel}/${nbOppMax}/prix)×prix.`
+}`;
 
       const parsed = await callClaude(system, userMsg, true, 2, true, 2500, CLAUDE_MODELS.fast);
       if (!parsed || typeof parsed !== "object") throw new Error("Réponse IA non structurée.");
@@ -329,6 +337,8 @@ RÈGLE MONTANT : budget total = ${dcaMensuel}€. Pour chaque opportunité, mont
         generatedAt: new Date().toISOString(),
         enrichedCount: universe.length,
         fetchedCount,
+        budget,
+        nbOppMax,
         allocCibles,
         currentAlloc,
       };
@@ -549,6 +559,7 @@ RÈGLE MONTANT : budget total = ${dcaMensuel}€. Pour chaque opportunité, mont
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
             <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px" }}>
               Opportunités à saisir · {(result.opportunites || []).filter(o => ["ACHETER", "RENFORCER"].includes((o.action || "").toUpperCase())).length}
+              {result.budget && <span style={{ fontWeight: "400", textTransform: "none", marginLeft: "6px", color: C.inkMuted }}>· Budget {fmtEur(result.budget)}</span>}
             </div>
             <div style={{ display: "flex", gap: "6px" }}>
               <span style={{ fontSize: "9px", fontWeight: "700", color: C.green, background: C.green + "18", borderRadius: "4px", padding: "2px 7px" }}>ACHETER</span>
@@ -563,10 +574,14 @@ RÈGLE MONTANT : budget total = ${dcaMensuel}€. Pour chaque opportunité, mont
               const acColor = actionColor(ac);
               const isExpanded = expanded[i];
               const prix = op.prix || 0;
-              // Budget proportionnel à allocation_pct, sinon réparti équitablement
-              const nbOpp = (result.opportunites || []).filter(o => ["ACHETER","RENFORCER"].includes((o.action||"").toUpperCase())).length || 1;
-              const allocPct = op.allocation_pct > 0 ? op.allocation_pct / 100 : 1 / nbOpp;
-              const budgetOp = Math.max(prix || 1, Math.round(budget * allocPct));
+              const oppList = (result.opportunites || []).filter(o => ["ACHETER","RENFORCER"].includes((o.action||"").toUpperCase()));
+              const nbOpp = oppList.length || 1;
+              // 1 ligne → tout le budget ; plusieurs → proportionnel à allocation_pct
+              const budgetOp = nbOpp === 1
+                ? budget
+                : op.allocation_pct > 0
+                  ? Math.round(budget * op.allocation_pct / 100)
+                  : Math.round(budget / nbOpp);
               const nbTitres = prix > 0 ? Math.max(1, Math.floor(budgetOp / prix)) : 1;
               const montant  = nbTitres * prix || budgetOp;
               const catalyseurDisplay = op.catalyseur && op.catalyseur.length > 55 ? op.catalyseur.slice(0, 52) + "…" : op.catalyseur;
