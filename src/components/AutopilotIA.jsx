@@ -678,13 +678,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
           <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "380px", margin: "0 auto 20px" }}>
             L'agent analyse les écarts entre votre répartition actuelle et la cible, puis identifie les meilleures opportunités Euronext pour votre budget de <strong>{fmtEur(budget)}</strong>.
           </div>
-          <button
-            onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,05–0,10 $ de crédits API.\n\nBudget : ${budget}€\n\nConfirmer ?`)) runAnalysis(); }}
-            disabled={!allocOk}
-            style={{ padding: "12px 28px", borderRadius: "12px", background: allocOk ? "linear-gradient(135deg,#1a237e,#283593)" : C.inkSubtle, color: "#fff", border: "none", fontSize: "14px", fontWeight: "700", cursor: allocOk ? "pointer" : "not-allowed", fontFamily: "Inter,sans-serif" }}>
-            ⚡ Lancer l'analyse
-          </button>
-          {!allocOk && <div style={{ marginTop: "8px", fontSize: "11px", color: C.red }}>Répartition cible = {allocTotal}% (ajustez pour atteindre 100%)</div>}
+          {!allocOk && <div style={{ marginTop: "8px", fontSize: "11px", color: C.red }}>Répartition cible = {allocTotal}% — ajustez pour atteindre 100% avant de lancer</div>}
         </div>
       )}
     </div>
