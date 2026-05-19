@@ -774,49 +774,59 @@ function CourbeEvolution({ hidden, positions, account }) {
           <path d={areaD} fill="url(#chartGrad)"/>
           <path d={smooth} fill="none" stroke={lineClr} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
 
-          {/* Ligne verticale crosshair + point sur la courbe */}
+          {/* Ligne verticale fine au curseur */}
           {hover && (
-            <>
-              <line x1={hover.x.toFixed(1)} y1={padT} x2={hover.x.toFixed(1)} y2={H - padB}
-                stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="4 4"/>
-              <circle cx={hover.x.toFixed(1)} cy={hover.y.toFixed(1)} r="4" fill={lineClr} opacity="0.9"/>
-              <circle cx={hover.x.toFixed(1)} cy={hover.y.toFixed(1)} r="7" fill={lineClr} opacity="0.15"/>
-            </>
+            <line x1={hover.x.toFixed(1)} y1={padT} x2={hover.x.toFixed(1)} y2={H - padB}
+              stroke="rgba(255,255,255,0.18)" strokeWidth="1"/>
           )}
         </svg>
 
-        {/* Tooltip unifié — une seule carte */}
+        {/* Tooltip fintech */}
         {hover && (() => {
-          const p      = points[hover.idx];
-          const pDate  = new Date(p.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
-          const pctX   = (hover.x / W) * 100;
+          const p     = points[hover.idx];
+          const pDate = new Date(p.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+          const pctX  = (hover.x / W) * 100;
           const onLeft = hover.x > W * 0.55;
-          const tipW   = p.perfCumulee != null ? 148 : 130;
-          // Delta depuis le premier point de la période
-          const deltaP = p.valeur - points[0].valeur;
-          const perfP  = points[0].valeur > 0 ? (deltaP / points[0].valeur * 100) : 0;
-          const perfDisplay = p.perfCumulee != null ? p.perfCumulee : perfP;
-          const perfClr = perfDisplay >= 0 ? "#6ee7b7" : "#f87171";
+
+          // Perf depuis début de la période (toujours fiable)
+          const perfPeriod = points[0].valeur > 0
+            ? (p.valeur - points[0].valeur) / points[0].valeur * 100
+            : null;
+          // Utiliser perf cumulée CSV seulement si valeur plausible (-100% < p < +2000%)
+          const perfDisplay = (p.perfCumulee != null && p.perfCumulee > -100 && p.perfCumulee < 2000)
+            ? p.perfCumulee
+            : (perfPeriod !== null && perfPeriod > -100 && perfPeriod < 2000 ? perfPeriod : null);
+          const perfClr = (perfDisplay ?? 0) >= 0 ? "#6ee7b7" : "#f87171";
+          const perfBg  = (perfDisplay ?? 0) >= 0 ? "rgba(110,231,183,0.12)" : "rgba(248,113,113,0.12)";
+
           return (
             <div style={{
               position: "absolute",
-              top: `${Math.max(4, Math.min(H - 70, hover.y - 36))}px`,
-              ...(onLeft ? { right: `calc(${100 - pctX}% + 14px)` } : { left: `calc(${pctX}% + 14px)` }),
-              width: `${tipW}px`,
-              background: "rgba(6,16,32,0.96)",
-              border: `1px solid ${lineClr}40`,
-              borderRadius: "10px",
-              padding: "8px 12px",
+              top: `${Math.max(4, Math.min(H - 72, hover.y - 38))}px`,
+              ...(onLeft ? { right: `calc(${100 - pctX}% + 12px)` } : { left: `calc(${pctX}% + 12px)` }),
+              minWidth: "130px",
+              background: "rgba(4,12,26,0.92)",
+              border: "1px solid rgba(255,255,255,0.10)",
+              borderTop: `2px solid ${lineClr}`,
+              borderRadius: "0 0 10px 10px",
+              padding: "10px 14px 10px",
               pointerEvents: "none",
               zIndex: 20,
-              backdropFilter: "blur(4px)",
-              boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px ${lineClr}20`,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
             }}>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "500", marginBottom: "4px" }}>{pDate}</div>
-              <div style={{ fontSize: "15px", fontWeight: "900", color: "#fff", letterSpacing: "-0.02em" }}>{fmtEur(p.valeur)}</div>
-              <div style={{ fontSize: "11px", fontWeight: "700", color: perfClr, marginTop: "2px" }}>
-                {perfDisplay >= 0 ? "+" : ""}{perfDisplay.toFixed(2)} %
+              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: "500", letterSpacing: "0.3px", marginBottom: "5px", whiteSpace: "nowrap" }}>
+                {pDate}
               </div>
+              <div style={{ fontSize: "17px", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", whiteSpace: "nowrap" }}>
+                {fmtEur(p.valeur)}
+              </div>
+              {perfDisplay !== null && (
+                <div style={{ display: "inline-block", marginTop: "5px", background: perfBg, borderRadius: "6px", padding: "2px 7px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: perfClr }}>
+                    {perfDisplay >= 0 ? "+" : ""}{perfDisplay.toFixed(2)} %
+                  </span>
+                </div>
+              )}
             </div>
           );
         })()}
