@@ -578,14 +578,28 @@ function BourseAnalyzerInner({ userName, onLogout }) {
           body { font-size: 16px; }
           .ba-sidebar { display: none !important; }
           .ba-tabnav { display: none !important; }
-          .ba-content { padding: 12px 12px calc(72px + env(safe-area-inset-bottom, 0px)) 12px !important; }
           .ba-content-inner { zoom: 1; }
-          .ba-topbar { height: 54px !important; padding: 0 14px !important; }
           .ba-g4 { grid-template-columns: repeat(2, 1fr) !important; }
           .ba-tbl-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; border-radius: 10px; }
           .ba-card-body { padding: 14px !important; }
           input, select, textarea { font-size: 16px !important; border-radius: 10px !important; }
           .ba-sidebar-item { min-height: 48px !important; }
+
+          /* TopBar fixe en haut — reste visible en scrollant */
+          .ba-topbar {
+            position: fixed !important;
+            top: 0; left: 0; right: 0;
+            height: calc(54px + env(safe-area-inset-top, 0px)) !important;
+            padding-top: env(safe-area-inset-top, 0px) !important;
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+            z-index: 200 !important;
+          }
+
+          /* Décale le contenu sous la topbar fixe + au-dessus de la bottom nav */
+          .ba-content {
+            padding: calc(54px + env(safe-area-inset-top, 0px) + 12px) 12px calc(72px + env(safe-area-inset-bottom, 0px)) 12px !important;
+          }
 
           /* Toolbar portfolio */
           .ba-toolbar { gap: 6px !important; margin-bottom: 6px !important; flex-wrap: wrap !important; }
@@ -599,18 +613,18 @@ function BourseAnalyzerInner({ userName, onLogout }) {
           /* Grille dashboard cards */
           .ba-dashboard-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
-          /* Bottom nav visible */
+          /* Bottom nav fixe en bas */
           .ba-bottom-nav {
             display: flex !important;
             position: fixed;
             bottom: 0; left: 0; right: 0;
             height: calc(60px + env(safe-area-inset-bottom, 0px));
             padding-bottom: env(safe-area-inset-bottom, 0px);
-            background: rgba(255,255,255,0.92);
+            background: rgba(255,255,255,0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid rgba(0,0,0,0.08);
-            z-index: 100;
+            z-index: 200;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
           }
         }
@@ -618,13 +632,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         /* ── Bottom navigation — masquée sur desktop ── */
         .ba-bottom-nav { display: none; }
 
-        /* ── Notch / Dynamic Island — padding top ── */
-        @supports (padding-top: env(safe-area-inset-top)) {
-          .ba-topbar {
-            padding-top: env(safe-area-inset-top, 0px) !important;
-            height: calc(54px + env(safe-area-inset-top, 0px)) !important;
-          }
-        }
 
         /* ── Petit écran ── */
         @media (max-width: 480px) {
