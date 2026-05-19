@@ -42,7 +42,7 @@ export const AUTOPILOT_UNIVERSE = {
     { symbol: "ALO.PA",   isin: "FR0010220475", nom: "Alstom",                      type: "Action", secteur: "Transports",        profil_min: "tres-dynamique" },
     { symbol: "HO.PA",    isin: "FR0000120271", nom: "Thales",                      type: "Action", secteur: "Défense",           profil_min: "tres-dynamique" },
     { symbol: "AM.PA",    isin: "FR0014004L86", nom: "Dassault Aviation",           type: "Action", secteur: "Défense",           profil_min: "tres-dynamique" },
-    { symbol: "ERF.PA",   isin: "FR0014000MR3", nom: "Eurofins Scientific",         type: "Action", secteur: "Biotech",           profil_min: "tres-dynamique" },
+    { symbol: "ERF.PA",   isin: "LU1275439729", nom: "Eurofins Scientific",         type: "Action", secteur: "Biotech",           profil_min: "tres-dynamique" },
     { symbol: "BIOR.PA",  isin: "FR0013280286", nom: "BioMérieux",                  type: "Action", secteur: "Biotech",           profil_min: "tres-dynamique" },
     { symbol: "MELE.PA",  isin: "BE0165385973", nom: "Melexis",                     type: "Action", secteur: "Semi-conducteurs",  profil_min: "tres-dynamique" },
     { symbol: "RNO.PA",   isin: "FR0000131906", nom: "Renault",                     type: "Action", secteur: "Automobile",        profil_min: "tres-dynamique" },
@@ -64,7 +64,7 @@ export const AUTOPILOT_UNIVERSE = {
   ],
   CTO: [
     // ETFs → tous profils
-    { symbol: "IWDA.AS",  isin: "IE00B4L5Y983", nom: "iShares Core MSCI World",     type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
+    { symbol: "IWDA.AS",  isin: "IE00B4L5YX21", nom: "iShares Core MSCI World",     type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
     { symbol: "VWRA.L",   isin: "IE00BK5BQT80", nom: "Vanguard FTSE All-World",     type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
     { symbol: "SPY",      isin: "US78462F1030", nom: "SPDR S&P 500 ETF",            type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
     { symbol: "QQQ",      isin: "US46090E1038", nom: "Invesco Nasdaq-100",          type: "ETF",    secteur: "ETF Tech",          profil_min: "prudent" },
