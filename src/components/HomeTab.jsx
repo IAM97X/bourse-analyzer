@@ -759,78 +759,65 @@ function CourbeEvolution({ hidden, positions, account }) {
           }}
           onTouchEnd={() => setHover(null)}
         >
+          {/* Grille horizontale */}
           {yTicks.map(({ y }, i) => (
             <line key={i} x1={padL} y1={y.toFixed(1)} x2={W-padR} y2={y.toFixed(1)}
               stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="4 6"/>
           ))}
-          <path d={smooth} fill="none" stroke={lineClr} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+          {/* Aire sous la courbe */}
+          <defs>
+            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={lineClr} stopOpacity="0.18"/>
+              <stop offset="100%" stopColor={lineClr} stopOpacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d={areaD} fill="url(#chartGrad)"/>
+          <path d={smooth} fill="none" stroke={lineClr} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
 
-          {/* Crosshair */}
+          {/* Ligne verticale crosshair + point sur la courbe */}
           {hover && (
-            <line x1={hover.x.toFixed(1)} y1={padT} x2={hover.x.toFixed(1)} y2={H - padB}
-              stroke="rgba(255,255,255,0.25)" strokeWidth="1" strokeDasharray="3 3"/>
+            <>
+              <line x1={hover.x.toFixed(1)} y1={padT} x2={hover.x.toFixed(1)} y2={H - padB}
+                stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="4 4"/>
+              <circle cx={hover.x.toFixed(1)} cy={hover.y.toFixed(1)} r="4" fill={lineClr} opacity="0.9"/>
+              <circle cx={hover.x.toFixed(1)} cy={hover.y.toFixed(1)} r="7" fill={lineClr} opacity="0.15"/>
+            </>
           )}
         </svg>
 
-        {/* Tooltip Boursorama-style */}
+        {/* Tooltip unifié — une seule carte */}
         {hover && (() => {
-          const p    = points[hover.idx];
-          const date = new Date(p.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
-          // pctX : % de largeur du conteneur = même ratio que le viewBox SVG (preserveAspectRatio none)
+          const p      = points[hover.idx];
+          const pDate  = new Date(p.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
           const pctX   = (hover.x / W) * 100;
-          // svgY en px réels : le SVG a height={H} donc 1:1
-          const svgYpx = hover.y;
-          const onLeft = hover.x > W * 0.62;
-          const flagW  = 116;
-          const dateW  = 100;
-          // Flag valeur : centré verticalement sur le point, décalé à gauche ou droite
-          const flagTop = Math.max(padT, Math.min(H - padB - 26, svgYpx - 13));
-          // Date : fixée dans la bande padB, en bas du SVG
-          const dateTop = H - padB - 22;
+          const onLeft = hover.x > W * 0.55;
+          const tipW   = p.perfCumulee != null ? 148 : 130;
+          // Delta depuis le premier point de la période
+          const deltaP = p.valeur - points[0].valeur;
+          const perfP  = points[0].valeur > 0 ? (deltaP / points[0].valeur * 100) : 0;
+          const perfDisplay = p.perfCumulee != null ? p.perfCumulee : perfP;
+          const perfClr = perfDisplay >= 0 ? "#6ee7b7" : "#f87171";
           return (
-            <>
-              {/* Flag valeur */}
-              <div style={{
-                position: "absolute",
-                top: `${flagTop}px`,
-                ...(onLeft
-                  ? { left: `calc(${pctX}% - ${flagW + 10}px)` }
-                  : { left: `calc(${pctX}% + 10px)` }
-                ),
-                width: `${flagW}px`,
-                background: "rgba(8,20,40,0.95)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                borderRadius: "6px",
-                padding: "5px 9px",
-                pointerEvents: "none",
-                zIndex: 10,
-                textAlign: "center",
-              }}>
-                <div style={{ fontSize: "13px", fontWeight: "800", color: "#fff", whiteSpace: "nowrap" }}>{fmtEur(p.valeur)}</div>
-                {p.perfCumulee != null && (
-                  <div style={{ fontSize: "10px", fontWeight: "600", color: p.perfCumulee >= 0 ? "#6ee7b7" : "#f87171", whiteSpace: "nowrap", marginTop: "1px" }}>
-                    {p.perfCumulee >= 0 ? "+" : ""}{p.perfCumulee.toFixed(2)} %
-                  </div>
-                )}
+            <div style={{
+              position: "absolute",
+              top: `${Math.max(4, Math.min(H - 70, hover.y - 36))}px`,
+              ...(onLeft ? { right: `calc(${100 - pctX}% + 14px)` } : { left: `calc(${pctX}% + 14px)` }),
+              width: `${tipW}px`,
+              background: "rgba(6,16,32,0.96)",
+              border: `1px solid ${lineClr}40`,
+              borderRadius: "10px",
+              padding: "8px 12px",
+              pointerEvents: "none",
+              zIndex: 20,
+              backdropFilter: "blur(4px)",
+              boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px ${lineClr}20`,
+            }}>
+              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: "500", marginBottom: "4px" }}>{pDate}</div>
+              <div style={{ fontSize: "15px", fontWeight: "900", color: "#fff", letterSpacing: "-0.02em" }}>{fmtEur(p.valeur)}</div>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: perfClr, marginTop: "2px" }}>
+                {perfDisplay >= 0 ? "+" : ""}{perfDisplay.toFixed(2)} %
               </div>
-
-              {/* Date — boîte colorée en bas du SVG, centrée sur le crosshair */}
-              <div style={{
-                position: "absolute",
-                top: `${dateTop}px`,
-                left: `calc(${pctX}% - ${dateW / 2}px)`,
-                width: `${dateW}px`,
-                background: isUp ? "rgba(110,231,183,0.15)" : "rgba(248,113,113,0.15)",
-                border: `1px solid ${isUp ? "rgba(110,231,183,0.45)" : "rgba(248,113,113,0.45)"}`,
-                borderRadius: "5px",
-                padding: "3px 0",
-                pointerEvents: "none",
-                zIndex: 10,
-                textAlign: "center",
-              }}>
-                <span style={{ fontSize: "10px", fontWeight: "700", color: isUp ? "#6ee7b7" : "#f87171", whiteSpace: "nowrap" }}>{date}</span>
-              </div>
-            </>
+            </div>
           );
         })()}
 
