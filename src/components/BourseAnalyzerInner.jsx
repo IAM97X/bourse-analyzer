@@ -613,6 +613,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
           /* Grille dashboard cards */
           .ba-dashboard-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
+          /* Graphiques donut — pleine largeur en mobile */
+          .ba-pie-wrap { flex-direction: column !important; }
+          .ba-pie-wrap > div { flex: 1 1 100% !important; min-width: 0 !important; }
+
           /* Bottom nav fixe en bas */
           .ba-bottom-nav {
             display: flex !important;

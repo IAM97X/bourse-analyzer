@@ -167,7 +167,7 @@ export default function PortfolioPieChart({ positions }) {
     .sort((a, b) => b.valeur - a.valeur);
 
   return (
-    <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+    <div className="ba-pie-wrap" style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
       <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "18px", boxShadow: shadow.card, flex: "1 1 340px", minWidth: 0 }}>
         <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "12px" }}>
           Répartition par titre
@@ -202,7 +202,7 @@ export default function PortfolioPieChart({ positions }) {
                 style={{ display: "flex", alignItems: "center", gap: "7px", cursor: "pointer", opacity: hovSecteur !== null && hovSecteur !== i ? 0.4 : 1, transition: "opacity 0.15s" }}
                 onMouseEnter={() => setHovSecteur(i)} onMouseLeave={() => setHovSecteur(null)}>
                 <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: sl.color, flexShrink: 0 }} />
-                <div style={{ flex: 1, fontSize: "11px", color: C.ink, fontWeight: "600" }}>{sl.nom}</div>
+                <div style={{ flex: 1, fontSize: "11px", color: C.ink, fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sl.nom}</div>
                 <div style={{ fontSize: "11px", color: sl.color, fontWeight: "700", flexShrink: 0 }}>{(sl.valeur / total * 100).toFixed(1)}%</div>
                 <div style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0, minWidth: "56px", textAlign: "right" }}>{fmtEur(sl.valeur)}</div>
               </div>

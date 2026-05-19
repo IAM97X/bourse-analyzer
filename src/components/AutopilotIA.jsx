@@ -384,37 +384,38 @@ RÈGLE MONTANT : ${nbOppMax === 1
     <div style={{ maxWidth: "780px", margin: "0 auto" }}>
 
       {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#1a237e,#283593)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ marginBottom: "16px" }}>
+        {/* Ligne 1 : badge + titre + contrôles en ligne */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#1a237e,#283593)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>AI</span>
           </div>
-          <div>
-            <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot IA</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot IA</div>
             <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {universe.length} instruments · Profil {profilLabel}</div>
           </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
-          {/* Budget input */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "5px 10px" }}>
-            <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>Budget</span>
-            <input
-              type="number" min="0" step="50"
-              value={budget}
-              onChange={e => updateBudget(e.target.value)}
-              onBlur={e => commitBudget(e.target.value)}
-              style={{ width: "72px", textAlign: "right", border: "none", background: "transparent", fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none" }}
-            />
-            <span style={{ fontSize: "11px", color: C.inkSubtle }}>€</span>
+          {/* Budget + bouton en ligne */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "5px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "5px 10px" }}>
+              <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>Budget</span>
+              <input
+                type="number" min="0" step="50"
+                value={budget}
+                onChange={e => updateBudget(e.target.value)}
+                onBlur={e => commitBudget(e.target.value)}
+                style={{ width: "58px", textAlign: "right", border: "none", background: "transparent", fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none" }}
+              />
+              <span style={{ fontSize: "11px", color: C.inkSubtle }}>€</span>
+            </div>
+            <button
+              onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,05–0,10 $ de crédits API.\n\nBudget à investir : ${budget}€\n\nConfirmer le lancement ?`)) runAnalysis(); }}
+              disabled={running || !allocOk}
+              style={{ padding: "9px 16px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "12px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif", whiteSpace: "nowrap" }}>
+              {running ? "⟳ En cours…" : "⚡ Lancer"}
+            </button>
           </div>
-          <button
-            onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,05–0,10 $ de crédits API.\n\nBudget à investir : ${budget}€\n\nConfirmer le lancement ?`)) runAnalysis(); }}
-            disabled={running || !allocOk}
-            style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
-            {running ? "⟳ Analyse en cours…" : "⚡ Lancer l'analyse"}
-          </button>
-          {result?.generatedAt && <span style={{ fontSize: "10px", color: C.inkSubtle }}>Dernière analyse : {new Date(result.generatedAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
         </div>
+        {result?.generatedAt && <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "6px", textAlign: "right" }}>Dernière analyse : {new Date(result.generatedAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</div>}
       </div>
 
       {/* ── Allocation cible ── */}
