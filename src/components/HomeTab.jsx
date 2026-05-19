@@ -8,6 +8,7 @@ import { fetchFMPHistorical } from "../lib/market";
 
 const SNAPSHOTS_KEY      = "bourse_snapshots";
 const TICKER_CACHE_KEY   = "bourse_isin_ticker_cache";
+const EVOLUTION_CSV_KEY  = "bourse_evolution_csv";
 
 // Résout une liste d'ISINs en tickers Yahoo — utilise le cache, résout les manquants via Yahoo Search
 async function resolveISINsToTickers(isins) {
@@ -416,6 +417,26 @@ function ColPerfs({ positions, account, profil }) {
   );
 }
 
+// ── Parser CSV Boursobank "performance-*.csv" ─────────────────────────────────
+function parseBoursobankEvolutionCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const results = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    // Format : "YYYY-MM-DD","valeur","X,XXX%","X,XXX%"
+    const cleaned = line.replace(/^"|"$/g, "");
+    const cols = cleaned.split('","');
+    if (cols.length < 2) continue;
+    const date    = cols[0];
+    const valeur  = parseFloat(cols[1]);
+    const perfCum = cols[3] ? parseFloat(cols[3].replace(",", ".").replace("%", "")) : null;
+    if (!date.match(/^\d{4}-\d{2}-\d{2}$/) || isNaN(valeur) || valeur <= 0) continue;
+    results.push({ date, valeur, perfCumulee: perfCum });
+  }
+  return results;
+}
+
 // ── Courbe d'évolution ────────────────────────────────────────────────────────
 const PERIODS = [
   { label: "1M",  days: 30  },
@@ -428,10 +449,29 @@ const PERIODS = [
 function CourbeEvolution({ hidden, positions, account }) {
   const [period, setPeriod]     = useState(30);
   const [hover, setHover]       = useState(null);
-  const [yahooPoints, setYahooPoints] = useState(null);  // null = not loaded, [] = loading, [...] = done
+  const [yahooPoints, setYahooPoints] = useState(null);
   const [yahooLoading, setYahooLoading] = useState(false);
+  const [csvPoints, setCsvPoints] = useState(() => {
+    try { const d = JSON.parse(localStorage.getItem(EVOLUTION_CSV_KEY) || "null"); return Array.isArray(d) && d.length > 1 ? d : null; } catch { return null; }
+  });
+  const fileInputRef = useRef(null);
   const svgRef = useRef(null);
   const blur = hidden ? { filter: "blur(6px)", userSelect: "none", pointerEvents: "none" } : {};
+
+  const handleCSVImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const parsed = parseBoursobankEvolutionCSV(ev.target.result);
+      if (parsed.length > 1) {
+        try { localStorage.setItem(EVOLUTION_CSV_KEY, JSON.stringify(parsed)); } catch {}
+        setCsvPoints(parsed);
+      }
+    };
+    reader.readAsText(file, "UTF-8");
+    e.target.value = "";
+  };
 
   // Reconstruction depuis Yahoo + transactions
   useEffect(() => {
@@ -514,6 +554,14 @@ function CourbeEvolution({ hidden, positions, account }) {
     return () => { cancelled = true; };
   }, [period, account]); // positions intentionnellement exclus pour éviter les re-fetch
 
+  // CSV Boursobank filtré par période
+  const csvFiltered = useMemo(() => {
+    if (!csvPoints) return null;
+    const cutoff = new Date(Date.now() - period * 86400000).toISOString().slice(0, 10);
+    const filtered = period >= 9999 ? csvPoints : csvPoints.filter(p => p.date >= cutoff);
+    return filtered.length >= 2 ? filtered : null;
+  }, [csvPoints, period]);
+
   // Fallback : snapshots localStorage
   const snapPoints = useMemo(() => {
     try {
@@ -524,18 +572,21 @@ function CourbeEvolution({ hidden, positions, account }) {
     } catch { return null; }
   }, [period]);
 
-  const rawPoints = yahooPoints ?? snapPoints;
+  // Priorité : CSV Boursobank > Yahoo reconstruit > Snapshots
+  const dataSource = csvFiltered ? "boursobank" : yahooPoints ? "yahoo" : "snapshots";
+  const rawPoints  = csvFiltered ?? yahooPoints ?? snapPoints;
 
-  const { points, current, first, investi } = useMemo(() => {
+  const { points, current, first, investi, perfCumFromCSV } = useMemo(() => {
     if (!rawPoints || rawPoints.length < 2) return { points: null };
     const last = rawPoints[rawPoints.length - 1];
     return {
-      points:  rawPoints,
-      current: last.valeur,
-      first:   rawPoints[0].valeur,
-      investi: last.capitalVerse || last.investi || 0,
+      points:         rawPoints,
+      current:        last.valeur,
+      first:          rawPoints[0].valeur,
+      investi:        last.capitalVerse || last.investi || 0,
+      perfCumFromCSV: dataSource === "boursobank" ? (last.perfCumulee ?? null) : null,
     };
-  }, [rawPoints]);
+  }, [rawPoints, dataSource]);
 
   if (yahooLoading && !snapPoints) return (
     <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.45)", fontSize: "12px" }}>
@@ -574,16 +625,29 @@ function CourbeEvolution({ hidden, positions, account }) {
     <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "16px", padding: "18px 18px 16px", boxShadow: "0 8px 28px rgba(8,20,40,0.45)" }}>
 
       {/* Titre + sélecteur */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
         <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "1.4px", textTransform: "uppercase" }}>
           Évolution du portefeuille
         </div>
-        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-          {yahooPoints ? (
-            <span style={{ fontSize: "9px", color: "rgba(110,231,183,0.7)", fontWeight: "600", letterSpacing: "0.5px" }}>● Yahoo</span>
-          ) : (
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+          {/* Badge source */}
+          {dataSource === "boursobank" && (
+            <span style={{ fontSize: "9px", color: "rgba(110,231,183,0.9)", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(110,231,183,0.1)", padding: "2px 7px", borderRadius: "10px", border: "1px solid rgba(110,231,183,0.25)" }}>● Boursobank</span>
+          )}
+          {dataSource === "yahoo" && (
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", fontWeight: "600", letterSpacing: "0.5px" }}>● Yahoo</span>
+          )}
+          {dataSource === "snapshots" && (
             <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.2)", fontWeight: "600", letterSpacing: "0.5px" }}>● Snapshots</span>
           )}
+          {/* Bouton import CSV */}
+          <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
+          <button onClick={() => fileInputRef.current?.click()}
+            title={csvPoints ? `${csvPoints.length} jours importés — cliquez pour mettre à jour` : "Importer le CSV Boursobank (performance-*.csv)"}
+            style={{ padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: csvPoints ? "rgba(110,231,183,0.12)" : "rgba(255,255,255,0.06)", color: csvPoints ? "rgba(110,231,183,0.8)" : "rgba(255,255,255,0.4)", fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+            {csvPoints ? "↑ CSV" : "+ CSV"}
+          </button>
+          {/* Sélecteur période */}
           <div style={{ display: "flex", gap: "2px" }}>
             {PERIODS.map(({ label, days }) => (
               <button key={days} onClick={() => setPeriod(days)}
@@ -595,16 +659,20 @@ function CourbeEvolution({ hidden, positions, account }) {
         </div>
       </div>
 
-      {/* 3 métriques */}
+      {/* Métriques */}
       <div style={{ display: "grid", gridTemplateColumns: pvLatent !== null ? "1fr 1fr 1fr" : "1fr 1fr", gap: "8px", marginBottom: "14px", ...blur }}>
         <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
           <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>Valeur actuelle</div>
           <div style={{ fontSize: "16px", fontWeight: "900", color: "#fff", letterSpacing: "-0.02em" }}>{fmtEur(current)}</div>
         </div>
         <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
-          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>Croissance · versements inclus</div>
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>
+            {dataSource === "boursobank" ? "Perf. cumulée · versements inclus" : "Croissance · versements inclus"}
+          </div>
           <div style={{ fontSize: "15px", fontWeight: "800", color: lineClr }}>{isUp?"+":""}{fmtEur(delta)}</div>
-          <div style={{ fontSize: "10px", color: lineClr, opacity: 0.8 }}>{isUp?"+":""}{perf.toFixed(2)} %</div>
+          <div style={{ fontSize: "10px", color: lineClr, opacity: 0.8 }}>
+            {perfCumFromCSV !== null ? `${perfCumFromCSV >= 0 ? "+" : ""}${perfCumFromCSV.toFixed(2)} %` : `${isUp?"+":""}${perf.toFixed(2)} %`}
+          </div>
         </div>
         {pvLatent !== null && (
           <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
@@ -683,7 +751,12 @@ function CourbeEvolution({ hidden, positions, account }) {
                 zIndex: 10,
                 textAlign: "center",
               }}>
-                <span style={{ fontSize: "13px", fontWeight: "800", color: "#fff", whiteSpace: "nowrap" }}>{fmtEur(p.valeur)}</span>
+                <div style={{ fontSize: "13px", fontWeight: "800", color: "#fff", whiteSpace: "nowrap" }}>{fmtEur(p.valeur)}</div>
+                {p.perfCumulee != null && (
+                  <div style={{ fontSize: "10px", fontWeight: "600", color: p.perfCumulee >= 0 ? "#6ee7b7" : "#f87171", whiteSpace: "nowrap", marginTop: "1px" }}>
+                    {p.perfCumulee >= 0 ? "+" : ""}{p.perfCumulee.toFixed(2)} %
+                  </div>
+                )}
               </div>
 
               {/* Date — boîte colorée en bas du SVG, centrée sur le crosshair */}
