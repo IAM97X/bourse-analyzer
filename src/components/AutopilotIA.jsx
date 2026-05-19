@@ -111,7 +111,10 @@ export default function AutopilotIA({ account, profil, hidden }) {
   const allocTotal = Object.values(allocCibles).reduce((a, b) => a + Number(b || 0), 0);
 
   const updateBudget = (val) => {
-    const v = Math.max(1, Number(val) || 200);
+    setBudget(val === "" ? "" : Number(val));
+  };
+  const commitBudget = (val) => {
+    const v = Math.max(0, Number(val) || 0);
     setBudget(v);
     save(budgetKey, v);
   };
@@ -396,9 +399,10 @@ RÈGLE MONTANT : ${nbOppMax === 1
           <div style={{ display: "flex", alignItems: "center", gap: "6px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "5px 10px" }}>
             <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>Budget</span>
             <input
-              type="number" min="1" step="50"
+              type="number" min="0" step="50"
               value={budget}
               onChange={e => updateBudget(e.target.value)}
+              onBlur={e => commitBudget(e.target.value)}
               style={{ width: "72px", textAlign: "right", border: "none", background: "transparent", fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none" }}
             />
             <span style={{ fontSize: "11px", color: C.inkSubtle }}>€</span>
