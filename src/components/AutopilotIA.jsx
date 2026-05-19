@@ -102,10 +102,18 @@ export default function AutopilotIA({ account, profil, hidden }) {
   const risque     = profil?.risque || "equilibre";
   const profilRank = PROFIL_RANK[risque] ?? 1;
 
-  const allocKey = `bourse_autopilot_alloc_${account || "PEA"}_${risque}`;
+  const allocKey  = `bourse_autopilot_alloc_${account || "PEA"}_${risque}`;
+  const budgetKey = `bourse_autopilot_budget_${account || "PEA"}`;
   const [allocCibles, setAllocCibles] = useState(() => load(allocKey, null) || DEFAULT_ALLOC[risque] || { "ETF Monde": 50, "Tech / IA": 30, "Santé": 20 });
+  const [budget, setBudget] = useState(() => load(budgetKey, null) || profil?.dcaMensuel || 200);
 
   const allocTotal = Object.values(allocCibles).reduce((a, b) => a + Number(b || 0), 0);
+
+  const updateBudget = (val) => {
+    const v = Math.max(1, Number(val) || 200);
+    setBudget(v);
+    save(budgetKey, v);
+  };
 
   const updateAlloc = (key, val) => {
     const v = Math.max(0, Math.min(100, Number(val) || 0));
@@ -152,7 +160,7 @@ export default function AutopilotIA({ account, profil, hidden }) {
     setRunning(true); setError(null);
     try {
       setStep("Sélection des instruments…");
-      const dcaMensuel = profil?.dcaMensuel || 200;
+      const dcaMensuel = budget;
       const currentAlloc = calcCurrentAlloc();
 
       // Gaps : catégories sous-pondérées
@@ -294,7 +302,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 }
 
 RÈGLE ACTION : ACHETER ou RENFORCER uniquement.
-RÈGLE MONTANT : montant_suggere = floor(${dcaMensuel}/prix) × prix, minimum 1 titre × prix.`;
+RÈGLE MONTANT : budget total = ${dcaMensuel}€. Pour chaque opportunité, montant_suggere = floor((allocation_pct/100 × ${dcaMensuel}) / prix) × prix, minimum 1 titre × prix.`;
 
       const parsed = await callClaude(system, userMsg, true, 2, true, 2500, CLAUDE_MODELS.fast);
       if (!parsed || typeof parsed !== "object") throw new Error("Réponse IA non structurée.");
@@ -364,9 +372,20 @@ RÈGLE MONTANT : montant_suggere = floor(${dcaMensuel}/prix) × prix, minimum 1 
             <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {universe.length} instruments · Profil {profilLabel}</div>
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+          {/* Budget input */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "5px 10px" }}>
+            <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>Budget</span>
+            <input
+              type="number" min="1" step="50"
+              value={budget}
+              onChange={e => updateBudget(e.target.value)}
+              style={{ width: "72px", textAlign: "right", border: "none", background: "transparent", fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none" }}
+            />
+            <span style={{ fontSize: "11px", color: C.inkSubtle }}>€</span>
+          </div>
           <button
-            onClick={() => { if (window.confirm("Cette analyse consomme environ 0,15 à 0,25 $ de crédits API.\n\nConseil : 1 à 2 fois par semaine maximum.\n\nConfirmer le lancement ?")) runAnalysis(); }}
+            onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,05–0,10 $ de crédits API.\n\nBudget à investir : ${budget}€\n\nConfirmer le lancement ?`)) runAnalysis(); }}
             disabled={running || !allocOk}
             style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg,#1a237e,#283593)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
             {running ? "⟳ Analyse en cours…" : "⚡ Lancer l'analyse"}
@@ -543,10 +562,13 @@ RÈGLE MONTANT : montant_suggere = floor(${dcaMensuel}/prix) × prix, minimum 1 
               const acShort = ac.length > 12 ? ac.split(/[\s/]/)[0] : ac;
               const acColor = actionColor(ac);
               const isExpanded = expanded[i];
-              const dcaMensuel = profil?.dcaMensuel || 200;
               const prix = op.prix || 0;
-              const nbTitres = prix > 0 ? Math.max(1, Math.floor(Math.max(dcaMensuel, 200) / prix)) : 1;
-              const montant = nbTitres * prix || dcaMensuel;
+              // Budget proportionnel à allocation_pct, sinon réparti équitablement
+              const nbOpp = (result.opportunites || []).filter(o => ["ACHETER","RENFORCER"].includes((o.action||"").toUpperCase())).length || 1;
+              const allocPct = op.allocation_pct > 0 ? op.allocation_pct / 100 : 1 / nbOpp;
+              const budgetOp = Math.max(prix || 1, Math.round(budget * allocPct));
+              const nbTitres = prix > 0 ? Math.max(1, Math.floor(budgetOp / prix)) : 1;
+              const montant  = nbTitres * prix || budgetOp;
               const catalyseurDisplay = op.catalyseur && op.catalyseur.length > 55 ? op.catalyseur.slice(0, 52) + "…" : op.catalyseur;
               const catCible = op.categorie_cible || getCat(op.secteur || "");
               const catCol = catColor(catCible);
@@ -630,10 +652,10 @@ RÈGLE MONTANT : montant_suggere = floor(${dcaMensuel}/prix) × prix, minimum 1 
           </div>
           <div style={{ fontSize: "16px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Prêt à scanner le marché</div>
           <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "380px", margin: "0 auto 20px" }}>
-            L'agent analyse les écarts entre votre répartition actuelle et la cible, puis identifie les meilleures opportunités Euronext pour les combler.
+            L'agent analyse les écarts entre votre répartition actuelle et la cible, puis identifie les meilleures opportunités Euronext pour votre budget de <strong>{fmtEur(budget)}</strong>.
           </div>
           <button
-            onClick={() => { if (window.confirm("Cette analyse consomme environ 0,15 à 0,25 $ de crédits API.\n\nConseil : 1 à 2 fois par semaine maximum.\n\nConfirmer ?")) runAnalysis(); }}
+            onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,05–0,10 $ de crédits API.\n\nBudget : ${budget}€\n\nConfirmer ?`)) runAnalysis(); }}
             disabled={!allocOk}
             style={{ padding: "12px 28px", borderRadius: "12px", background: allocOk ? "linear-gradient(135deg,#1a237e,#283593)" : C.inkSubtle, color: "#fff", border: "none", fontSize: "14px", fontWeight: "700", cursor: allocOk ? "pointer" : "not-allowed", fontFamily: "Inter,sans-serif" }}>
             ⚡ Lancer l'analyse

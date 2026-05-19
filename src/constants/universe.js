@@ -21,8 +21,8 @@ export const AUTOPILOT_UNIVERSE = {
     { symbol: "SU.PA",    isin: "FR0000121972", nom: "Schneider Electric",          type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
     { symbol: "EL.PA",    isin: "FR0000121667", nom: "EssilorLuxottica",            type: "Action", secteur: "Santé",             profil_min: "equilibre" },
     { symbol: "ASML.AS",  isin: "NL0010273215", nom: "ASML Holding",                type: "Action", secteur: "Semi-conducteurs",  profil_min: "equilibre" },
-    { symbol: "SAP.DE",   isin: "DE0007164600", nom: "SAP",                         type: "Action", secteur: "Tech",              profil_min: "equilibre" },
-    { symbol: "SIE.DE",   isin: "DE0007236101", nom: "Siemens",                     type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
+    { symbol: "ADYEN.AS", isin: "NL0012969182", nom: "Adyen",                       type: "Action", secteur: "Fintech",           profil_min: "dynamique" },
+    { symbol: "PHIA.AS",  isin: "NL0000009538", nom: "Philips",                     type: "Action", secteur: "Santé",              profil_min: "equilibre" },
     // Actions plus volatiles → dynamique+
     { symbol: "CAP.PA",   isin: "FR0000125338", nom: "Capgemini",                   type: "Action", secteur: "Tech",              profil_min: "dynamique" },
     { symbol: "DSY.PA",   isin: "FR0014003TT8", nom: "Dassault Systèmes",           type: "Action", secteur: "Tech",              profil_min: "dynamique" },
@@ -34,7 +34,7 @@ export const AUTOPILOT_UNIVERSE = {
     { symbol: "DG.PA",    isin: "FR0000125486", nom: "Vinci",                       type: "Action", secteur: "Infrastructure",    profil_min: "dynamique" },
     { symbol: "LR.PA",    isin: "FR0010307819", nom: "Legrand",                     type: "Action", secteur: "Industrie",         profil_min: "dynamique" },
     { symbol: "MT.AS",    isin: "LU1598757687", nom: "ArcelorMittal",               type: "Action", secteur: "Métaux",            profil_min: "dynamique" },
-    { symbol: "IFX.DE",   isin: "DE0006231004", nom: "Infineon Technologies",       type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
+    { symbol: "BESI.AS",  isin: "NL0012866412", nom: "BE Semiconductor Industries", type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
     { symbol: "UCB.BR",   isin: "BE0003739530", nom: "UCB Pharma",                  type: "Action", secteur: "Biotech",           profil_min: "dynamique" },
     // Actions haute volatilité / croissance → très dynamique
     { symbol: "SOI.PA",   isin: "FR0012451430", nom: "Soitec",                      type: "Action", secteur: "Semi-conducteurs",  profil_min: "tres-dynamique" },
