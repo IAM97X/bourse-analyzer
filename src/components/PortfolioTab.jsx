@@ -1176,8 +1176,10 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                       i
                     </div>
                     {showPotentielInfo && (
-                      <div onClick={() => setShowPotentielInfo(false)}
-                        style={{ position: "absolute", left: "20px", top: "-4px", zIndex: 99, width: "280px", background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "12px 14px", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", cursor: "default" }}>
+                      <>
+                      <div onClick={() => setShowPotentielInfo(false)} style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.25)" }} />
+                      <div onClick={e => e.stopPropagation()}
+                        style={{ position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)", zIndex: 9999, width: "min(300px, 90vw)", background: "#fff", border: "1px solid #e5e7eb", borderRadius: "14px", padding: "16px", boxShadow: "0 16px 48px rgba(0,0,0,0.2)", cursor: "default" }}>
                         <div style={{ fontSize: "11px", fontWeight: "800", color: "#1e293b", marginBottom: "6px" }}>C'est quoi ce score ?</div>
                         <div style={{ fontSize: "11px", color: "#475569", lineHeight: "1.6", marginBottom: "8px" }}>
                           Une note sur 10 qui résume <strong>la santé de votre portefeuille</strong> : êtes-vous trop concentré sur un seul secteur ? Vos frais sont-ils raisonnables ? Votre niveau de risque correspond-il à votre objectif ?
@@ -1191,7 +1193,9 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                           <div>① Importez votre fichier CSV — le score se calcule <strong>automatiquement</strong></div>
                           <div style={{ marginTop: "3px" }}>② Pour une analyse encore plus précise, activez <strong>Signaux IA</strong> (nécessite une clé Claude)</div>
                         </div>
+                        <button onClick={() => setShowPotentielInfo(false)} style={{ marginTop: "12px", width: "100%", padding: "8px", background: "#f1f5f9", border: "none", borderRadius: "8px", fontSize: "12px", fontWeight: "600", color: "#475569", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Fermer</button>
                       </div>
+                      </>
                     )}
                   </div>
                 </div>
