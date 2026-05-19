@@ -1018,14 +1018,15 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const projUsed  = projSimul(cagrUsed); // toujours cohérent avec le graphique
         const useIAProj = cagrIA != null;
         const trajLabel = useIAProj ? "Trajectoire (IA)" : "Trajectoire (neutre)";
-        const trajSuffix = useIAProj && cagrIA != null ? ` · CAGR IA ~${cagrIA.toFixed(1)}%/an` : (useIAProj ? "" : " — scénario conservateur");
+        const trajSuffix = useIAProj && cagrIA != null ? ` · CAGR IA ~${cagrIA.toFixed(1)}%/an` : " — scénario conservateur";
         if (objectifEuros > 0) {
           const couv = projUsed / objectifEuros;
-          if      (couv >= 1.3) { score += 3; factors.push({ label: trajLabel, detail: `${fmtEur(Math.round(projUsed))} projetés · marge +${Math.round((couv-1)*100)}%${trajSuffix}`, delta: +3, ok: true }); }
-          else if (couv >= 1.1) { score += 2; factors.push({ label: trajLabel, detail: `${fmtEur(Math.round(projUsed))} projetés · ${Math.round(couv*100)}% de l'objectif${trajSuffix}`, delta: +2, ok: true }); }
+          // Seuils relevés : +3 seulement si marge >50% (évite sur-notation sur objectif bas)
+          if      (couv >= 1.5) { score += 3; factors.push({ label: trajLabel, detail: `${fmtEur(Math.round(projUsed))} projetés · marge +${Math.round((couv-1)*100)}%${trajSuffix}`, delta: +3, ok: true }); }
+          else if (couv >= 1.2) { score += 2; factors.push({ label: trajLabel, detail: `${fmtEur(Math.round(projUsed))} projetés · ${Math.round(couv*100)}% de l'objectif${trajSuffix}`, delta: +2, ok: true }); }
           else if (couv >= 1.0) { score += 1; factors.push({ label: trajLabel, detail: `Objectif atteint à ${Math.round(couv*100)}% — marge de sécurité faible${trajSuffix}`, delta: +1, ok: true }); }
           else if (couv >= 0.7) { score -= 1; factors.push({ label: trajLabel, detail: `${Math.round(couv*100)}% de l'objectif${trajSuffix}`, delta: -1, ok: false }); }
-          else if (couv >= 0.4) { score -= 2; factors.push({ label: trajLabel, detail: `Seulement ${Math.round(couv*100)}% de l'objectif — objectif trop ambitieux ou portefeuille insuffisant${trajSuffix}`, delta: -2, ok: false }); }
+          else if (couv >= 0.4) { score -= 2; factors.push({ label: trajLabel, detail: `Seulement ${Math.round(couv*100)}% de l'objectif${trajSuffix}`, delta: -2, ok: false }); }
           else                  { score -= 3; factors.push({ label: trajLabel, detail: `Trajectoire insuffisante · ${Math.round(couv*100)}% de l'objectif${trajSuffix}`, delta: -3, ok: false }); }
         } else {
           const cagrNeutrePF = positions.length > 0
@@ -1082,17 +1083,25 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           factors.push({ label: "Signaux directionnels", detail: "Non analysé", delta: 0, ok: null });
         }
 
-        // 4. Catalyseurs — pondérés par poids (poids x2 vs avant)
+        // 4. Catalyseurs — exige un catalyseur factuel (>30 chars, non générique)
         if (nbAnalyzed > 0) {
+          const genericPhrases = ["à surveiller", "à confirmer", "potentiel de", "en attente", "possible", "pourrait"];
+          const hasRealCatalyst = (sig) => {
+            const c = sig?.catalyseur_cle?.trim() || "";
+            if (c.length < 30) return false;
+            if (genericPhrases.some(g => c.toLowerCase().includes(g))) return false;
+            return true;
+          };
           const totalValAnalyzed = analyzed.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
-          const poidsCat = analyzed.filter(p => p._sig.catalyseur_cle?.trim().length > 5)
+          const poidsCat = analyzed.filter(p => hasRealCatalyst(p._sig))
             .reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
           const ratioCatVal = totalValAnalyzed > 0 ? poidsCat / totalValAnalyzed : 0;
           const pctCat = Math.round(ratioCatVal * 100);
-          if      (ratioCatVal >= 0.75) { score += 2; factors.push({ label: "Catalyseurs", detail: `${pctCat}% du capital avec catalyseur identifié`, delta: +2, ok: true }); }
-          else if (ratioCatVal >= 0.4)  { score += 1; factors.push({ label: "Catalyseurs", detail: `${pctCat}% du capital avec catalyseur`, delta: +1, ok: true }); }
-          else if (ratioCatVal === 0)   { score -= 2; factors.push({ label: "Catalyseurs", detail: "Aucun catalyseur identifié — risque de thèse sans déclencheur", delta: -2, ok: false }); }
-          else                          { score -= 1; factors.push({ label: "Catalyseurs", detail: `Seulement ${pctCat}% du capital avec catalyseur`, delta: -1, ok: false }); }
+          // Max +1 (plus +2) — catalyseur est un signal, pas une certitude
+          if      (ratioCatVal >= 0.6)  { score += 1; factors.push({ label: "Catalyseurs", detail: `${pctCat}% du capital avec catalyseur factuel`, delta: +1, ok: true }); }
+          else if (ratioCatVal >= 0.3)  {             factors.push({ label: "Catalyseurs", detail: `${pctCat}% du capital — catalyseurs partiels`, delta: 0, ok: null }); }
+          else if (ratioCatVal === 0)   { score -= 1; factors.push({ label: "Catalyseurs", detail: "Aucun catalyseur factuel identifié", delta: -1, ok: false }); }
+          else                          {             factors.push({ label: "Catalyseurs", detail: `${pctCat}% du capital avec catalyseur — insuffisant`, delta: 0, ok: null }); }
         } else {
           factors.push({ label: "Catalyseurs", detail: "Lancez le scoring IA", delta: 0, ok: null });
         }
@@ -1102,30 +1111,31 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         else if (isCourt) { score -= 1; factors.push({ label: "Horizon", detail: `${horizonInfo.label} · fenêtre courte`, delta: -1, ok: false }); }
         else              {             factors.push({ label: "Horizon", detail: horizonInfo.label, delta: 0, ok: null }); }
 
-        // 6. Diversification — concentration ligne + concentration sectorielle
+        // 6. Diversification — concentration ligne + concentration sectorielle (seuils stricts)
         const maxPosPct = totalVal > 0 ? Math.max(...positions.map(p => ((p.dernierCours || p.pru) * p.quantite) / totalVal)) : 0;
         const nbPos = positions.length;
-        // Secteurs détectés
         const secteurMap = {};
         positions.forEach(p => {
           const sec = p.secteur || ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || (isETFName(p.nom) ? "ETF" : "Autre");
-          const v = (p.dernierCours || p.pru) * p.quantite;
-          secteurMap[sec] = (secteurMap[sec] || 0) + v;
+          secteurMap[sec] = (secteurMap[sec] || 0) + (p.dernierCours || p.pru) * p.quantite;
         });
         const nbSecteurs = Object.keys(secteurMap).length;
         const maxSecPct = totalVal > 0 ? Math.max(...Object.values(secteurMap)) / totalVal : 0;
-        // Pénalité concentration
+
         let divScore = 0;
-        if (nbPos < 2) divScore -= 2;
-        else if (maxPosPct > 0.5) divScore -= 1;
-        else if (nbPos >= 5 && maxPosPct <= 0.3) divScore += 1;
-        // Pénalité sectorielle
-        if (maxSecPct > 0.7 && nbSecteurs <= 2) divScore -= 1;
-        else if (nbSecteurs >= 4 && maxSecPct <= 0.4) divScore += 1;
-        divScore = Math.max(-2, Math.min(2, divScore));
+        // Concentration par ligne (seuil abaissé : >40% = risque réel)
+        if (nbPos < 3)                                  divScore -= 2;
+        else if (nbPos < 5 || maxPosPct > 0.6)         divScore -= 2;
+        else if (maxPosPct > 0.4)                       divScore -= 1;
+        else if (nbPos >= 8 && maxPosPct <= 0.2)        divScore += 2;
+        else if (nbPos >= 6 && maxPosPct <= 0.3)        divScore += 1;
+        // Concentration sectorielle
+        if      (maxSecPct > 0.65)                      divScore -= 1;
+        else if (nbSecteurs >= 5 && maxSecPct <= 0.35)  divScore += 1;
+        divScore = Math.max(-3, Math.min(2, divScore));
         score += divScore;
-        const divDetail = nbPos < 2
-          ? `${nbPos} position — concentration extrême`
+        const divDetail = nbPos < 3
+          ? `${nbPos} positions — concentration critique`
           : `${nbPos} lignes · ${nbSecteurs} secteur(s) · max ${Math.round(maxPosPct*100)}%/ligne · max ${Math.round(maxSecPct*100)}%/secteur`;
         factors.push({ label: "Diversification", detail: divDetail, delta: divScore, ok: divScore > 0 ? true : divScore < 0 ? false : null });
 

@@ -15,7 +15,7 @@ export const MARKET_SCORING_PROMPT = `Tu es un analyste financier expert spécia
 - signal : ACHAT (fort potentiel, catalyseurs positifs), RENFORCER (tendance positive, bon point d'entrée), ATTENDRE (neutre, pas urgent), PRUDENCE (risques identifiés, éviter ce mois), VENDRE (fondamentaux détériorés, sortir de la position)
 - score_marche : entre 0 et 20 (0=très négatif, 20=très positif)
 - resume : 1-2 phrases concrètes avec les arguments clés
-- catalyseur_cle : principal catalyseur ou risque identifié
+- catalyseur_cle : catalyseur factuel CONFIRMÉ par les données de marché (ex: publication résultats T2, décision BCE, lancement produit annoncé). NE PAS INVENTER — laisser "" si aucun catalyseur réel identifié dans les données collectées
 Réponds UNIQUEMENT en JSON valide, sans markdown, sans texte autour :
 {"classement":[{"isin":"...","nom":"...","signal":"ACHAT|RENFORCER|ATTENDRE|PRUDENCE|VENDRE","score_marche":17,"resume":"...","catalyseur_cle":"..."}]}`;
 
