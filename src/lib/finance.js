@@ -118,17 +118,23 @@ export function computeRiskScore(positions, totalActuel) {
 
 export const PROFIL_RANK = { prudent: 0, equilibre: 1, dynamique: 2, "tres-dynamique": 3 };
 
-const NL_SUR_PARIS = new Set(["NL0014559478","NL00150001Q9","NL0000235190","NL0010273215","NL0011794037"]);
-export function getMIC(isin) {
+const SUFFIX_TO_MIC = { PA: "XPAR", AS: "XAMS", AM: "XAMS", BR: "XBRU", LS: "XLIS", LN: "XLON" };
+const NL_SUR_PARIS = new Set(["NL0014559478","NL00150001Q9","NL0000235190","NL0011794037"]);
+export function getMIC(isin, symbol) {
   if (!isin) return "XPAR";
+  // Dériver depuis le suffixe du symbol si disponible (source la plus fiable)
+  if (symbol) {
+    const suffix = symbol.split(".").pop().toUpperCase();
+    if (SUFFIX_TO_MIC[suffix]) return SUFFIX_TO_MIC[suffix];
+  }
   if (NL_SUR_PARIS.has(isin)) return "XPAR";
   if (isin.startsWith("BE")) return "XBRU";
   if (isin.startsWith("NL")) return "XAMS";
   return "XPAR";
 }
-export function getEuronextUrl(isin, nom) {
+export function getEuronextUrl(isin, nom, symbol) {
   if (!isin) return null;
-  const mic  = getMIC(isin);
+  const mic  = getMIC(isin, symbol);
   const type = isETFName(nom) ? "etfs" : "equities";
   return `https://live.euronext.com/fr/product/${type}/${isin}-${mic}`;
 }

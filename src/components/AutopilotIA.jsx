@@ -566,8 +566,8 @@ RÈGLE MONTANT : montant_suggere = floor(${dcaMensuel}/prix) × prix, minimum 1 
                           {op.dans_portefeuille && <span style={{ fontSize: "9px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px" }}>En portefeuille</span>}
                           <a href={`https://fr.finance.yahoo.com/quote/${encodeURIComponent(op.symbol)}`} target="_blank" rel="noopener noreferrer"
                             style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: "#5F01D1", borderRadius: "4px", padding: "2px 6px", textDecoration: "none", flexShrink: 0 }}>Yahoo</a>
-                          {op.isin && /\.(PA|AS|BR|AM|DE|LS|MC)$/.test(op.symbol || "") && (
-                            <a href={getEuronextUrl(op.isin, op.nom)} target="_blank" rel="noopener noreferrer"
+                          {op.isin && /\.(PA|AS|BR|AM|LS)$/.test(op.symbol || "") && (
+                            <a href={getEuronextUrl(op.isin, op.nom, op.symbol)} target="_blank" rel="noopener noreferrer"
                               style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: "#003087", borderRadius: "4px", padding: "2px 6px", textDecoration: "none", flexShrink: 0 }}>Euronext</a>
                           )}
                         </div>
