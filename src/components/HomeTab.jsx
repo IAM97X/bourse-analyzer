@@ -417,24 +417,73 @@ function ColPerfs({ positions, account, profil }) {
   );
 }
 
-// ── Parser CSV Boursobank "performance-*.csv" ─────────────────────────────────
-function parseBoursobankEvolutionCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  const results = [];
+// ── Parseur universel CSV évolution portefeuille (Boursobank, Fortuneo, DEGIRO…) ─
+function detectAndParseEvolutionCSV(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return { rows: [], broker: "inconnu" };
+
+  // 1. Détection du séparateur
+  const firstLine = lines[0];
+  const sep = firstLine.includes(";") ? ";" : firstLine.includes("\t") ? "\t" : ",";
+
+  // 2. Parser une ligne CSV avec guillemets
+  const parseLine = (line) => {
+    const cols = []; let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === sep && !inQ) { cols.push(cur.trim()); cur = ""; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    return cols.map(c => c.replace(/^"|"$/g, "").trim());
+  };
+
+  const header = parseLine(lines[0]).map(h => h.toLowerCase());
+
+  // 3. Détection broker
+  let broker = "générique";
+  if (header.some(h => h.includes("valorisation portefeuille"))) broker = "Boursobank";
+  else if (header.some(h => h.includes("fortuneo") || h.includes("valeur liquidative"))) broker = "Fortuneo";
+  else if (header.some(h => h.includes("degiro") || h.includes("valeur du portefeuille"))) broker = "DEGIRO";
+  else if (header.some(h => h.includes("trade republic"))) broker = "Trade Republic";
+
+  // 4. Index des colonnes clés
+  const dateIdx = header.findIndex(h => h === "date" || h.startsWith("date"));
+  const valueKeywords = ["valorisation", "valeur", "value", "montant", "total", "portefeuille", "liquidative", "portfolio"];
+  let valueIdx = header.findIndex((h, i) => i !== dateIdx && valueKeywords.some(k => h.includes(k)));
+  if (valueIdx < 0) valueIdx = dateIdx === 0 ? 1 : 0; // fallback : 2e colonne
+  const perfCumKeywords = ["cumulée", "cumulee", "cumulative", "cum.", "total perf"];
+  const perfCumIdx = header.findIndex(h => perfCumKeywords.some(k => h.includes(k)));
+
+  // 5. Normalisation de date (ISO YYYY-MM-DD ou FR dd/mm/yyyy ou dd/mm/yy)
+  const normalizeDate = (s) => {
+    s = s.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const m2 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
+    const m3 = s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+    if (m3) return `20${m3[3]}-${m3[2]}-${m3[1]}`;
+    const m4 = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (m4) return `${m4[3]}-${m4[2]}-${m4[1]}`;
+    return null;
+  };
+
+  // 6. Parse des lignes de données
+  const rows = [];
   for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    // Format : "YYYY-MM-DD","valeur","X,XXX%","X,XXX%"
-    const cleaned = line.replace(/^"|"$/g, "");
-    const cols = cleaned.split('","');
+    const cols = parseLine(lines[i]);
     if (cols.length < 2) continue;
-    const date    = cols[0];
-    const valeur  = parseFloat(cols[1]);
-    const perfCum = cols[3] ? parseFloat(cols[3].replace(",", ".").replace("%", "")) : null;
-    if (!date.match(/^\d{4}-\d{2}-\d{2}$/) || isNaN(valeur) || valeur <= 0) continue;
-    results.push({ date, valeur, perfCumulee: perfCum });
+    const date = normalizeDate(cols[dateIdx >= 0 ? dateIdx : 0]);
+    const rawVal = (cols[valueIdx] || "").replace(/\s/g, "").replace(",", ".");
+    const valeur = parseFloat(rawVal);
+    const rawPerf = perfCumIdx >= 0 ? (cols[perfCumIdx] || "").replace(",", ".").replace("%", "") : null;
+    const perfCumulee = rawPerf !== null ? parseFloat(rawPerf) : null;
+    if (!date || isNaN(valeur) || valeur <= 0) continue;
+    rows.push({ date, valeur, perfCumulee: (perfCumulee !== null && !isNaN(perfCumulee)) ? perfCumulee : null });
   }
-  return results;
+
+  return { rows, broker };
 }
 
 // ── Courbe d'évolution ────────────────────────────────────────────────────────
@@ -451,9 +500,14 @@ function CourbeEvolution({ hidden, positions, account }) {
   const [hover, setHover]       = useState(null);
   const [yahooPoints, setYahooPoints] = useState(null);
   const [yahooLoading, setYahooLoading] = useState(false);
-  const [csvPoints, setCsvPoints] = useState(() => {
-    try { const d = JSON.parse(localStorage.getItem(EVOLUTION_CSV_KEY) || "null"); return Array.isArray(d) && d.length > 1 ? d : null; } catch { return null; }
+  const [csvData, setCsvData] = useState(() => {
+    try {
+      const d = JSON.parse(localStorage.getItem(EVOLUTION_CSV_KEY) || "null");
+      return d && Array.isArray(d.rows) && d.rows.length > 1 ? d : null;
+    } catch { return null; }
   });
+  const csvPoints = csvData?.rows ?? null;
+  const csvBroker = csvData?.broker ?? null;
   const fileInputRef = useRef(null);
   const svgRef = useRef(null);
   const blur = hidden ? { filter: "blur(6px)", userSelect: "none", pointerEvents: "none" } : {};
@@ -463,10 +517,11 @@ function CourbeEvolution({ hidden, positions, account }) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const parsed = parseBoursobankEvolutionCSV(ev.target.result);
-      if (parsed.length > 1) {
-        try { localStorage.setItem(EVOLUTION_CSV_KEY, JSON.stringify(parsed)); } catch {}
-        setCsvPoints(parsed);
+      const { rows, broker } = detectAndParseEvolutionCSV(ev.target.result);
+      if (rows.length > 1) {
+        const payload = { rows, broker, importedAt: Date.now() };
+        try { localStorage.setItem(EVOLUTION_CSV_KEY, JSON.stringify(payload)); } catch {}
+        setCsvData(payload);
       }
     };
     reader.readAsText(file, "UTF-8");
@@ -632,7 +687,7 @@ function CourbeEvolution({ hidden, positions, account }) {
         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
           {/* Badge source */}
           {dataSource === "boursobank" && (
-            <span style={{ fontSize: "9px", color: "rgba(110,231,183,0.9)", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(110,231,183,0.1)", padding: "2px 7px", borderRadius: "10px", border: "1px solid rgba(110,231,183,0.25)" }}>● Boursobank</span>
+            <span style={{ fontSize: "9px", color: "rgba(110,231,183,0.9)", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(110,231,183,0.1)", padding: "2px 7px", borderRadius: "10px", border: "1px solid rgba(110,231,183,0.25)" }}>● {csvBroker || "CSV"}</span>
           )}
           {dataSource === "yahoo" && (
             <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", fontWeight: "600", letterSpacing: "0.5px" }}>● Yahoo</span>
@@ -643,7 +698,7 @@ function CourbeEvolution({ hidden, positions, account }) {
           {/* Bouton import CSV */}
           <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
           <button onClick={() => fileInputRef.current?.click()}
-            title={csvPoints ? `${csvPoints.length} jours importés — cliquez pour mettre à jour` : "Importer le CSV Boursobank (performance-*.csv)"}
+            title={csvPoints ? `${csvPoints.length} jours importés (${csvBroker}) — cliquez pour mettre à jour` : "Importer export CSV de votre courtier (Boursobank, Fortuneo, DEGIRO…)"}
             style={{ padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: csvPoints ? "rgba(110,231,183,0.12)" : "rgba(255,255,255,0.06)", color: csvPoints ? "rgba(110,231,183,0.8)" : "rgba(255,255,255,0.4)", fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
             {csvPoints ? "↑ CSV" : "+ CSV"}
           </button>
