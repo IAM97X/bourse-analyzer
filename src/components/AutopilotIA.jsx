@@ -91,15 +91,16 @@ export default function AutopilotIA({ account, profil, hidden }) {
   const [step, setStep]               = useState("");
   const [expanded, setExpanded]       = useState({});
   const [showAllocEditor, setShowAllocEditor] = useState(false);
-  const [result, setResult]           = useState(() => {
-    const r = load("bourse_autopilot_last", null);
-    if (!r || !Array.isArray(r.opportunites)) return null;
-    return r;
-  });
   const [error, setError]             = useState(null);
   const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
 
   const risque     = profil?.risque || "equilibre";
+  const resultKey = `bourse_autopilot_last_${account || "PEA"}_${risque}`;
+  const [result, setResult]           = useState(() => {
+    const r = load(resultKey, null);
+    if (!r || !Array.isArray(r.opportunites)) return null;
+    return r;
+  });
   const profilRank = PROFIL_RANK[risque] ?? 1;
 
   const allocKey  = `bourse_autopilot_alloc_${account || "PEA"}_${risque}`;
@@ -173,14 +174,14 @@ export default function AutopilotIA({ account, profil, hidden }) {
         if (gap > 0) gaps[cat] = gap;
       });
 
-      // Sélection de 20 instruments proportionnelle aux écarts
+      // Sélection de 20 instruments proportionnelle aux écarts (déterministe)
       const TOTAL = 20;
-      const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+      const stableSort = arr => [...arr].sort((a, b) => (a.symbol || "").localeCompare(b.symbol || ""));
       const nonZero = Object.entries(allocCibles).filter(([, v]) => Number(v) > 0);
       let universeSlice;
 
       if (nonZero.length === 0) {
-        universeSlice = shuffle(universe).slice(0, TOTAL);
+        universeSlice = stableSort(universe).slice(0, TOTAL);
       } else {
         const weights = {};
         nonZero.forEach(([cat, tgt]) => {
@@ -192,11 +193,11 @@ export default function AutopilotIA({ account, profil, hidden }) {
           .sort(([a], [b]) => (weights[b] || 0) - (weights[a] || 0))
           .forEach(([cat]) => {
             const count = Math.max(1, Math.round((weights[cat] || 0) / totalW * TOTAL));
-            shuffle(universe.filter(i => getCat(i.secteur) === cat))
+            stableSort(universe.filter(i => getCat(i.secteur) === cat))
               .slice(0, count)
               .forEach(i => selected.add(i));
           });
-        const rem = shuffle(universe.filter(i => !selected.has(i)));
+        const rem = stableSort(universe.filter(i => !selected.has(i)));
         rem.slice(0, Math.max(0, TOTAL - selected.size)).forEach(i => selected.add(i));
         universeSlice = [...selected].slice(0, TOTAL);
       }
@@ -259,6 +260,14 @@ ${allocGapStr}`;
 
       setStep("Analyse IA et recherche d'actualités…");
 
+      const prevResult = load(resultKey, null);
+      const prevOpps = prevResult?.opportunites?.filter(o => ["ACHETER","RENFORCER"].includes((o.action||"").toUpperCase())) || [];
+      const prevCtx = prevOpps.length > 0
+        ? `\nANALYSE PRÉCÉDENTE (${new Date(prevResult.generatedAt).toLocaleDateString("fr-FR")}) :
+${prevOpps.map(o => `• ${o.nom} (${o.isin}) — ${o.action} — ${o.rationale?.slice(0, 80) || ""}`).join("\n")}
+→ CONTINUITÉ : maintiens ces recommandations si les fondamentaux n'ont pas changé. Ne remplace une ligne que si une meilleure opportunité est clairement identifiée.\n`
+        : "";
+
       const hasPrices = fetchedCount > 0;
       const userMsg = `Voici les ${universeSlice.length} instruments sélectionnés pour combler les écarts de ta répartition cible.
 ${hasPrices ? `✅ Les cours temps réel ont déjà été récupérés via Yahoo Finance (${fetchedCount}/${universeSlice.length} instruments).` : "⚠ Cours non disponibles — utilise web_search pour les récupérer."}
@@ -266,7 +275,7 @@ ${hasPrices ? `✅ Les cours temps réel ont déjà été récupérés via Yahoo
 INSTRUMENTS + COURS :
 ${universeList}
 
-${hasPrices
+${prevCtx}${hasPrices
   ? `Les cours sont fournis — NE PAS faire de web_search pour les prix.
 Utilise web_search pour UNIQUEMENT les actualités et catalyseurs récents des 2-3 meilleures opportunités identifiées (1 recherche max par instrument finaliste).`
   : `Utilise web_search pour récupérer les cours manquants et les actualités des meilleures opportunités.`}
@@ -343,7 +352,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
         currentAlloc,
       };
       setResult(final);
-      save("bourse_autopilot_last", final);
+      save(resultKey, final);
     } catch (e) {
       setError(e.message);
     } finally {
