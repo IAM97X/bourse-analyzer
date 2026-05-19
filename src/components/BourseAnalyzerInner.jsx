@@ -481,29 +481,19 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       {/* ── Onboarding Guide ── */}
       {showOnboarding && <OnboardingGuide onDone={() => setShowOnboarding(false)} />}
 
-      {/* ── Bottom navigation bar (mobile only — 5 tabs principaux) ── */}
+      {/* ── Bottom navigation bar (mobile only) ── */}
       <nav className="ba-bottom-nav">
-        {[
-          { key: TABS.PORTFOLIO,  label: "Positions",  icon: NAV_GROUPS.flatMap(g=>g.items).find(i=>i.key===TABS.PORTFOLIO)?.icon  },
-          { key: TABS.MARCHE,     label: "Signaux",    icon: NAV_GROUPS.flatMap(g=>g.items).find(i=>i.key===TABS.MARCHE)?.icon     },
-          { key: TABS.AUTOPILOT,  label: "Autopilot",  icon: NAV_GROUPS.flatMap(g=>g.items).find(i=>i.key===TABS.AUTOPILOT)?.icon  },
-          { key: TABS.DCA,        label: "DCA",        icon: NAV_GROUPS.flatMap(g=>g.items).find(i=>i.key===TABS.DCA)?.icon        },
-        ].map(({ key, label, icon }) => {
+        {NAV_GROUPS.flatMap(g => g.items).map(({ key, icon }) => {
+          const SHORT = { portfolio: "Positions", marche: "Marchés", dca: "DCA", projection: "Projec.", historique: "Répart.", operations: "Opérat.", chat: "Conseil", profil: "Config." };
           const isActive = activeTab === key;
           return (
             <button key={key} onClick={() => changeTab(key)}
-              style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", background: "none", border: "none", cursor: "pointer", padding: "6px 2px" }}>
-              <span style={{ width: "44px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "12px", background: isActive ? "linear-gradient(135deg,#1E3A5F,#2D5986)" : "transparent", color: isActive ? "#fff" : C.inkSubtle, fontSize: "16px", transition: "all 0.18s", boxShadow: isActive ? "0 3px 12px rgba(30,58,95,0.35)" : "none" }}>{icon}</span>
-              <span style={{ fontSize: "10px", fontWeight: isActive ? "700" : "400", color: isActive ? C.navy : C.inkSubtle, fontFamily: "'Roboto', sans-serif" }}>{label}</span>
+              style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", background: "none", border: "none", cursor: "pointer", padding: "6px 2px", position: "relative" }}>
+              <span style={{ width: "40px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "10px", background: isActive ? "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)" : "transparent", color: isActive ? "#fff" : C.inkSubtle, fontSize: "14px", transition: "all 0.18s", boxShadow: isActive ? "0 3px 12px rgba(30,58,95,0.45)" : "none" }}>{icon}</span>
+              <span style={{ fontSize: "9px", fontWeight: isActive ? "500" : "400", color: isActive ? C.accent : C.inkSubtle, fontFamily: "'Roboto', sans-serif" }}>{SHORT[key] || key}</span>
             </button>
           );
         })}
-        {/* Bouton "Menu" ouvre le drawer */}
-        <button onClick={() => setMobileNavOpen(true)}
-          style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", background: "none", border: "none", cursor: "pointer", padding: "6px 2px" }}>
-          <span style={{ width: "44px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "12px", background: "transparent", color: C.inkSubtle, fontSize: "18px" }}>⋯</span>
-          <span style={{ fontSize: "10px", fontWeight: "400", color: C.inkSubtle, fontFamily: "'Roboto', sans-serif" }}>Menu</span>
-        </button>
       </nav>
 
       <style>{`
@@ -577,32 +567,17 @@ function BourseAnalyzerInner({ userName, onLogout }) {
           html { font-size: 16px; }
           body { font-size: 16px; }
           .ba-sidebar { display: none !important; }
-          .ba-tabnav { display: none !important; }
+          .ba-content { padding: 16px 14px 24px 14px !important; }
           .ba-content-inner { zoom: 1; }
+          .ba-topbar { height: 54px !important; padding: 0 14px !important; }
           .ba-g4 { grid-template-columns: repeat(2, 1fr) !important; }
           .ba-tbl-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch; border-radius: 10px; }
           .ba-card-body { padding: 14px !important; }
           input, select, textarea { font-size: 16px !important; border-radius: 10px !important; }
           .ba-sidebar-item { min-height: 48px !important; }
 
-          /* TopBar fixe en haut — reste visible en scrollant */
-          .ba-topbar {
-            position: fixed !important;
-            top: 0; left: 0; right: 0;
-            height: calc(54px + env(safe-area-inset-top, 0px)) !important;
-            padding-top: env(safe-area-inset-top, 0px) !important;
-            padding-left: 14px !important;
-            padding-right: 14px !important;
-            z-index: 200 !important;
-          }
-
-          /* Décale le contenu sous la topbar fixe + au-dessus de la bottom nav */
-          .ba-content {
-            padding: calc(54px + env(safe-area-inset-top, 0px) + 12px) 12px calc(72px + env(safe-area-inset-bottom, 0px)) 12px !important;
-          }
-
           /* Toolbar portfolio */
-          .ba-toolbar { gap: 6px !important; margin-bottom: 6px !important; flex-wrap: wrap !important; }
+          .ba-toolbar { gap: 6px !important; margin-bottom: 6px !important; }
           .ba-toolbar > button { padding: 8px 10px !important; font-size: 11px !important; border-radius: 8px !important; }
           .ba-toolbar-status { width: 100%; order: 99; font-size: 10px; color: ${C.inkSubtle}; padding: 2px 0; }
 
@@ -612,34 +587,23 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
           /* Grille dashboard cards */
           .ba-dashboard-grid { grid-template-columns: repeat(2, 1fr) !important; }
-
-          /* Graphiques donut — pleine largeur en mobile */
-          .ba-pie-wrap { flex-direction: column !important; }
-          .ba-pie-wrap > div { flex: 1 1 100% !important; min-width: 0 !important; }
-
-          /* Bottom nav fixe en bas */
-          .ba-bottom-nav {
-            display: flex !important;
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: calc(60px + env(safe-area-inset-bottom, 0px));
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(0,0,0,0.08);
-            z-index: 200;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-          }
         }
 
-        /* ── Bottom navigation — masquée sur desktop ── */
-        .ba-bottom-nav { display: none; }
+        /* ── Bottom navigation — masquée (remplacée par le drawer hamburger) ── */
+        .ba-bottom-nav { display: none !important; }
 
+        /* ── Notch / Dynamic Island — padding top ── */
+        @supports (padding-top: env(safe-area-inset-top)) {
+          .ba-topbar {
+            padding-top: env(safe-area-inset-top, 0px) !important;
+            height: calc(54px + env(safe-area-inset-top, 0px)) !important;
+          }
+        }
 
         /* ── Petit écran ── */
         @media (max-width: 480px) {
           .ba-g4 { grid-template-columns: repeat(2, 1fr) !important; }
+          .ba-content { padding: 12px 12px 80px 12px !important; }
           .ba-perf-kpi { grid-template-columns: repeat(2, 1fr) !important; }
           .ba-perf-breakdown { grid-template-columns: repeat(2, 1fr) !important; }
         }
