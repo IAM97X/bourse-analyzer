@@ -26,7 +26,7 @@ export const AUTOPILOT_UNIVERSE = {
     // Actions plus volatiles → dynamique+
     { symbol: "CAP.PA",   isin: "FR0000125338", nom: "Capgemini",                   type: "Action", secteur: "Tech",              profil_min: "dynamique" },
     { symbol: "DSY.PA",   isin: "FR0014003TT8", nom: "Dassault Systèmes",           type: "Action", secteur: "Tech",              profil_min: "dynamique" },
-    { symbol: "STM.PA",   isin: "NL0000226223", nom: "STMicroelectronics",          type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
+    { symbol: "STMPA.PA", isin: "NL0000226223", nom: "STMicroelectronics",          type: "Action", secteur: "Semi-conducteurs",  profil_min: "dynamique" },
     { symbol: "SAF.PA",   isin: "FR0000073272", nom: "Safran",                      type: "Action", secteur: "Aéronautique",      profil_min: "dynamique" },
     { symbol: "AIR.PA",   isin: "NL0000235190", nom: "Airbus",                      type: "Action", secteur: "Aéronautique",      profil_min: "dynamique" },
     { symbol: "RMS.PA",   isin: "FR0000052292", nom: "Hermès",                      type: "Action", secteur: "Luxe",              profil_min: "dynamique" },

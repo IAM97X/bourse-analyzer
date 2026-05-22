@@ -1627,7 +1627,6 @@ export default function HistoriqueTab({ portfolioVersion, account = "PEA" }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      <DividendTracker account={account} positions={positions} />
       <PortfolioPieChart positions={positions} />
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
         <div style={{ flex: "1 1 400px", minWidth: 0, display: "flex", flexDirection: "column" }}><CorrelationMatrix positions={positions} /></div>

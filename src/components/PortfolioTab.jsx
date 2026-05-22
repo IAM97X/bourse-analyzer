@@ -12,6 +12,8 @@ import PortfolioPieChart, { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPi
 import DividendesCard from "./DividendesCard";
 import CompanyAvatar from "./CompanyAvatar";
 import CapturesPanel, { makeCapture, downloadCapture, CAPTURES_KEY } from "./CapturesPanel";
+import MiniSparkline from "./MiniSparkline";
+import { savePricePoint, loadPriceHistory } from "../lib/priceHistory";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 
@@ -133,6 +135,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     if (!forceRefresh) {
       const cached = getCachedCours(cacheKey);
       if (cached) {
+        savePricePoint(pos.id, cached);
         setPositions(prev => prev.map(p => p.id === pos.id ? { ...p, dernierCours: cached, lastFetch: Date.now() } : p));
         return;
       }
@@ -167,6 +170,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       }
       if (cours && cours > 0 && (!pos.pru || cours < pos.pru * 50)) {
         setCachedCours(cacheKey, cours);
+        savePricePoint(pos.id, cours);
         setPositions(prev => prev.map(p => p.id === pos.id ? { ...p, dernierCours: cours, lastFetch: Date.now() } : p));
         const newAlerts = [];
         if (pos.alerteHaute && cours >= pos.alerteHaute) newAlerts.push({ nom: pos.nom, type: "OBJECTIF ATTEINT", color: C.green, cours, seuil: pos.alerteHaute });
@@ -316,6 +320,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
             if (p.dernierCours && newPrice !== p.dernierCours) {
               newFlash[p.id] = newPrice > p.dernierCours ? "green" : "red";
             }
+            savePricePoint(p.id, newPrice);
             return { ...p, dernierCours: newPrice, intradayVariation: q.regularMarketChangePercent ?? null, lastFetch: Date.now(), dividendeAnnuel: q.trailingAnnualDividendRate ?? p.dividendeAnnuel ?? null, rendementDividende: q.trailingAnnualDividendYield != null ? q.trailingAnnualDividendYield * 100 : (p.rendementDividende ?? null), ...(secteur && !p.secteur ? { secteur } : {}) };
           });
           if (Object.keys(newFlash).length > 0) {
@@ -701,6 +706,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                   const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? "#7B1111" : sig === "PRUDENCE" ? C.red : C.goldDark;
                   const concentration = !etf && poids > 20;
                   const euronextUrl = pos.isin ? getEuronextUrl(pos.isin, pos.nom) : null;
+                  const priceHist = loadPriceHistory(pos.id);
                   return (
                     <div key={pos.id} onClick={() => setSelectedPosId(selectedPosId === pos.id ? null : pos.id)}
                       style={{ display: "grid", gridTemplateColumns: COL, alignItems: "center", padding: "10px 14px", gap: "6px", borderBottom: `1px solid ${C.border}`, background: selectedPosId === pos.id ? C.navyLight : concentration ? "#FFF8F5" : "transparent", cursor: "pointer", transition: "background 0.1s", animation: flashIds[pos.id] ? `flash${flashIds[pos.id] === "green" ? "Green" : "Red"} 1.5s ease-out` : "none" }}>
@@ -731,11 +737,12 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                           ? <input autoFocus value={editCoursVal}
                               style={{ width: "72px", fontSize: "12px", fontFamily: "Inter, sans-serif", color: C.navy, border: `1px solid ${C.navy}`, borderRadius: "4px", padding: "1px 5px", background: C.snowOff, outline: "none" }}
                               onChange={e => setEditCoursVal(e.target.value)}
-                              onBlur={() => { const v = parseFloat(editCoursVal.replace(",",".")); if (v > 0) setPositions(prev => prev.map(p => p.id === pos.id ? { ...p, dernierCours: v, lastFetch: Date.now() } : p)); setEditCoursId(null); }}
+                              onBlur={() => { const v = parseFloat(editCoursVal.replace(",",".")); if (v > 0) { savePricePoint(pos.id, v); setPositions(prev => prev.map(p => p.id === pos.id ? { ...p, dernierCours: v, lastFetch: Date.now() } : p)); } setEditCoursId(null); }}
                               onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setEditCoursId(null); }} />
                           : <>
                               <div style={{ fontSize: "12px", color: C.navy, fontWeight: "700" }}>{fmtCours(cours)}</div>
                               {pos.intradayVariation != null && <div style={{ fontSize: "9px", fontWeight: "700", color: pos.intradayVariation >= 0 ? C.green : C.red }}>{pos.intradayVariation >= 0 ? "+" : ""}{pos.intradayVariation.toFixed(2)}%</div>}
+                              {priceHist.length >= 2 && <div style={{ marginTop: "3px" }}><MiniSparkline data={priceHist} posId={pos.id} width={48} height={14} /></div>}
                             </>
                         }
                       </div>

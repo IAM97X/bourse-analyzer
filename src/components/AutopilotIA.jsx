@@ -90,7 +90,7 @@ export default function AutopilotIA({ account, profil, hidden }) {
   const [running, setRunning]         = useState(false);
   const [step, setStep]               = useState("");
   const [expanded, setExpanded]       = useState({});
-  const [showAllocEditor, setShowAllocEditor] = useState(false);
+  const [showAllocEditor, setShowAllocEditor] = useState(true);
   const [error, setError]             = useState(null);
   const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
 

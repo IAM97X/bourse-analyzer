@@ -658,7 +658,10 @@ function CourbeEvolution({ hidden, positions, account }) {
   const delta    = current - first;
   const perf     = (delta / first) * 100;
   const pvLatent = investi > 0 ? current - investi : null;
-  const isUp     = delta >= 0;
+  const pvPct    = pvLatent !== null && investi > 0 ? (pvLatent / investi) * 100 : null;
+  // Quand le delta période est nul (historique insuffisant), on bascule sur le gain total
+  const flatPeriod = Math.abs(delta) < 0.01 && pvLatent !== null;
+  const isUp     = flatPeriod ? (pvLatent >= 0) : (delta >= 0);
   const lineClr  = isUp ? "#6ee7b7" : "#f87171";
 
   const W = 600; const H = 130;
@@ -715,24 +718,30 @@ function CourbeEvolution({ hidden, positions, account }) {
       </div>
 
       {/* Métriques */}
-      <div style={{ display: "grid", gridTemplateColumns: pvLatent !== null ? "1fr 1fr 1fr" : "1fr 1fr", gap: "8px", marginBottom: "14px", ...blur }}>
+      <div style={{ display: "grid", gridTemplateColumns: pvLatent !== null && !flatPeriod ? "1fr 1fr 1fr" : "1fr 1fr", gap: "8px", marginBottom: "14px", ...blur }}>
         <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
           <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>Valeur actuelle</div>
           <div style={{ fontSize: "16px", fontWeight: "900", color: "#fff", letterSpacing: "-0.02em" }}>{fmtEur(current)}</div>
         </div>
         <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
           <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>
-            {dataSource === "boursobank" ? "Perf. cumulée · versements inclus" : "Croissance · versements inclus"}
+            {flatPeriod ? "Gain total · depuis achat" : dataSource === "boursobank" ? "Perf. cumulée · versements inclus" : "Croissance · versements inclus"}
           </div>
-          <div style={{ fontSize: "15px", fontWeight: "800", color: lineClr }}>{isUp?"+":""}{fmtEur(delta)}</div>
+          <div style={{ fontSize: "15px", fontWeight: "800", color: lineClr }}>
+            {flatPeriod
+              ? <>{pvLatent >= 0 ? "+" : ""}{fmtEur(pvLatent)}</>
+              : <>{isUp ? "+" : ""}{fmtEur(delta)}</>}
+          </div>
           <div style={{ fontSize: "10px", color: lineClr, opacity: 0.8 }}>
-            {perfCumFromCSV !== null ? `${perfCumFromCSV >= 0 ? "+" : ""}${perfCumFromCSV.toFixed(2)} %` : `${isUp?"+":""}${perf.toFixed(2)} %`}
+            {flatPeriod
+              ? (pvPct !== null ? `${pvPct >= 0 ? "+" : ""}${pvPct.toFixed(2)} % vs investi` : "achats − ventes réels")
+              : perfCumFromCSV !== null ? `${perfCumFromCSV >= 0 ? "+" : ""}${perfCumFromCSV.toFixed(2)} %` : `${isUp ? "+" : ""}${perf.toFixed(2)} %`}
           </div>
         </div>
-        {pvLatent !== null && (
+        {pvLatent !== null && !flatPeriod && (
           <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
             <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>Gain vs capital versé</div>
-            <div style={{ fontSize: "15px", fontWeight: "800", color: pvLatent >= 0 ? "#6ee7b7" : "#f87171" }}>{pvLatent>=0?"+":""}{fmtEur(pvLatent)}</div>
+            <div style={{ fontSize: "15px", fontWeight: "800", color: pvLatent >= 0 ? "#6ee7b7" : "#f87171" }}>{pvLatent >= 0 ? "+" : ""}{fmtEur(pvLatent)}</div>
             <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>achats − ventes réels</div>
           </div>
         )}
