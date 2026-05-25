@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { C, shadow } from "../constants/theme";
-import { fmtEur, fmtPct, fmtCours, sanitizePositions } from "../lib/finance";
+import { fmtEur, fmtPct, fmtCours, sanitizePositions, isETFName } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { fetchWithProxy, enqueueApi, callClaude } from "../lib/api";
 import { ThinkingSpinner } from "./UI";
@@ -8,6 +8,150 @@ import CompanyAvatar from "./CompanyAvatar";
 import PortfolioPieChart from "./PortfolioPieChart";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { AVIS_PARSE_PROMPT } from "../constants/prompts";
+import { AUTOPILOT_UNIVERSE } from "../constants/universe";
+
+// ─── Catégories et couleurs (miroir AutopilotIA) ───────────────────────────────
+const ALLOC_CATS = [
+  { key: "ETF Monde",        label: "ETF Monde",          color: "#1E3A5F" },
+  { key: "ETF Sectoriel",    label: "ETF Sectoriel",      color: "#2563EB" },
+  { key: "Tech / IA",        label: "Tech / IA",          color: "#7C3AED" },
+  { key: "Semi-conducteurs", label: "Semi-conducteurs",   color: "#6D28D9" },
+  { key: "Santé",            label: "Santé",              color: "#059669" },
+  { key: "Industrie",        label: "Industrie / Déf.",   color: "#D97706" },
+  { key: "Énergie",          label: "Énergie",            color: "#B45309" },
+  { key: "Luxe",             label: "Luxe / Conso",       color: "#BE185D" },
+  { key: "Finance",          label: "Finance",            color: "#0369A1" },
+  { key: "Autres",           label: "Autres",             color: "#64748B" },
+];
+const SECTOR_TO_CAT = {
+  "ETF Monde":"ETF Monde","ETF USA":"ETF Monde","ETF Europe":"ETF Monde",
+  "ETF Émergents":"ETF Monde","ETF Obligataire":"ETF Monde","ETF Tech":"ETF Sectoriel",
+  "Tech":"Tech / IA","Tech Services":"Tech / IA","Cloud":"Tech / IA","IA/Data":"Tech / IA",
+  "Tech/IA":"Tech / IA","SaaS productivité":"Tech / IA","AdTech/IA":"Tech / IA",
+  "Semi-conducteurs":"Semi-conducteurs","Semi-conducteurs/IA":"Semi-conducteurs",
+  "Semi / IA infra":"Semi-conducteurs","Serveurs IA":"Semi-conducteurs",
+  "Santé":"Santé","Biotech":"Santé","Biotech nano":"Santé","Santé numérique":"Santé",
+  "IA / Drug discovery":"Santé","Santé animale":"Santé",
+  "Industrie":"Industrie","Aéronautique":"Industrie","Infrastructure":"Industrie",
+  "Transports":"Industrie","Défense":"Industrie","Espace":"Industrie",
+  "Énergie":"Énergie","Hydrogène vert":"Énergie",
+  "Luxe":"Luxe","Cosmétiques":"Luxe","Consommation":"Luxe",
+  "Banque":"Finance","Assurance":"Finance","Financier":"Finance","Fintech":"Finance",
+};
+const ISIN_CAT_UNIVERSE = {};
+[...AUTOPILOT_UNIVERSE.PEA, ...AUTOPILOT_UNIVERSE.CTO].forEach(i => {
+  if (i.isin) ISIN_CAT_UNIVERSE[i.isin] = SECTOR_TO_CAT[i.secteur] || "Autres";
+});
+function getPosCat(p, cache = {}) {
+  if (p.isin && ISIN_CAT_UNIVERSE[p.isin]) return ISIN_CAT_UNIVERSE[p.isin];
+  if (p.isin && cache[p.isin])             return cache[p.isin];
+  const fromSector = SECTOR_TO_CAT[p.secteur || ""];
+  if (fromSector) return fromSector;
+  const nom = (p.nom || "").toLowerCase();
+  if (isETFName(p.nom)) {
+    if (/monde|world|msci|acwi|s&p|sp500|nasdaq|europe|émergent/i.test(nom)) return "ETF Monde";
+    return "ETF Sectoriel";
+  }
+  if (/technip|entech|solaire|éolien|hydrogène|haffner|énergie|energy|total|shell/i.test(nom)) return "Énergie";
+  if (/smaio|sanofi|novartis|pfizer|medtech|implant|santé|health|pharma|biotech/i.test(nom)) return "Santé";
+  if (/airbus|safran|thales|boeing/i.test(nom)) return "Industrie";
+  if (/lvmh|hermès|kering|l.?oréal/i.test(nom)) return "Luxe";
+  if (/bnp|société générale|axa|allianz/i.test(nom)) return "Finance";
+  if (/nvidia|asml|stmicro/i.test(nom)) return "Semi-conducteurs";
+  if (/microsoft|apple|google|meta|capgem/i.test(nom)) return "Tech / IA";
+  return "Autres";
+}
+
+// ─── Tableau de répartition sectorielle ──────────────────────────────────────
+function SecteurTable({ positions }) {
+  const isinCatCache = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("bourse_isin_cat_cache") || "{}"); } catch { return {}; }
+  }, []);
+
+  const totalVal = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * p.quantite, 0);
+
+  // Regrouper par catégorie
+  const byCat = {};
+  positions.forEach(p => {
+    const cat = getPosCat(p, isinCatCache);
+    if (!byCat[cat]) byCat[cat] = { valeur: 0, positions: [] };
+    byCat[cat].valeur     += (p.dernierCours || p.pru || 0) * p.quantite;
+    byCat[cat].positions.push(p.nom);
+  });
+
+  const maxPct = Math.max(...Object.values(byCat).map(b => totalVal > 0 ? b.valeur / totalVal * 100 : 0), 1);
+
+  return (
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "18px 20px", boxShadow: shadow.card }}>
+      <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px" }}>
+        Répartition sectorielle
+      </div>
+
+      {/* En-tête */}
+      <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 72px 80px", gap: "8px", padding: "0 0 8px", borderBottom: `1px solid ${C.border}`, marginBottom: "4px" }}>
+        {["Secteur", "", "Valeur", "Positions"].map((h, i) => (
+          <div key={i} style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.5px", textAlign: i >= 2 ? "right" : "left" }}>{h}</div>
+        ))}
+      </div>
+
+      {/* Lignes */}
+      {ALLOC_CATS.map(cat => {
+        const data    = byCat[cat.key];
+        const valeur  = data?.valeur || 0;
+        const pct     = totalVal > 0 && valeur > 0 ? valeur / totalVal * 100 : 0;
+        const present = valeur > 0;
+        const noms    = data?.positions || [];
+
+        return (
+          <div key={cat.key} style={{ display: "grid", gridTemplateColumns: "160px 1fr 72px 80px", gap: "8px", alignItems: "center", padding: "9px 0", borderBottom: `1px solid rgba(0,0,0,0.04)`, opacity: present ? 1 : 0.45 }}>
+            {/* Label + badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: present ? cat.color : C.border, flexShrink: 0 }} />
+              <span style={{ fontSize: "12px", fontWeight: present ? "700" : "500", color: present ? C.ink : C.inkSubtle }}>{cat.label}</span>
+            </div>
+
+            {/* Barre */}
+            <div style={{ height: "8px", background: C.snowOff, borderRadius: "4px", overflow: "hidden" }}>
+              {present && (
+                <div style={{ height: "100%", width: `${(pct / maxPct) * 100}%`, background: cat.color, borderRadius: "4px", transition: "width 0.4s ease" }} />
+              )}
+            </div>
+
+            {/* % + valeur */}
+            <div style={{ textAlign: "right" }}>
+              {present ? (
+                <>
+                  <div style={{ fontSize: "13px", fontWeight: "800", color: cat.color }}>{pct.toFixed(1)}%</div>
+                  <div style={{ fontSize: "9px", color: C.inkSubtle }}>{fmtEur(valeur)}</div>
+                </>
+              ) : (
+                <span style={{ fontSize: "11px", color: C.inkSubtle }}>absent</span>
+              )}
+            </div>
+
+            {/* Positions */}
+            <div style={{ textAlign: "right" }}>
+              {noms.length > 0 ? (
+                <div style={{ fontSize: "10px", color: C.inkMuted, lineHeight: 1.4 }}>
+                  {noms.slice(0, 2).map(n => n.split(" ")[0]).join(", ")}
+                  {noms.length > 2 && <span style={{ color: C.inkSubtle }}> +{noms.length - 2}</span>}
+                </div>
+              ) : (
+                <span style={{ fontSize: "10px", color: C.inkSubtle }}>—</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Total */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "10px", borderTop: `1px solid ${C.border}` }}>
+        <span style={{ fontSize: "11px", fontWeight: "700", color: C.inkMuted }}>{positions.length} position{positions.length > 1 ? "s" : ""}</span>
+        <span style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>{fmtEur(totalVal)}</span>
+      </div>
+    </div>
+  );
+}
 
 function PEAAvisOperes({ account = "PEA" }) {
   const [operations, setOperations] = useState(() => load("bourse_avis_operes", []));
@@ -1630,6 +1774,7 @@ export default function HistoriqueTab({ portfolioVersion, account = "PEA" }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <PortfolioPieChart positions={positions} />
+      <SecteurTable positions={positions} />
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
         <div style={{ flex: "1 1 400px", minWidth: 0, display: "flex", flexDirection: "column" }}><CorrelationMatrix positions={positions} /></div>
         <div style={{ flex: "1 1 300px", minWidth: 0, display: "flex", flexDirection: "column" }}><BenchmarkComparaison /></div>
