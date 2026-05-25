@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { C, shadow } from "../constants/theme";
-import { sanitizePositions, fmtEur, isETFName } from "../lib/finance";
+import { sanitizePositions, fmtEur, isETFName, linReg } from "../lib/finance";
 import { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
 import { load, save } from "../lib/storage";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
@@ -10,6 +10,154 @@ import { COURTIERS } from "../constants/courtiers";
 import { ThinkingSpinner } from "./UI";
 
 const AI_POTENTIEL_KEY = "bourse_ai_potentiel";
+
+// ─── Projection Globale du Portefeuille ──────────────────────────────────────
+function GlobalProjectionChart({ positions, onClose }) {
+  const snapshots = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("bourse_snapshots") || "[]").filter(s => s.valeur > 0).sort((a, b) => a.date.localeCompare(b.date)); }
+    catch { return []; }
+  }, []);
+
+  const currentValue = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+  const totalInvesti = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
+
+  // Données historiques : snapshots ou point synthétique
+  const histPoints = useMemo(() => {
+    if (snapshots.length >= 2) return snapshots.map(s => ({ date: new Date(s.date).getTime(), val: s.valeur }));
+    const today = Date.now();
+    return [
+      { date: today - 365 * 86400000, val: totalInvesti },
+      { date: today, val: currentValue },
+    ];
+  }, [snapshots, currentValue, totalInvesti]);
+
+  // Régression linéaire sur log(valeur) → taux de croissance annualisé
+  const { annualRate, regOffset } = useMemo(() => {
+    if (histPoints.length < 2) return { annualRate: 0.07, regOffset: 0 };
+    const xs = histPoints.map((_, i) => i);
+    const ys = histPoints.map(p => Math.log(p.val));
+    const { a, b } = linReg(xs, ys);
+    const stepsPerYear = histPoints.length / Math.max(1, (histPoints[histPoints.length - 1].date - histPoints[0].date) / (365.25 * 86400000));
+    const ar = Math.exp(b * stepsPerYear) - 1;
+    const lastLog = Math.log(histPoints[histPoints.length - 1].val);
+    const regLastLog = a + b * (histPoints.length - 1);
+    return { annualRate: Math.min(Math.max(ar, -0.5), 2), regOffset: lastLog - regLastLog };
+  }, [histPoints]);
+
+  // Scénarios de projection (12 mois en avant)
+  const PROJ_MONTHS = 18;
+  const lastVal = histPoints[histPoints.length - 1].val;
+  const lastDate = histPoints[histPoints.length - 1].date;
+  const rates = { pessimiste: Math.max(annualRate - 0.04, -0.3), realiste: annualRate, optimiste: annualRate + 0.04 };
+
+  const projPoints = Array.from({ length: PROJ_MONTHS + 1 }, (_, i) => {
+    const t = lastDate + i * 30.44 * 86400000;
+    const f = i / 12;
+    return {
+      date: t,
+      pess: lastVal * Math.pow(1 + rates.pessimiste, f),
+      real: lastVal * Math.pow(1 + rates.realiste, f),
+      opti: lastVal * Math.pow(1 + rates.optimiste, f),
+    };
+  });
+
+  // SVG dimensions
+  const W = 780, H = 220, ML = 64, MR = 24, MT = 16, MB = 32;
+  const CW = W - ML - MR, CH = H - MT - MB;
+  const allVals = [...histPoints.map(p => p.val), ...projPoints.flatMap(p => [p.pess, p.opti])];
+  const minV = Math.min(...allVals) * 0.96, maxV = Math.max(...allVals) * 1.04;
+  const allDates = [...histPoints.map(p => p.date), projPoints[projPoints.length - 1].date];
+  const minD = allDates[0], maxD = allDates[allDates.length - 1];
+  const xS = d => ML + ((d - minD) / (maxD - minD)) * CW;
+  const yS = v => MT + (1 - (v - minV) / (maxV - minV)) * CH;
+  const fmtK = v => v >= 1e6 ? `${(v/1e6).toFixed(2)}M€` : v >= 1e3 ? `${(v/1e3).toFixed(0)}k€` : `${Math.round(v)}€`;
+
+  const histPath = histPoints.map((p, i) => `${i === 0 ? "M" : "L"}${xS(p.date).toFixed(1)},${yS(p.val).toFixed(1)}`).join(" ");
+  const mkPath = (key) => projPoints.map((p, i) => `${i === 0 ? "M" : "L"}${xS(p.date).toFixed(1)},${yS(p[key]).toFixed(1)}`).join(" ");
+
+  const yTicks = [minV, (minV + maxV) / 2, maxV].map(v => ({ v, y: yS(v), label: fmtK(v) }));
+  const sep = xS(lastDate);
+  const pvPct = totalInvesti > 0 ? ((currentValue - totalInvesti) / totalInvesti * 100) : null;
+
+  return (
+    <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "14px", padding: "18px", boxShadow: shadow.card, color: "#fff" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+        <div>
+          <span style={{ fontSize: "13px", fontWeight: "800", color: "#fff" }}>Projection globale</span>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", marginLeft: "10px" }}>
+            {histPoints.length >= 3 ? `${histPoints.length} snapshots · ` : ""}taux estimé {(annualRate * 100).toFixed(1)}%/an · projection {PROJ_MONTHS} mois
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+          {pvPct !== null && (
+            <span style={{ fontSize: "11px", fontWeight: "700", color: pvPct >= 0 ? "#6ee7b7" : "#f87171" }}>
+              {pvPct >= 0 ? "+" : ""}{pvPct.toFixed(2)}% vs PRU
+            </span>
+          )}
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.6)", borderRadius: "6px", padding: "3px 8px", cursor: "pointer", fontSize: "13px", fontFamily: "Inter,sans-serif" }}>✕</button>
+        </div>
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+        <defs>
+          <linearGradient id="glb-hist" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6ee7b7" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#6ee7b7" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {/* Grille Y */}
+        {yTicks.map(({ v, y, label }) => (
+          <g key={v}>
+            <line x1={ML} y1={y} x2={W - MR} y2={y} stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+            <text x={ML - 5} y={y + 4} textAnchor="end" fontSize="9" fill="rgba(255,255,255,0.35)">{label}</text>
+          </g>
+        ))}
+        {/* Séparateur historique/projection */}
+        <line x1={sep} y1={MT} x2={sep} y2={H - MB} stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="4,3" />
+        <text x={sep + 4} y={MT + 10} fontSize="8" fill="rgba(255,255,255,0.3)">Aujourd'hui</text>
+        {/* Zone bande incertitude */}
+        <path
+          d={[...projPoints.map((p, i) => `${i === 0 ? "M" : "L"}${xS(p.date).toFixed(1)},${yS(p.opti).toFixed(1)}`).join(" "),
+              ...projPoints.map((p, i) => `${i === 0 ? "" : "L"}${xS(p.date).toFixed(1)},${yS(p.pess).toFixed(1)}`).reverse().join(" "), "Z"].join(" ")}
+          fill="rgba(99,179,237,0.08)"
+        />
+        {/* Historique rempli */}
+        {histPoints.length >= 2 && (
+          <path
+            d={`${histPath} L${xS(lastDate).toFixed(1)},${yS(minV).toFixed(1)} L${xS(histPoints[0].date).toFixed(1)},${yS(minV).toFixed(1)} Z`}
+            fill="url(#glb-hist)"
+          />
+        )}
+        {/* Courbe historique */}
+        {histPoints.length >= 2 && <path d={histPath} fill="none" stroke="#6ee7b7" strokeWidth="2" strokeLinejoin="round" />}
+        {/* Projections */}
+        <path d={mkPath("opti")} fill="none" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="5,4" />
+        <path d={mkPath("real")} fill="none" stroke="#a78bfa" strokeWidth="2" strokeDasharray="5,4" />
+        <path d={mkPath("pess")} fill="none" stroke="#f87171" strokeWidth="1.5" strokeDasharray="5,4" />
+        {/* Point actuel */}
+        <circle cx={xS(lastDate)} cy={yS(lastVal)} r="4" fill="#6ee7b7" stroke="#0d1f33" strokeWidth="1.5" />
+      </svg>
+
+      {/* Légende + valeurs projetées à 18 mois */}
+      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "10px" }}>
+        {[
+          { label: "Optimiste", val: projPoints[projPoints.length - 1].opti, color: "#60a5fa" },
+          { label: "Réaliste", val: projPoints[projPoints.length - 1].real, color: "#a78bfa" },
+          { label: "Pessimiste", val: projPoints[projPoints.length - 1].pess, color: "#f87171" },
+        ].map(({ label, val, color }) => (
+          <div key={label} style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "6px 12px", display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontWeight: "700", textTransform: "uppercase" }}>{label} (+{PROJ_MONTHS}m)</span>
+            <span style={{ fontSize: "13px", fontWeight: "800", color }}>{fmtK(val)}</span>
+          </div>
+        ))}
+        <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "6px 12px", display: "flex", flexDirection: "column", gap: "2px" }}>
+          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontWeight: "700", textTransform: "uppercase" }}>Actuel</span>
+          <span style={{ fontSize: "13px", fontWeight: "800", color: "#6ee7b7" }}>{fmtK(lastVal)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Marché Tab ─────────────────────────────────────────────────────────────
 function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, marketScoringUi, onRunScoring }) {
@@ -322,6 +470,17 @@ Retourne ce JSON exact (aucun texte autour) :
           Projection par valeur
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
+          {/* Bouton Projection globale */}
+          <button onClick={() => setSelectedPosId(selectedPosId === "__global__" ? null : "__global__")} style={{
+            padding: "6px 14px", borderRadius: "20px",
+            border: `1.5px solid ${selectedPosId === "__global__" ? "#7C3AED" : C.border}`,
+            background: selectedPosId === "__global__" ? "rgba(124,58,237,0.12)" : C.snowOff,
+            color: selectedPosId === "__global__" ? "#7C3AED" : C.inkMuted,
+            fontSize: "11px", fontWeight: selectedPosId === "__global__" ? "700" : "500",
+            fontFamily: "Inter, sans-serif", cursor: "pointer",
+          }}>
+            Projection globale
+          </button>
           {positions.map(pos => (
             <button key={pos.id} onClick={() => setSelectedPosId(pos.id === selectedPosId ? null : pos.id)} style={{
               padding: "6px 12px", borderRadius: "20px", border: `1px solid ${pos.id === selectedPosId ? C.navy : C.border}`,
@@ -334,11 +493,13 @@ Retourne ce JSON exact (aucun texte autour) :
             </button>
           ))}
         </div>
-        {selectedPos
-          ? <StockProjectionChart pos={selectedPos} onClose={() => setSelectedPosId(null)} />
-          : <div style={{ fontSize: "12px", color: C.inkSubtle, padding: "16px 0", textAlign: "center" }}>
-              Sélectionnez une valeur ci-dessus pour afficher sa projection
-            </div>
+        {selectedPosId === "__global__"
+          ? <GlobalProjectionChart positions={positions} onClose={() => setSelectedPosId(null)} />
+          : selectedPos
+            ? <StockProjectionChart pos={selectedPos} onClose={() => setSelectedPosId(null)} />
+            : <div style={{ fontSize: "12px", color: C.inkSubtle, padding: "16px 0", textAlign: "center" }}>
+                Sélectionnez une valeur ou "Projection globale" pour afficher sa projection
+              </div>
         }
       </div>
 
