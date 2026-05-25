@@ -118,6 +118,34 @@ export function computeRiskScore(positions, totalActuel) {
 
 export const PROFIL_RANK = { prudent: 0, equilibre: 1, dynamique: 2, "tres-dynamique": 3 };
 
+// ─── Éligibilité PEA ─────────────────────────────────────────────────────────
+// Règle : siège social dans l'EEE (UE + Norvège, Islande, Liechtenstein)
+// Source : Art. L221-31 Code monétaire — l'éligibilité ne dépend pas du marché
+// de cotation (Euronext Growth est éligible si la société est dans l'EEE).
+const _EEA = new Set([
+  "FR","DE","NL","BE","IT","ES","PT","AT","FI","SE","DK","NO","IE","LU",
+  "CZ","HU","PL","GR","CY","MT","SI","SK","EE","LV","LT","BG","HR","RO",
+  "IS","LI", // Islande, Liechtenstein
+]);
+const _NON_EEA = new Set([
+  "US","GB","CH","JP","CA","AU","CN","HK","SG","BR","KR","TW","IN","ZA",
+]);
+const _COUNTRY_NAME = {
+  FR:"France",DE:"Allemagne",NL:"Pays-Bas",BE:"Belgique",IT:"Italie",
+  ES:"Espagne",PT:"Portugal",AT:"Autriche",FI:"Finlande",SE:"Suède",
+  DK:"Danemark",NO:"Norvège",IE:"Irlande",LU:"Luxembourg",PL:"Pologne",
+  US:"États-Unis",GB:"Royaume-Uni",CH:"Suisse",JP:"Japon",CA:"Canada",
+};
+
+export function checkPEAEligibility(isin) {
+  if (!isin || isin.length < 2) return { eligible: null, label: "ISIN manquant", color: "#94A3B8" };
+  const cc = isin.slice(0, 2).toUpperCase();
+  const pays = _COUNTRY_NAME[cc] || cc;
+  if (_EEA.has(cc))     return { eligible: true,  label: `PEA ✓ (${pays})`,        color: "#059669" };
+  if (_NON_EEA.has(cc)) return { eligible: false, label: `Non-éligible PEA (${pays})`, color: "#DC2626" };
+  return                       { eligible: null,  label: `PEA ? — vérifier (${pays})`, color: "#D97706" };
+}
+
 const SUFFIX_TO_MIC = { PA: "XPAR", AS: "XAMS", AM: "XAMS", BR: "XBRU", LS: "XLIS", LN: "XLON" };
 const NL_SUR_PARIS = new Set(["NL0014559478","NL00150001Q9","NL0000235190","NL0011794037"]);
 export function getMIC(isin, symbol) {

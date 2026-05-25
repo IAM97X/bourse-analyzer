@@ -2,7 +2,7 @@ import { useState } from "react";
 import { C, shadow } from "../constants/theme";
 import { AUTOPILOT_UNIVERSE, fetchYahooPrices } from "../constants/universe";
 import { load, save } from "../lib/storage";
-import { sanitizePositions, fmtEur, PROFIL_RANK, getEuronextUrl } from "../lib/finance";
+import { sanitizePositions, fmtEur, PROFIL_RANK, getEuronextUrl, checkPEAEligibility } from "../lib/finance";
 import { callClaude, CLAUDE_MODELS } from "../lib/api";
 
 // ─── Catégories d'allocation ───────────────────────────────────────────────
@@ -94,6 +94,7 @@ function AnalyseStrategique({ analyse }) {
     { key: "surexpositions", label: "Surexpositions & concentration", dot: "#F87171" },
     { key: "manques",        label: "Manques sectoriels",            dot: "#FBBF24" },
     { key: "correlations",   label: "Corrélations à risque",         dot: "#A78BFA" },
+    { key: "pea_alertes",    label: "Éligibilité PEA",               dot: "#F97316" },
   ];
 
   return (
@@ -305,7 +306,9 @@ export default function AutopilotIA({ account, profil, hidden }) {
             const val   = cours * p.quantite;
             const pvPct = p.pru > 0 ? ((cours - p.pru) / p.pru * 100).toFixed(1) : "0";
             const poids = totalVal > 0 ? (val / totalVal * 100).toFixed(1) : "—";
-            return `• ${p.nom} (${p.isin}) — ${p.quantite} titres @ PRU ${fmtEur(p.pru)} — cours ${fmtEur(cours)} — PV: ${pvPct}% — poids: ${poids}%`;
+            const pea   = checkPEAEligibility(p.isin);
+            const peaTag = pea.eligible === true ? "PEA:✓" : pea.eligible === false ? "PEA:✗" : "PEA:?";
+            return `• ${p.nom} (${p.isin}) [${peaTag}] — ${p.quantite} titres @ PRU ${fmtEur(p.pru)} — cours ${fmtEur(cours)} — PV: ${pvPct}% — poids: ${poids}%`;
           }).join("\n")
         : "Portefeuille vide";
       const pvGlobalPct = totalInves > 0 ? ((totalVal - totalInves) / totalInves * 100).toFixed(1) : "0";
@@ -382,6 +385,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
     "surexpositions": "Concentrations identifiées avec % exacts tirés des données. Ex: 'SMAIO représente X% du portefeuille avec +Y% de PV — risque de correction'. Si aucune : 'Aucune surexposition critique détectée'",
     "manques": "Secteurs absents qui fragilisent concrètement ce profil ${profilLabel} sur l'horizon ${profil?.horizon || "moyen terme"}. Ne pas citer ce qui est déjà couvert par l'ETF",
     "correlations": "Positions partageant des catalyseurs communs de baisse — nommer le risque macroéconomique précis (taux, politique, secteur). Si portefeuille < 3 positions : 'Portefeuille trop concentré pour analyse de corrélation'",
+    "pea_alertes": "Signale UNIQUEMENT les positions marquées PEA:✗ dans le portefeuille — nom + ISIN + raison (pays non-EEE). Si toutes les positions sont PEA:✓ : laisser vide ''",
     "actions_prioritaires": [
       {"rang": 1, "titre": "Titre court de l'action", "detail": "Description chiffrée — montant exact, nb titres possibles, impact sur répartition", "impact": "Répartition avant → après. Ex: ETF Monde 58% → 65%"}
     ]
@@ -710,6 +714,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
                           {/* Catégorie cible badge */}
                           <span style={{ fontSize: "9px", fontWeight: "700", color: catCol, background: catCol + "18", borderRadius: "4px", padding: "1px 6px" }}>{catCible}</span>
                           {op.dans_portefeuille && <span style={{ fontSize: "9px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px" }}>En portefeuille</span>}
+                          {account === "PEA" && op.isin && (() => { const p = checkPEAEligibility(op.isin); return <span title={p.label} style={{ fontSize: "9px", fontWeight: "700", color: p.color, background: p.color + "18", borderRadius: "4px", padding: "1px 6px", cursor: "default" }}>{p.eligible === true ? "PEA ✓" : p.eligible === false ? "⚠ Non-PEA" : "PEA ?"}</span>; })()}
                           <a href={`https://fr.finance.yahoo.com/quote/${encodeURIComponent(op.symbol)}`} target="_blank" rel="noopener noreferrer"
                             style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: "#5F01D1", borderRadius: "4px", padding: "2px 6px", textDecoration: "none", flexShrink: 0 }}>Yahoo</a>
                           {op.isin && /\.(PA|AS|BR|AM|LS)$/.test(op.symbol || "") && (
