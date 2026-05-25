@@ -160,6 +160,24 @@ export function computeMA(prices, win) {
   });
 }
 
+// ─── Modified Dietz TWR ──────────────────────────────────────────────────────
+// cashFlows : [{ date: "YYYY-MM-DD", amount: number }]  (+ = entrée, - = sortie)
+// Retourne le taux de rendement pondéré dans le temps sur la période
+export function modifiedDietz(startValue, endValue, cashFlows, startDate, endDate) {
+  const D = (new Date(endDate) - new Date(startDate)) / 86400000; // durée en jours
+  if (D <= 0 || startValue <= 0) return null;
+  let sumCF = 0, sumWeightedCF = 0;
+  for (const cf of cashFlows) {
+    const di = (new Date(cf.date) - new Date(startDate)) / 86400000;
+    const w  = Math.max(0, (D - di) / D);
+    sumCF         += cf.amount;
+    sumWeightedCF += cf.amount * w;
+  }
+  const denom = startValue + sumWeightedCF;
+  if (Math.abs(denom) < 0.01) return null;
+  return (endValue - startValue - sumCF) / denom;
+}
+
 export function computeRSI(prices, period = 14) {
   const result = new Array(prices.length).fill(null);
   if (prices.length <= period) return result;

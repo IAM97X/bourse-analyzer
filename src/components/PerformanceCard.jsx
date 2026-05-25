@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
-import { sanitizePositions, fmtPct } from "../lib/finance";
+import { sanitizePositions, fmtPct, modifiedDietz } from "../lib/finance";
 import { load } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
 import { DEFAULT_POSITIONS } from "../constants/config";
@@ -20,17 +20,26 @@ function perfColor(v) {
   return v >= 0 ? C.green : C.red;
 }
 
-function PerfRow({ label, value, note }) {
-  const color = perfColor(value);
-  const formatted = value === null ? "—" : (value >= 0 ? "+" : "") + value.toFixed(2) + " %";
+function PerfRow({ label, value, note, twr }) {
+  const color    = perfColor(value);
+  const twrColor = perfColor(twr);
+  const fmt = v => v === null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(2) + " %";
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
       <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.85)", fontWeight: "600", lineHeight: "1.35" }}>
         {label}{note && <sup style={{ fontSize: "9px", opacity: 0.6, marginLeft: "2px" }}>{note}</sup>}
       </span>
-      <span style={{ fontSize: "14px", fontWeight: "800", color, minWidth: "80px", textAlign: "right" }}>
-        {formatted}
-      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        {twr !== undefined && twr !== null && (
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: "10px", color: twrColor, fontWeight: "700" }}>{fmt(twr)}</div>
+            <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)", fontWeight: "600", letterSpacing: "0.5px" }}>TWR</div>
+          </div>
+        )}
+        <span style={{ fontSize: "14px", fontWeight: "800", color, minWidth: "72px", textAlign: "right" }}>
+          {fmt(value)}
+        </span>
+      </div>
     </div>
   );
 }
@@ -69,6 +78,27 @@ export default function PerformanceCard({ account = "PEA" }) {
   const perfMois   = perf(snapMois)   ?? perfDepuisAchat;
   const perfVeille = perf(snapVeille);
 
+  // ── TWR (Modified Dietz) ─────────────────────────────────────────────────
+  const ops = (() => { try { return JSON.parse(localStorage.getItem("bourse_avis_operes") || "[]").filter(o => (o.compte || "PEA") === account); } catch { return []; } })();
+
+  const twrForPeriod = (snap, periodStart) => {
+    if (!snap || snap.valeur <= 0 || currentValue <= 0) return null;
+    const endDate = now.toISOString().slice(0, 10);
+    // Cash flows : ACHAT = entrée (+), VENTE = sortie (-)
+    const cfs = ops
+      .filter(o => o.date >= periodStart && o.date <= endDate && (o.type === "ACHAT" || o.type === "VENTE"))
+      .map(o => ({
+        date:   o.date,
+        amount: (o.type === "ACHAT" ? 1 : -1) * (parseFloat(o.quantite) || 0) * (parseFloat(o.prixUnitaire) || 0),
+      }));
+    const r = modifiedDietz(snap.valeur, currentValue, cfs, periodStart, endDate);
+    return r !== null ? r * 100 : null;
+  };
+
+  const twrYtd  = twrForPeriod(snapYtd,  `${yyyy}-01-01`);
+  const twrMois = twrForPeriod(snapMois, `${yyyy}-${mm}-01`);
+  const hasTwr  = twrYtd !== null || twrMois !== null;
+
   const moisLabel = now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
   // Fetch CAC 40 YTD + mensuel
@@ -105,8 +135,8 @@ export default function PerformanceCard({ account = "PEA" }) {
         Suivi des performances · {account}
       </div>
 
-      <PerfRow label={`Ma performance ${yyyy}`}      value={perfYtd}    note="1" />
-      <PerfRow label={`Ma performance ${moisLabel}`} value={perfMois}   note="2" />
+      <PerfRow label={`Ma performance ${yyyy}`}      value={perfYtd}    note="1" twr={twrYtd} />
+      <PerfRow label={`Ma performance ${moisLabel}`} value={perfMois}   note="2" twr={twrMois} />
       <PerfRow label="Ma performance de la veille"   value={perfVeille} />
 
       <div style={{ margin: "10px 0 2px", borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: "10px" }} />
