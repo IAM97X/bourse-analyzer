@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { C, shadow } from "../constants/theme";
 import { sanitizePositions, fmtEur, isETFName, linReg } from "../lib/finance";
 import { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
@@ -13,17 +13,31 @@ const AI_POTENTIEL_KEY = "bourse_ai_potentiel";
 
 const TICKER_CACHE_KEY_M = "bourse_isin_ticker_cache";
 const STEP_MS = 7 * 24 * 3600 * 1000; // 1 semaine
-const PROJ_WEEKS = 78; // ~18 mois
+
+const GLOBAL_HORIZONS = [
+  { label: "6 mois",  weeks: 26 },
+  { label: "12 mois", weeks: 52 },
+  { label: "3 ans",   weeks: 156 },
+];
 
 function GlobalProjectionChart({ positions, onClose }) {
+  const [hidx, setHidx] = useState(1); // 12 mois par défaut
   const [state, setState] = useState({ status: "idle", data: null, error: null, progress: 0 });
+  const [hoverFrac, setHoverFrac] = useState(null);
+  const svgRef = useRef(null);
 
-  const totalInvesti  = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
-  const currentValue  = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
-  const pvPct = totalInvesti > 0 ? ((currentValue - totalInvesti) / totalInvesti * 100) : null;
   const fmtK = v => v >= 1e6 ? `${(v/1e6).toFixed(2)}M€` : v >= 1e3 ? `${(v/1e3).toFixed(0)}k€` : `${Math.round(v)}€`;
 
+  const totalInvesti = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
+  const currentValue = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+  const pvPct = totalInvesti > 0 ? ((currentValue - totalInvesti) / totalInvesti * 100) : null;
+
+  // Dimensions SVG (identiques à StockProjectionChart)
+  const VW = 800, VH = 240, ML = 62, MR = 24, MT = 15, MB = 35;
+  const CW = VW - ML - MR, CH = VH - MT - MB;
+
   useEffect(() => {
+    const PROJ_WEEKS = GLOBAL_HORIZONS[hidx].weeks;
     let cancelled = false;
     setState({ status: "loading", data: null, error: null, progress: 0 });
 
@@ -93,29 +107,31 @@ function GlobalProjectionChart({ positions, onClose }) {
       if (cancelled) return;
 
       const valid = results.filter(Boolean);
-      if (valid.length === 0) { setState({ status: "error", data: null, error: "Aucune donnée Yahoo disponible", progress: 1 }); return; }
+      if (valid.length === 0) {
+        setState({ status: "error", data: null, error: "Aucune donnée Yahoo disponible", progress: 1 });
+        return;
+      }
 
-      // Aligner sur la même grille temporelle (dernière date commune → +PROJ_WEEKS)
+      // Historique : 12 mois glissants
       const now = Date.now();
-      const histStart = now - 365 * 86400000; // afficher 12 mois d'historique
-      // Reconstituer les valeurs historiques hebdo du portefeuille sur 12 mois
+      const histStart = now - 365 * 86400000;
       const steps = Math.ceil((now - histStart) / STEP_MS);
       const histDates = Array.from({ length: steps + 1 }, (_, i) => histStart + i * STEP_MS);
 
-      // Pour chaque position : interpoler le prix à chaque date historique
       const histPortfolio = histDates.map(d => {
         let val = 0;
         for (const r of valid) {
           const { pos, pts } = r;
-          // Trouver le point le plus proche avant d
           const idx = pts.findLastIndex ? pts.findLastIndex(p => p.t <= d) : [...pts].reverse().findIndex(p => p.t <= d);
-          const price = idx >= 0 ? (pts.findLastIndex ? pts[idx].p : pts[pts.length - 1 - idx]?.p ?? pos.dernierCours ?? pos.pru) : (pos.dernierCours || pos.pru);
+          const price = idx >= 0
+            ? (pts.findLastIndex ? pts[idx].p : pts[pts.length - 1 - idx]?.p ?? pos.dernierCours ?? pos.pru)
+            : (pos.dernierCours || pos.pru);
           val += price * pos.quantite;
         }
         return { date: d, val };
       });
 
-      // Projections : somme des projections individuelles × quantité
+      // Projections : somme pondérée × quantité
       const projDates = Array.from({ length: PROJ_WEEKS + 1 }, (_, i) => now + i * STEP_MS);
       const projMid = projDates.map((_, i) => valid.reduce((s, r) => s + (i === 0 ? (r.pos.dernierCours || r.pos.pru) : r.projMid[i - 1] || r.projMid[r.projMid.length - 1]) * r.pos.quantite, 0));
       const projHi  = projDates.map((_, i) => valid.reduce((s, r) => s + (i === 0 ? (r.pos.dernierCours || r.pos.pru) : r.projHi[i - 1]  || r.projHi[r.projHi.length - 1])  * r.pos.quantite, 0));
@@ -126,108 +142,301 @@ function GlobalProjectionChart({ positions, onClose }) {
 
     run();
     return () => { cancelled = true; };
-  }, [positions.map(p => p.id).join(",")]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [positions.map(p => p.id).join(","), hidx]);
 
   // ── Rendu loading / error ──
   if (state.status === "loading") return (
-    <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "14px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
+    <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", borderRadius: "14px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
       <ThinkingSpinner size={18} color="#a78bfa" />
       <div style={{ marginTop: "10px" }}>Calcul projection globale… {Math.round(state.progress * 100)}%</div>
     </div>
   );
   if (state.status === "error") return (
-    <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "14px", padding: "18px", color: "#f87171", fontSize: "12px" }}>
-      {state.error} <button onClick={onClose} style={{ marginLeft: "12px", background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "13px" }}>✕</button>
+    <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", borderRadius: "14px", padding: "18px", color: "#f87171", fontSize: "12px" }}>
+      {state.error}
+      <button onClick={onClose} style={{ marginLeft: "12px", background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "13px" }}>✕</button>
     </div>
   );
   if (!state.data) return null;
 
   const { histPortfolio, projDates, projMid, projHi, projLo, validCount } = state.data;
+  const PROJ_WEEKS = GLOBAL_HORIZONS[hidx].weeks;
 
-  // ── SVG ──
-  const W = 780, H = 230, ML = 68, MR = 24, MT = 16, MB = 32;
-  const CW = W - ML - MR, CH = H - MT - MB;
-  const allVals = [...histPortfolio.map(p => p.val), ...projHi, ...projLo].filter(Boolean);
-  const minV = Math.min(...allVals) * 0.96, maxV = Math.max(...allVals) * 1.04;
-  const allDates = [...histPortfolio.map(p => p.date), projDates[projDates.length - 1]];
-  const minD = allDates[0], maxD = allDates[allDates.length - 1];
-  const xS = d => ML + ((d - minD) / (maxD - minD)) * CW;
-  const yS = v => MT + (1 - (v - minV) / (maxV - minV)) * CH;
-  const sep = xS(Date.now());
+  // ── Échelles ──
+  const allDates  = [...histPortfolio.map(p => p.date), ...projDates];
+  const allPrices = [...histPortfolio.map(p => p.val), ...projMid];
+  const xMin = allDates[0] || 0;
+  const xMax = allDates[allDates.length - 1] || 1;
+  const yMin_raw = Math.min(...allPrices.filter(Boolean));
+  const yMax_raw = Math.max(...allPrices.filter(Boolean));
+  const yPad = (yMax_raw - yMin_raw) * 0.12;
+  const yMin = Math.max(0, yMin_raw - yPad);
+  const yMax = yMax_raw + yPad;
 
-  const histPath = histPortfolio.map((p, i) => `${i === 0 ? "M" : "L"}${xS(p.date).toFixed(1)},${yS(p.val).toFixed(1)}`).join(" ");
-  const mkProjPath = arr => projDates.map((d, i) => `${i === 0 ? "M" : "L"}${xS(d).toFixed(1)},${yS(arr[i]).toFixed(1)}`).join(" ");
-  const bandPath = [
-    ...projDates.map((d, i) => `${i === 0 ? "M" : "L"}${xS(d).toFixed(1)},${yS(projHi[i]).toFixed(1)}`),
-    ...projDates.map((d, i) => `L${xS(projDates[projDates.length - 1 - i]).toFixed(1)},${yS(projLo[projDates.length - 1 - i]).toFixed(1)}`),
-    "Z"
+  const xScale = t => ML + (t - xMin) / Math.max(xMax - xMin, 1) * CW;
+  const yScale = v => MT + (1 - (v - yMin) / Math.max(yMax - yMin, 0.01)) * CH;
+
+  // Grille Y (5 niveaux réguliers)
+  const priceRange = yMax_raw - yMin_raw;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(Math.max(priceRange / 5, 0.01))));
+  const niceStep = [1, 2, 2.5, 5, 10].map(f => f * magnitude).find(s => s >= priceRange / 5) || magnitude * 10;
+  const gridPrices = [];
+  for (let v = Math.ceil(yMin / niceStep) * niceStep; v <= yMax + 0.001; v += niceStep) {
+    gridPrices.push(Math.round(v * 100) / 100);
+  }
+
+  // Labels X (6 points sur toute la timeline)
+  const xLabels = allDates.length > 1
+    ? Array.from({ length: 6 }, (_, i) => {
+        const idx = Math.round(i * (allDates.length - 1) / 5);
+        return { t: allDates[idx] };
+      })
+    : [];
+
+  // Séparateur "Auj."
+  const todayX = xScale(histPortfolio[histPortfolio.length - 1].date);
+
+  // Area historique polygon
+  const histPts = [
+    `${xScale(histPortfolio[0].date).toFixed(1)},${(MT + CH).toFixed(1)}`,
+    ...histPortfolio.map(p => `${xScale(p.date).toFixed(1)},${yScale(p.val).toFixed(1)}`),
+    `${xScale(histPortfolio[histPortfolio.length - 1].date).toFixed(1)},${(MT + CH).toFixed(1)}`,
   ].join(" ");
 
-  const yTicks = [minV, (minV + maxV) / 2, maxV].map(v => ({ v, y: yS(v), label: fmtK(v) }));
-  const xLabels = [histPortfolio[0].date, Date.now(), projDates[Math.floor(PROJ_WEEKS / 2)], projDates[PROJ_WEEKS]].map(d => ({
-    x: xS(d), label: new Date(d).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })
-  }));
+  // Band ±1σ polygon
+  const bandPts = [
+    ...projDates.map((d, i) => `${xScale(d).toFixed(1)},${yScale(projHi[i]).toFixed(1)}`),
+    ...[...projDates].reverse().map((d, i) => {
+      const ri = projDates.length - 1 - i;
+      return `${xScale(d).toFixed(1)},${yScale(projLo[ri]).toFixed(1)}`;
+    }),
+  ].join(" ");
+
+  // PRU moyen pondéré du portefeuille
+  const pruMoyen = totalInvesti > 0 ? totalInvesti / positions.reduce((s, p) => s + p.quantite, 0) : null;
+  // Valeur PRU totale (PRU × quantité pour chaque position)
+  const pruTotal = totalInvesti;
+
+  // Hover
+  const handleMouseMove = (e) => {
+    if (!svgRef.current || !state.data) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const frac = Math.max(0, Math.min(1, ((e.clientX - rect.left) / rect.width * VW - ML) / CW));
+    setHoverFrac(frac);
+  };
+  const hoverT = hoverFrac != null ? xMin + hoverFrac * (xMax - xMin) : null;
+  const isInProj = hoverT != null && hoverT > histPortfolio[histPortfolio.length - 1].date;
+  const hoverHistIdx = hoverT != null && !isInProj
+    ? histPortfolio.reduce((bi, p, i) => Math.abs(p.date - hoverT) < Math.abs(histPortfolio[bi].date - hoverT) ? i : bi, 0)
+    : null;
+  const hoverProjIdx = hoverT != null && isInProj && projDates.length
+    ? projDates.reduce((bi, t, i) => Math.abs(t - hoverT) < Math.abs(projDates[bi] - hoverT) ? i : bi, 0)
+    : null;
+
+  // Performance finale projetée
+  const finalProj = projMid[projMid.length - 1];
+  const finalPct = finalProj && currentValue ? ((finalProj - currentValue) / currentValue * 100) : null;
 
   return (
-    <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "14px", padding: "18px", boxShadow: shadow.card, color: "#fff" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
-        <div>
-          <span style={{ fontSize: "13px", fontWeight: "800", color: "#fff" }}>Projection globale</span>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", marginLeft: "10px" }}>
-            {validCount} valeur{validCount > 1 ? "s" : ""} · régression Yahoo 5 ans · projection 18 mois
+    <div style={{ background: C.snow, borderRadius: "16px", overflow: "hidden", marginTop: "16px", boxShadow: "0 8px 32px rgba(30,58,95,0.12)", border: `1px solid ${C.border}` }}>
+
+      {/* En-tête gradient */}
+      <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>Portefeuille</span>
+          {finalPct != null && (
+            <span style={{
+              fontSize: "11px", fontWeight: "700", padding: "3px 10px", borderRadius: "20px",
+              color: finalPct >= 0 ? "#4ADE80" : "#F87171",
+              background: finalPct >= 0 ? "rgba(74,222,128,0.15)" : "rgba(248,113,113,0.15)",
+              border: `1px solid ${finalPct >= 0 ? "rgba(74,222,128,0.30)" : "rgba(248,113,113,0.30)"}`,
+            }}>
+              {GLOBAL_HORIZONS[hidx].label} : {finalPct >= 0 ? "+" : ""}{finalPct.toFixed(1)}%
+              {finalProj && <span style={{ fontWeight: "500", marginLeft: "4px", opacity: 0.8 }}>{fmtK(finalProj)}</span>}
+            </span>
+          )}
+          {pvPct !== null && (
+            <span style={{ fontSize: "11px", fontWeight: "700", color: pvPct >= 0 ? "#4ADE80" : "#F87171", opacity: 0.8 }}>
+              {pvPct >= 0 ? "+" : ""}{pvPct.toFixed(2)}% vs PRU
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
+          {GLOBAL_HORIZONS.map((h, i) => (
+            <button key={h.label} onClick={() => setHidx(i)} style={{
+              padding: "4px 10px", borderRadius: "6px", border: "none", cursor: "pointer",
+              fontSize: "11px", fontWeight: "700", fontFamily: "Inter, sans-serif",
+              background: i === hidx ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.07)",
+              color: i === hidx ? "#fff" : "rgba(255,255,255,0.45)",
+              boxShadow: i === hidx ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
+              transition: "all 0.15s",
+            }}>{h.label}</button>
+          ))}
+          {onClose && (
+            <button onClick={onClose} style={{ marginLeft: "2px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontSize: "12px", color: "rgba(255,255,255,0.5)", fontFamily: "Inter, sans-serif" }}>✕</button>
+          )}
+        </div>
+      </div>
+
+      {/* Corps */}
+      <div style={{ padding: "16px 20px 20px" }}>
+        <svg ref={svgRef} viewBox={`0 0 ${VW} ${VH}`}
+          style={{ width: "100%", height: "auto", cursor: "crosshair", display: "block", userSelect: "none" }}
+          onMouseMove={handleMouseMove} onMouseLeave={() => setHoverFrac(null)}>
+
+          <defs>
+            <linearGradient id="glb-hist-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1E3A5F" stopOpacity="0.22" />
+              <stop offset="85%" stopColor="#1E3A5F" stopOpacity="0.02" />
+              <stop offset="100%" stopColor="#1E3A5F" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="glb-proj-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2D5986" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#2D5986" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Fond zone graphique */}
+          <rect x={ML} y={MT} width={CW} height={CH} fill={C.snowOff} rx="4" opacity="0.5" />
+
+          {/* Grille Y */}
+          {gridPrices.map(v => (
+            <g key={v}>
+              <line x1={ML} x2={ML + CW} y1={yScale(v)} y2={yScale(v)} stroke="rgba(148,163,184,0.3)" strokeWidth="1" strokeDasharray="4,4" />
+              <text x={ML - 6} y={yScale(v) + 4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="Inter,sans-serif" fontWeight="500">
+                {fmtK(v)}
+              </text>
+            </g>
+          ))}
+
+          {/* Labels X */}
+          {xLabels.map(({ t }, i) => (
+            <text key={i} x={xScale(t)} y={MT + CH + 22} textAnchor="middle" fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">
+              {new Date(t).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}
+            </text>
+          ))}
+
+          {/* Séparateur "Auj." */}
+          <line x1={todayX} x2={todayX} y1={MT} y2={MT + CH} stroke="rgba(148,163,184,0.5)" strokeWidth="1" strokeDasharray="4,3" />
+          <text x={todayX} y={MT - 4} textAnchor="middle" fontSize="8" fill="#94A3B8" fontFamily="Inter,sans-serif" fontWeight="600">Auj.</text>
+
+          {/* Area fill historique */}
+          <polygon points={histPts} fill="url(#glb-hist-grad)" />
+
+          {/* Bande ±1σ projection */}
+          {projDates.length > 0 && (
+            <polygon points={bandPts} fill="rgba(45,89,134,0.12)" />
+          )}
+
+          {/* Ligne PRU total */}
+          {pruTotal > 0 && pruTotal >= yMin && pruTotal <= yMax && (
+            <>
+              <line x1={ML} x2={ML + CW} y1={yScale(pruTotal)} y2={yScale(pruTotal)} stroke={C.goldDark} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.85" />
+              <text x={ML + CW + 3} y={yScale(pruTotal) + 4} fontSize="9" fill={C.goldDark} fontFamily="Inter,sans-serif" fontWeight="600">PRU</text>
+            </>
+          )}
+
+          {/* Courbe historique */}
+          <polyline
+            points={histPortfolio.map(p => `${xScale(p.date).toFixed(1)},${yScale(p.val).toFixed(1)}`).join(" ")}
+            fill="none" stroke="#1E3A5F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+          {/* Courbe projection médiane */}
+          {projDates.length > 0 && (
+            <polyline
+              points={[
+                `${xScale(histPortfolio[histPortfolio.length - 1].date).toFixed(1)},${yScale(histPortfolio[histPortfolio.length - 1].val).toFixed(1)}`,
+                ...projDates.map((d, i) => `${xScale(d).toFixed(1)},${yScale(projMid[i]).toFixed(1)}`),
+              ].join(" ")}
+              fill="none" stroke="#2D5986" strokeWidth="2" strokeDasharray="7,5" strokeLinecap="round" opacity="0.85" />
+          )}
+
+          {/* Crosshair */}
+          {hoverFrac != null && hoverT != null && (
+            <>
+              <line x1={xScale(hoverT)} x2={xScale(hoverT)} y1={MT} y2={MT + CH} stroke="rgba(148,163,184,0.6)" strokeWidth="1" strokeDasharray="3,3" />
+              {!isInProj && hoverHistIdx != null && (
+                <circle cx={xScale(histPortfolio[hoverHistIdx].date)} cy={yScale(histPortfolio[hoverHistIdx].val)} r="5" fill="#1E3A5F" stroke="#fff" strokeWidth="2.5" />
+              )}
+              {isInProj && hoverProjIdx != null && (
+                <circle cx={xScale(projDates[hoverProjIdx])} cy={yScale(projMid[hoverProjIdx])} r="5" fill="#2D5986" stroke="#fff" strokeWidth="2.5" />
+              )}
+            </>
+          )}
+        </svg>
+
+        {/* Infobulle hover */}
+        {hoverFrac != null && (
+          <div style={{ background: "#111214", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "11px", display: "inline-flex", gap: "14px", flexWrap: "wrap", alignItems: "center", boxShadow: "0 4px 16px rgba(17,18,20,0.18)" }}>
+            {!isInProj && hoverHistIdx != null && (
+              <>
+                <span style={{ color: "rgba(255,255,255,0.55)", fontWeight: "600" }}>
+                  {new Date(histPortfolio[hoverHistIdx].date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+                <span style={{ color: "#fff", fontWeight: "800", fontSize: "13px" }}>{fmtK(histPortfolio[hoverHistIdx].val)}</span>
+                {pruTotal > 0 && (
+                  <span style={{
+                    fontWeight: "700",
+                    color: histPortfolio[hoverHistIdx].val >= pruTotal ? "#4ADE80" : "#F87171",
+                    background: histPortfolio[hoverHistIdx].val >= pruTotal ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
+                    padding: "2px 8px", borderRadius: "6px",
+                  }}>
+                    {((histPortfolio[hoverHistIdx].val - pruTotal) / pruTotal * 100).toFixed(2)}% vs PRU
+                  </span>
+                )}
+              </>
+            )}
+            {isInProj && hoverProjIdx != null && (
+              <>
+                <span style={{ color: "#A78BFA", fontWeight: "700" }}>Projection</span>
+                <span style={{ color: "rgba(255,255,255,0.55)", fontWeight: "600" }}>
+                  {new Date(projDates[hoverProjIdx]).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+                <span style={{ color: "#fff", fontWeight: "800", fontSize: "13px" }}>{fmtK(projMid[hoverProjIdx])}</span>
+                {pruTotal > 0 && (
+                  <span style={{
+                    fontWeight: "700",
+                    color: projMid[hoverProjIdx] >= pruTotal ? "#4ADE80" : "#F87171",
+                    background: projMid[hoverProjIdx] >= pruTotal ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
+                    padding: "2px 8px", borderRadius: "6px",
+                  }}>
+                    {((projMid[hoverProjIdx] - pruTotal) / pruTotal * 100).toFixed(2)}% vs PRU
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Légende */}
+        <div style={{ display: "flex", gap: "14px", marginTop: "12px", flexWrap: "wrap", fontSize: "10px" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "5px", color: C.inkMuted }}>
+            <span style={{ width: "18px", height: "2.5px", background: "#1E3A5F", borderRadius: "2px", display: "inline-block" }} />
+            Cours
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: "5px", color: C.inkSubtle }}>
+            <span style={{ width: "18px", height: "1px", borderTop: "2px dashed #2D5986", display: "inline-block" }} />
+            Tendance
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: "5px", color: C.inkSubtle }}>
+            <span style={{ width: "12px", height: "10px", background: "rgba(30,58,95,0.15)", borderRadius: "2px", display: "inline-block" }} />
+            ±1σ
+          </span>
+          {pruTotal > 0 && (
+            <span style={{ display: "flex", alignItems: "center", gap: "5px", color: C.goldDark }}>
+              <span style={{ width: "18px", height: "1px", borderTop: "1.5px dashed #B8920A", display: "inline-block" }} />
+              PRU {fmtK(pruTotal)}
+            </span>
+          )}
+          <span style={{ marginLeft: "auto", color: C.inkSubtle, fontSize: "9px" }}>
+            {validCount} valeur{validCount > 1 ? "s" : ""} · régression Yahoo 5 ans
           </span>
         </div>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          {pvPct !== null && <span style={{ fontSize: "11px", fontWeight: "700", color: pvPct >= 0 ? "#6ee7b7" : "#f87171" }}>{pvPct >= 0 ? "+" : ""}{pvPct.toFixed(2)}% vs PRU</span>}
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.6)", borderRadius: "6px", padding: "3px 8px", cursor: "pointer", fontSize: "13px", fontFamily: "Inter,sans-serif" }}>✕</button>
+
+        <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px", opacity: 0.7 }}>
+          ⚠ Projection extrapolée. Non garantie. Ne constitue pas un conseil en investissement.
         </div>
-      </div>
-
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
-        <defs>
-          <linearGradient id="glb-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6ee7b7" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#6ee7b7" stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
-        {yTicks.map(({ v, y, label }) => (
-          <g key={v}>
-            <line x1={ML} y1={y} x2={W - MR} y2={y} stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
-            <text x={ML - 5} y={y + 4} textAnchor="end" fontSize="9" fill="rgba(255,255,255,0.35)">{label}</text>
-          </g>
-        ))}
-        {xLabels.map(({ x, label }, i) => (
-          <text key={i} x={x} y={H - 4} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.3)">{label}</text>
-        ))}
-        <line x1={sep} y1={MT} x2={sep} y2={H - MB} stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="4,3" />
-        <text x={sep + 4} y={MT + 10} fontSize="8" fill="rgba(255,255,255,0.3)">Auj.</text>
-        {/* Bande incertitude */}
-        <path d={bandPath} fill="rgba(167,139,250,0.08)" />
-        {/* Historique */}
-        <path d={`${histPath} L${xS(histPortfolio[histPortfolio.length-1].date).toFixed(1)},${yS(minV).toFixed(1)} L${xS(histPortfolio[0].date).toFixed(1)},${yS(minV).toFixed(1)} Z`} fill="url(#glb-grad)" />
-        <path d={histPath} fill="none" stroke="#6ee7b7" strokeWidth="2" strokeLinejoin="round" />
-        {/* Projections */}
-        <path d={mkProjPath(projHi)}  fill="none" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="5,4" />
-        <path d={mkProjPath(projMid)} fill="none" stroke="#a78bfa" strokeWidth="2"   strokeDasharray="5,4" />
-        <path d={mkProjPath(projLo)}  fill="none" stroke="#f87171" strokeWidth="1.5" strokeDasharray="5,4" />
-        <circle cx={sep} cy={yS(currentValue)} r="4" fill="#6ee7b7" stroke="#0d1f33" strokeWidth="1.5" />
-      </svg>
-
-      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "10px" }}>
-        {[
-          { label: `Optimiste +18m`, val: projHi[PROJ_WEEKS], color: "#60a5fa" },
-          { label: `Tendance +18m`,  val: projMid[PROJ_WEEKS], color: "#a78bfa" },
-          { label: `Pessimiste +18m`,val: projLo[PROJ_WEEKS],  color: "#f87171" },
-          { label: "Actuel",          val: currentValue,         color: "#6ee7b7" },
-        ].map(({ label, val, color }) => (
-          <div key={label} style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", padding: "6px 12px" }}>
-            <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontWeight: "700", textTransform: "uppercase" }}>{label}</div>
-            <div style={{ fontSize: "13px", fontWeight: "800", color }}>{fmtK(val)}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: "8px", fontSize: "9px", color: "rgba(255,255,255,0.2)" }}>
-        △ Projection extrapolée. Non garantie. Ne constitue pas un conseil en investissement.
       </div>
     </div>
   );
