@@ -224,7 +224,7 @@ export default function AutopilotIA({ account, profil, hidden }) {
     if (/technip|schlumberger|saipem|subsea/i.test(nom))              return "Énergie";
     if (/entech|énergie|energy|solaire|éolien|hydrogène|haffner/i.test(nom)) return "Énergie";
     if (/total|bp |shell|equinor/i.test(nom))                         return "Énergie";
-    if (/sanofi|novartis|pfizer|biontech|astrazen/i.test(nom))        return "Santé";
+    if (/sanofi|novartis|pfizer|biontech|astrazen|smaio|medtech|implant|orthop/i.test(nom)) return "Santé";
     if (/airbus|safran|thales|dassault|boeing/i.test(nom))            return "Industrie";
     if (/lvmh|hermès|kering|l.?oréal|luxe/i.test(nom))               return "Luxe";
     if (/bnp|société générale|crédit|axa|allianz/i.test(nom))         return "Finance";
