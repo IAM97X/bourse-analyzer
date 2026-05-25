@@ -106,7 +106,8 @@ function AuthPage({ onSession }) {
   const handleReset = async () => {
     if (!email.trim()) { setError("Entrez votre email."); return; }
     setLoading(true); setError("");
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim());
+    const redirectTo = window.location.origin + window.location.pathname;
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
     if (err) setError(err.message);
     else setInfo("Email de réinitialisation envoyé.");
     setLoading(false);
