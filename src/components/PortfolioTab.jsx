@@ -404,10 +404,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         });
       }
     }
-    // Snapshot CSV : fiable car vient directement de Boursorama
+    // Snapshot CSV : uniquement si les cours réels sont disponibles (pas de PRU comme fallback)
     try {
-      const valeurCsv = next.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
-      const investiCsv = next.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
+      const withCours  = next.filter(p => (p.dernierCours || 0) > 0);
+      const valeurCsv  = withCours.reduce((s, p) => s + p.dernierCours * (p.quantite || 0), 0);
+      const investiCsv = withCours.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
       if (valeurCsv > 0) {
         const today = new Date().toISOString().slice(0, 10);
         let snaps = (() => { try { return JSON.parse(localStorage.getItem("bourse_snapshots") || "[]"); } catch { return []; } })();

@@ -20,26 +20,34 @@ function perfColor(v) {
   return v >= 0 ? C.green : C.red;
 }
 
-function PerfRow({ label, value, note, twr }) {
+function PerfRow({ label, value, note, twr, snap }) {
   const color    = perfColor(value);
   const twrColor = perfColor(twr);
   const fmt = v => v === null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(2) + " %";
+  const fmtEurSimple = v => v == null ? "" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
-      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.85)", fontWeight: "600", lineHeight: "1.35" }}>
-        {label}{note && <sup style={{ fontSize: "9px", opacity: 0.6, marginLeft: "2px" }}>{note}</sup>}
-      </span>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        {twr !== undefined && twr !== null && (
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "10px", color: twrColor, fontWeight: "700" }}>{fmt(twr)}</div>
-            <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)", fontWeight: "600", letterSpacing: "0.5px" }}>TWR</div>
-          </div>
-        )}
-        <span style={{ fontSize: "14px", fontWeight: "800", color, minWidth: "72px", textAlign: "right" }}>
-          {fmt(value)}
+    <div style={{ padding: "11px 0", borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.85)", fontWeight: "600", lineHeight: "1.35" }}>
+          {label}{note && <sup style={{ fontSize: "9px", opacity: 0.6, marginLeft: "2px" }}>{note}</sup>}
         </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {twr !== undefined && twr !== null && (
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "10px", color: twrColor, fontWeight: "700" }}>{fmt(twr)}</div>
+              <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)", fontWeight: "600", letterSpacing: "0.5px" }}>TWR</div>
+            </div>
+          )}
+          <span style={{ fontSize: "14px", fontWeight: "800", color, minWidth: "72px", textAlign: "right" }}>
+            {fmt(value)}
+          </span>
+        </div>
       </div>
+      {snap && (
+        <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.25)", marginTop: "2px" }}>
+          Réf. : {snap.date} · {fmtEurSimple(snap.valeur)}{snap.source ? ` · ${snap.source}` : ""}
+        </div>
+      )}
     </div>
   );
 }
@@ -135,16 +143,16 @@ export default function PerformanceCard({ account = "PEA" }) {
         Suivi des performances · {account}
       </div>
 
-      <PerfRow label={`Ma performance ${yyyy}`}      value={perfYtd}    note="1" twr={twrYtd} />
-      <PerfRow label={`Ma performance ${moisLabel}`} value={perfMois}   note="2" twr={twrMois} />
-      <PerfRow label="Ma performance de la veille"   value={perfVeille} />
+      <PerfRow label={`Ma performance ${yyyy}`}      value={perfYtd}    note="1" twr={twrYtd}  snap={snapYtd} />
+      <PerfRow label={`Ma performance ${moisLabel}`} value={perfMois}   note="2" twr={twrMois} snap={snapMois} />
+      <PerfRow label="Ma performance de la veille"   value={perfVeille} snap={snapVeille} />
 
       <div style={{ margin: "10px 0 2px", borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: "10px" }} />
 
       <PerfRow label={`Performance ${yyyy} du CAC 40`}  value={loading ? null : cac40Ytd}  note="3" />
       <PerfRow label={`Performance ${moisLabel} du CAC 40`} value={loading ? null : cac40Mois} />
 
-      {/* Notes */}
+      {/* Notes + reset */}
       <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "3px" }}>
         {[
           ["1", "Calculée depuis le 1er snapshot disponible de l'année"],
@@ -155,6 +163,19 @@ export default function PerformanceCard({ account = "PEA" }) {
             <sup>{n}</sup> {txt}
           </div>
         ))}
+        <button
+          onClick={() => {
+            if (!window.confirm("Supprimer les snapshots synthétiques (source: positions/transactions) ?\n\nSeuls les snapshots issus d'imports CSV et de prises de snapshot manuelles seront conservés.")) return;
+            try {
+              const snaps = JSON.parse(localStorage.getItem("bourse_snapshots") || "[]");
+              const kept  = snaps.filter(s => s.source === "csv" || s.source === "manual" || !s.source);
+              localStorage.setItem("bourse_snapshots", JSON.stringify(kept));
+              window.location.reload();
+            } catch {}
+          }}
+          style={{ marginTop: "8px", alignSelf: "flex-start", fontSize: "9px", color: "rgba(255,100,100,0.6)", background: "none", border: "1px solid rgba(255,100,100,0.2)", borderRadius: "5px", padding: "3px 8px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          Supprimer snapshots synthétiques
+        </button>
       </div>
     </div>
   );

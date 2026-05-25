@@ -833,8 +833,10 @@ function calcCapitalVerse() {
 }
 
 function takeSnapshot(positions) {
-  const valeur       = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
-  const coutBase     = positions.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
+  // N'utiliser que les positions avec cours réel — PRU ne reflète pas la valeur marché
+  const withCours = positions.filter(p => (p.dernierCours || 0) > 0);
+  const valeur    = withCours.reduce((s, p) => s + p.dernierCours * (p.quantite || 0), 0);
+  const coutBase  = withCours.reduce((s, p) => s + (p.pru || 0) * (p.quantite || 0), 0);
   const capitalVerse = calcCapitalVerse() || coutBase;
   const investi      = capitalVerse; // backward compat
   if (valeur === 0) return;
