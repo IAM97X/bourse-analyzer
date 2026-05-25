@@ -506,7 +506,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>Contexte marché</div>
-              <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55 }}>{result.resume}</div>
+              <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55 }}>{(result.resume || "").replace(/<\/?cite[^>]*>/g, "")}</div>
             </div>
           </div>
 
