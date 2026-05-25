@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { C, shadow } from "../constants/theme";
 import { SYSTEM_PROMPT, MARKET_SCORING_PROMPT } from "../constants/prompts";
 import { load, save } from "../lib/storage";
-import { callClaude, enqueueApi, hasClaudeKey } from "../lib/api";
+import { callClaude, enqueueApi, hasClaudeKey, fetchWithProxy } from "../lib/api";
 import { fetchYahooAnalysts, fetchGoogleNewsRSS, formatExternalContext } from "../lib/market";
 import { useIsMobile } from "../context/mobile";
 import { UI, DEFAULT_PROFIL } from "../constants/config";
@@ -186,8 +186,25 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     if (!positions || positions.length === 0) return;
     setMarketScoringUi(UI.LOADING);
     try {
-      // Résoudre les tickers depuis le cache
+      // Résoudre les tickers : cache existant + résolution Yahoo Search pour les manquants
       const tickerCache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY) || "{}"); } catch { return {}; } })();
+      const missingISINs = positions.filter(p => p.isin && !p.ticker && !tickerCache[p.isin]).map(p => p.isin);
+      if (missingISINs.length > 0) {
+        await Promise.all(missingISINs.map(async (isin) => {
+          try {
+            const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(isin)}&quotesCount=5&newsCount=0`;
+            const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
+            if (!res.ok) return;
+            const json = await res.json();
+            const quotes = json?.quotes || [];
+            const best = quotes.find(q => q.symbol && (q.exchDisp?.includes("Paris") || q.exchDisp?.includes("Amsterdam") || q.exchDisp?.includes("Euronext")))
+              || quotes.find(q => q.symbol && q.quoteType === "EQUITY")
+              || quotes[0];
+            if (best?.symbol) tickerCache[isin] = best.symbol;
+          } catch {}
+        }));
+        try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(tickerCache)); } catch {}
+      }
 
       // Fetcher Yahoo analystes + Google News RSS pour chaque position en parallèle
       const externalData = await Promise.all(positions.map(async (pos) => {
