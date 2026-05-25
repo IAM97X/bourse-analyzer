@@ -61,8 +61,12 @@ export default function PerformanceCard({ account = "PEA" }) {
     ? (currentValue - snap.valeur) / snap.valeur * 100
     : null;
 
-  const perfYtd    = perf(snapYtd);
-  const perfMois   = perf(snapMois);
+  // Fallback : si pas de snapshot YTD/mensuel, calculer depuis le PRU total
+  const totalInvesti = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
+  const perfDepuisAchat = totalInvesti > 0 ? (currentValue - totalInvesti) / totalInvesti * 100 : null;
+
+  const perfYtd    = perf(snapYtd)    ?? perfDepuisAchat;
+  const perfMois   = perf(snapMois)   ?? perfDepuisAchat;
   const perfVeille = perf(snapVeille);
 
   const moisLabel = now.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });

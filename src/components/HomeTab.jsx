@@ -627,9 +627,23 @@ function CourbeEvolution({ hidden, positions, account }) {
     } catch { return null; }
   }, [period]);
 
-  // Priorité : CSV Boursobank > Yahoo reconstruit > Snapshots
+  // Synthèse minimale si aucune donnée : 2 points (hier + aujourd'hui) à partir du portfolio actuel
+  const syntheticPoints = useMemo(() => {
+    if (!positions || positions.length === 0) return null;
+    const valeur  = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+    const investi = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
+    if (valeur <= 0) return null;
+    const today     = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    return [
+      { date: yesterday, valeur, investi, capitalVerse: investi },
+      { date: today,     valeur, investi, capitalVerse: investi },
+    ];
+  }, [positions]);
+
+  // Priorité : CSV Boursobank > Yahoo reconstruit > Snapshots > Synthèse
   const dataSource = csvFiltered ? "boursobank" : yahooPoints ? "yahoo" : "snapshots";
-  const rawPoints  = csvFiltered ?? yahooPoints ?? snapPoints;
+  const rawPoints  = csvFiltered ?? yahooPoints ?? snapPoints ?? syntheticPoints;
 
   const { points, current, first, investi, perfCumFromCSV } = useMemo(() => {
     if (!rawPoints || rawPoints.length < 2) return { points: null };
