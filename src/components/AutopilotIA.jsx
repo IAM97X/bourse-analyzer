@@ -2,7 +2,7 @@ import { useState } from "react";
 import { C, shadow } from "../constants/theme";
 import { AUTOPILOT_UNIVERSE, fetchYahooPrices } from "../constants/universe";
 import { load, save } from "../lib/storage";
-import { sanitizePositions, fmtEur, PROFIL_RANK, getEuronextUrl, checkPEAEligibility } from "../lib/finance";
+import { sanitizePositions, fmtEur, PROFIL_RANK, getEuronextUrl, checkPEAEligibility, isETFName } from "../lib/finance";
 import { callClaude, CLAUDE_MODELS } from "../lib/api";
 
 // ─── Catégories d'allocation ───────────────────────────────────────────────
@@ -206,6 +206,33 @@ export default function AutopilotIA({ account, profil, hidden }) {
     return all.filter(i => (PROFIL_RANK[i.profil_min || "prudent"] ?? 0) <= profilRank);
   })();
 
+  // Catégorie intelligente : secteur d'abord, puis détection par nom
+  const getSmartCat = (p) => {
+    const fromSector = getCat(p.secteur || "");
+    if (fromSector !== "Autres") return fromSector;
+    const nom = (p.nom || "").toLowerCase();
+    if (isETFName(p.nom)) {
+      if (/monde|world|msci|all.?country|acwi/i.test(nom))            return "ETF Monde";
+      if (/s&p|sp500|nasdaq|usa|amériq|america/i.test(nom))           return "ETF Monde";
+      if (/europe|europ|stoxx/i.test(nom))                            return "ETF Monde";
+      if (/émergent|emerging|bric/i.test(nom))                        return "ETF Monde";
+      if (/tech|digital|numérique|innovation/i.test(nom))             return "ETF Sectoriel";
+      if (/santé|health|pharma|biotech/i.test(nom))                   return "ETF Sectoriel";
+      if (/énergie|energy|clean|vert|green/i.test(nom))               return "ETF Sectoriel";
+      return "ETF Monde";
+    }
+    if (/technip|schlumberger|saipem|subsea/i.test(nom))              return "Énergie";
+    if (/entech|énergie|energy|solaire|éolien|hydrogène|haffner/i.test(nom)) return "Énergie";
+    if (/total|bp |shell|equinor/i.test(nom))                         return "Énergie";
+    if (/sanofi|novartis|pfizer|biontech|astrazen/i.test(nom))        return "Santé";
+    if (/airbus|safran|thales|dassault|boeing/i.test(nom))            return "Industrie";
+    if (/lvmh|hermès|kering|l.?oréal|luxe/i.test(nom))               return "Luxe";
+    if (/bnp|société générale|crédit|axa|allianz/i.test(nom))         return "Finance";
+    if (/nvidia|intel|amd|asml|stmicro|semi/i.test(nom))              return "Semi-conducteurs";
+    if (/microsoft|apple|google|meta|amazon|capgem|dassault syst/i.test(nom)) return "Tech / IA";
+    return "Autres";
+  };
+
   // Current portfolio allocation by category
   const calcCurrentAlloc = () => {
     if (!positions.length) return {};
@@ -213,7 +240,7 @@ export default function AutopilotIA({ account, profil, hidden }) {
     let totalVal = 0;
     positions.forEach(p => {
       const val = (p.quantite || 0) * (p.dernierCours || p.pru || 0);
-      const cat = getCat(p.secteur || "");
+      const cat = getSmartCat(p);
       bycat[cat] = (bycat[cat] || 0) + val;
       totalVal += val;
     });
