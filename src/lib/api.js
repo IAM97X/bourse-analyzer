@@ -5,13 +5,21 @@ const PROXIES = [
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
 ];
 export async function fetchWithProxy(url, opts = {}) {
+  // En production, on passe par le proxy Vercel pour éviter les blocages Yahoo
+  if (process.env.NODE_ENV === "production" && url.includes("yahoo.com")) {
+    try {
+      const proxyUrl = `/api/yahoo-proxy?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000), ...opts });
+      if (res.ok || res.status < 500) return res;
+    } catch {}
+  }
   for (const proxy of PROXIES) {
     try {
       const res = await fetch(proxy(url), { signal: AbortSignal.timeout(10000), ...opts });
       if (res.ok || res.status < 500) return res;
     } catch {}
   }
-  throw new Error("Données de marché indisponibles (proxies CORS inaccessibles)");
+  throw new Error("Données de marché indisponibles");
 }
 
 export const CLAUDE_MODELS = {
