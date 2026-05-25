@@ -1,9 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { AUTOPILOT_UNIVERSE, fetchYahooPrices } from "../constants/universe";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur, PROFIL_RANK, getEuronextUrl, checkPEAEligibility, isETFName } from "../lib/finance";
-import { callClaude, CLAUDE_MODELS } from "../lib/api";
+import { callClaude, CLAUDE_MODELS, fetchWithProxy } from "../lib/api";
+
+// Yahoo Finance sector → ALLOC_CATS
+const YAHOO_SECTOR_TO_CAT = {
+  "Healthcare":"Santé","Biotechnology":"Santé","Medical Devices":"Santé","Drug Manufacturers":"Santé",
+  "Technology":"Tech / IA","Software":"Tech / IA","Internet Content & Information":"Tech / IA",
+  "Electronic Technology":"Tech / IA","Computer Hardware":"Tech / IA",
+  "Semiconductors":"Semi-conducteurs","Semiconductor Equipment & Materials":"Semi-conducteurs",
+  "Electronic Components":"Semi-conducteurs",
+  "Industrials":"Industrie","Aerospace & Defense":"Industrie","Industrial Machinery":"Industrie",
+  "Engineering & Construction":"Industrie","Air Freight & Logistics":"Industrie",
+  "Energy":"Énergie","Oil & Gas":"Énergie","Utilities":"Énergie","Renewable Energy":"Énergie",
+  "Financial Services":"Finance","Banks":"Finance","Insurance":"Finance","Asset Management":"Finance",
+  "Consumer Cyclical":"Luxe","Luxury Goods":"Luxe","Apparel":"Luxe","Consumer Defensive":"Luxe",
+  "Communication Services":"Tech / IA","Telecom Services":"Autres",
+  "Basic Materials":"Autres","Real Estate":"Autres","Consumer Electronics":"Tech / IA",
+};
 
 // ─── Catégories d'allocation ───────────────────────────────────────────────
 const ALLOC_CATS = [
@@ -58,6 +74,12 @@ const DEFAULT_ALLOC = {
 
 const getCat = s => SECTOR_TO_CAT[s] || "Autres";
 const catColor = key => ALLOC_CATS.find(c => c.key === key)?.color || "#64748B";
+
+// ISIN → catégorie depuis l'univers (lookup instantané, initialisé après SECTOR_TO_CAT)
+const ISIN_TO_CAT_UNIVERSE = {};
+[...AUTOPILOT_UNIVERSE.PEA, ...AUTOPILOT_UNIVERSE.CTO].forEach(i => {
+  if (i.isin) ISIN_TO_CAT_UNIVERSE[i.isin] = getCat(i.secteur || "");
+});
 
 // ─── Composant allocation bar ──────────────────────────────────────────────
 function AllocBar({ cat, tgt, cur, onChange }) {
@@ -206,8 +228,15 @@ export default function AutopilotIA({ account, profil, hidden }) {
     return all.filter(i => (PROFIL_RANK[i.profil_min || "prudent"] ?? 0) <= profilRank);
   })();
 
-  // Catégorie intelligente : secteur d'abord, puis détection par nom
+  // Cache ISIN→catégorie (Yahoo Finance) persisté en localStorage
+  const [isinCatCache, setIsinCatCache] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("bourse_isin_cat_cache") || "{}"); } catch { return {}; }
+  });
+
+  // Catégorie intelligente : ISIN univers > ISIN cache > secteur > nom
   const getSmartCat = (p) => {
+    if (p.isin && ISIN_TO_CAT_UNIVERSE[p.isin]) return ISIN_TO_CAT_UNIVERSE[p.isin];
+    if (p.isin && isinCatCache[p.isin])          return isinCatCache[p.isin];
     const fromSector = getCat(p.secteur || "");
     if (fromSector !== "Autres") return fromSector;
     const nom = (p.nom || "").toLowerCase();
@@ -216,22 +245,52 @@ export default function AutopilotIA({ account, profil, hidden }) {
       if (/s&p|sp500|nasdaq|usa|amériq|america/i.test(nom))           return "ETF Monde";
       if (/europe|europ|stoxx/i.test(nom))                            return "ETF Monde";
       if (/émergent|emerging|bric/i.test(nom))                        return "ETF Monde";
-      if (/tech|digital|numérique|innovation/i.test(nom))             return "ETF Sectoriel";
-      if (/santé|health|pharma|biotech/i.test(nom))                   return "ETF Sectoriel";
-      if (/énergie|energy|clean|vert|green/i.test(nom))               return "ETF Sectoriel";
+      if (/tech|digital|innovation/i.test(nom))                       return "ETF Sectoriel";
+      if (/santé|health|pharma/i.test(nom))                           return "ETF Sectoriel";
+      if (/énergie|energy|clean|green/i.test(nom))                    return "ETF Sectoriel";
       return "ETF Monde";
     }
-    if (/technip|schlumberger|saipem|subsea/i.test(nom))              return "Énergie";
-    if (/entech|énergie|energy|solaire|éolien|hydrogène|haffner/i.test(nom)) return "Énergie";
+    if (/technip|schlumberger|saipem|subsea|haffner/i.test(nom))      return "Énergie";
+    if (/entech|solaire|éolien|hydrogène/i.test(nom))                 return "Énergie";
     if (/total|bp |shell|equinor/i.test(nom))                         return "Énergie";
-    if (/sanofi|novartis|pfizer|biontech|astrazen|smaio|medtech|implant|orthop/i.test(nom)) return "Santé";
-    if (/airbus|safran|thales|dassault|boeing/i.test(nom))            return "Industrie";
-    if (/lvmh|hermès|kering|l.?oréal|luxe/i.test(nom))               return "Luxe";
-    if (/bnp|société générale|crédit|axa|allianz/i.test(nom))         return "Finance";
-    if (/nvidia|intel|amd|asml|stmicro|semi/i.test(nom))              return "Semi-conducteurs";
-    if (/microsoft|apple|google|meta|amazon|capgem|dassault syst/i.test(nom)) return "Tech / IA";
+    if (/smaio|sanofi|novartis|pfizer|astrazen|medtech|implant/i.test(nom)) return "Santé";
+    if (/airbus|safran|thales|boeing/i.test(nom))                     return "Industrie";
+    if (/lvmh|hermès|kering|l.?oréal/i.test(nom))                    return "Luxe";
+    if (/bnp|société générale|axa|allianz/i.test(nom))                return "Finance";
+    if (/nvidia|asml|stmicro/i.test(nom))                             return "Semi-conducteurs";
+    if (/microsoft|apple|google|meta|capgem/i.test(nom))              return "Tech / IA";
     return "Autres";
   };
+
+  // Fetch automatique des secteurs manquants via Yahoo Finance
+  useEffect(() => {
+    const missing = positions.filter(p => p.isin && p.ticker
+      && !ISIN_TO_CAT_UNIVERSE[p.isin]
+      && !isinCatCache[p.isin]
+    );
+    if (!missing.length) return;
+    let cancelled = false;
+    (async () => {
+      const updates = {};
+      await Promise.all(missing.map(async p => {
+        try {
+          const res  = await fetchWithProxy(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(p.ticker)}?modules=assetProfile`);
+          const json = await res.json();
+          const profile = json?.quoteSummary?.result?.[0]?.assetProfile;
+          const sector  = profile?.sector || profile?.industry || "";
+          const cat = YAHOO_SECTOR_TO_CAT[sector] || getCat(p.secteur || "") || "Autres";
+          if (cat !== "Autres" || sector) updates[p.isin] = cat;
+        } catch {}
+      }));
+      if (!cancelled && Object.keys(updates).length) {
+        const next = { ...isinCatCache, ...updates };
+        localStorage.setItem("bourse_isin_cat_cache", JSON.stringify(next));
+        setIsinCatCache(next);
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [positions.map(p => p.isin).join(",")]);
 
   // Current portfolio allocation by category
   const calcCurrentAlloc = () => {
