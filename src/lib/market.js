@@ -272,8 +272,9 @@ export async function fetchGoogleNewsRSS(query) {
   const text = await res.text();
   const xml = new DOMParser().parseFromString(text, "text/xml");
   return [...xml.querySelectorAll("item")].slice(0, 5).map(item => ({
-    title: item.querySelector("title")?.textContent?.replace(/ - [^-]+$/, "").trim() || "",
-    pubDate: item.querySelector("pubDate")?.textContent || "",
+    title:   item.querySelector("title")?.textContent?.replace(/ - [^-]+$/, "").trim() || "",
+    snippet: item.querySelector("description")?.textContent?.replace(/<[^>]*>/g, "").slice(0, 200).trim() || "",
+    pubDate: item.querySelector("pubDate")?.textContent?.slice(0, 16) || "",
   }));
 }
 
@@ -299,7 +300,11 @@ export function formatExternalContext(nom, analysts, news) {
   }
   if (news && news.length > 0) {
     lines.push("Actualités récentes :");
-    news.forEach(n => lines.push(`  • ${n.title}`));
+    news.forEach(n => {
+      const date = n.pubDate ? ` [${n.pubDate}]` : "";
+      lines.push(`  • ${n.title}${date}`);
+      if (n.snippet) lines.push(`    ${n.snippet}`);
+    });
   }
   return lines.join("\n");
 }
