@@ -665,7 +665,13 @@ function CourbeEvolution({ hidden, positions, account }) {
 
   if (!points) return (
     <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "12px" }}>
-      Aucune donnée disponible · importez votre CSV et actualisez les cours.
+      <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
+      <div style={{ marginBottom: "12px" }}>Aucune donnée disponible</div>
+      <button onClick={() => fileInputRef.current?.click()}
+        style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+        + Importer CSV Boursobank
+      </button>
+      <div style={{ marginTop: "8px", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>Boursobank · Fortuneo · DEGIRO</div>
     </div>
   );
 
