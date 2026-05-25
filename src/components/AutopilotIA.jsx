@@ -333,6 +333,28 @@ export default function AutopilotIA({ account, profil, hidden }) {
           }).join("\n")
         : "Premier investissement — respecter la répartition cible";
 
+      // Signaux marché existants (scoring précédent)
+      const prevScoring = (() => { try { return JSON.parse(localStorage.getItem("bourse_market_scoring") || "[]"); } catch { return []; } })();
+      const sigCtx = prevScoring.length > 0
+        ? prevScoring.map(s => `  • ${s.nom} (${s.isin || ""}) — ${s.signal} (${s.score_marche}/20) — ${s.resume || ""}`).join("\n")
+        : "  Aucun signal calculé — lancer le scoring Marché pour les obtenir";
+
+      // Performances depuis snapshots
+      const snapshots = (() => { try { return JSON.parse(localStorage.getItem("bourse_snapshots") || "[]"); } catch { return []; } })();
+      const nowDate = new Date();
+      const yyyyNow = nowDate.getFullYear();
+      const mmNow   = String(nowDate.getMonth() + 1).padStart(2, "0");
+      const findSnap = t => { const b = snapshots.filter(s => s.date <= t); return b.length ? b[b.length-1] : null; };
+      const sYtd  = findSnap(`${yyyyNow}-01-01`);
+      const sMois = findSnap(`${yyyyNow}-${mmNow}-01`);
+      const pYtd  = sYtd  && sYtd.valeur  > 0 ? ((totalVal - sYtd.valeur)  / sYtd.valeur  * 100).toFixed(1) : null;
+      const pMois = sMois && sMois.valeur > 0 ? ((totalVal - sMois.valeur) / sMois.valeur * 100).toFixed(1) : null;
+      const perfCtx = (pYtd != null || pMois != null)
+        ? `PERFORMANCES :
+  YTD ${yyyyNow} : ${pYtd != null ? (pYtd >= 0 ? "+" : "") + pYtd + "%" : "—"}
+  Mois en cours : ${pMois != null ? (pMois >= 0 ? "+" : "") + pMois + "%" : "—"}`
+        : "";
+
       const system = `Tu es un gérant de portefeuille privé senior spécialisé ${account}. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
 PROFIL : ${profilLabel} | DCA : ${dcaMensuel}€/mois | COURTIER : ${profil?.courtier || "boursobank"} | HORIZON : ${profil?.horizon || "moyen terme"}
 
@@ -340,13 +362,17 @@ PORTEFEUILLE ACTUEL :
 ${portfolioCtx}
 
 ${metriquesCtx}
+${perfCtx}
+
+SIGNAUX IA PAR POSITION (scoring marché) :
+${sigCtx}
 
 RÉPARTITION CIBLE :
 ${allocCibleStr}
 ÉCARTS (actuel → cible) :
 ${allocGapStr}
 
-RÈGLE ANALYSE : utilise exclusivement les données chiffrées ci-dessus (PRU, PV%, poids, valeur totale). Ne generalise jamais — chaque affirmation doit référencer un chiffre réel du portefeuille.`;
+RÈGLES : utilise exclusivement les données chiffrées ci-dessus. L'éligibilité PEA est indiquée [PEA✓/✗] — ne la remet jamais en question si PEA✓. Ne renvoie jamais vers Boursorama pour des infos que tu possèdes déjà. Sois direct et tranché.`;
 
       setStep("Analyse IA et recherche d'actualités…");
 
