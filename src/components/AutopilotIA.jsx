@@ -595,8 +595,8 @@ RÈGLE MONTANT : ${nbOppMax === 1
                 : op.allocation_pct > 0
                   ? Math.round(budget * op.allocation_pct / 100)
                   : Math.round(budget / nbOpp);
-              const nbTitres = prix > 0 ? Math.max(1, Math.floor(budgetOp / prix)) : 1;
-              const montant  = nbTitres * prix || budgetOp;
+              const nbTitres = prix > 0 ? Math.floor(budgetOp / prix) : 0;
+              const montant  = nbTitres * prix;
               const catalyseurDisplay = op.catalyseur && op.catalyseur.length > 55 ? op.catalyseur.slice(0, 52) + "…" : op.catalyseur;
               const catCible = op.categorie_cible || getCat(op.secteur || "");
               const catCol = catColor(catCible);
@@ -638,7 +638,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
                     </div>
                     <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55, marginBottom: "6px",
                       ...(!isExpanded ? { overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" } : {}) }}>
-                      {op.rationale}
+                      {(op.rationale || "").replace(/<\/?cite[^>]*>/g, "")}
                     </div>
                     <button onClick={() => setExpanded(e => ({ ...e, [i]: !e[i] }))}
                       style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: "none", padding: "0 0 8px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
@@ -648,7 +648,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
                       {[
                         { label: "Risque",    val: op.risque,   color: riskColor(op.risque) },
                         { label: "Horizon",   val: op.horizon,  color: C.inkMuted },
-                        { label: "Montant",   val: `${fmtEur(montant)} · ${nbTitres} titre${nbTitres > 1 ? "s" : ""}`, color: C.ink },
+                        { label: "Montant",   val: nbTitres === 0 ? `Budget insuffisant (${fmtEur(prix)}/titre)` : `${fmtEur(montant)} · ${nbTitres} titre${nbTitres > 1 ? "s" : ""}`, color: nbTitres === 0 ? C.red : C.ink },
                         { label: "Δ bas 52s", val: op.dist_bas52 != null ? `+${op.dist_bas52}%` : "—", color: (op.dist_bas52 || 0) < 10 ? C.green : C.inkSubtle },
                       ].map(m => (
                         <div key={m.label} style={{ background: C.snowOff, borderRadius: "6px", padding: "4px 10px" }}>
