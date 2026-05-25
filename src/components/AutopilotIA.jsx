@@ -67,11 +67,13 @@ function AllocBar({ cat, tgt, cur, onChange }) {
     <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0" }}>
       <div style={{ width: "120px", fontSize: "11px", color: C.inkMuted, fontWeight: "600", flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cat.label}</div>
       <div style={{ flex: 1, position: "relative", height: "18px", background: C.snowOff, borderRadius: "4px", overflow: "hidden" }}>
-        {/* current */}
         {cur > 0 && <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100,cur)}%`, background: color + "40", borderRadius: "4px" }} />}
-        {/* target */}
         {tgt > 0 && <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100,tgt)}%`, background: color + "22", borderRadius: "4px", border: `1px solid ${color}60` }} />}
       </div>
+      {/* Actuel */}
+      <span style={{ fontSize: "11px", fontWeight: "700", color: cur > 0 ? color : C.inkSubtle, width: "30px", textAlign: "right" }}>{cur > 0 ? `${cur}%` : "—"}</span>
+      <span style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0 }}>→</span>
+      {/* Cible */}
       <input
         type="number" min="0" max="100" step="5"
         value={tgt || ""}
@@ -79,7 +81,8 @@ function AllocBar({ cat, tgt, cur, onChange }) {
         style={{ width: "46px", textAlign: "center", border: `1px solid ${tgt > 0 ? color : C.border}`, borderRadius: "6px", padding: "3px 4px", fontSize: "12px", fontWeight: "700", color: tgt > 0 ? color : C.inkSubtle, background: tgt > 0 ? color + "08" : "transparent", fontFamily: "Inter,sans-serif", outline: "none" }}
       />
       <span style={{ fontSize: "10px", color: C.inkSubtle, width: "14px" }}>%</span>
-      {gap > 0 && <span style={{ fontSize: "10px", fontWeight: "700", color: color, background: color + "15", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>↑{gap}%</span>}
+      {gap > 2 && <span style={{ fontSize: "10px", fontWeight: "700", color: color, background: color + "15", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>↑{gap}%</span>}
+      {cur > 0 && tgt > 0 && cur > tgt + 2 && <span style={{ fontSize: "10px", fontWeight: "700", color: C.red, background: C.red + "15", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>↓{cur - tgt}%</span>}
     </div>
   );
 }
@@ -576,7 +579,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
               />
             ))}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px" }}>
-              <span style={{ fontSize: "10px", color: C.inkSubtle }}>Barre bleue = actuel · contour = cible · ↑ = sous-pondéré</span>
+              <span style={{ fontSize: "10px", color: C.inkSubtle }}>Actuel → Cible · ↑ sous-pondéré · ↓ sur-pondéré</span>
               <button onClick={resetAlloc}
                 style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
                 Réinitialiser
