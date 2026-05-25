@@ -11,6 +11,8 @@ export const SYNC_KEYS = [
   "bourse_sidebar_collapsed", "bourse_active_tab",
   "bourse_avis_operes", "bourse_snapshots", "bourse_dividendes",
   "bourse_api_keys", "bourse_impot_sortie", "bourse_local_name",
+  "bourse_price_history", "bourse_evolution_csv", "bourse_isin_ticker_cache",
+  "bourse_autopilot_result_PEA", "bourse_autopilot_result_CTO",
 ];
 
 let _syncUserId = null;
