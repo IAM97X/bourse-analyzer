@@ -84,6 +84,67 @@ function AllocBar({ cat, tgt, cur, onChange }) {
   );
 }
 
+// ─── Analyse stratégique ──────────────────────────────────────────────────
+function AnalyseStrategique({ analyse }) {
+  const [open, setOpen] = useState(true);
+  if (!analyse) return null;
+
+  const SECTIONS = [
+    { key: "bilan_global",   label: "Bilan global",                  dot: "#60A5FA" },
+    { key: "surexpositions", label: "Surexpositions & concentration", dot: "#F87171" },
+    { key: "manques",        label: "Manques sectoriels",            dot: "#FBBF24" },
+    { key: "correlations",   label: "Corrélations à risque",         dot: "#A78BFA" },
+  ];
+
+  return (
+    <div style={{ background: "linear-gradient(135deg,#0d1f3c 0%,#162a4a 100%)", borderRadius: "16px", marginBottom: "12px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
+      <button onClick={() => setOpen(v => !v)}
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "none", border: "none", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "13px", fontWeight: "800", color: "#fff" }}>Analyse stratégique</span>
+          <span style={{ fontSize: "9px", fontWeight: "700", color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.09)", borderRadius: "4px", padding: "2px 7px", letterSpacing: "0.8px", textTransform: "uppercase" }}>Conseiller IA</span>
+        </div>
+        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div style={{ padding: "2px 18px 18px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          {SECTIONS.map(s => analyse[s.key] && (
+            <div key={s.key} style={{ marginTop: "14px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px" }}>
+                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
+                <span style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.9px" }}>{s.label}</span>
+              </div>
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)", lineHeight: 1.65, paddingLeft: "12px" }}>{analyse[s.key]}</div>
+            </div>
+          ))}
+
+          {analyse.actions_prioritaires?.length > 0 && (
+            <div style={{ marginTop: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#34D399", flexShrink: 0 }} />
+                <span style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.9px" }}>Actions prioritaires</span>
+              </div>
+              {analyse.actions_prioritaires.map((a, i) => (
+                <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "10px 12px" }}>
+                  <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: "10px", fontWeight: "800", color: "#34D399" }}>{a.rang}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "12px", fontWeight: "700", color: "#fff", marginBottom: "3px" }}>{a.titre}</div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", lineHeight: 1.55 }}>{a.detail}</div>
+                    {a.impact && <div style={{ fontSize: "10px", color: "#60A5FA", marginTop: "4px", fontWeight: "600" }}>→ {a.impact}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Composant principal ───────────────────────────────────────────────────
 export default function AutopilotIA({ account, profil, hidden }) {
   const positions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === (account || "PEA"));
@@ -235,12 +296,29 @@ export default function AutopilotIA({ account, profil, hidden }) {
         return `${i.isin} | ${i.nom} | ${i.symbol} | ${i.secteur} | cat:${cat} | ${gapPct} | COURS:N/A`;
       }).join("\n");
 
+      const totalVal   = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * p.quantite, 0);
+      const totalInves = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
+
       const portfolioCtx = positions.length > 0
         ? positions.map(p => {
-            const pvPct = p.pru > 0 ? (((p.dernierCours || p.pru) - p.pru) / p.pru * 100).toFixed(1) : "0";
-            return `• ${p.nom} (${p.isin}) — ${p.quantite} titres @ PRU ${p.pru}€ — PV: ${pvPct}%`;
+            const cours = p.dernierCours || p.pru || 0;
+            const val   = cours * p.quantite;
+            const pvPct = p.pru > 0 ? ((cours - p.pru) / p.pru * 100).toFixed(1) : "0";
+            const poids = totalVal > 0 ? (val / totalVal * 100).toFixed(1) : "—";
+            return `• ${p.nom} (${p.isin}) — ${p.quantite} titres @ PRU ${fmtEur(p.pru)} — cours ${fmtEur(cours)} — PV: ${pvPct}% — poids: ${poids}%`;
           }).join("\n")
         : "Portefeuille vide";
+      const pvGlobalPct = totalInves > 0 ? ((totalVal - totalInves) / totalInves * 100).toFixed(1) : "0";
+      const sortedByWeight = [...positions].sort((a, b) =>
+        ((b.dernierCours || b.pru || 0) * b.quantite) - ((a.dernierCours || a.pru || 0) * a.quantite));
+      const top1 = sortedByWeight[0];
+      const top1Pct = totalVal > 0 && top1 ? ((top1.dernierCours || top1.pru || 0) * top1.quantite / totalVal * 100).toFixed(1) : "0";
+      const allocActuelleStr = Object.entries(currentAlloc).filter(([k]) => k !== "_totalVal").map(([k, v]) => `${k}=${v}%`).join(", ");
+      const metriquesCtx = totalVal > 0 ? `MÉTRIQUES CLÉS :
+- Valeur totale : ${fmtEur(totalVal)} | Investi : ${fmtEur(totalInves)} | PV globale : ${pvGlobalPct >= 0 ? "+" : ""}${pvGlobalPct}%
+- Plus grosse position : ${top1?.nom || "—"} (${top1Pct}% du portefeuille)
+- Répartition actuelle par catégorie : ${allocActuelleStr}
+- Nombre de positions : ${positions.length}` : "";
 
       const allocCibleStr = nonZero.map(([k, v]) => `  ${k}: ${v}%`).join("\n");
       const allocGapStr = nonZero.length > 0 && positions.length > 0
@@ -252,14 +330,20 @@ export default function AutopilotIA({ account, profil, hidden }) {
           }).join("\n")
         : "Premier investissement — respecter la répartition cible";
 
-      const system = `Tu es un gérant de portefeuille expert spécialisé ${account}. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
+      const system = `Tu es un gérant de portefeuille privé senior spécialisé ${account}. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
 PROFIL : ${profilLabel} | DCA : ${dcaMensuel}€/mois | COURTIER : ${profil?.courtier || "boursobank"} | HORIZON : ${profil?.horizon || "moyen terme"}
+
 PORTEFEUILLE ACTUEL :
 ${portfolioCtx}
+
+${metriquesCtx}
+
 RÉPARTITION CIBLE :
 ${allocCibleStr}
 ÉCARTS (actuel → cible) :
-${allocGapStr}`;
+${allocGapStr}
+
+RÈGLE ANALYSE : utilise exclusivement les données chiffrées ci-dessus (PRU, PV%, poids, valeur totale). Ne generalise jamais — chaque affirmation doit référencer un chiffre réel du portefeuille.`;
 
       setStep("Analyse IA et recherche d'actualités…");
 
@@ -291,8 +375,17 @@ Critères : cours proche du bas 52 semaines, dist_bas faible, catalyseur récent
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {
-  "resume": "Analyse des écarts et contexte marché pour profil ${profilLabel} en 2-3 phrases",
+  "resume": "Contexte marché et positionnement global en 1-2 phrases synthétiques",
   "score_marche": 7,
+  "analyse_portefeuille": {
+    "bilan_global": "État factuel du portefeuille : PV globale chiffrée, niveau de diversification réel, adéquation profil ${profilLabel} — utiliser les vrais chiffres fournis",
+    "surexpositions": "Concentrations identifiées avec % exacts tirés des données. Ex: 'SMAIO représente X% du portefeuille avec +Y% de PV — risque de correction'. Si aucune : 'Aucune surexposition critique détectée'",
+    "manques": "Secteurs absents qui fragilisent concrètement ce profil ${profilLabel} sur l'horizon ${profil?.horizon || "moyen terme"}. Ne pas citer ce qui est déjà couvert par l'ETF",
+    "correlations": "Positions partageant des catalyseurs communs de baisse — nommer le risque macroéconomique précis (taux, politique, secteur). Si portefeuille < 3 positions : 'Portefeuille trop concentré pour analyse de corrélation'",
+    "actions_prioritaires": [
+      {"rang": 1, "titre": "Titre court de l'action", "detail": "Description chiffrée — montant exact, nb titres possibles, impact sur répartition", "impact": "Répartition avant → après. Ex: ETF Monde 58% → 65%"}
+    ]
+  },
   "opportunites": [
     {
       "symbol": "CW8.PA",
@@ -509,6 +602,9 @@ RÈGLE MONTANT : ${nbOppMax === 1
               <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.55 }}>{(result.resume || "").replace(/<\/?cite[^>]*>/g, "")}</div>
             </div>
           </div>
+
+          {/* Analyse stratégique conseiller */}
+          <AnalyseStrategique analyse={result.analyse_portefeuille} />
 
           {/* Analyse allocation (si résultat contient les données) */}
           {result.allocCibles && (
