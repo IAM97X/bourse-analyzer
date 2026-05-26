@@ -20,7 +20,7 @@ import StratégieDCATab from "./StratégieDCATab";
 import ProjectionTab from "./ProjectionTab";
 import HistoriqueTab, { OperationsTab } from "./HistoriqueTab";
 import ProfilTab, { ParametresTab } from "./ProfilTab";
-import OnboardingGuide, { ONBOARDING_KEY } from "./OnboardingGuide";
+import OnboardingWizard, { ONBOARDING_KEY } from "./OnboardingWizard";
 import PWAInstallBanner from "./PWAInstallBanner";
 import HomeTab from "./HomeTab";
 
@@ -527,7 +527,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       <PWAInstallBanner />
 
       {/* ── Onboarding Guide ── */}
-      {showOnboarding && <OnboardingGuide onDone={() => setShowOnboarding(false)} />}
+      {showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); window.location.reload(); }} />}
 
       {/* ── Bottom navigation bar (mobile only) ── */}
       <nav className="ba-bottom-nav">
