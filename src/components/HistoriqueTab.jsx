@@ -64,11 +64,12 @@ function getPosCat(p, cache = {}) {
 
 // ─── Tableau de répartition sectorielle ──────────────────────────────────────
 function SecteurTable({ positions, account = "PEA" }) {
+  const [hovered, setHovered] = useState(null);
+
   const isinCatCache = useMemo(() => {
     try { return JSON.parse(localStorage.getItem("bourse_isin_cat_cache") || "{}"); } catch { return {}; }
   }, []);
 
-  // Cibles Autopilot (si une analyse a été lancée)
   const allocCibles = useMemo(() => {
     try {
       const profil = JSON.parse(localStorage.getItem("bourse_profil") || "{}");
@@ -80,17 +81,16 @@ function SecteurTable({ positions, account = "PEA" }) {
 
   const totalVal = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * p.quantite, 0);
 
-  // Regrouper par catégorie
   const byCat = {};
   positions.forEach(p => {
     const cat = getPosCat(p, isinCatCache);
     if (!byCat[cat]) byCat[cat] = { valeur: 0, positions: [] };
-    byCat[cat].valeur     += (p.dernierCours || p.pru || 0) * p.quantite;
-    byCat[cat].positions.push(p.nom);
+    byCat[cat].valeur += (p.dernierCours || p.pru || 0) * p.quantite;
+    byCat[cat].positions.push({ nom: p.nom, valeur: (p.dernierCours || p.pru || 0) * p.quantite, pru: p.pru, cours: p.dernierCours });
   });
 
   const hasTargets = allocCibles && Object.keys(allocCibles).length > 0;
-  const maxPct = Math.max(...Object.values(byCat).map(b => totalVal > 0 ? b.valeur / totalVal * 100 : 0), 1);
+  const rows = ALLOC_CATS.filter(cat => byCat[cat.key] || (allocCibles && Number(allocCibles[cat.key]) > 0));
 
   return (
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "18px 20px", boxShadow: shadow.card }}>
@@ -103,58 +103,82 @@ function SecteurTable({ positions, account = "PEA" }) {
         )}
       </div>
 
-      {/* Lignes */}
-      {ALLOC_CATS.filter(cat => byCat[cat.key] || (allocCibles && Number(allocCibles[cat.key]) > 0)).map(cat => {
+      {rows.map(cat => {
         const data    = byCat[cat.key];
         const valeur  = data?.valeur || 0;
         const cur     = totalVal > 0 && valeur > 0 ? Math.round(valeur / totalVal * 100) : 0;
         const tgt     = hasTargets ? Number(allocCibles[cat.key] || 0) : null;
         const gap     = tgt !== null ? tgt - cur : 0;
         const present = cur > 0;
-        const noms    = data?.positions || [];
+        const posItems = data?.positions || [];
+        const isHov   = hovered === cat.key;
 
         return (
-          <div key={cat.key} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 0", borderBottom: `1px solid rgba(0,0,0,0.04)`, opacity: (present || tgt > 0) ? 1 : 0.35 }}>
-            {/* Label */}
-            <div style={{ width: "140px", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: present ? cat.color : C.border, flexShrink: 0 }} />
-              <span style={{ fontSize: "12px", fontWeight: present ? "700" : "500", color: present ? C.ink : C.inkSubtle, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cat.label}</span>
+          <div key={cat.key}
+            onMouseEnter={() => setHovered(cat.key)}
+            onMouseLeave={() => setHovered(null)}
+            style={{ borderRadius: "10px", padding: "8px 10px", marginBottom: "2px", background: isHov ? cat.color + "0A" : "transparent", transition: "background 0.15s", cursor: "default", opacity: (present || tgt > 0) ? 1 : 0.4 }}>
+
+            {/* Ligne principale */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ width: "140px", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: present ? cat.color : C.border, flexShrink: 0, transition: "transform 0.15s", transform: isHov ? "scale(1.3)" : "scale(1)" }} />
+                <span style={{ fontSize: "12px", fontWeight: present ? "700" : "500", color: present ? C.ink : C.inkSubtle }}>{cat.label}</span>
+              </div>
+
+              <div style={{ flex: 1, height: "14px", background: C.snowOff, borderRadius: "4px", position: "relative" }}>
+                {present && (
+                  <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, cur)}%`, background: cat.color + (isHov ? "88" : "55"), borderRadius: "4px", transition: "width 0.4s, background 0.15s" }} />
+                )}
+                {tgt > 0 && (
+                  <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, tgt)}%`, border: `1.5px solid ${cat.color}`, borderRadius: "4px", boxSizing: "border-box" }} />
+                )}
+                {!hasTargets && present && (
+                  <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${(cur / 100) * 100}%`, background: cat.color + (isHov ? "88" : "55"), borderRadius: "4px", transition: "width 0.4s" }} />
+                )}
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0, minWidth: hasTargets ? "120px" : "60px", justifyContent: "flex-end" }}>
+                <span style={{ fontSize: "12px", fontWeight: "700", color: present ? C.ink : C.inkSubtle }}>{cur}%</span>
+                {hasTargets && tgt !== null && (
+                  <>
+                    <span style={{ fontSize: "10px", color: C.inkSubtle }}>→</span>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: cat.color }}>{tgt}%</span>
+                    {Math.abs(gap) > 2 && (
+                      <span style={{ fontSize: "9px", fontWeight: "700", color: cat.color, background: cat.color + "18", borderRadius: "4px", padding: "1px 5px" }}>
+                        {gap > 0 ? "↑" : "↓"}{Math.abs(gap)}%
+                      </span>
+                    )}
+                  </>
+                )}
+                {present && !hasTargets && (
+                  <span style={{ fontSize: "11px", color: C.inkSubtle, marginLeft: "4px" }}>{fmtEur(valeur)}</span>
+                )}
+              </div>
             </div>
 
-            {/* Barre double (actuel + cible) */}
-            <div style={{ flex: 1, height: "14px", background: C.snowOff, borderRadius: "4px", position: "relative" }}>
-              {present && (
-                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, cur)}%`, background: cat.color + "55", borderRadius: "4px", transition: "width 0.4s" }} />
-              )}
-              {tgt > 0 && (
-                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, tgt)}%`, border: `1.5px solid ${cat.color}`, borderRadius: "4px", boxSizing: "border-box" }} />
-              )}
-              {!hasTargets && present && (
-                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${(cur / maxPct) * 100}%`, background: cat.color, borderRadius: "4px", transition: "width 0.4s" }} />
-              )}
-            </div>
-
-            {/* % actuel → cible */}
-            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0, minWidth: hasTargets ? "110px" : "50px", justifyContent: "flex-end" }}>
-              <span style={{ fontSize: "12px", fontWeight: "700", color: present ? C.ink : C.inkSubtle }}>{cur}%</span>
-              {hasTargets && tgt !== null && (
-                <>
-                  <span style={{ fontSize: "10px", color: C.inkSubtle }}>→</span>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: cat.color }}>{tgt}%</span>
-                  {Math.abs(gap) > 2 && (
-                    <span style={{ fontSize: "9px", fontWeight: "700", color: cat.color, background: cat.color + "18", borderRadius: "4px", padding: "1px 4px", minWidth: "28px", textAlign: "center" }}>
-                      {gap > 0 ? "↑" : "↓"}{Math.abs(gap)}%
-                    </span>
-                  )}
-                </>
-              )}
-            </div>
+            {/* Détail au survol */}
+            {isHov && present && (
+              <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: `1px solid ${cat.color}22`, display: "flex", flexDirection: "column", gap: "4px" }}>
+                {posItems.map((p, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px" }}>
+                    <span style={{ color: C.inkMuted, fontWeight: "500" }}>↳ {p.nom}</span>
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      {p.cours && <span style={{ color: C.inkSubtle }}>cours {fmtCours(p.cours)} €</span>}
+                      <span style={{ fontWeight: "700", color: cat.color }}>{fmtEur(p.valeur)}</span>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ display: "flex", justifyContent: "flex-end", fontSize: "11px", color: C.inkSubtle, marginTop: "2px" }}>
+                  Total : <strong style={{ marginLeft: "4px", color: C.ink }}>{fmtEur(valeur)}</strong>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
 
-      {/* Total */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "10px", borderTop: `1px solid ${C.border}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", paddingTop: "10px", borderTop: `1px solid ${C.border}` }}>
         <span style={{ fontSize: "11px", fontWeight: "700", color: C.inkMuted }}>{positions.length} position{positions.length > 1 ? "s" : ""}</span>
         <span style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>{fmtEur(totalVal)}</span>
       </div>
