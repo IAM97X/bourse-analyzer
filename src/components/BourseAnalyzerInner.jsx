@@ -211,11 +211,33 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         const ticker = pos.ticker || (pos.isin && tickerCache[pos.isin]) || null;
         let analysts = null;
         let news = [];
+
+        // Stratégie multi-requêtes pour maximiser les résultats, surtout pour les micro-caps
+        const fetchNewsWithFallbacks = async () => {
+          // 1. Requête principale : nom seul (sans guillemets ni termes restrictifs)
+          const q1 = `${pos.nom} bourse`;
+          let items = await fetchGoogleNewsRSS(q1).catch(() => []);
+          // 2. Si peu de résultats et ISIN disponible, essayer avec l'ISIN
+          if (items.length < 2 && pos.isin) {
+            const q2 = `${pos.isin} résultats actualité`;
+            const items2 = await fetchGoogleNewsRSS(q2).catch(() => []);
+            items = [...items, ...items2].filter((v, i, a) => a.findIndex(x => x.title === v.title) === i);
+          }
+          // 3. Si encore peu de résultats, essayer nom abrégé (1er mot) + secteur
+          if (items.length < 2) {
+            const shortName = pos.nom.split(" ")[0];
+            const q3 = `${shortName} action résultats`;
+            const items3 = await fetchGoogleNewsRSS(q3).catch(() => []);
+            items = [...items, ...items3].filter((v, i, a) => a.findIndex(x => x.title === v.title) === i);
+          }
+          return items.slice(0, 6);
+        };
+
         await Promise.all([
           ticker
             ? fetchYahooAnalysts(ticker).then(d => { analysts = d; }).catch(() => {})
             : Promise.resolve(),
-          fetchGoogleNewsRSS(`"${pos.nom}" bourse action`).then(d => { news = d; }).catch(() => {}),
+          fetchNewsWithFallbacks().then(d => { news = d; }),
         ]);
         return { pos, analysts, news };
       }));
