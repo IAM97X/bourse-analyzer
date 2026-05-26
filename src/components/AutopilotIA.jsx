@@ -84,28 +84,57 @@ const ISIN_TO_CAT_UNIVERSE = {};
 
 // ─── Composant allocation bar ──────────────────────────────────────────────
 function AllocBar({ cat, tgt, cur, onChange }) {
-  const color = catColor(cat.key);
-  const gap = Math.max(0, tgt - cur);
+  const color  = catColor(cat.key);
+  const diff   = tgt - cur;
+  const isOver = cur > 0 && tgt > 0 && diff < -2;
+  const isUnder = diff > 2;
+  const badgeColor = isOver ? C.red : color;
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 0" }}>
-      <div style={{ width: "120px", fontSize: "11px", color: C.inkMuted, fontWeight: "600", flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cat.label}</div>
-      <div style={{ flex: 1, position: "relative", height: "18px", background: C.snowOff, borderRadius: "4px", overflow: "hidden" }}>
-        {cur > 0 && <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100,cur)}%`, background: color + "40", borderRadius: "4px" }} />}
-        {tgt > 0 && <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100,tgt)}%`, background: color + "22", borderRadius: "4px", border: `1px solid ${color}60` }} />}
+    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "7px 8px", borderRadius: "10px", transition: "background 0.12s" }}
+      onMouseEnter={e => e.currentTarget.style.background = color + "08"}
+      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+
+      {/* Label avec dot */}
+      <div style={{ width: "130px", display: "flex", alignItems: "center", gap: "7px", flexShrink: 0 }}>
+        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: cur > 0 || tgt > 0 ? color : C.border, flexShrink: 0 }} />
+        <span style={{ fontSize: "12px", fontWeight: cur > 0 || tgt > 0 ? "700" : "400", color: cur > 0 || tgt > 0 ? C.ink : C.inkSubtle, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {cat.label}
+        </span>
       </div>
-      {/* Actuel */}
-      <span style={{ fontSize: "11px", fontWeight: "700", color: cur > 0 ? color : C.inkSubtle, width: "30px", textAlign: "right" }}>{cur > 0 ? `${cur}%` : "—"}</span>
-      <span style={{ fontSize: "10px", color: C.inkSubtle, flexShrink: 0 }}>→</span>
-      {/* Cible */}
-      <input
-        type="number" min="0" max="100" step="5"
-        value={tgt || ""}
-        onChange={e => onChange(cat.key, e.target.value)}
-        style={{ width: "46px", textAlign: "center", border: `1px solid ${tgt > 0 ? color : C.border}`, borderRadius: "6px", padding: "3px 4px", fontSize: "12px", fontWeight: "700", color: tgt > 0 ? color : C.inkSubtle, background: tgt > 0 ? color + "08" : "transparent", fontFamily: "Inter,sans-serif", outline: "none" }}
-      />
-      <span style={{ fontSize: "10px", color: C.inkSubtle, width: "14px" }}>%</span>
-      {gap > 2 && <span style={{ fontSize: "10px", fontWeight: "700", color: color, background: color + "15", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>↑{gap}%</span>}
-      {cur > 0 && tgt > 0 && cur > tgt + 2 && <span style={{ fontSize: "10px", fontWeight: "700", color: C.red, background: C.red + "15", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>↓{cur - tgt}%</span>}
+
+      {/* Barre double */}
+      <div style={{ flex: 1, position: "relative", height: "20px", background: C.snowOff, borderRadius: "6px" }}>
+        {cur > 0 && (
+          <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, cur)}%`, background: color + "55", borderRadius: "6px", transition: "width 0.4s" }} />
+        )}
+        {tgt > 0 && (
+          <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, tgt)}%`, border: `2px solid ${color}`, borderRadius: "6px", boxSizing: "border-box" }} />
+        )}
+      </div>
+
+      {/* cur% → input% badge */}
+      <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
+        <span style={{ fontSize: "11px", fontWeight: "700", color: cur > 0 ? color : C.inkSubtle, width: "26px", textAlign: "right" }}>
+          {cur > 0 ? `${cur}%` : "—"}
+        </span>
+        <span style={{ fontSize: "9px", color: C.inkSubtle }}>→</span>
+        <input
+          type="number" min="0" max="100" step="5"
+          value={tgt || ""}
+          placeholder="0"
+          onChange={e => onChange(cat.key, e.target.value)}
+          style={{ width: "44px", textAlign: "center", border: `1.5px solid ${tgt > 0 ? color : C.border}`, borderRadius: "7px", padding: "4px 4px", fontSize: "12px", fontWeight: "700", color: tgt > 0 ? color : C.inkSubtle, background: tgt > 0 ? color + "08" : C.snowOff, fontFamily: "Inter,sans-serif", outline: "none" }}
+        />
+        <span style={{ fontSize: "10px", color: C.inkSubtle, width: "10px" }}>%</span>
+        <div style={{ width: "36px", textAlign: "left" }}>
+          {(isUnder || isOver) && (
+            <span style={{ fontSize: "9px", fontWeight: "700", color: badgeColor, background: badgeColor + "15", borderRadius: "4px", padding: "1px 5px", whiteSpace: "nowrap" }}>
+              {isOver ? `↓${Math.abs(diff)}%` : `↑${diff}%`}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
