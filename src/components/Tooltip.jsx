@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { GLOSSARY } from "../constants/glossary";
 import { TABS } from "../constants/tabs";
 
@@ -14,11 +15,11 @@ export default function Tooltip({ term, children, text }) {
   const show = useCallback(() => {
     clearTimeout(hideTimer.current);
     if (!triggerRef.current) return;
+    // Use viewport-relative rect — walk up the DOM to undo any CSS transforms
     const rect = triggerRef.current.getBoundingClientRect();
-    const TIP_H = 110;
+    const TIP_H = 130;
     const spaceAbove = rect.top;
     const spaceBelow = window.innerHeight - rect.bottom;
-    // Préférer au-dessus, sauf si vraiment pas assez de place ET plus d'espace en dessous
     setAbove(!(spaceAbove < TIP_H + 8 && spaceBelow > spaceAbove));
     setCoords({ top: rect.top, bottom: rect.bottom, left: rect.left + rect.width / 2 });
     setVisible(true);
@@ -43,7 +44,7 @@ export default function Tooltip({ term, children, text }) {
 
   if (!definition) return children || <span>{term}</span>;
 
-  const TIP_W = 240;
+  const TIP_W = 250;
   const leftPos = Math.max(8, Math.min((coords.left || 0) - TIP_W / 2, window.innerWidth - TIP_W - 8));
   const tipStyle = {
     position: "fixed",
@@ -73,6 +74,28 @@ export default function Tooltip({ term, children, text }) {
     window.dispatchEvent(new CustomEvent("openChatWithQuery", { detail: { query, tab: TABS.CHAT } }));
   };
 
+  const tooltip = visible ? (
+    <div
+      style={tipStyle}
+      onMouseEnter={cancelHide}
+      onMouseLeave={scheduleHide}
+    >
+      <div style={{ marginBottom: "7px" }}>
+        <span style={{ fontWeight: "700", color: "#818CF8" }}>{term} — </span>
+        {definition}
+      </div>
+      <button onClick={askAssistant} style={{
+        display: "flex", alignItems: "center", gap: "5px",
+        background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)",
+        borderRadius: "6px", padding: "4px 9px", cursor: "pointer",
+        fontSize: "10px", fontWeight: "700", color: "#818CF8",
+        fontFamily: "Inter, sans-serif",
+      }}>
+        <span>💬</span> En savoir plus avec l'assistant
+      </button>
+    </div>
+  ) : null;
+
   return (
     <>
       <span
@@ -91,27 +114,7 @@ export default function Tooltip({ term, children, text }) {
         }}>?</span>
       </span>
 
-      {visible && (
-        <div
-          style={tipStyle}
-          onMouseEnter={cancelHide}
-          onMouseLeave={scheduleHide}
-        >
-          <div style={{ marginBottom: "7px" }}>
-            <span style={{ fontWeight: "700", color: "#818CF8" }}>{term} — </span>
-            {definition}
-          </div>
-          <button onClick={askAssistant} style={{
-            display: "flex", alignItems: "center", gap: "5px",
-            background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)",
-            borderRadius: "6px", padding: "4px 9px", cursor: "pointer",
-            fontSize: "10px", fontWeight: "700", color: "#818CF8",
-            fontFamily: "Inter, sans-serif",
-          }}>
-            <span>💬</span> En savoir plus avec l'assistant
-          </button>
-        </div>
-      )}
+      {createPortal(tooltip, document.body)}
     </>
   );
 }
