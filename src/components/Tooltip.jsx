@@ -15,9 +15,11 @@ export default function Tooltip({ term, children, text }) {
     clearTimeout(hideTimer.current);
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    const TIP_H = 100;
+    const TIP_H = 110;
     const spaceAbove = rect.top;
-    setAbove(spaceAbove >= TIP_H + 12);
+    const spaceBelow = window.innerHeight - rect.bottom;
+    // Préférer au-dessus, sauf si vraiment pas assez de place ET plus d'espace en dessous
+    setAbove(!(spaceAbove < TIP_H + 8 && spaceBelow > spaceAbove));
     setCoords({ top: rect.top, bottom: rect.bottom, left: rect.left + rect.width / 2 });
     setVisible(true);
   }, []);
