@@ -222,52 +222,6 @@ function ProfilTab({ profil, onChange }) {
             </div>
           </div>
 
-          {/* Capital + DCA */}
-          <Section title="Comptes & DCA">
-            <div style={{ marginBottom: "12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", background: C.snowOff, borderRadius: "10px", border: `1px solid ${C.border}`, fontSize: "12px", color: C.inkMuted }}>
-                <span>💡</span>
-                <span>Configurez votre DCA mensuel dans l'onglet <strong style={{ color: C.ink }}>Plan DCA</strong>.</span>
-              </div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "12px" }}>
-              <div>
-                <label style={lbl}>Durée DCA (mois)</label>
-                <input style={inp} type="number" min="1" max="480" placeholder="120" value={form.dcaDuree || ""} onChange={e => {
-                  const mois = parseInt(e.target.value) || 0;
-                  const horizon = mois <= 24 ? "court" : mois <= 48 ? "moyen" : mois <= 96 ? "long" : "tres-long";
-                  setForm(f => ({ ...f, dcaDuree: e.target.value, horizon }));
-                }} />
-              </div>
-            </div>
-            {/* Revalorisation DCA */}
-            <div style={{ background: C.snowOff, borderRadius: "12px", padding: "12px 14px", border: `1px solid ${C.border}` }}>
-              <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "10px" }}>Revalorisation du DCA (optionnel)</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                <div>
-                  <label style={lbl}>Augmentation (€)</label>
-                  <input style={inp} type="number" min="0" step="10" placeholder="ex : 50"
-                    value={form.dcaCroissanceMontant || ""}
-                    onChange={e => setForm(f => ({ ...f, dcaCroissanceMontant: e.target.value }))} />
-                </div>
-                <div>
-                  <label style={lbl}>Tous les N ans</label>
-                  <input style={inp} type="number" min="1" max="10" step="1" placeholder="ex : 2"
-                    value={form.dcaCroissancePeriode || ""}
-                    onChange={e => setForm(f => ({ ...f, dcaCroissancePeriode: e.target.value }))} />
-                </div>
-              </div>
-              {form.dcaCroissanceMontant > 0 && form.dcaCroissancePeriode > 0 && (() => {
-                const dca0 = parseFloat(form.dcaMensuel) || 0;
-                const aug  = parseFloat(form.dcaCroissanceMontant);
-                const per  = parseFloat(form.dcaCroissancePeriode);
-                return <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "8px" }}>
-                  Ex : {dca0}€ → {dca0 + aug}€ après {per} ans → {dca0 + aug*2}€ après {per*2} ans…
-                </div>;
-              })()}
-            </div>
-          </Section>
-
           {/* Objectif patrimonial */}
           <Section title="Objectif patrimonial (facultatif)">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>

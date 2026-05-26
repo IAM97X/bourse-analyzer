@@ -748,6 +748,62 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
       <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "8px" }}>
         Capital de départ : {fmtEur(capitalActuel)} · Frais de courtage estimés (≤500€ : 1,99€ · &gt;500€ : 0,5%) · Projection indicative non garantie.
       </div>
+
+      {/* Paramètres DCA */}
+      <div style={{ marginTop: "20px", borderTop: `1px solid ${C.border}`, paddingTop: "16px" }}>
+        <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "12px" }}>Paramètres DCA</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+          <div>
+            <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Durée (mois)</div>
+            <input
+              type="number" min="1" max="480" placeholder="120"
+              value={profil?.dcaDuree || ""}
+              onChange={e => {
+                const mois = parseInt(e.target.value) || 0;
+                const horizon = mois <= 24 ? "court" : mois <= 48 ? "moyen" : mois <= 96 ? "long" : "tres-long";
+                onSaveProfil && onSaveProfil({ ...profil, dcaDuree: mois || profil?.dcaDuree, horizon });
+              }}
+              style={{ width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box" }}
+            />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "6px 12px", background: C.navyLight, borderRadius: "10px", border: `1px solid rgba(30,58,95,0.1)` }}>
+            <div style={{ fontSize: "9px", color: C.navy, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Durée restante</div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: C.navy }}>
+              {(() => { const m = profil?.dcaDuree || 0; return m >= 24 ? `${Math.round(m/12)} ans` : m ? `${m} mois` : "—"; })()}
+            </div>
+          </div>
+        </div>
+
+        {/* Revalorisation */}
+        <div style={{ background: C.snowOff, borderRadius: "12px", padding: "12px 14px", border: `1px solid ${C.border}` }}>
+          <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "10px" }}>Revalorisation du DCA (optionnel)</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            <div>
+              <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Augmentation (€)</div>
+              <input
+                type="number" min="0" step="10" placeholder="ex : 50"
+                value={profil?.dcaCroissanceMontant || ""}
+                onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaCroissanceMontant: parseFloat(e.target.value) || 0 })}
+                style={{ width: "100%", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box" }}
+              />
+            </div>
+            <div>
+              <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Tous les N ans</div>
+              <input
+                type="number" min="1" max="10" step="1" placeholder="ex : 2"
+                value={profil?.dcaCroissancePeriode || ""}
+                onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaCroissancePeriode: parseInt(e.target.value) || 0 })}
+                style={{ width: "100%", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box" }}
+              />
+            </div>
+          </div>
+          {(profil?.dcaCroissanceMontant > 0) && (profil?.dcaCroissancePeriode > 0) && (
+            <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "8px" }}>
+              Ex : {dcaSim}€ → {dcaSim + profil.dcaCroissanceMontant}€ après {profil.dcaCroissancePeriode} ans → {dcaSim + profil.dcaCroissanceMontant * 2}€ après {profil.dcaCroissancePeriode * 2} ans…
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
