@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { GLOSSARY } from "../constants/glossary";
-import { TABS } from "../constants/tabs";
 
 export default function Tooltip({ term, children, text }) {
   const [visible, setVisible]   = useState(false);
@@ -71,7 +70,7 @@ export default function Tooltip({ term, children, text }) {
     e.stopPropagation();
     setVisible(false);
     const query = `Explique-moi ce qu'est "${term}" en termes simples et comment ça s'applique à mon portefeuille.`;
-    window.dispatchEvent(new CustomEvent("openChatWithQuery", { detail: { query, tab: TABS.CHAT } }));
+    window.dispatchEvent(new CustomEvent("openAssistantWithQuery", { detail: { query } }));
   };
 
   const tooltip = visible ? (

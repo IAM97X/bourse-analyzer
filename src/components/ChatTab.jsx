@@ -137,6 +137,27 @@ export function AIAssistant({ account, profil }) {
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 100); }, [open]);
 
+  // Ouvre l'assistant flottant et envoie la query depuis les tooltips
+  const pendingQueryRef = useRef(null);
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.detail?.query) return;
+      pendingQueryRef.current = e.detail.query;
+      setOpen(true);
+    };
+    window.addEventListener("openAssistantWithQuery", handler);
+    return () => window.removeEventListener("openAssistantWithQuery", handler);
+  }, []);
+
+  // Envoie la query en attente une fois l'assistant ouvert
+  useEffect(() => {
+    if (!open || !pendingQueryRef.current) return;
+    const q = pendingQueryRef.current;
+    pendingQueryRef.current = null;
+    setTimeout(() => send(q), 200);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const buildContext = () => {
     const allPos   = load("bourse_portfolio", []);
     const positions = allPos.filter(p => (p.compte || "PEA") === account);
@@ -176,8 +197,8 @@ Règles strictes :
 - IMPORTANT : rappelle toujours que tes analyses sont informatives et ne constituent pas un conseil en investissement financier
 - Ne conseille jamais d'acheter ou vendre un titre spécifique de façon directe${customInstructions}`;
 
-  const send = async () => {
-    const text = input.trim();
+  const send = async (overrideText) => {
+    const text = (overrideText ?? input).trim();
     if (!text || loading) return;
     const userMsg = { role: "user", content: text };
     const newMessages = [...messages, userMsg];
