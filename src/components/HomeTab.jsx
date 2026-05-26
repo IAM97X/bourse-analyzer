@@ -752,15 +752,15 @@ function CourbeEvolution({ hidden, positions, account }) {
       </div>
 
       {/* Valeur + perf */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "10px", flexWrap: "wrap", ...blur }}>
-        <div style={{ fontSize: "28px", fontWeight: "800", color: ink, letterSpacing: "-0.04em", lineHeight: 1 }}>{fmtEur(current)}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "6px", flexWrap: "wrap", ...blur }}>
+        <div style={{ fontSize: "20px", fontWeight: "700", color: ink, letterSpacing: "-0.03em", lineHeight: 1 }}>{fmtEur(current)}</div>
         {perfBadgeEur !== null && (
-          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            <span style={{ fontSize: "13px", fontWeight: "700", color: lineClr }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ fontSize: "12px", fontWeight: "600", color: lineClr }}>
               {perfBadgeEur >= 0 ? "+" : ""}{fmtEur(perfBadgeEur)}
             </span>
             {perfBadge !== null && (
-              <span style={{ fontSize: "11px", fontWeight: "700", color: lineClr, background: `${lineClr}15`, borderRadius: "5px", padding: "1px 6px" }}>
+              <span style={{ fontSize: "10px", fontWeight: "700", color: lineClr, background: `${lineClr}15`, borderRadius: "4px", padding: "1px 5px" }}>
                 {perfBadge >= 0 ? "+" : ""}{perfBadge.toFixed(2)} %
               </span>
             )}
