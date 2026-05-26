@@ -537,6 +537,17 @@ Réponds en français, direct, sans introduction générique.`;
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [sessions, loading]);
 
+  // Reçoit les questions depuis les tooltips du glossaire et les envoie directement
+  const sendRef = useRef(null);
+  useEffect(() => { sendRef.current = sendMessage; });
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail?.query) setTimeout(() => sendRef.current?.(e.detail.query), 100);
+    };
+    window.addEventListener("openChatWithQuery", handler);
+    return () => window.removeEventListener("openChatWithQuery", handler);
+  }, []);
+
   const detectOpportunities = async () => {
     if (oppoLoading || loading) return;
     setOppoLoading(true);

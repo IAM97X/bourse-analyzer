@@ -4,6 +4,7 @@ import { sanitizePositions, fmtPct, modifiedDietz } from "../lib/finance";
 import { load } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
 import { DEFAULT_POSITIONS } from "../constants/config";
+import Tooltip from "./Tooltip";
 
 const SNAPSHOTS_KEY = "bourse_snapshots";
 
@@ -35,7 +36,9 @@ function PerfRow({ label, value, note, twr, snap }) {
           {twr !== undefined && twr !== null && (
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: "10px", color: twrColor, fontWeight: "700" }}>{fmt(twr)}</div>
-              <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)", fontWeight: "600", letterSpacing: "0.5px" }}>TWR</div>
+              <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)", fontWeight: "600", letterSpacing: "0.5px" }}>
+                <Tooltip term="TWR" position="bottom"><span style={{ color: "rgba(255,255,255,0.3)" }}>TWR</span></Tooltip>
+              </div>
             </div>
           )}
           <span style={{ fontSize: "14px", fontWeight: "800", color, minWidth: "72px", textAlign: "right" }}>
@@ -143,7 +146,7 @@ export default function PerformanceCard({ account = "PEA" }) {
         Suivi des performances · {account}
       </div>
 
-      <PerfRow label={`Ma performance ${yyyy}`}      value={perfYtd}    note="1" twr={twrYtd}  snap={snapYtd} />
+      <PerfRow label={<span>Ma performance <Tooltip term="YTD" position="bottom"><span style={{ color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>{yyyy}</span></Tooltip></span>} value={perfYtd} note="1" twr={twrYtd} snap={snapYtd} />
       <PerfRow label={`Ma performance ${moisLabel}`} value={perfMois}   note="2" twr={twrMois} snap={snapMois} />
       <PerfRow label="Ma performance de la veille"   value={perfVeille} snap={snapVeille} />
 

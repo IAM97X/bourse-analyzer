@@ -14,6 +14,7 @@ import CompanyAvatar from "./CompanyAvatar";
 import CapturesPanel, { makeCapture, downloadCapture, CAPTURES_KEY } from "./CapturesPanel";
 import MiniSparkline from "./MiniSparkline";
 import { savePricePoint, loadPriceHistory } from "../lib/priceHistory";
+import Tooltip from "./Tooltip";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 
@@ -532,8 +533,8 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           <div style={{ fontSize: "12px", color: C.ink, fontWeight: "700", letterSpacing: "0.5px", marginBottom: "16px" }}>{editId ? "Modifier la position" : "Nouvelle position"}</div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "2fr 1.5fr 1fr 1fr", gap: "10px", marginBottom: "10px" }}>
             <div style={ isMobile ? { gridColumn: "1 / -1" } : {}}><label style={lbl}>Action / ETF</label><input style={inp} placeholder="Technip Energies" value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} data-gramm="false" spellCheck="false" /></div>
-            <div style={ isMobile ? { gridColumn: "1 / -1" } : {}}><label style={lbl}>ISIN (optionnel)</label><input style={inp} placeholder="FR0014000MR3" value={form.isin} onChange={e => setForm(f => ({ ...f, isin: e.target.value }))} data-gramm="false" spellCheck="false" /></div>
-            <div><label style={lbl}>PRU (€)</label><input style={inp} placeholder="32.14" value={form.pru} onChange={e => setForm(f => ({ ...f, pru: e.target.value }))} /></div>
+            <div style={ isMobile ? { gridColumn: "1 / -1" } : {}}><label style={lbl}><Tooltip term="ISIN">ISIN</Tooltip> (optionnel)</label><input style={inp} placeholder="FR0014000MR3" value={form.isin} onChange={e => setForm(f => ({ ...f, isin: e.target.value }))} data-gramm="false" spellCheck="false" /></div>
+            <div><label style={lbl}><Tooltip term="PRU">PRU</Tooltip> (€)</label><input style={inp} placeholder="32.14" value={form.pru} onChange={e => setForm(f => ({ ...f, pru: e.target.value }))} /></div>
             <div><label style={lbl}>Quantité</label><input style={inp} placeholder="11" value={form.quantite} onChange={e => setForm(f => ({ ...f, quantite: e.target.value }))} /></div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: "10px", marginBottom: "16px" }}>

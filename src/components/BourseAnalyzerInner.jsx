@@ -270,6 +270,15 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     }
   }, []);
 
+  // Ouvre l'onglet Chat avec un message pré-envoyé (depuis les tooltips du glossaire)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail?.tab) changeTab(e.detail.tab);
+    };
+    window.addEventListener("openChatWithQuery", handler);
+    return () => window.removeEventListener("openChatWithQuery", handler);
+  }, []);
+
   // Écoute l'événement "analyseAll" déclenché depuis PortfolioTab quand une position est sauvée
   useEffect(() => {
     const handler = (e) => {

@@ -4,6 +4,7 @@ import { AUTOPILOT_UNIVERSE, fetchYahooPrices } from "../constants/universe";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur, PROFIL_RANK, getEuronextUrl, checkPEAEligibility, isETFName } from "../lib/finance";
 import { callClaude, CLAUDE_MODELS, fetchWithProxy } from "../lib/api";
+import Tooltip from "./Tooltip";
 
 // Yahoo Finance sector → ALLOC_CATS
 const YAHOO_SECTOR_TO_CAT = {
@@ -609,7 +610,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
           {/* Budget input */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "5px 10px" }}>
-            <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>Budget</span>
+            <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}><Tooltip term="DCA">Budget</Tooltip></span>
             <input
               type="number" min="0" step="50"
               value={budget}

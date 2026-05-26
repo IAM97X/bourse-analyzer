@@ -8,6 +8,7 @@ import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
 import { callClaude, enqueueApi, getKey, fetchWithProxy } from "../lib/api";
 import { COURTIERS } from "../constants/courtiers";
 import { ThinkingSpinner } from "./UI";
+import Tooltip from "./Tooltip";
 
 const AI_POTENTIEL_KEY = "bourse_ai_potentiel";
 
@@ -477,7 +478,9 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
       <div style={{ background: C.cardGrad, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "22px", boxShadow: shadow.card, marginBottom: "20px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px", flexWrap: "wrap", gap: "10px" }}>
           <div>
-            <div style={{ fontWeight: "700", fontSize: "14px", color: C.ink }}>Scoring IA Dynamique</div>
+            <div style={{ fontWeight: "700", fontSize: "14px", color: C.ink }}>
+              <Tooltip term="SCORING">Scoring IA Dynamique</Tooltip>
+            </div>
             <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px" }}>Analyse temps réel de chaque position — actualités + signaux marché</div>
           </div>
           <button
