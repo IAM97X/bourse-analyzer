@@ -687,7 +687,7 @@ function CourbeEvolution({ hidden, positions, account }) {
   const lineClrDown = "#e74c3c";
 
   const W = 600; const H = 160;
-  const padT = 12, padB = 12, padL = 58, padR = 12;
+  const padT = 12, padB = 12, padL = 8, padR = 8;
   const values = points.map(p => p.valeur);
   const minV = Math.min(...values), maxV = Math.max(...values);
   const range = maxV - minV || 1;
@@ -795,16 +795,9 @@ function CourbeEvolution({ hidden, positions, account }) {
               <stop offset="100%" stopColor={lineClr} stopOpacity="0"/>
             </linearGradient>
           </defs>
-          {yTicks.map(({ y, label }, i) => (
-            <g key={i}>
-              <line x1="0" y1={y.toFixed(1)} x2={W - padR} y2={y.toFixed(1)}
-                stroke="rgba(26,45,74,0.07)" strokeWidth="1" strokeDasharray="3 6"/>
-              <rect x="0" y={(y - 8).toFixed(0)} width={(padL - 2).toFixed(0)} height="12" fill="white"/>
-              <text x="2" y={(y + 4).toFixed(0)} textAnchor="start"
-                fontSize="10" fill="rgba(26,45,74,0.50)" fontFamily="Inter,sans-serif" fontWeight="500">
-                {label}
-              </text>
-            </g>
+          {yTicks.map(({ y }, i) => (
+            <line key={i} x1="0" y1={y.toFixed(1)} x2={W - padR} y2={y.toFixed(1)}
+              stroke="rgba(26,45,74,0.07)" strokeWidth="1" strokeDasharray="3 6"/>
           ))}
           <path d={areaD} fill="url(#chartGradLight)"/>
           <path d={smoothPath} fill="none" stroke={lineClr} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"/>
