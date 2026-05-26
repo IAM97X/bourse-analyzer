@@ -502,8 +502,28 @@ export default function AutopilotIA({ account, profil, hidden }) {
   Mois en cours : ${pMois != null ? (pMois >= 0 ? "+" : "") + pMois + "%" : "—"}`
         : "";
 
+      const horizonLabel = { "court": "court terme (<2 ans)", "moyen": "moyen terme (2-5 ans)", "long": "long terme (5-10 ans)", "tres-long": "très long terme (>10 ans)" }[horizon] || "moyen terme";
+      const profilRules = {
+        "prudent":        "PRUDENT — ETF et grandes capitalisations UNIQUEMENT. Aucune small/micro cap. Aucune valeur spéculative ou biotech. Priorise la stabilité et les dividendes.",
+        "equilibre":      "ÉQUILIBRÉ — ETF + valeurs de qualité établies. Small caps uniquement si fondamentaux solides et signal IA ≥ 13/20. Évite les micro-caps (<200M€ de capitalisation).",
+        "dynamique":      "DYNAMIQUE — Croissance acceptée. Small caps et valeurs de croissance autorisées si catalyseur identifié. Micro-caps à éviter sauf exception motivée.",
+        "tres-dynamique": "TRÈS DYNAMIQUE — Croissance forte et valeurs spéculatives autorisées. Micro-caps possibles si potentiel élevé. Volatilité acceptée sur horizon long.",
+      }[risque] || "";
+      const horizonRules = {
+        "court":     "HORIZON COURT (<2 ans) : refuse toute valeur avec dist_bas > 15% ou forte volatilité. Priorise la préservation du capital. Pas de valeurs en perte latente > 10%.",
+        "moyen":     "HORIZON MOYEN (2-5 ans) : accepte une volatilité modérée. Dist_bas < 25% conseillé. Équilibre rendement/risque.",
+        "long":      "HORIZON LONG (5-10 ans) : la volatilité court terme est acceptable. Favorise les valeurs de croissance avec bon catalyseur.",
+        "tres-long": "HORIZON TRÈS LONG (>10 ans) : priorise le potentiel de croissance maximal. La volatilité est ton alliée. Valeurs transformationnelles bienvenues.",
+      }[horizon] || "";
+      const budgetRule = dcaMensuel > 0
+        ? `BUDGET ${dcaMensuel}€ : ne propose que des instruments dont le prix unitaire ≤ ${dcaMensuel}€ (sinon l'utilisateur ne peut pas acheter 1 titre). ${dcaMensuel < 100 ? "Budget serré : 1 opportunité max." : ""}`
+        : "";
+
       const system = `Tu es un gérant de portefeuille privé senior spécialisé ${account}. Aujourd'hui : ${new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
-PROFIL : ${profilLabel} | DCA : ${dcaMensuel}€/mois | COURTIER : ${profil?.courtier || "boursobank"} | HORIZON : ${profil?.horizon || "moyen terme"}
+
+PROFIL INVESTISSEUR :
+- Risque : ${profilLabel} | Horizon : ${horizonLabel}
+- DCA mensuel : ${dcaMensuel}€/mois | Courtier : ${profil?.courtier || "boursobank"}
 
 PORTEFEUILLE ACTUEL :
 ${portfolioCtx}
@@ -519,7 +539,12 @@ ${allocCibleStr}
 ÉCARTS (actuel → cible) :
 ${allocGapStr}
 
-RÈGLES : utilise exclusivement les données chiffrées ci-dessus. L'éligibilité PEA est indiquée [PEA✓/✗] — ne la remet jamais en question si PEA✓. Ne renvoie jamais vers Boursorama pour des infos que tu possèdes déjà. Sois direct et tranché.`;
+RÈGLES ABSOLUES (liées au profil) :
+1. ${profilRules}
+2. ${horizonRules}
+${budgetRule ? `3. ${budgetRule}` : ""}
+- L'éligibilité PEA est indiquée [PEA✓/✗] — ne la remet jamais en question si PEA✓.
+- Utilise exclusivement les données chiffrées ci-dessus. Sois direct et tranché.`;
 
       setStep("Analyse IA et recherche d'actualités…");
 
