@@ -66,12 +66,39 @@ const SECTOR_TO_CAT = {
   "eVTOL / Air taxi":"Industrie","Tech/IA":"Tech / IA",
 };
 
-const DEFAULT_ALLOC = {
-  "prudent":        { "ETF Monde": 75, "ETF Sectoriel": 20, "Santé": 5 },
-  "equilibre":      { "ETF Monde": 50, "ETF Sectoriel": 15, "Tech / IA": 15, "Santé": 10, "Industrie": 10 },
-  "dynamique":      { "ETF Monde": 20, "ETF Sectoriel": 10, "Tech / IA": 25, "Semi-conducteurs": 15, "Santé": 15, "Industrie": 15 },
-  "tres-dynamique": { "Tech / IA": 30, "Semi-conducteurs": 25, "Santé": 15, "Industrie": 15, "Finance": 5, "Autres": 10 },
+// Matrice recommandée risque × horizon (toujours = 100%)
+const ALLOC_MATRIX = {
+  "prudent": {
+    "court":     { "ETF Monde": 85, "ETF Sectoriel": 10, "Santé": 5 },
+    "moyen":     { "ETF Monde": 75, "ETF Sectoriel": 15, "Santé": 10 },
+    "long":      { "ETF Monde": 70, "ETF Sectoriel": 15, "Santé": 10, "Industrie": 5 },
+    "tres-long": { "ETF Monde": 65, "ETF Sectoriel": 20, "Santé": 10, "Industrie": 5 },
+  },
+  "equilibre": {
+    "court":     { "ETF Monde": 65, "ETF Sectoriel": 20, "Santé": 15 },
+    "moyen":     { "ETF Monde": 50, "ETF Sectoriel": 15, "Tech / IA": 15, "Santé": 10, "Industrie": 10 },
+    "long":      { "ETF Monde": 40, "ETF Sectoriel": 10, "Tech / IA": 20, "Santé": 15, "Industrie": 10, "Semi-conducteurs": 5 },
+    "tres-long": { "ETF Monde": 35, "ETF Sectoriel": 10, "Tech / IA": 25, "Santé": 15, "Industrie": 10, "Semi-conducteurs": 5 },
+  },
+  "dynamique": {
+    "court":     { "ETF Monde": 40, "Tech / IA": 20, "Santé": 20, "Industrie": 15, "ETF Sectoriel": 5 },
+    "moyen":     { "ETF Monde": 25, "Tech / IA": 25, "Semi-conducteurs": 15, "Santé": 15, "Industrie": 15, "ETF Sectoriel": 5 },
+    "long":      { "ETF Monde": 20, "Tech / IA": 25, "Semi-conducteurs": 20, "Santé": 15, "Industrie": 15, "ETF Sectoriel": 5 },
+    "tres-long": { "ETF Monde": 15, "Tech / IA": 30, "Semi-conducteurs": 20, "Santé": 15, "Industrie": 15, "ETF Sectoriel": 5 },
+  },
+  "tres-dynamique": {
+    "court":     { "ETF Monde": 25, "Tech / IA": 25, "Semi-conducteurs": 20, "Santé": 20, "Industrie": 10 },
+    "moyen":     { "Tech / IA": 30, "Semi-conducteurs": 25, "Santé": 15, "Industrie": 15, "ETF Monde": 10, "Finance": 5 },
+    "long":      { "Tech / IA": 35, "Semi-conducteurs": 25, "Santé": 15, "Industrie": 15, "Finance": 5, "ETF Monde": 5 },
+    "tres-long": { "Tech / IA": 35, "Semi-conducteurs": 30, "Santé": 15, "Industrie": 15, "Finance": 5 },
+  },
 };
+
+function computeDefaultAlloc(risque, horizon) {
+  return (ALLOC_MATRIX[risque] || ALLOC_MATRIX["equilibre"])[horizon]
+    || (ALLOC_MATRIX[risque] || ALLOC_MATRIX["equilibre"])["moyen"]
+    || { "ETF Monde": 60, "ETF Sectoriel": 20, "Santé": 10, "Industrie": 10 };
+}
 
 const getCat = s => SECTOR_TO_CAT[s] || "Autres";
 const catColor = key => ALLOC_CATS.find(c => c.key === key)?.color || "#64748B";
@@ -222,7 +249,8 @@ export default function AutopilotIA({ account, profil, hidden }) {
 
   const allocKey  = `bourse_autopilot_alloc_${account || "PEA"}_${risque}`;
   const budgetKey = `bourse_autopilot_budget_${account || "PEA"}`;
-  const [allocCibles, setAllocCibles] = useState(() => load(allocKey, null) || DEFAULT_ALLOC[risque] || { "ETF Monde": 50, "Tech / IA": 30, "Santé": 20 });
+  const horizon = profil?.horizon || "moyen";
+  const [allocCibles, setAllocCibles] = useState(() => load(allocKey, null) || computeDefaultAlloc(risque, horizon));
   const [budget, setBudget] = useState(() => load(budgetKey, null) || profil?.dcaMensuel || 200);
 
   const allocTotal = Object.values(allocCibles).reduce((a, b) => a + Number(b || 0), 0);
@@ -245,7 +273,7 @@ export default function AutopilotIA({ account, profil, hidden }) {
   };
 
   const resetAlloc = () => {
-    const def = DEFAULT_ALLOC[risque] || { "ETF Monde": 100 };
+    const def = computeDefaultAlloc(risque, horizon);
     setAllocCibles(def);
     save(allocKey, def);
   };
