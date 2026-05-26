@@ -692,7 +692,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
           {/* Budget input */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "5px 10px" }}>
-            <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}><Tooltip term="DCA">Budget</Tooltip></span>
+            <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>Budget</span>
             <input
               type="number" min="0" step="50"
               value={budget}
