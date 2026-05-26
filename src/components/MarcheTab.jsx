@@ -506,12 +506,21 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
                   <div style={{ fontSize: "11px", color: C.inkSubtle }}>Non scoré — Lancez une analyse</div>
                 </div>
               );
-              const scoreBarColor = s.score_marche >= 14 ? C.green : s.score_marche >= 9 ? C.gold : C.red;
+              const scoreBarColor = s.score_marche >= 16 ? C.green : s.score_marche >= 13 ? C.accent : s.score_marche >= 9 ? C.gold : s.score_marche >= 5 ? C.red : "#7B1111";
+              // Dériver le signal depuis le score si incohérent (ex: ATTENDRE à 8/20)
+              const derivedSignal = s.score_marche >= 16 ? "ACHAT" : s.score_marche >= 13 ? "RENFORCER" : s.score_marche >= 9 ? "ATTENDRE" : s.score_marche >= 5 ? "PRUDENCE" : "VENDRE";
+              const signal = (s.signal && SIG_COLOR[s.signal] && (
+                (s.signal === "ACHAT"      && s.score_marche >= 16) ||
+                (s.signal === "RENFORCER"  && s.score_marche >= 13) ||
+                (s.signal === "ATTENDRE"   && s.score_marche >= 9  && s.score_marche < 13) ||
+                (s.signal === "PRUDENCE"   && s.score_marche >= 5  && s.score_marche < 9) ||
+                (s.signal === "VENDRE"     && s.score_marche < 5)
+              )) ? s.signal : derivedSignal;
               return (
-                <div key={pos.id} style={{ padding: "14px 16px", background: SIG_BG[s.signal] || C.snowOff, borderRadius: "14px", border: `1px solid ${SIG_COLOR[s.signal] ? SIG_COLOR[s.signal] + "33" : C.border}`, display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div key={pos.id} style={{ padding: "14px 16px", background: SIG_BG[signal] || C.snowOff, borderRadius: "14px", border: `1px solid ${SIG_COLOR[signal] ? SIG_COLOR[signal] + "33" : C.border}`, display: "flex", flexDirection: "column", gap: "8px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                     <div style={{ fontWeight: "700", fontSize: "13.5px", color: C.ink, flex: 1, minWidth: "100px" }}>{pos.nom}</div>
-                    <span style={{ fontSize: "10px", fontWeight: "800", color: SIG_COLOR[s.signal] || C.inkMuted, background: SIG_COLOR[s.signal] ? SIG_COLOR[s.signal] + "22" : C.snowDim, padding: "3px 10px", borderRadius: "20px", border: `1px solid ${SIG_COLOR[s.signal] || C.border}`, letterSpacing: "0.5px" }}>{s.signal}</span>
+                    <span style={{ fontSize: "10px", fontWeight: "800", color: SIG_COLOR[signal] || C.inkMuted, background: SIG_COLOR[signal] ? SIG_COLOR[signal] + "22" : C.snowDim, padding: "3px 10px", borderRadius: "20px", border: `1px solid ${SIG_COLOR[signal] || C.border}`, letterSpacing: "0.5px" }}>{signal}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       <div style={{ width: "80px", height: "6px", borderRadius: "3px", background: C.snowDim, overflow: "hidden" }}>
                         <div style={{ width: `${(s.score_marche / 20) * 100}%`, height: "100%", background: scoreBarColor, borderRadius: "3px", transition: "width 0.5s" }} />
