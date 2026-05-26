@@ -682,54 +682,80 @@ function CourbeEvolution({ hidden, positions, account }) {
   // Quand le delta période est nul (historique insuffisant), on bascule sur le gain total
   const flatPeriod = Math.abs(delta) < 0.01 && pvLatent !== null;
   const isUp     = flatPeriod ? (pvLatent >= 0) : (delta >= 0);
-  const lineClr  = isUp ? "#6ee7b7" : "#f87171";
+  const lineClr  = isUp ? "#0ea87e" : "#e74c3c";
+  const lineClrUp   = "#0ea87e";
+  const lineClrDown = "#e74c3c";
 
-  const W = 600; const H = 130;
-  const padT = 16, padB = 10, padL = 12, padR = 48;
+  const W = 600; const H = 140;
+  const padT = 18, padB = 12, padL = 12, padR = 52;
   const values = points.map(p => p.valeur);
   const minV = Math.min(...values), maxV = Math.max(...values);
   const range = maxV - minV || 1;
   const toX = i => padL + (i / (points.length - 1)) * (W - padL - padR);
   const toY = v => padT + (1 - (v - minV) / range) * (H - padT - padB);
 
-  const pts    = points.map((p, i) => [toX(i), toY(p.valeur)]);
-  const smooth = pts.map(([x,y], i) => `${i===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const areaD  = `${smooth} L${pts[pts.length-1][0].toFixed(1)},${H-padB} L${pts[0][0].toFixed(1)},${H-padB} Z`;
+  const pts = points.map((p, i) => [toX(i), toY(p.valeur)]);
+
+  // Courbe bezier lissée (Catmull-Rom → bezier cubique)
+  const catmullRom = (ps) => {
+    if (ps.length < 2) return "";
+    const t = 0.4;
+    let d = `M${ps[0][0].toFixed(2)},${ps[0][1].toFixed(2)}`;
+    for (let i = 0; i < ps.length - 1; i++) {
+      const p0 = ps[Math.max(0, i - 1)];
+      const p1 = ps[i];
+      const p2 = ps[i + 1];
+      const p3 = ps[Math.min(ps.length - 1, i + 2)];
+      const cp1x = p1[0] + (p2[0] - p0[0]) * t / 2;
+      const cp1y = p1[1] + (p2[1] - p0[1]) * t / 2;
+      const cp2x = p2[0] - (p3[0] - p1[0]) * t / 2;
+      const cp2y = p2[1] - (p3[1] - p1[1]) * t / 2;
+      d += ` C${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+    }
+    return d;
+  };
+
+  const smoothPath = catmullRom(pts);
+  const areaD = `${smoothPath} L${pts[pts.length-1][0].toFixed(2)},${H-padB} L${pts[0][0].toFixed(2)},${H-padB} Z`;
 
   const yTicks = [minV, (minV+maxV)/2, maxV].map(v => ({ v, y: toY(v), label: v >= 1000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0) }));
   const xDates = [0, Math.floor((points.length-1)/2), points.length-1].map(i => ({ i, x: toX(i), label: points[i].date.slice(5).replace("-","/") }));
 
+  // Couleurs thème clair
+  const bg     = "#fff";
+  const ink    = "#1a2d4a";
+  const inkSub = "rgba(26,45,74,0.45)";
+  const inkMut = "rgba(26,45,74,0.28)";
+  const cardBg = "#f4f6f9";
+
   return (
-    <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "16px", padding: "18px 18px 16px", boxShadow: "0 8px 28px rgba(8,20,40,0.45)" }}>
+    <div style={{ background: bg, borderRadius: "16px", padding: "18px 18px 16px", boxShadow: "0 2px 16px rgba(26,45,74,0.10)", border: "1px solid rgba(26,45,74,0.08)" }}>
 
       {/* Titre + sélecteur */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
-        <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "1.4px", textTransform: "uppercase" }}>
+        <div style={{ fontSize: "10px", color: inkSub, fontWeight: "700", letterSpacing: "1.4px", textTransform: "uppercase" }}>
           Évolution du portefeuille
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-          {/* Badge source */}
           {dataSource === "boursobank" && (
-            <span style={{ fontSize: "9px", color: "rgba(110,231,183,0.9)", fontWeight: "700", letterSpacing: "0.5px", background: "rgba(110,231,183,0.1)", padding: "2px 7px", borderRadius: "10px", border: "1px solid rgba(110,231,183,0.25)" }}>● {csvBroker || "CSV"}</span>
+            <span style={{ fontSize: "9px", color: lineClrUp, fontWeight: "700", letterSpacing: "0.5px", background: `${lineClrUp}14`, padding: "2px 7px", borderRadius: "10px", border: `1px solid ${lineClrUp}33` }}>● {csvBroker || "CSV"}</span>
           )}
           {dataSource === "yahoo" && (
-            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", fontWeight: "600", letterSpacing: "0.5px" }}>● Yahoo</span>
+            <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600", letterSpacing: "0.5px" }}>● Yahoo</span>
           )}
           {dataSource === "snapshots" && (
-            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.2)", fontWeight: "600", letterSpacing: "0.5px" }}>● Snapshots</span>
+            <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600", letterSpacing: "0.5px" }}>● Snapshots</span>
           )}
-          {/* Bouton import CSV */}
           <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
           <button onClick={() => fileInputRef.current?.click()}
-            title={csvPoints ? `${csvPoints.length} jours importés (${csvBroker}) — cliquez pour mettre à jour` : "Importer export CSV de votre courtier (Boursobank, Fortuneo, DEGIRO…)"}
-            style={{ padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: csvPoints ? "rgba(110,231,183,0.12)" : "rgba(255,255,255,0.06)", color: csvPoints ? "rgba(110,231,183,0.8)" : "rgba(255,255,255,0.4)", fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+            title={csvPoints ? `${csvPoints.length} jours importés (${csvBroker}) — cliquez pour mettre à jour` : "Importer export CSV de votre courtier"}
+            style={{ padding: "3px 9px", borderRadius: "6px", border: `1px solid ${csvPoints ? lineClrUp+"44" : "rgba(26,45,74,0.15)"}`, background: csvPoints ? `${lineClrUp}12` : cardBg, color: csvPoints ? lineClrUp : inkSub, fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
             {csvPoints ? "↑ CSV" : "+ CSV"}
           </button>
-          {/* Sélecteur période */}
           <div style={{ display: "flex", gap: "2px" }}>
             {PERIODS.map(({ label, days }) => (
               <button key={days} onClick={() => setPeriod(days)}
-                style={{ padding: "3px 8px", borderRadius: "6px", border: "none", background: period === days ? "rgba(255,255,255,0.14)" : "transparent", color: period === days ? "#fff" : "rgba(255,255,255,0.3)", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                style={{ padding: "3px 8px", borderRadius: "6px", border: "none", background: period === days ? ink : "transparent", color: period === days ? "#fff" : inkSub, fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
                 {label}
               </button>
             ))}
@@ -739,30 +765,28 @@ function CourbeEvolution({ hidden, positions, account }) {
 
       {/* Métriques */}
       <div style={{ display: "grid", gridTemplateColumns: pvLatent !== null && !flatPeriod ? "1fr 1fr 1fr" : "1fr 1fr", gap: "8px", marginBottom: "14px", ...blur }}>
-        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
-          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>Valeur actuelle</div>
-          <div style={{ fontSize: "16px", fontWeight: "900", color: "#fff", letterSpacing: "-0.02em" }}>{fmtEur(current)}</div>
+        <div style={{ background: cardBg, borderRadius: "10px", padding: "10px 12px" }}>
+          <div style={{ fontSize: "9px", color: inkMut, fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>Valeur actuelle</div>
+          <div style={{ fontSize: "16px", fontWeight: "900", color: ink, letterSpacing: "-0.02em" }}>{fmtEur(current)}</div>
         </div>
-        <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
-          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>
+        <div style={{ background: cardBg, borderRadius: "10px", padding: "10px 12px" }}>
+          <div style={{ fontSize: "9px", color: inkMut, fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>
             {flatPeriod ? "Gain total · depuis achat" : dataSource === "boursobank" ? "Perf. cumulée · versements inclus" : "Croissance · versements inclus"}
           </div>
           <div style={{ fontSize: "15px", fontWeight: "800", color: lineClr }}>
-            {flatPeriod
-              ? <>{pvLatent >= 0 ? "+" : ""}{fmtEur(pvLatent)}</>
-              : <>{isUp ? "+" : ""}{fmtEur(delta)}</>}
+            {flatPeriod ? <>{pvLatent >= 0 ? "+" : ""}{fmtEur(pvLatent)}</> : <>{isUp ? "+" : ""}{fmtEur(delta)}</>}
           </div>
-          <div style={{ fontSize: "10px", color: lineClr, opacity: 0.8 }}>
+          <div style={{ fontSize: "10px", color: lineClr, opacity: 0.85 }}>
             {flatPeriod
               ? (pvPct !== null ? `${pvPct >= 0 ? "+" : ""}${pvPct.toFixed(2)} % vs investi` : "achats − ventes réels")
               : perfCumFromCSV !== null ? `${perfCumFromCSV >= 0 ? "+" : ""}${perfCumFromCSV.toFixed(2)} %` : `${isUp ? "+" : ""}${perf.toFixed(2)} %`}
           </div>
         </div>
         {pvLatent !== null && !flatPeriod && (
-          <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "10px", padding: "10px 12px" }}>
-            <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.32)", fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>Gain vs capital versé</div>
-            <div style={{ fontSize: "15px", fontWeight: "800", color: pvLatent >= 0 ? "#6ee7b7" : "#f87171" }}>{pvLatent >= 0 ? "+" : ""}{fmtEur(pvLatent)}</div>
-            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>achats − ventes réels</div>
+          <div style={{ background: cardBg, borderRadius: "10px", padding: "10px 12px" }}>
+            <div style={{ fontSize: "9px", color: inkMut, fontWeight: "700", letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "4px" }}>Gain vs capital versé</div>
+            <div style={{ fontSize: "15px", fontWeight: "800", color: pvLatent >= 0 ? lineClrUp : lineClrDown }}>{pvLatent >= 0 ? "+" : ""}{fmtEur(pvLatent)}</div>
+            <div style={{ fontSize: "10px", color: inkMut }}>achats − ventes réels</div>
           </div>
         )}
       </div>
@@ -788,72 +812,59 @@ function CourbeEvolution({ hidden, positions, account }) {
           }}
           onTouchEnd={() => setHover(null)}
         >
-          {/* Grille horizontale */}
-          {yTicks.map(({ y }, i) => (
-            <line key={i} x1={padL} y1={y.toFixed(1)} x2={W-padR} y2={y.toFixed(1)}
-              stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="4 6"/>
-          ))}
-          {/* Aire sous la courbe */}
           <defs>
-            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={lineClr} stopOpacity="0.18"/>
+            <linearGradient id="chartGradLight" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={lineClr} stopOpacity="0.14"/>
               <stop offset="100%" stopColor={lineClr} stopOpacity="0"/>
             </linearGradient>
           </defs>
-          <path d={areaD} fill="url(#chartGrad)"/>
-          <path d={smooth} fill="none" stroke={lineClr} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
-
-          {/* Ligne verticale fine au curseur */}
+          {yTicks.map(({ y }, i) => (
+            <line key={i} x1={padL} y1={y.toFixed(1)} x2={W-padR} y2={y.toFixed(1)}
+              stroke="rgba(26,45,74,0.07)" strokeWidth="1" strokeDasharray="4 6"/>
+          ))}
+          <path d={areaD} fill="url(#chartGradLight)"/>
+          <path d={smoothPath} fill="none" stroke={lineClr} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"/>
           {hover && (
             <line x1={hover.x.toFixed(1)} y1={padT} x2={hover.x.toFixed(1)} y2={H - padB}
-              stroke="rgba(255,255,255,0.18)" strokeWidth="1"/>
+              stroke="rgba(26,45,74,0.15)" strokeWidth="1"/>
+          )}
+          {hover && (
+            <circle cx={hover.x.toFixed(1)} cy={toY(points[hover.idx].valeur).toFixed(1)} r="4"
+              fill={lineClr} stroke="#fff" strokeWidth="2"/>
           )}
         </svg>
 
-        {/* Tooltip fintech */}
+        {/* Tooltip */}
         {hover && (() => {
           const p     = points[hover.idx];
           const pDate = new Date(p.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
           const pctX  = (hover.x / W) * 100;
           const onLeft = hover.x > W * 0.55;
-
-          // Perf depuis début de la période (toujours fiable)
-          const perfPeriod = points[0].valeur > 0
-            ? (p.valeur - points[0].valeur) / points[0].valeur * 100
-            : null;
-          // Utiliser perf cumulée CSV seulement si valeur plausible (-100% < p < +2000%)
+          const perfPeriod = points[0].valeur > 0 ? (p.valeur - points[0].valeur) / points[0].valeur * 100 : null;
           const perfDisplay = (p.perfCumulee != null && p.perfCumulee > -100 && p.perfCumulee < 2000)
             ? p.perfCumulee
             : (perfPeriod !== null && perfPeriod > -100 && perfPeriod < 2000 ? perfPeriod : null);
-          const perfClr = (perfDisplay ?? 0) >= 0 ? "#6ee7b7" : "#f87171";
-          const perfBg  = (perfDisplay ?? 0) >= 0 ? "rgba(110,231,183,0.12)" : "rgba(248,113,113,0.12)";
-
+          const pClr = (perfDisplay ?? 0) >= 0 ? lineClrUp : lineClrDown;
           return (
             <div style={{
               position: "absolute",
               top: `${Math.max(4, Math.min(H - 72, hover.y - 38))}px`,
-              ...(onLeft ? { right: `calc(${100 - pctX}% + 12px)` } : { left: `calc(${pctX}% + 12px)` }),
+              ...(onLeft ? { right: `calc(${100 - pctX}% + 14px)` } : { left: `calc(${pctX}% + 14px)` }),
               minWidth: "130px",
-              background: "rgba(4,12,26,0.92)",
-              border: "1px solid rgba(255,255,255,0.10)",
-              borderTop: `2px solid ${lineClr}`,
+              background: "#fff",
+              border: "1px solid rgba(26,45,74,0.12)",
+              borderTop: `2.5px solid ${lineClr}`,
               borderRadius: "0 0 10px 10px",
-              padding: "10px 14px 10px",
+              padding: "9px 13px",
               pointerEvents: "none",
               zIndex: 20,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+              boxShadow: "0 4px 20px rgba(26,45,74,0.13)",
             }}>
-              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: "500", letterSpacing: "0.3px", marginBottom: "5px", whiteSpace: "nowrap" }}>
-                {pDate}
-              </div>
-              <div style={{ fontSize: "17px", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", whiteSpace: "nowrap" }}>
-                {fmtEur(p.valeur)}
-              </div>
+              <div style={{ fontSize: "10px", color: inkSub, fontWeight: "500", marginBottom: "4px", whiteSpace: "nowrap" }}>{pDate}</div>
+              <div style={{ fontSize: "17px", fontWeight: "800", color: ink, letterSpacing: "-0.03em", whiteSpace: "nowrap" }}>{fmtEur(p.valeur)}</div>
               {perfDisplay !== null && (
-                <div style={{ display: "inline-block", marginTop: "5px", background: perfBg, borderRadius: "6px", padding: "2px 7px" }}>
-                  <span style={{ fontSize: "11px", fontWeight: "700", color: perfClr }}>
-                    {perfDisplay >= 0 ? "+" : ""}{perfDisplay.toFixed(2)} %
-                  </span>
+                <div style={{ display: "inline-block", marginTop: "4px", background: `${pClr}14`, borderRadius: "6px", padding: "2px 7px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: pClr }}>{perfDisplay >= 0 ? "+" : ""}{perfDisplay.toFixed(2)} %</span>
                 </div>
               )}
             </div>
@@ -863,25 +874,20 @@ function CourbeEvolution({ hidden, positions, account }) {
         {/* Labels Y */}
         <div style={{ position: "absolute", top: 0, right: 0, height: "100%", width: `${padR}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", paddingBottom: `${padB}px`, paddingTop: `${padT - 6}px`, boxSizing: "border-box" }}>
           {[...yTicks].reverse().map(({ label }, i) => (
-            <span key={i} style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", fontWeight: "500", lineHeight: 1, display: "block", textAlign: "right", paddingRight: "4px" }}>
-              {label}
-            </span>
+            <span key={i} style={{ fontSize: "10px", color: inkMut, fontWeight: "500", lineHeight: 1, display: "block", textAlign: "right", paddingRight: "4px" }}>{label}</span>
           ))}
         </div>
 
-        {/* Labels X — positionnés au % exact de la coordonnée SVG */}
+        {/* Labels X */}
         <div style={{ position: "relative", height: "18px", marginTop: "4px" }}>
           {xDates.map(({ label, x, i: idx }) => {
             const pct = (x / W) * 100;
             return (
               <span key={idx} style={{
-                position: "absolute",
-                left: `${pct}%`,
+                position: "absolute", left: `${pct}%`,
                 transform: idx === 0 ? "none" : idx === points.length - 1 ? "translateX(-100%)" : "translateX(-50%)",
-                fontSize: "10px", color: "rgba(255,255,255,0.35)", fontWeight: "500", whiteSpace: "nowrap",
-              }}>
-                {label}
-              </span>
+                fontSize: "10px", color: inkMut, fontWeight: "500", whiteSpace: "nowrap",
+              }}>{label}</span>
             );
           })}
         </div>
