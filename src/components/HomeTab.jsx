@@ -799,7 +799,7 @@ function CourbeEvolution({ hidden, positions, account }) {
             <g key={i}>
               <line x1={padL} y1={y.toFixed(1)} x2={W - padR} y2={y.toFixed(1)}
                 stroke="rgba(26,45,74,0.08)" strokeWidth="1" strokeDasharray="3 5"/>
-              <text x={(padL - 6).toFixed(0)} y={(y + 4).toFixed(0)} textAnchor="end"
+              <text x="4" y={(y + 4).toFixed(0)} textAnchor="start"
                 fontSize="10" fill="rgba(26,45,74,0.45)" fontFamily="Inter,sans-serif" fontWeight="500">
                 {label}
               </text>
