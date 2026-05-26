@@ -686,8 +686,8 @@ function CourbeEvolution({ hidden, positions, account }) {
   const lineClrUp   = "#0ea87e";
   const lineClrDown = "#e74c3c";
 
-  const W = 600; const H = 140;
-  const padT = 18, padB = 12, padL = 12, padR = 52;
+  const W = 600; const H = 160;
+  const padT = 12, padB = 12, padL = 72, padR = 12;
   const values = points.map(p => p.valeur);
   const minV = Math.min(...values), maxV = Math.max(...values);
   const range = maxV - minV || 1;
@@ -699,7 +699,23 @@ function CourbeEvolution({ hidden, positions, account }) {
   const smoothPath = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
   const areaD = `${smoothPath} L${pts[pts.length-1][0].toFixed(2)},${H-padB} L${pts[0][0].toFixed(2)},${H-padB} Z`;
 
-  const yTicks = [minV, (minV+maxV)/2, maxV].map(v => ({ v, y: toY(v), label: v >= 1000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0) }));
+  // Graduations Y — intervalles arrondis, ~5-6 ticks
+  const niceStep = (() => {
+    const steps = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
+    const target = range / 5;
+    return steps.find(s => s >= target) || steps[steps.length - 1];
+  })();
+  const yStart = Math.floor(minV / niceStep) * niceStep;
+  const yEnd   = Math.ceil(maxV  / niceStep) * niceStep;
+  const yTicks = [];
+  for (let v = yStart; v <= yEnd; v += niceStep) {
+    const y = toY(v);
+    if (y >= padT - 4 && y <= H - padB + 4) {
+      const label = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(v) + " €";
+      yTicks.push({ v, y, label });
+    }
+  }
+
   const xDates = [0, Math.floor((points.length-1)/2), points.length-1].map(i => ({ i, x: toX(i), label: points[i].date.slice(5).replace("-","/") }));
 
   // Couleurs thème clair
@@ -799,9 +815,15 @@ function CourbeEvolution({ hidden, positions, account }) {
               <stop offset="100%" stopColor={lineClr} stopOpacity="0"/>
             </linearGradient>
           </defs>
-          {yTicks.map(({ y }, i) => (
-            <line key={i} x1={padL} y1={y.toFixed(1)} x2={W-padR} y2={y.toFixed(1)}
-              stroke="rgba(26,45,74,0.07)" strokeWidth="1" strokeDasharray="4 6"/>
+          {yTicks.map(({ y, label }, i) => (
+            <g key={i}>
+              <line x1={padL} y1={y.toFixed(1)} x2={W - padR} y2={y.toFixed(1)}
+                stroke="rgba(26,45,74,0.08)" strokeWidth="1" strokeDasharray="3 5"/>
+              <text x={(padL - 6).toFixed(0)} y={(y + 4).toFixed(0)} textAnchor="end"
+                fontSize="10" fill="rgba(26,45,74,0.45)" fontFamily="Inter,sans-serif" fontWeight="500">
+                {label}
+              </text>
+            </g>
           ))}
           <path d={areaD} fill="url(#chartGradLight)"/>
           <path d={smoothPath} fill="none" stroke={lineClr} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"/>
@@ -847,13 +869,6 @@ function CourbeEvolution({ hidden, positions, account }) {
             </div>
           );
         })()}
-
-        {/* Labels Y */}
-        <div style={{ position: "absolute", top: 0, right: 0, height: "100%", width: `${padR}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", paddingBottom: `${padB}px`, paddingTop: `${padT - 6}px`, boxSizing: "border-box" }}>
-          {[...yTicks].reverse().map(({ label }, i) => (
-            <span key={i} style={{ fontSize: "10px", color: inkMut, fontWeight: "500", lineHeight: 1, display: "block", textAlign: "right", paddingRight: "4px" }}>{label}</span>
-          ))}
-        </div>
 
         {/* Labels X */}
         <div style={{ position: "relative", height: "18px", marginTop: "4px" }}>
