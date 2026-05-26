@@ -90,7 +90,7 @@ function SecteurTable({ positions, account = "PEA" }) {
   });
 
   const hasTargets = allocCibles && Object.keys(allocCibles).length > 0;
-  const rows = ALLOC_CATS.filter(cat => byCat[cat.key] || (allocCibles && Number(allocCibles[cat.key]) > 0));
+  const rows = ALLOC_CATS;
 
   return (
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "18px 20px", boxShadow: shadow.card }}>
