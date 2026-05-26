@@ -68,9 +68,44 @@ const DEFAULT_SCREENING_STOCKS = [
 
 // ─── CSV import ──────────────────────────────────────────────────────────────
 
+const MIN_WIDTH = 768;
+
+function MobileBlock() {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 99999,
+      background: "linear-gradient(135deg, #021024 0%, #052659 100%)",
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      padding: "32px 24px", textAlign: "center", fontFamily: "Inter, sans-serif",
+    }}>
+      <AppLogo size={48} />
+      <div style={{ marginTop: "28px", fontSize: "22px", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
+        Application non disponible<br />sur mobile
+      </div>
+      <div style={{ marginTop: "14px", fontSize: "14px", color: "rgba(193,232,255,0.6)", lineHeight: 1.65, maxWidth: "300px" }}>
+        Bourse Analyzer est optimisé pour les écrans de <strong style={{ color: "rgba(193,232,255,0.9)" }}>tablette et ordinateur</strong>.
+      </div>
+      <div style={{ marginTop: "32px", display: "flex", alignItems: "center", gap: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "14px", padding: "14px 20px" }}>
+        <span style={{ fontSize: "22px" }}>💻</span>
+        <div style={{ textAlign: "left" }}>
+          <div style={{ fontSize: "12px", fontWeight: "700", color: "#fff" }}>Accède depuis un ordinateur</div>
+          <div style={{ fontSize: "11px", color: "rgba(193,232,255,0.5)", marginTop: "2px" }}>ou une tablette (≥ 768 px)</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BourseAnalyzer() {
   const [state, setState] = useState("loading"); // "loading" | "auth" | "app"
   const [userName, setUserName] = useState("");
+  const [isMobileScreen, setIsMobileScreen] = useState(() => window.innerWidth < MIN_WIDTH);
+
+  useEffect(() => {
+    const check = () => setIsMobileScreen(window.innerWidth < MIN_WIDTH);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     if (!supabase) {
@@ -126,6 +161,8 @@ export default function BourseAnalyzer() {
     setSyncUserId(null);
     setState("auth");
   };
+
+  if (isMobileScreen) return <MobileBlock />;
 
   if (state === "loading") return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #021024 0%, #052659 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
