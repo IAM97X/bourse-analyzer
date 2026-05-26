@@ -726,36 +726,6 @@ RÈGLE MONTANT : ${nbOppMax === 1
           {/* Analyse stratégique conseiller */}
           <AnalyseStrategique analyse={result.analyse_portefeuille} />
 
-          {/* Analyse allocation (si résultat contient les données) */}
-          {result.allocCibles && (
-            <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "14px 16px", marginBottom: "12px", boxShadow: shadow.card }}>
-              <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>
-                Répartition analysée
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                {Object.entries(result.allocCibles).filter(([, v]) => Number(v) > 0).map(([cat, tgt]) => {
-                  const cur = (result.currentAlloc || {})[cat] || 0;
-                  const gap = Number(tgt) - cur;
-                  const color = catColor(cat);
-                  return (
-                    <div key={cat} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={{ width: "120px", fontSize: "10px", color: C.inkMuted, fontWeight: "600", flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {ALLOC_CATS.find(c => c.key === cat)?.label || cat}
-                      </div>
-                      <div style={{ flex: 1, height: "14px", background: C.snowOff, borderRadius: "4px", position: "relative", overflow: "hidden" }}>
-                        {cur > 0 && <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, cur)}%`, background: color + "50", borderRadius: "4px" }} />}
-                        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, Number(tgt))}%`, background: "transparent", border: `1px solid ${color}`, borderRadius: "4px" }} />
-                      </div>
-                      <span style={{ fontSize: "10px", fontWeight: "700", color: cur > 0 ? C.ink : C.inkSubtle, width: "28px", textAlign: "right" }}>{cur}%</span>
-                      <span style={{ fontSize: "10px", color: C.inkSubtle }}>→</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700", color: color, width: "28px" }}>{tgt}%</span>
-                      {gap > 2 && <span style={{ fontSize: "9px", fontWeight: "700", color: color, background: color + "15", borderRadius: "4px", padding: "1px 4px" }}>↑{gap}%</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Alertes portefeuille */}
           {result.alertes_portefeuille?.length > 0 && (

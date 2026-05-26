@@ -63,10 +63,20 @@ function getPosCat(p, cache = {}) {
 }
 
 // ─── Tableau de répartition sectorielle ──────────────────────────────────────
-function SecteurTable({ positions }) {
+function SecteurTable({ positions, account = "PEA" }) {
   const isinCatCache = useMemo(() => {
     try { return JSON.parse(localStorage.getItem("bourse_isin_cat_cache") || "{}"); } catch { return {}; }
   }, []);
+
+  // Cibles Autopilot (si une analyse a été lancée)
+  const allocCibles = useMemo(() => {
+    try {
+      const profil = JSON.parse(localStorage.getItem("bourse_profil") || "{}");
+      const risque = profil.risque || "equilibre";
+      const stored = localStorage.getItem(`bourse_autopilot_alloc_${account}_${risque}`);
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
+  }, [account]);
 
   const totalVal = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * p.quantite, 0);
 
@@ -79,65 +89,64 @@ function SecteurTable({ positions }) {
     byCat[cat].positions.push(p.nom);
   });
 
+  const hasTargets = allocCibles && Object.keys(allocCibles).length > 0;
   const maxPct = Math.max(...Object.values(byCat).map(b => totalVal > 0 ? b.valeur / totalVal * 100 : 0), 1);
 
   return (
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "18px 20px", boxShadow: shadow.card }}>
-      <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px" }}>
-        Répartition sectorielle
-      </div>
-
-      {/* En-tête */}
-      <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 72px 80px", gap: "8px", padding: "0 0 8px", borderBottom: `1px solid ${C.border}`, marginBottom: "4px" }}>
-        {["Secteur", "", "Valeur", "Positions"].map((h, i) => (
-          <div key={i} style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.5px", textAlign: i >= 2 ? "right" : "left" }}>{h}</div>
-        ))}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+        <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px" }}>
+          Répartition analysée
+        </div>
+        {hasTargets && (
+          <div style={{ fontSize: "10px", color: C.inkSubtle }}>actuel → <span style={{ fontWeight: "700" }}>cible</span></div>
+        )}
       </div>
 
       {/* Lignes */}
-      {ALLOC_CATS.map(cat => {
+      {ALLOC_CATS.filter(cat => byCat[cat.key] || (allocCibles && Number(allocCibles[cat.key]) > 0)).map(cat => {
         const data    = byCat[cat.key];
         const valeur  = data?.valeur || 0;
-        const pct     = totalVal > 0 && valeur > 0 ? valeur / totalVal * 100 : 0;
-        const present = valeur > 0;
+        const cur     = totalVal > 0 && valeur > 0 ? Math.round(valeur / totalVal * 100) : 0;
+        const tgt     = hasTargets ? Number(allocCibles[cat.key] || 0) : null;
+        const gap     = tgt !== null ? tgt - cur : 0;
+        const present = cur > 0;
         const noms    = data?.positions || [];
 
         return (
-          <div key={cat.key} style={{ display: "grid", gridTemplateColumns: "160px 1fr 72px 80px", gap: "8px", alignItems: "center", padding: "9px 0", borderBottom: `1px solid rgba(0,0,0,0.04)`, opacity: present ? 1 : 0.45 }}>
-            {/* Label + badge */}
-            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+          <div key={cat.key} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 0", borderBottom: `1px solid rgba(0,0,0,0.04)`, opacity: (present || tgt > 0) ? 1 : 0.35 }}>
+            {/* Label */}
+            <div style={{ width: "140px", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: present ? cat.color : C.border, flexShrink: 0 }} />
-              <span style={{ fontSize: "12px", fontWeight: present ? "700" : "500", color: present ? C.ink : C.inkSubtle }}>{cat.label}</span>
+              <span style={{ fontSize: "12px", fontWeight: present ? "700" : "500", color: present ? C.ink : C.inkSubtle, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cat.label}</span>
             </div>
 
-            {/* Barre */}
-            <div style={{ height: "8px", background: C.snowOff, borderRadius: "4px", overflow: "hidden" }}>
+            {/* Barre double (actuel + cible) */}
+            <div style={{ flex: 1, height: "14px", background: C.snowOff, borderRadius: "4px", position: "relative" }}>
               {present && (
-                <div style={{ height: "100%", width: `${(pct / maxPct) * 100}%`, background: cat.color, borderRadius: "4px", transition: "width 0.4s ease" }} />
+                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, cur)}%`, background: cat.color + "55", borderRadius: "4px", transition: "width 0.4s" }} />
+              )}
+              {tgt > 0 && (
+                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${Math.min(100, tgt)}%`, border: `1.5px solid ${cat.color}`, borderRadius: "4px", boxSizing: "border-box" }} />
+              )}
+              {!hasTargets && present && (
+                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${(cur / maxPct) * 100}%`, background: cat.color, borderRadius: "4px", transition: "width 0.4s" }} />
               )}
             </div>
 
-            {/* % + valeur */}
-            <div style={{ textAlign: "right" }}>
-              {present ? (
+            {/* % actuel → cible */}
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0, minWidth: hasTargets ? "110px" : "50px", justifyContent: "flex-end" }}>
+              <span style={{ fontSize: "12px", fontWeight: "700", color: present ? C.ink : C.inkSubtle }}>{cur}%</span>
+              {hasTargets && tgt !== null && (
                 <>
-                  <div style={{ fontSize: "13px", fontWeight: "800", color: cat.color }}>{pct.toFixed(1)}%</div>
-                  <div style={{ fontSize: "9px", color: C.inkSubtle }}>{fmtEur(valeur)}</div>
+                  <span style={{ fontSize: "10px", color: C.inkSubtle }}>→</span>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: cat.color }}>{tgt}%</span>
+                  {Math.abs(gap) > 2 && (
+                    <span style={{ fontSize: "9px", fontWeight: "700", color: cat.color, background: cat.color + "18", borderRadius: "4px", padding: "1px 4px", minWidth: "28px", textAlign: "center" }}>
+                      {gap > 0 ? "↑" : "↓"}{Math.abs(gap)}%
+                    </span>
+                  )}
                 </>
-              ) : (
-                <span style={{ fontSize: "11px", color: C.inkSubtle }}>absent</span>
-              )}
-            </div>
-
-            {/* Positions */}
-            <div style={{ textAlign: "right" }}>
-              {noms.length > 0 ? (
-                <div style={{ fontSize: "10px", color: C.inkMuted, lineHeight: 1.4 }}>
-                  {noms.slice(0, 2).map(n => n.split(" ")[0]).join(", ")}
-                  {noms.length > 2 && <span style={{ color: C.inkSubtle }}> +{noms.length - 2}</span>}
-                </div>
-              ) : (
-                <span style={{ fontSize: "10px", color: C.inkSubtle }}>—</span>
               )}
             </div>
           </div>
@@ -1774,7 +1783,7 @@ export default function HistoriqueTab({ portfolioVersion, account = "PEA" }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <PortfolioPieChart positions={positions} />
-      <SecteurTable positions={positions} />
+      <SecteurTable positions={positions} account={account} />
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
         <div style={{ flex: "1 1 400px", minWidth: 0, display: "flex", flexDirection: "column" }}><CorrelationMatrix positions={positions} /></div>
         <div style={{ flex: "1 1 300px", minWidth: 0, display: "flex", flexDirection: "column" }}><BenchmarkComparaison /></div>
