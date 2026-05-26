@@ -734,36 +734,13 @@ function CourbeEvolution({ hidden, positions, account }) {
   return (
     <div style={{ background: bg, borderRadius: "20px", padding: "14px 14px 10px", boxShadow: "0 2px 20px rgba(26,45,74,0.09)", border: "1px solid rgba(26,45,74,0.07)" }}>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "8px", gap: "8px", flexWrap: "wrap", ...blur }}>
-
-        {/* Valeur + perf */}
-        <div>
-          <div style={{ fontSize: "10px", fontWeight: "600", color: inkMut, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "2px" }}>
-            Portefeuille {account}
-          </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
-            <div style={{ fontSize: "20px", fontWeight: "800", color: ink, letterSpacing: "-0.03em", lineHeight: 1 }}>{fmtEur(current)}</div>
-            {perfBadgeEur !== null && (
-              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <span style={{ fontSize: "12px", fontWeight: "700", color: lineClr }}>
-                  {perfBadgeEur >= 0 ? "+" : ""}{fmtEur(perfBadgeEur)}
-                </span>
-                {perfBadge !== null && (
-                  <span style={{ fontSize: "10px", fontWeight: "700", color: lineClr, background: `${lineClr}15`, borderRadius: "4px", padding: "1px 5px" }}>
-                    {perfBadge >= 0 ? "+" : ""}{perfBadge.toFixed(2)} %
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+      {/* Header : label + actions à droite */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px", ...blur }}>
+        <div style={{ fontSize: "10px", fontWeight: "600", color: inkMut, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+          Portefeuille {account}
         </div>
-
-        {/* Contrôles : source + CSV + périodes */}
-        <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
-          {dataSource === "boursobank" && (
-            <span style={{ fontSize: "9px", color: lineClrUp, fontWeight: "700", background: `${lineClrUp}14`, padding: "2px 5px", borderRadius: "5px", border: `1px solid ${lineClrUp}28` }}>● {csvBroker || "CSV"}</span>
-          )}
+        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+          {dataSource === "boursobank" && <span style={{ fontSize: "9px", color: lineClrUp, fontWeight: "700", background: `${lineClrUp}14`, padding: "2px 5px", borderRadius: "5px", border: `1px solid ${lineClrUp}28` }}>● {csvBroker || "CSV"}</span>}
           {dataSource === "yahoo"     && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Yahoo</span>}
           {dataSource === "snapshots" && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Snap</span>}
           <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
@@ -771,15 +748,24 @@ function CourbeEvolution({ hidden, positions, account }) {
             style={{ padding: "2px 7px", borderRadius: "5px", border: `1px solid ${csvPoints ? lineClrUp+"40" : "rgba(26,45,74,0.13)"}`, background: "transparent", color: csvPoints ? lineClrUp : inkSub, fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
             {csvPoints ? "↑ CSV" : "+ CSV"}
           </button>
-          <div style={{ display: "flex", background: "#f0f2f5", borderRadius: "7px", padding: "2px" }}>
-            {PERIODS.map(({ label, days }) => (
-              <button key={days} onClick={() => setPeriod(days)}
-                style={{ padding: "2px 7px", borderRadius: "5px", border: "none", background: period === days ? "#fff" : "transparent", color: period === days ? ink : inkSub, fontSize: "10px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: period === days ? "0 1px 3px rgba(26,45,74,0.10)" : "none" }}>
-                {label}
-              </button>
-            ))}
-          </div>
         </div>
+      </div>
+
+      {/* Valeur + perf */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "10px", flexWrap: "wrap", ...blur }}>
+        <div style={{ fontSize: "28px", fontWeight: "800", color: ink, letterSpacing: "-0.04em", lineHeight: 1 }}>{fmtEur(current)}</div>
+        {perfBadgeEur !== null && (
+          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <span style={{ fontSize: "13px", fontWeight: "700", color: lineClr }}>
+              {perfBadgeEur >= 0 ? "+" : ""}{fmtEur(perfBadgeEur)}
+            </span>
+            {perfBadge !== null && (
+              <span style={{ fontSize: "11px", fontWeight: "700", color: lineClr, background: `${lineClr}15`, borderRadius: "5px", padding: "1px 6px" }}>
+                {perfBadge >= 0 ? "+" : ""}{perfBadge.toFixed(2)} %
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Courbe */}
@@ -876,6 +862,18 @@ function CourbeEvolution({ hidden, positions, account }) {
               }}>{label}</span>
             );
           })}
+        </div>
+      </div>
+
+      {/* Période pills — centrées en bas */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
+        <div style={{ display: "flex", background: "#f0f2f5", borderRadius: "8px", padding: "2px", gap: "1px" }}>
+          {PERIODS.map(({ label, days }) => (
+            <button key={days} onClick={() => setPeriod(days)}
+              style={{ padding: "3px 10px", borderRadius: "6px", border: "none", background: period === days ? "#fff" : "transparent", color: period === days ? ink : inkSub, fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: period === days ? "0 1px 3px rgba(26,45,74,0.10)" : "none", transition: "all 0.15s" }}>
+              {label}
+            </button>
+          ))}
         </div>
       </div>
     </div>
