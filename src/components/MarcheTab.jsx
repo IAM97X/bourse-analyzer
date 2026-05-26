@@ -463,8 +463,9 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
   );
 
   const selectedPos = positions.find(p => p.id === selectedPosId) || null;
-  const SIG_COLOR = { ACHAT: C.green, RENFORCER: C.accent, ATTENDRE: C.gold, PRUDENCE: C.red, VENDRE: "#7B1111" };
-  const SIG_BG    = { ACHAT: C.greenLight, RENFORCER: C.paleBlue, ATTENDRE: C.goldLight, PRUDENCE: C.redLight, VENDRE: "rgba(123,17,17,0.08)" };
+  const SIG_COLOR  = { ACHAT: C.green, RENFORCER: C.accent, ATTENDRE: C.gold, PRUDENCE: C.red, VENDRE: "#7B1111" };
+  const SIG_BG     = { ACHAT: C.greenLight, RENFORCER: C.paleBlue, ATTENDRE: C.goldLight, PRUDENCE: C.redLight, VENDRE: "rgba(123,17,17,0.08)" };
+  const SIG_PHRASE = { ACHAT: "Momentum favorable, à surveiller", RENFORCER: "Position solide, tu peux étoffer", ATTENDRE: "Pas d'action urgente", PRUDENCE: "Contexte dégradé, reste vigilant", VENDRE: "Signal négatif détecté" };
 
   const scores = Array.isArray(marketScores) ? marketScores : [];
   const scoredPositions = positions.map(p => {
@@ -522,7 +523,12 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
               return (
                 <div key={pos.id} style={{ padding: "14px 16px", background: SIG_BG[signal] || C.snowOff, borderRadius: "14px", border: `1px solid ${SIG_COLOR[signal] ? SIG_COLOR[signal] + "33" : C.border}`, display: "flex", flexDirection: "column", gap: "8px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                    <div style={{ fontWeight: "700", fontSize: "13.5px", color: C.ink, flex: 1, minWidth: "100px" }}>{pos.nom}</div>
+                    <div style={{ flex: 1, minWidth: "100px" }}>
+                      <div style={{ fontWeight: "700", fontSize: "13.5px", color: C.ink }}>{pos.nom}</div>
+                      {SIG_PHRASE[signal] && (
+                        <div style={{ fontSize: "11px", color: SIG_COLOR[signal], fontWeight: "500", marginTop: "2px", opacity: 0.85 }}>{SIG_PHRASE[signal]}</div>
+                      )}
+                    </div>
                     <span style={{ fontSize: "10px", fontWeight: "800", color: SIG_COLOR[signal] || C.inkMuted, background: SIG_COLOR[signal] ? SIG_COLOR[signal] + "22" : C.snowDim, padding: "3px 10px", borderRadius: "20px", border: `1px solid ${SIG_COLOR[signal] || C.border}`, letterSpacing: "0.5px" }}>{signal}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       <div style={{ width: "80px", height: "6px", borderRadius: "3px", background: C.snowDim, overflow: "hidden" }}>
