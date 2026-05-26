@@ -696,26 +696,7 @@ function CourbeEvolution({ hidden, positions, account }) {
 
   const pts = points.map((p, i) => [toX(i), toY(p.valeur)]);
 
-  // Courbe bezier lissée (Catmull-Rom → bezier cubique)
-  const catmullRom = (ps) => {
-    if (ps.length < 2) return "";
-    const t = 0.4;
-    let d = `M${ps[0][0].toFixed(2)},${ps[0][1].toFixed(2)}`;
-    for (let i = 0; i < ps.length - 1; i++) {
-      const p0 = ps[Math.max(0, i - 1)];
-      const p1 = ps[i];
-      const p2 = ps[i + 1];
-      const p3 = ps[Math.min(ps.length - 1, i + 2)];
-      const cp1x = p1[0] + (p2[0] - p0[0]) * t / 2;
-      const cp1y = p1[1] + (p2[1] - p0[1]) * t / 2;
-      const cp2x = p2[0] - (p3[0] - p1[0]) * t / 2;
-      const cp2y = p2[1] - (p3[1] - p1[1]) * t / 2;
-      d += ` C${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
-    }
-    return d;
-  };
-
-  const smoothPath = catmullRom(pts);
+  const smoothPath = pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
   const areaD = `${smoothPath} L${pts[pts.length-1][0].toFixed(2)},${H-padB} L${pts[0][0].toFixed(2)},${H-padB} Z`;
 
   const yTicks = [minV, (minV+maxV)/2, maxV].map(v => ({ v, y: toY(v), label: v >= 1000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0) }));
