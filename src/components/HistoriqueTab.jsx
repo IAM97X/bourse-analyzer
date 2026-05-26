@@ -6,6 +6,7 @@ import { fetchWithProxy, enqueueApi, callClaude } from "../lib/api";
 import { ThinkingSpinner } from "./UI";
 import CompanyAvatar from "./CompanyAvatar";
 import PortfolioPieChart from "./PortfolioPieChart";
+import Tooltip from "./Tooltip";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { AVIS_PARSE_PROMPT } from "../constants/prompts";
 import { AUTOPILOT_UNIVERSE } from "../constants/universe";
@@ -1290,14 +1291,20 @@ function PerformanceGlobale({ positions, account = "PEA" }) {
       {/* KPI row */}
       <div className="ba-perf-kpi" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", borderBottom: `1px solid ${C.border}` }}>
         {[
-          { label: "Gain brut total", value: (gainBrut >= 0 ? "+" : "") + fmtEur(gainBrut), color: gainBrut >= 0 ? C.green : C.red },
-          { label: "Rendement total", value: pctFmt(rendPct), color: pctColor(rendPct) },
-          { label: "CAGR (annualisé)", value: cagr != null ? pctFmt(cagr) : "< 1 an", color: cagr != null ? pctColor(cagr) : C.inkSubtle },
-          { label: "Dietz TWR annualisé", value: dietzCagr != null ? pctFmt(dietzCagr) : "< 1 an", color: dietzCagr != null ? pctColor(dietzCagr) : C.inkSubtle },
-        ].map(({ label, value, color }, i) => (
+          { label: "Gain brut total",      value: (gainBrut >= 0 ? "+" : "") + fmtEur(gainBrut), color: gainBrut >= 0 ? C.green : C.red,
+            tip: "Différence entre la valeur actuelle de ton portefeuille et le total de tes achats nets (hors frais de courtage)." },
+          { label: "Rendement total",      value: pctFmt(rendPct), color: pctColor(rendPct),
+            tip: "Gain brut divisé par le capital total investi, exprimé en %. Ne tient pas compte de la durée." },
+          { label: "CAGR (annualisé)",     value: cagr != null ? pctFmt(cagr) : "< 1 an", color: cagr != null ? pctColor(cagr) : C.inkSubtle,
+            tip: "Taux de croissance annuel composé depuis ton premier achat. Répond à : à quel % annuel mon capital a-t-il grossi ?" },
+          { label: "Dietz TWR annualisé",  value: dietzCagr != null ? pctFmt(dietzCagr) : "< 1 an", color: dietzCagr != null ? pctColor(dietzCagr) : C.inkSubtle,
+            tip: "Rendement annualisé pondéré par le temps (méthode Modified Dietz). Neutralise l'effet des apports/retraits — mesure la vraie performance du gérant." },
+        ].map(({ label, value, color, tip }, i) => (
           <div key={i} style={{ padding: "14px 16px", borderRight: i < 3 ? `1px solid ${C.border}` : "none", textAlign: "center" }}>
             <div style={{ fontSize: "17px", fontWeight: "800", color, fontFamily: "Inter,sans-serif", letterSpacing: "-0.5px" }}>{value}</div>
-            <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: "600" }}>{label}</div>
+            <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: "600" }}>
+              <Tooltip text={tip} term={label}><span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{label}</span></Tooltip>
+            </div>
           </div>
         ))}
       </div>
