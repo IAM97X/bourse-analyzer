@@ -248,11 +248,15 @@ export default function AutopilotIA({ account, profil, hidden }) {
   const profilRank = PROFIL_RANK[risque] ?? 1;
 
   const allocKey  = `bourse_autopilot_alloc_${account || "PEA"}_${risque}`;
+  const budgetKey = `bourse_autopilot_budget_${account || "PEA"}`;
   const horizon = profil?.horizon || "moyen";
   const [allocCibles, setAllocCibles] = useState(() => load(allocKey, null) || computeDefaultAlloc(risque, horizon));
-  const budget = profil?.dcaMensuel || 200;
+  const [budget, setBudget] = useState(() => load(budgetKey, null) || profil?.dcaMensuel || 200);
 
   const allocTotal = Object.values(allocCibles).reduce((a, b) => a + Number(b || 0), 0);
+
+  const updateBudget = (val) => { setBudget(val === "" ? "" : Number(val)); };
+  const commitBudget = (val) => { const v = Math.max(0, Number(val) || 0); setBudget(v); save(budgetKey, v); };
 
   const updateAlloc = (key, val) => {
     const v = Math.max(0, Math.min(100, Number(val) || 0));
@@ -680,10 +684,16 @@ RÈGLE MONTANT : ${nbOppMax === 1
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
-          {/* Budget depuis le profil */}
-          <div style={{ display: "flex", alignItems: "center", gap: "4px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "5px 10px" }}>
-            <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>DCA</span>
-            <span style={{ fontSize: "13px", fontWeight: "700", color: C.ink }}>{budget}</span>
+          {/* Budget mensuel éditable */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "5px 10px" }}>
+            <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "600" }}>Budget</span>
+            <input
+              type="number" min="0" step="50"
+              value={budget}
+              onChange={e => updateBudget(e.target.value)}
+              onBlur={e => commitBudget(e.target.value)}
+              style={{ width: "60px", border: "none", background: "transparent", fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", textAlign: "right" }}
+            />
             <span style={{ fontSize: "11px", color: C.inkSubtle }}>€/mois</span>
           </div>
           <button

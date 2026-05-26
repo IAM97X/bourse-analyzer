@@ -651,7 +651,7 @@ function projDCA(capital, dcaMensuel, tauxAnnuel, mois) {
   return capital * Math.pow(1 + r, mois) + dcaMensuel * ((Math.pow(1 + r, mois) - 1) / r);
 }
 
-function DCASimulator({ profil, dcaSim, setDcaSim, positions }) {
+function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
   const capitalActuel = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
   const dcaMin = 50, dcaMax = 3000, dcaStep = 50;
 
@@ -682,6 +682,8 @@ function DCASimulator({ profil, dcaSim, setDcaSim, positions }) {
         </div>
         <input type="range" min={dcaMin} max={dcaMax} step={dcaStep} value={dcaSim}
           onChange={e => setDcaSim(Number(e.target.value))}
+          onMouseUp={e => onSaveProfil && onSaveProfil({ ...profil, dcaMensuel: Number(e.target.value) })}
+          onTouchEnd={e => onSaveProfil && onSaveProfil({ ...profil, dcaMensuel: Number(e.target.value) })}
           style={{ width: "100%", accentColor: C.navy, cursor: "pointer" }} />
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", color: C.inkSubtle, marginTop: "3px" }}>
           <span>{dcaMin} €</span><span>{dcaMax} €</span>
@@ -775,7 +777,7 @@ export default function StratégieDCATab({ profil, portfolioVersion, marketScore
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      <DCASimulator profil={profil} dcaSim={dcaSim} setDcaSim={setDcaSim} positions={positions} />
+      <DCASimulator profil={profil} dcaSim={dcaSim} setDcaSim={setDcaSim} onSaveProfil={onSaveProfil} positions={positions} />
       <DCAStrategy positions={positions} profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={onRunScoring} onSaveProfil={onSaveProfil} />
     </div>
   );

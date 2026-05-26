@@ -224,11 +224,13 @@ function ProfilTab({ profil, onChange }) {
 
           {/* Capital + DCA */}
           <Section title="Comptes & DCA">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-              <div>
-                <label style={lbl}>DCA mensuel initial (€)</label>
-                <input style={inp} type="number" min="0" placeholder="0" value={form.dcaMensuel || ""} onChange={e => setForm(f => ({ ...f, dcaMensuel: e.target.value }))} />
+            <div style={{ marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", background: C.snowOff, borderRadius: "10px", border: `1px solid ${C.border}`, fontSize: "12px", color: C.inkMuted }}>
+                <span>💡</span>
+                <span>Configurez votre DCA mensuel dans l'onglet <strong style={{ color: C.ink }}>Plan DCA</strong>.</span>
               </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "12px" }}>
               <div>
                 <label style={lbl}>Durée DCA (mois)</label>
                 <input style={inp} type="number" min="1" max="480" placeholder="120" value={form.dcaDuree || ""} onChange={e => {
