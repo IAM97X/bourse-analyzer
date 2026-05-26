@@ -687,7 +687,7 @@ function CourbeEvolution({ hidden, positions, account }) {
   const lineClrDown = "#e74c3c";
 
   const W = 600; const H = 160;
-  const padT = 12, padB = 12, padL = 72, padR = 12;
+  const padT = 12, padB = 12, padL = 58, padR = 12;
   const values = points.map(p => p.valeur);
   const minV = Math.min(...values), maxV = Math.max(...values);
   const range = maxV - minV || 1;
@@ -732,7 +732,7 @@ function CourbeEvolution({ hidden, positions, account }) {
   const perfBadgeEur = flatPeriod ? pvLatent : delta;
 
   return (
-    <div style={{ background: bg, borderRadius: "20px", padding: "14px 14px 10px", boxShadow: "0 2px 20px rgba(26,45,74,0.09)", border: "1px solid rgba(26,45,74,0.07)" }}>
+    <div style={{ background: bg, borderRadius: "20px", padding: "12px 12px 10px", boxShadow: "0 2px 20px rgba(26,45,74,0.09)", border: "1px solid rgba(26,45,74,0.07)" }}>
 
       {/* Header : label + actions à droite */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px", ...blur }}>
@@ -752,7 +752,7 @@ function CourbeEvolution({ hidden, positions, account }) {
       </div>
 
       {/* Valeur + perf */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "6px", flexWrap: "wrap", ...blur }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "4px", flexWrap: "wrap", ...blur }}>
         <div style={{ fontSize: "20px", fontWeight: "700", color: ink, letterSpacing: "-0.03em", lineHeight: 1 }}>{fmtEur(current)}</div>
         {perfBadgeEur !== null && (
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -797,10 +797,11 @@ function CourbeEvolution({ hidden, positions, account }) {
           </defs>
           {yTicks.map(({ y, label }, i) => (
             <g key={i}>
-              <line x1={padL} y1={y.toFixed(1)} x2={W - padR} y2={y.toFixed(1)}
-                stroke="rgba(26,45,74,0.08)" strokeWidth="1" strokeDasharray="3 5"/>
-              <text x="4" y={(y + 4).toFixed(0)} textAnchor="start"
-                fontSize="10" fill="rgba(26,45,74,0.45)" fontFamily="Inter,sans-serif" fontWeight="500">
+              <line x1="0" y1={y.toFixed(1)} x2={W - padR} y2={y.toFixed(1)}
+                stroke="rgba(26,45,74,0.07)" strokeWidth="1" strokeDasharray="3 6"/>
+              <rect x="0" y={(y - 8).toFixed(0)} width={(padL - 2).toFixed(0)} height="12" fill="white"/>
+              <text x="2" y={(y + 4).toFixed(0)} textAnchor="start"
+                fontSize="10" fill="rgba(26,45,74,0.50)" fontFamily="Inter,sans-serif" fontWeight="500">
                 {label}
               </text>
             </g>
