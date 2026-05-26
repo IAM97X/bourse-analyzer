@@ -1348,8 +1348,6 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
         );
       })()}
 
-      {/* Suivi réel vs projeté */}
-      <SuiviHistorique />
     </div>
   );
 }
