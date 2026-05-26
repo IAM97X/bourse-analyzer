@@ -5,9 +5,10 @@ import { C, shadow } from "../constants/theme";
 export const ONBOARDING_KEY = "bourse_onboarding_v1";
 
 const HORIZONS = [
-  { key: "court",  label: "Court terme",  sub: "moins de 3 ans" },
-  { key: "moyen",  label: "Moyen terme",  sub: "3 à 10 ans" },
-  { key: "long",   label: "Long terme",   sub: "plus de 10 ans" },
+  { key: "court",     label: "Court",      sub: "< 2 ans" },
+  { key: "moyen",     label: "Moyen",      sub: "2–5 ans" },
+  { key: "long",      label: "Long",       sub: "5–10 ans" },
+  { key: "tres-long", label: "Très long",  sub: "> 10 ans" },
 ];
 
 const inp = {
