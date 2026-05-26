@@ -137,6 +137,9 @@ export function AIAssistant({ account, profil }) {
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 100); }, [open]);
 
+  // Ref toujours à jour vers send pour éviter les stale closures
+  const sendRef = useRef(null);
+
   // Ouvre l'assistant flottant et envoie la query depuis les tooltips
   const pendingQueryRef = useRef(null);
   useEffect(() => {
@@ -154,8 +157,7 @@ export function AIAssistant({ account, profil }) {
     if (!open || !pendingQueryRef.current) return;
     const q = pendingQueryRef.current;
     pendingQueryRef.current = null;
-    setTimeout(() => send(q), 200);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setTimeout(() => sendRef.current?.(q), 250);
   }, [open]);
 
   const buildContext = () => {
@@ -198,7 +200,7 @@ Règles strictes :
 - Ne conseille jamais d'acheter ou vendre un titre spécifique de façon directe${customInstructions}`;
 
   const send = async (overrideText) => {
-    const text = (overrideText ?? input).trim();
+    const text = (typeof overrideText === "string" ? overrideText : input).trim();
     if (!text || loading) return;
     const userMsg = { role: "user", content: text };
     const newMessages = [...messages, userMsg];
@@ -231,6 +233,7 @@ Règles strictes :
     }
     setLoading(false);
   };
+  sendRef.current = send;
 
   const dayIndex = Math.floor(Date.now() / 86400000);
   const ALL_SUGGESTIONS = [
