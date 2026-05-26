@@ -732,46 +732,49 @@ function CourbeEvolution({ hidden, positions, account }) {
   const perfBadgeEur = flatPeriod ? pvLatent : delta;
 
   return (
-    <div style={{ background: bg, borderRadius: "20px", padding: "20px 20px 14px", boxShadow: "0 2px 20px rgba(26,45,74,0.09)", border: "1px solid rgba(26,45,74,0.07)" }}>
+    <div style={{ background: bg, borderRadius: "20px", padding: "14px 14px 10px", boxShadow: "0 2px 20px rgba(26,45,74,0.09)", border: "1px solid rgba(26,45,74,0.07)" }}>
 
-      {/* Ligne 1 : valeur principale + badge perf */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "12px", flexWrap: "wrap", gap: "8px", ...blur }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "8px", gap: "8px", flexWrap: "wrap", ...blur }}>
+
+        {/* Valeur + perf */}
         <div>
-          <div style={{ fontSize: "11px", color: inkMut, fontWeight: "600", letterSpacing: "0.5px", marginBottom: "3px" }}>Portefeuille {account}</div>
-          <div style={{ fontSize: "28px", fontWeight: "900", color: ink, letterSpacing: "-0.03em", lineHeight: 1.1 }}>{fmtEur(current)}</div>
-          {perfBadgeEur !== null && (
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "5px" }}>
-              <span style={{ fontSize: "13px", fontWeight: "700", color: lineClr }}>
-                {perfBadgeEur >= 0 ? "+" : ""}{fmtEur(perfBadgeEur)}
-              </span>
-              {perfBadge !== null && (
-                <span style={{ fontSize: "12px", fontWeight: "700", color: lineClr, background: `${lineClr}15`, borderRadius: "6px", padding: "1px 7px" }}>
-                  {perfBadge >= 0 ? "+" : ""}{perfBadge.toFixed(2)} %
+          <div style={{ fontSize: "10px", fontWeight: "600", color: inkMut, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "2px" }}>
+            Portefeuille {account}
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
+            <div style={{ fontSize: "20px", fontWeight: "800", color: ink, letterSpacing: "-0.03em", lineHeight: 1 }}>{fmtEur(current)}</div>
+            {perfBadgeEur !== null && (
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "12px", fontWeight: "700", color: lineClr }}>
+                  {perfBadgeEur >= 0 ? "+" : ""}{fmtEur(perfBadgeEur)}
                 </span>
-              )}
-              <span style={{ fontSize: "10px", color: inkMut }}>
-                {flatPeriod ? "depuis achat" : dataSource === "boursobank" ? "perf. cumulée" : "sur la période"}
-              </span>
-            </div>
-          )}
+                {perfBadge !== null && (
+                  <span style={{ fontSize: "10px", fontWeight: "700", color: lineClr, background: `${lineClr}15`, borderRadius: "4px", padding: "1px 5px" }}>
+                    {perfBadge >= 0 ? "+" : ""}{perfBadge.toFixed(2)} %
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Contrôles : source + CSV + périodes */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
           {dataSource === "boursobank" && (
-            <span style={{ fontSize: "9px", color: lineClrUp, fontWeight: "700", background: `${lineClrUp}14`, padding: "2px 7px", borderRadius: "8px", border: `1px solid ${lineClrUp}30` }}>● {csvBroker || "CSV"}</span>
+            <span style={{ fontSize: "9px", color: lineClrUp, fontWeight: "700", background: `${lineClrUp}14`, padding: "2px 5px", borderRadius: "5px", border: `1px solid ${lineClrUp}28` }}>● {csvBroker || "CSV"}</span>
           )}
-          {dataSource === "yahoo"      && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Yahoo</span>}
-          {dataSource === "snapshots"  && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Snapshots</span>}
+          {dataSource === "yahoo"     && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Yahoo</span>}
+          {dataSource === "snapshots" && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Snap</span>}
           <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
           <button onClick={() => fileInputRef.current?.click()}
-            style={{ padding: "4px 10px", borderRadius: "8px", border: `1px solid ${csvPoints ? lineClrUp+"44" : "rgba(26,45,74,0.14)"}`, background: csvPoints ? `${lineClrUp}10` : "transparent", color: csvPoints ? lineClrUp : inkSub, fontSize: "11px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+            style={{ padding: "2px 7px", borderRadius: "5px", border: `1px solid ${csvPoints ? lineClrUp+"40" : "rgba(26,45,74,0.13)"}`, background: "transparent", color: csvPoints ? lineClrUp : inkSub, fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
             {csvPoints ? "↑ CSV" : "+ CSV"}
           </button>
-          <div style={{ display: "flex", background: "#f0f2f5", borderRadius: "10px", padding: "2px" }}>
+          <div style={{ display: "flex", background: "#f0f2f5", borderRadius: "7px", padding: "2px" }}>
             {PERIODS.map(({ label, days }) => (
               <button key={days} onClick={() => setPeriod(days)}
-                style={{ padding: "4px 10px", borderRadius: "8px", border: "none", background: period === days ? "#fff" : "transparent", color: period === days ? ink : inkSub, fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: period === days ? "0 1px 4px rgba(26,45,74,0.12)" : "none", transition: "all 0.15s" }}>
+                style={{ padding: "2px 7px", borderRadius: "5px", border: "none", background: period === days ? "#fff" : "transparent", color: period === days ? ink : inkSub, fontSize: "10px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: period === days ? "0 1px 3px rgba(26,45,74,0.10)" : "none" }}>
                 {label}
               </button>
             ))}
