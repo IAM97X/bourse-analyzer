@@ -809,10 +809,6 @@ function CourbeEvolution({ hidden, positions, account }) {
             <line x1={hover.x.toFixed(1)} y1={padT} x2={hover.x.toFixed(1)} y2={H - padB}
               stroke="rgba(26,45,74,0.15)" strokeWidth="1"/>
           )}
-          {hover && (
-            <circle cx={hover.x.toFixed(1)} cy={toY(points[hover.idx].valeur).toFixed(1)} r="4"
-              fill={lineClr} stroke="#fff" strokeWidth="2"/>
-          )}
         </svg>
 
         {/* Tooltip */}
