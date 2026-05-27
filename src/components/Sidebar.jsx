@@ -92,7 +92,7 @@ export const NAV_GROUPS = [
     { key: TABS.PROJECTION, label: "Projection",  icon: <IconWave/> },
   ]},
   { label: "IA", featured: true, items: [
-    { key: TABS.CHAT,      label: "Assistant IA",     icon: <IconChat/> },
+    { key: TABS.CHAT,      label: "Conseiller Privé", icon: <IconChat/> },
     { key: TABS.AUTOPILOT, label: "Autopilot IA",     icon: <IconAutopilot/> },
   ]},
   { label: "COMPTE", items: [

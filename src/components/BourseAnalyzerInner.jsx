@@ -532,7 +532,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       {/* ── Bottom navigation bar (mobile only) ── */}
       <nav className="ba-bottom-nav">
         {NAV_GROUPS.flatMap(g => g.items).map(({ key, icon }) => {
-          const SHORT = { portfolio: "Positions", marche: "Marchés", dca: "DCA", projection: "Projec.", historique: "Répart.", operations: "Opérat.", chat: "Assist.", profil: "Config." };
+          const SHORT = { portfolio: "Positions", marche: "Marchés", dca: "DCA", projection: "Projec.", historique: "Répart.", operations: "Opérat.", chat: "Conseil.", profil: "Config." };
           const isActive = activeTab === key;
           return (
             <button key={key} onClick={() => changeTab(key)}
