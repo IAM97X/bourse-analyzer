@@ -119,15 +119,19 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
                 const ma50  = ma50arr[last]  != null ? ma50arr[last].toFixed(3)  : null;
                 const ma200 = ma200arr[last] != null ? ma200arr[last].toFixed(3) : null;
                 const rsi   = rsiArr[last]   != null ? Math.round(rsiArr[last])  : null;
-                const cours = closes[last];
-                if (ma50 || ma200 || rsi) {
-                  const tendance = ma200 && cours > parseFloat(ma200) ? "au-dessus de la MM200 (haussier LT)" : ma200 ? "en dessous de la MM200 (baissier LT)" : "";
-                  technicalCtx = `\n\nDONNÉES TECHNIQUES CALCULÉES LOCALEMENT (Yahoo Finance hebdo, temps réel) :` +
+                const coursYahoo = closes[last];
+                // Préférer le cours en cache (intraday) sinon dernier close hebdo Yahoo
+                const coursActuel = pos.dernierCours || coursYahoo;
+                if (ma50 || ma200 || rsi || coursActuel) {
+                  const tendance = ma200 && coursActuel > parseFloat(ma200) ? "au-dessus de la MM200 (haussier LT)" : ma200 ? "en dessous de la MM200 (baissier LT)" : "";
+                  technicalCtx = `\n\nDONNÉES CALCULÉES LOCALEMENT (Yahoo Finance, temps réel) :` +
+                    (coursActuel ? `\n- Cours actuel : ${coursActuel.toFixed(3)} €` : "") +
                     (ma50  ? `\n- MM50 : ${ma50} €`  : "") +
                     (ma200 ? `\n- MM200 : ${ma200} €` : "") +
                     (rsi   ? `\n- RSI(14) : ${rsi}` : "") +
-                    (tendance ? `\n- Cours ${tendance}` : "") +
-                    `\nUtilise DIRECTEMENT ces valeurs dans analyse_technique.ma50, analyse_technique.ma200 et analyse_technique.rsi — NE PAS faire de web_search pour ces indicateurs.`;
+                    (tendance ? `\n- Tendance : cours ${tendance}` : "") +
+                    `\nUtilise DIRECTEMENT ces valeurs dans performance.cours_actuel, analyse_technique.ma50, analyse_technique.ma200 et analyse_technique.rsi.` +
+                    `\nNE PAS faire de web_search pour le cours ni pour les indicateurs techniques — les données ci-dessus sont à jour.`;
                 }
               }
             }

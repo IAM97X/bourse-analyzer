@@ -247,9 +247,14 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         .map(({ pos, analysts, news }) => formatExternalContext(pos.nom, analysts, news))
         .join("\n\n");
 
-      const posListe = positions.map(p =>
-        `- ${p.nom}${p.isin ? ` (ISIN: ${p.isin})` : ""}${p.ticker ? ` [${p.ticker}]` : ""}, PRU ${p.pru}€, qté ${p.quantite}`
-      ).join("\n");
+      const posListe = positions.map(p => {
+        const cours = p.dernierCours || p.pru;
+        const valeur = (cours * p.quantite).toFixed(0);
+        const pv = cours - p.pru;
+        const pvPct = p.pru > 0 ? ((pv / p.pru) * 100).toFixed(1) : "0.0";
+        const pvSign = pv >= 0 ? "+" : "";
+        return `- ${p.nom}${p.isin ? ` (ISIN: ${p.isin})` : ""}${p.ticker ? ` [${p.ticker}]` : ""}, PRU ${p.pru}€, cours ${cours}€, qté ${p.quantite}, valeur ${valeur}€, PV ${pvSign}${pvPct}%`;
+      }).join("\n");
 
       const userMsg = `Portefeuille PEA à analyser (DCA long terme, 10 ans) :\n${posListe}\n\nDONNÉES MARCHÉ EN TEMPS RÉEL :\n${contextBlocks}\n\nJSON uniquement.`;
 
