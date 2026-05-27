@@ -511,8 +511,11 @@ function CourbeEvolution({ hidden, positions, account }) {
       return d && Array.isArray(d.rows) && d.rows.length > 1 ? d : null;
     } catch { return null; }
   });
-  const csvPoints = csvData?.rows ?? null;
-  const csvBroker = csvData?.broker ?? null;
+  const csvPoints    = csvData?.rows ?? null;
+  const csvBroker    = csvData?.broker ?? null;
+  const csvImportedAt = csvData?.importedAt
+    ? new Date(csvData.importedAt).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    : null;
   const fileInputRef = useRef(null);
   const svgRef = useRef(null);
   const blur = hidden ? { filter: "blur(6px)", userSelect: "none", pointerEvents: "none" } : {};
@@ -865,7 +868,12 @@ function CourbeEvolution({ hidden, positions, account }) {
           Portefeuille {account}
         </div>
         <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-          {dataSource === "boursobank" && <span style={{ fontSize: "9px", color: lineClrUp, fontWeight: "700", background: `${lineClrUp}14`, padding: "2px 5px", borderRadius: "5px", border: `1px solid ${lineClrUp}28` }}>● {csvBroker || "CSV"}</span>}
+          {dataSource === "boursobank" && (
+            <span style={{ fontSize: "9px", color: lineClrUp, fontWeight: "700", background: `${lineClrUp}14`, padding: "2px 7px", borderRadius: "5px", border: `1px solid ${lineClrUp}28`, display: "flex", alignItems: "center", gap: "4px" }}>
+              <span>● {csvBroker || "CSV"}</span>
+              {csvImportedAt && <span style={{ fontWeight: "500", opacity: 0.75 }}>· {csvImportedAt}</span>}
+            </span>
+          )}
           {dataSource === "yahoo"     && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Yahoo</span>}
           {dataSource === "snapshots" && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Snap</span>}
           <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
