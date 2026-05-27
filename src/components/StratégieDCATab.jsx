@@ -241,7 +241,10 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
                   <CompanyAvatar nom={pos.nom} isin={pos.isin} size={22} />
                   <span style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>{pos.nom.split(" ")[0]}</span>
                   <span style={{ fontSize: "10px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "99px", padding: "2px 7px" }}>{sig}</span>
-                  <span style={{ fontSize: "10px", color: C.inkSubtle }}>{Math.round(pos.scoreIA * 20)}/20</span>
+                  {pos.iaEntry
+                    ? <span style={{ fontSize: "10px", color: C.inkSubtle }}>{Math.round(pos.scoreIA * 20)}/20</span>
+                    : <span style={{ fontSize: "10px", color: C.inkSubtle, opacity: 0.5 }} title="Analyse IA non lancée">—</span>
+                  }
                 </div>
               );
             })}
@@ -596,15 +599,26 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
                   <div style={{ fontSize: "18px", fontWeight: "800", color: C.navy }}>{Math.round(prioritaire.scoreMeca * 100)}<span style={{ fontSize: "11px", fontWeight: "500" }}>/100</span></div>
                   <div style={{ fontSize: "9px", color: C.inkSubtle }}>Potentiel LT + Nature + Poids</div>
                 </div>
-                <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "10px 12px", textAlign: "center" }}>
+                <div style={{ background: C.snowOff, border: `1px solid ${prioritaire.iaEntry ? C.border : "rgba(217,119,6,0.3)"}`, borderRadius: "8px", padding: "10px 12px", textAlign: "center" }}>
                   <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "4px" }}>Score marché IA</div>
-                  <div style={{ fontSize: "18px", fontWeight: "800", color: sigCfg.color }}>{Math.round(prioritaire.scoreIA * 100)}<span style={{ fontSize: "11px", fontWeight: "500" }}>/100</span></div>
-                  <div style={{ fontSize: "9px", color: C.inkSubtle }}>Actualité + momentum + fondamentaux</div>
+                  {prioritaire.iaEntry
+                    ? <>
+                        <div style={{ fontSize: "18px", fontWeight: "800", color: sigCfg.color }}>{Math.round(prioritaire.scoreIA * 100)}<span style={{ fontSize: "11px", fontWeight: "500" }}>/100</span></div>
+                        <div style={{ fontSize: "9px", color: C.inkSubtle }}>Actualité + momentum + fondamentaux</div>
+                      </>
+                    : <>
+                        <div style={{ fontSize: "18px", fontWeight: "800", color: C.goldDark }}>—</div>
+                        <div style={{ fontSize: "9px", color: C.goldDark, fontWeight: "600" }}>Analyse non lancée</div>
+                      </>
+                  }
                 </div>
                 <div style={{ background: sigCfg.bg, border: `1px solid ${sigCfg.border}`, borderRadius: "8px", padding: "10px 12px", textAlign: "center" }}>
                   <div style={{ fontSize: "9px", color: sigCfg.color, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "4px" }}>Score final</div>
                   <div style={{ fontSize: "18px", fontWeight: "800", color: sigCfg.color }}>{Math.round(prioritaire.score * 100)}<span style={{ fontSize: "11px", fontWeight: "500" }}>/100</span></div>
-                  <div style={{ fontSize: "9px", color: sigCfg.color, opacity: 0.8 }}>55 % méca · 45 % IA</div>
+                  <div style={{ fontSize: "9px", color: sigCfg.color, opacity: 0.8 }}>
+                    55 % méca · 45 % IA{!prioritaire.iaEntry && <span style={{ color: C.goldDark, fontWeight: "700" }}> *</span>}
+                  </div>
+                  {!prioritaire.iaEntry && <div style={{ fontSize: "8px", color: C.goldDark, marginTop: "2px" }}>* IA = neutre (non calculé)</div>}
                 </div>
               </div>
 
