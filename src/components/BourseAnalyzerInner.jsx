@@ -20,6 +20,7 @@ import StratégieDCATab from "./StratégieDCATab";
 import ProjectionTab from "./ProjectionTab";
 import HistoriqueTab, { OperationsTab } from "./HistoriqueTab";
 import ProfilTab, { ParametresTab } from "./ProfilTab";
+import AIPortfolioTab from "./AIPortfolioTab";
 import OnboardingWizard, { ONBOARDING_KEY } from "./OnboardingWizard";
 import PWAInstallBanner from "./PWAInstallBanner";
 import HomeTab from "./HomeTab";
@@ -27,7 +28,7 @@ import HomeTab from "./HomeTab";
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 
 const DCA_TABS  = [TABS.DCA, TABS.AUTOPILOT, TABS.PROJECTION];
-const IA_TABS   = [TABS.MARCHE, TABS.CHAT];
+const IA_TABS   = [TABS.MARCHE, TABS.CHAT, TABS.AI_PORTFOLIO];
 const PLUS_TABS = [TABS.PLUS, TABS.HISTORIQUE, TABS.OPERATIONS, TABS.PROFIL, TABS.SETTINGS];
 
 const TAB_LABELS = {
@@ -36,8 +37,9 @@ const TAB_LABELS = {
   [TABS.DCA]:        "Plan DCA",
   [TABS.AUTOPILOT]:  "Autopilot IA",
   [TABS.PROJECTION]: "Simulateur",
-  [TABS.MARCHE]:     "Signaux IA",
-  [TABS.CHAT]:       "Conseiller Privé",
+  [TABS.MARCHE]:        "Signaux IA",
+  [TABS.CHAT]:          "Conseiller Privé",
+  [TABS.AI_PORTFOLIO]:  "Portefeuille IA",
   [TABS.HISTORIQUE]: "Répartition",
   [TABS.OPERATIONS]: "Transactions",
   [TABS.PROFIL]:     "Profil investisseur",
@@ -576,8 +578,9 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             {IA_TABS.includes(activeTab) && (
               <PillBar
                 pills={[
-                  { key: TABS.MARCHE, label: "Signaux IA" },
-                  { key: TABS.CHAT,   label: "Conseiller" },
+                  { key: TABS.MARCHE,        label: "Signaux IA" },
+                  { key: TABS.CHAT,          label: "Conseiller" },
+                  { key: TABS.AI_PORTFOLIO,  label: "Portefeuille IA" },
                 ]}
                 active={activeTab}
                 onChange={changeTab}
@@ -617,7 +620,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             {activeTab === TABS.DCA        && <StratégieDCATab profil={profil} portfolioVersion={portfolioVersion} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} onSaveProfil={p => { setProfil(p); save("bourse_profil", p); }} account={account} />}
             {activeTab === TABS.OPERATIONS && <OperationsTab account={account} />}
             {activeTab === TABS.CHAT       && <ChatTab profil={profil} account={account} portfolioVersion={portfolioVersion} marketScores={marketScores} />}
-            {activeTab === TABS.AUTOPILOT  && <AutopilotIA account={account} profil={profil} hidden={hiddenValues} />}
+            {activeTab === TABS.AUTOPILOT    && <AutopilotIA account={account} profil={profil} hidden={hiddenValues} />}
+            {activeTab === TABS.AI_PORTFOLIO && <AIPortfolioTab account={account} hidden={hiddenValues} />}
             {activeTab === TABS.PROFIL     && <ProfilTab profil={profil} onChange={setProfil} />}
             {activeTab === TABS.SETTINGS   && <ParametresTab profil={profil} onChange={setProfil} />}
           </div>

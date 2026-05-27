@@ -3,5 +3,11 @@
   "outputDirectory": "build",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/ai-portfolio-cycle",
+      "schedule": "0 21 * * 0"
+    }
   ]
 }

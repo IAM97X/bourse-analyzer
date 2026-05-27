@@ -1,0 +1,550 @@
+import { useState, useEffect, useCallback } from "react";
+import { C } from "../constants/theme";
+import { load, save } from "../lib/storage";
+import { sanitizePositions, fmtEur } from "../lib/finance";
+
+const AI_PF_KEY = "bourse_ai_portfolio";
+
+// ── Batch price fetch via /api/yahoo ──────────────────────────────────────────
+async function fetchBatchPrices(symbols) {
+  const prices = {};
+  const chunks = [];
+  for (let i = 0; i < symbols.length; i += 20) chunks.push(symbols.slice(i, i + 20));
+  await Promise.all(chunks.map(async chunk => {
+    try {
+      const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(chunk.join(","))}`, { signal: AbortSignal.timeout(12000) });
+      if (!res.ok) return;
+      const data = await res.json();
+      (data?.quoteResponse?.result || []).forEach(q => {
+        if (q.regularMarketPrice) prices[q.symbol] = q.regularMarketPrice;
+      });
+    } catch {}
+  }));
+  return prices;
+}
+
+// ── Compute total portfolio value ─────────────────────────────────────────────
+function totalValue(pf, prices) {
+  return (pf.cash || 0) + (pf.positions || []).reduce((s, p) => {
+    const c = prices?.[p.ticker] || p.dernier_cours || p.prix_achat_moyen || 0;
+    return s + p.quantite * c;
+  }, 0);
+}
+
+// ── Apply AI decisions to portfolio ──────────────────────────────────────────
+function applyDecisions(portfolio, decisions, prices) {
+  let cash = portfolio.cash;
+  let positions = (portfolio.positions || []).map(p => ({ ...p }));
+  const newTrades = [];
+  const cashMin = (portfolio.capital_initial || 0) * 0.05;
+
+  for (const d of (decisions || [])) {
+    if (d.action === "HOLD" || !d.quantite || d.quantite <= 0) continue;
+    const prix = prices[d.ticker] || d.cours || 0;
+    if (!prix) continue;
+
+    if (d.action === "BUY") {
+      const montant = d.quantite * prix;
+      if (montant > cash - cashMin) continue;
+      cash -= montant;
+      const existing = positions.find(p => p.ticker === d.ticker);
+      if (existing) {
+        const tot = existing.quantite + d.quantite;
+        existing.prix_achat_moyen = (existing.prix_achat_moyen * existing.quantite + prix * d.quantite) / tot;
+        existing.quantite = tot;
+        existing.dernier_cours = prix;
+      } else {
+        positions.push({ ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix_achat_moyen: prix, dernier_cours: prix });
+      }
+      newTrades.push({ date: new Date().toISOString(), action: "BUY", ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix, montant, raison: d.raison || "" });
+    } else if (d.action === "SELL") {
+      const existing = positions.find(p => p.ticker === d.ticker);
+      if (!existing || existing.quantite < d.quantite) continue;
+      cash += d.quantite * prix;
+      existing.quantite -= d.quantite;
+      existing.dernier_cours = prix;
+      if (existing.quantite === 0) positions = positions.filter(p => p.ticker !== d.ticker);
+      newTrades.push({ date: new Date().toISOString(), action: "SELL", ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix, montant: d.quantite * prix, raison: d.raison || "" });
+    }
+  }
+
+  positions.forEach(p => { if (prices[p.ticker]) p.dernier_cours = prices[p.ticker]; });
+
+  const valeur = cash + positions.reduce((s, p) => s + p.quantite * (p.dernier_cours || p.prix_achat_moyen), 0);
+  const today = new Date().toISOString().slice(0, 10);
+  const snapshots = [...(portfolio.snapshots || []).filter(s => s.date !== today), { date: today, valeur }].slice(-365);
+
+  return { ...portfolio, cash, positions, trades: [...newTrades, ...(portfolio.trades || [])].slice(0, 100), snapshots, last_cycle: new Date().toISOString() };
+}
+
+// ── Performance chart (SVG, 3 séries normalisées) ────────────────────────────
+function PerformanceChart({ aiSnapshots, userSnapshots, inceptionDate, height = 160 }) {
+  const W = 600;
+
+  const normalize = (snaps) => {
+    if (!snaps?.length) return [];
+    const filtered = snaps.filter(s => s.date >= (inceptionDate || "2000-01-01")).sort((a, b) => a.date.localeCompare(b.date));
+    if (filtered.length < 2) return [];
+    const base = filtered[0].valeur;
+    if (!base) return [];
+    return filtered.map(s => ({ date: s.date, v: (s.valeur / base) * 100 }));
+  };
+
+  const aiData   = normalize(aiSnapshots);
+  const userData = normalize(userSnapshots);
+
+  if (aiData.length < 2) {
+    return (
+      <div style={{ height, display: "flex", alignItems: "center", justifyContent: "center", color: C.inkSubtle, fontSize: "12px" }}>
+        Graphique disponible après le 2e cycle
+      </div>
+    );
+  }
+
+  const allDates = [...new Set([...aiData, ...userData].map(d => d.date))].sort();
+  const allVals  = [...aiData, ...userData].map(d => d.v);
+  const minV = Math.min(94, ...allVals), maxV = Math.max(106, ...allVals);
+  const range = maxV - minV || 1;
+
+  const xOf = (date) => {
+    const i = allDates.indexOf(date);
+    return i < 0 ? null : (i / Math.max(1, allDates.length - 1)) * W;
+  };
+  const yOf = (v) => height - 24 - ((v - minV) / range) * (height - 36);
+  const pts = (data) => data.map(d => { const x = xOf(d.date); return x === null ? null : `${x.toFixed(1)},${yOf(d.v).toFixed(1)}`; }).filter(Boolean).join(" ");
+  const y100 = yOf(100);
+
+  const lastAI   = aiData[aiData.length - 1];
+  const lastUser = userData[userData.length - 1];
+
+  return (
+    <svg viewBox={`0 0 ${W} ${height}`} style={{ width: "100%", height, display: "block" }} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="aiGradFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1E3A5F" stopOpacity="0.18"/>
+          <stop offset="100%" stopColor="#1E3A5F" stopOpacity="0.01"/>
+        </linearGradient>
+      </defs>
+
+      {/* Référence 100% */}
+      <line x1="0" y1={y100} x2={W} y2={y100} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 3"/>
+      <text x="4" y={y100 - 4} fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">100%</text>
+
+      {/* Courbe utilisateur */}
+      {userData.length > 1 && (
+        <polyline points={pts(userData)} fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      )}
+
+      {/* Courbe IA (avec fill) */}
+      {aiData.length > 1 && (() => {
+        const firstX = (xOf(aiData[0].date) || 0).toFixed(1);
+        const lastX  = (xOf(aiData[aiData.length - 1].date) || 0).toFixed(1);
+        return (
+          <>
+            <polygon points={`${pts(aiData)} ${lastX},${height} ${firstX},${height}`} fill="url(#aiGradFill)"/>
+            <polyline points={pts(aiData)} fill="none" stroke="#1E3A5F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </>
+        );
+      })()}
+
+      {/* Labels dernière valeur */}
+      {lastAI && (() => {
+        const x = xOf(lastAI.date);
+        if (x === null) return null;
+        const diff = lastAI.v - 100;
+        return <text x={Math.min(x + 4, W - 44)} y={yOf(lastAI.v) - 4} fontSize="9" fill="#1E3A5F" fontWeight="700" fontFamily="Inter,sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
+      })()}
+      {lastUser && userData.length > 1 && (() => {
+        const x = xOf(lastUser.date);
+        if (x === null) return null;
+        const diff = lastUser.v - 100;
+        return <text x={Math.min(x + 4, W - 44)} y={yOf(lastUser.v) + 12} fontSize="9" fill="#10B981" fontWeight="700" fontFamily="Inter,sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
+      })()}
+    </svg>
+  );
+}
+
+// ── Empty / Init state ────────────────────────────────────────────────────────
+function EmptyState({ onInit, account, error }) {
+  const userPositions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === account);
+  const capital = userPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+
+  return (
+    <div style={{ maxWidth: "480px", margin: "48px auto 0", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
+      <div style={{ fontSize: "52px", marginBottom: "20px", lineHeight: 1 }}>🤖</div>
+      <div style={{ fontSize: "22px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginBottom: "10px" }}>Portefeuille IA autonome</div>
+      <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.7, marginBottom: "28px" }}>
+        L'IA gère un portefeuille virtuel avec le même capital que vous. Elle analyse le marché chaque semaine de façon autonome et tente de vous battre — et de battre le marché.
+      </div>
+
+      {capital > 0 && (
+        <div style={{ background: "linear-gradient(135deg, rgba(30,58,95,0.07), rgba(30,58,95,0.03))", border: "1px solid rgba(30,58,95,0.14)", borderRadius: "18px", padding: "22px 24px", marginBottom: "24px" }}>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkMuted, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>Capital de départ (miroir {account})</div>
+          <div style={{ fontSize: "32px", fontWeight: "900", color: C.ink, letterSpacing: "-0.04em" }}>{fmtEur(capital)}</div>
+          <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "5px" }}>100% cash · l'IA déployera lors du 1er cycle</div>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", fontSize: "13px", color: "#B91C1C" }}>
+          {error}
+        </div>
+      )}
+
+      <button onClick={onInit} style={{ padding: "14px 36px", borderRadius: "14px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", color: "#fff", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", fontFamily: "Inter,sans-serif", boxShadow: "0 6px 24px rgba(30,58,95,0.35)", transition: "transform 0.18s" }}
+        onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+        onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
+        Activer le Portefeuille IA →
+      </button>
+
+      <div style={{ marginTop: "20px", fontSize: "11px", color: C.inkSubtle, lineHeight: 1.7 }}>
+        Cycle automatique chaque dimanche soir.<br/>
+        Déclenchez aussi un cycle manuellement à tout moment.
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+export default function AIPortfolioTab({ account, hidden }) {
+  const [aiPf, setAiPf]         = useState(() => load(AI_PF_KEY, null));
+  const [cycling, setCycling]   = useState(false);
+  const [cycleLog, setCycleLog] = useState(null);
+  const [error, setError]       = useState(null);
+  const [prices, setPrices]     = useState({});
+  const [loadingPrices, setLoadingPrices] = useState(false);
+
+  // Refresh current position prices on mount
+  useEffect(() => {
+    if (!aiPf?.positions?.length) return;
+    setLoadingPrices(true);
+    fetchBatchPrices(aiPf.positions.map(p => p.ticker))
+      .then(p => setPrices(p))
+      .catch(() => {})
+      .finally(() => setLoadingPrices(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleInit = useCallback(() => {
+    const userPositions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === account);
+    const capital = userPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+    if (capital <= 0) {
+      setError("Ajoutez d'abord des positions à votre portefeuille pour définir le capital de départ.");
+      return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const newPf = {
+      active: true, account, inception_date: today,
+      capital_initial: Math.round(capital * 100) / 100,
+      cash: Math.round(capital * 100) / 100,
+      positions: [], trades: [],
+      snapshots: [{ date: today, valeur: capital }],
+      last_cycle: null, strategie_courante: null,
+    };
+    setAiPf(newPf);
+    save(AI_PF_KEY, newPf);
+    setError(null);
+  }, [account]);
+
+  const handleRunCycle = useCallback(async () => {
+    if (!aiPf || cycling) return;
+    setCycling(true);
+    setError(null);
+    setCycleLog(null);
+    try {
+      // 1. Fetch current prices for all universe symbols + current positions
+      const universeTickers = [
+        "CW8.PA","PANX.PA","PUST.PA","EWLD.PA","AI.PA","MC.PA","TTE.PA","SAN.PA",
+        "OR.PA","BNP.PA","SU.PA","AXA.PA","EL.PA","ASML.AS","ADYEN.AS","CAP.PA",
+        "DSY.PA","STMPA.PA","SAF.PA","AIR.PA","RMS.PA","KER.PA","GLE.PA","HO.PA",
+        "AM.PA","DG.PA","ENGI.PA","PUB.PA","ORA.PA","CA.PA","LR.PA","TEP.PA",
+        "MT.AS","BESI.AS","SOI.PA","ALO.PA","RNO.PA","BIOR.PA","ERF.PA","VIRP.PA",
+      ];
+      const allTickers = [...new Set([...universeTickers, ...(aiPf.positions || []).map(p => p.ticker)])];
+      const freshPrices = await fetchBatchPrices(allTickers);
+      setPrices(freshPrices);
+
+      if (Object.keys(freshPrices).length < 5) {
+        throw new Error("Impossible de récupérer les cours. Vérifiez votre connexion et réessayez.");
+      }
+
+      // 2. Call AI decision endpoint
+      const res = await fetch("/api/ai-portfolio-decide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ portfolio: aiPf, prices: freshPrices, account }),
+        signal: AbortSignal.timeout(45000),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Erreur serveur ${res.status}`);
+      }
+      const { decisions, strategie } = await res.json();
+      if (!decisions) throw new Error("Réponse IA invalide");
+
+      // 3. Apply trades locally
+      const updatedPf = applyDecisions(aiPf, decisions, freshPrices);
+      updatedPf.strategie_courante = strategie || updatedPf.strategie_courante;
+
+      setAiPf(updatedPf);
+      save(AI_PF_KEY, updatedPf);
+      setCycleLog({ decisions, strategie });
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setCycling(false);
+    }
+  }, [aiPf, cycling, account]);
+
+  const handleReset = () => {
+    if (!window.confirm("Réinitialiser le Portefeuille IA ? Toutes les données (trades, performance) seront perdues.")) return;
+    setAiPf(null);
+    save(AI_PF_KEY, null);
+    setCycleLog(null);
+    setError(null);
+    setPrices({});
+  };
+
+  // ── Empty state ─────────────────────────────────────────────────────────────
+  if (!aiPf) return <EmptyState onInit={handleInit} account={account} error={error} />;
+
+  // ── Derived values ──────────────────────────────────────────────────────────
+  const val  = totalValue(aiPf, prices);
+  const perf = aiPf.capital_initial > 0 ? ((val - aiPf.capital_initial) / aiPf.capital_initial) * 100 : 0;
+
+  const userSnaps = (() => {
+    const all = load("bourse_snapshots", []);
+    return aiPf.inception_date ? all.filter(s => s.date >= aiPf.inception_date) : all;
+  })();
+
+  const userPerf = (() => {
+    if (userSnaps.length < 2) return null;
+    const base = userSnaps[0].valeur, last = userSnaps[userSnaps.length - 1].valeur;
+    return base > 0 ? ((last - base) / base) * 100 : null;
+  })();
+
+  const fp = (p, fallback = "—") => p === null || p === undefined ? fallback : (p >= 0 ? "+" : "") + p.toFixed(2) + "%";
+  const perfColor = (p) => p === null ? C.inkMuted : p >= 0 ? "#059669" : "#DC2626";
+
+  const nextSunday = (() => {
+    const d = new Date();
+    const days = d.getDay() === 0 ? 7 : 7 - d.getDay();
+    return new Date(d.getTime() + days * 86400000).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  })();
+
+  const inceptionFmt = aiPf.inception_date
+    ? new Date(aiPf.inception_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+    : "—";
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+  return (
+    <div style={{ animation: "fadeIn 0.3s ease" }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Portefeuille IA</span>
+            <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg,#080B0F,#2D5986)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
+          </div>
+          <div style={{ fontSize: "12px", color: C.inkMuted, marginTop: "3px" }}>
+            Depuis le {inceptionFmt} · Capital {fmtEur(aiPf.capital_initial)} · {account}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <button onClick={handleRunCycle} disabled={cycling}
+            style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg,#080B0F 0%,#1E3A5F 100%)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
+            {cycling
+              ? <><span style={{ width: "12px", height: "12px", border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "ba-spin 0.7s linear infinite" }}/> Analyse en cours…</>
+              : "▶ Lancer un cycle"}
+          </button>
+          <button onClick={handleReset} title="Réinitialiser le portefeuille IA"
+            style={{ width: "34px", height: "34px", borderRadius: "10px", background: C.snowDim, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: "14px", color: C.inkMuted, transition: "all 0.15s" }}>↺</button>
+        </div>
+      </div>
+
+      {/* ── Error ── */}
+      {error && (
+        <div style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px", fontSize: "13px", color: "#B91C1C", lineHeight: 1.5 }}>
+          {error}
+        </div>
+      )}
+
+      {/* ── KPI row ── */}
+      <div className="ba-g4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px", marginBottom: "24px" }}>
+        {[
+          {
+            label: "Valeur IA",
+            value: hidden ? "••••" : fmtEur(val),
+            sub: fp(perf),
+            subColor: perfColor(perf),
+          },
+          {
+            label: "Cash dispo",
+            value: hidden ? "••••" : fmtEur(aiPf.cash),
+            sub: `${aiPf.capital_initial > 0 ? ((aiPf.cash / aiPf.capital_initial) * 100).toFixed(0) : 0}% du capital`,
+          },
+          {
+            label: "vs Votre portefeuille",
+            value: userPerf !== null ? fp(perf - userPerf) : "—",
+            sub: `IA ${fp(perf)} · Vous ${fp(userPerf)}`,
+            subColor: userPerf !== null ? perfColor(perf - userPerf) : C.inkMuted,
+          },
+          {
+            label: "Positions · Trades",
+            value: `${aiPf.positions.length} · ${aiPf.trades?.length || 0}`,
+            sub: aiPf.last_cycle ? `Dernier cycle ${new Date(aiPf.last_cycle).toLocaleDateString("fr-FR")}` : "Aucun cycle",
+          },
+        ].map(({ label, value, sub, subColor }) => (
+          <div key={label} style={{ background: "rgba(255,255,255,0.72)", border: `1px solid ${C.border}`, borderRadius: "14px", padding: "14px 16px", backdropFilter: "blur(8px)" }}>
+            <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkMuted, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>{label}</div>
+            <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.01em" }}>{value}</div>
+            {sub && <div style={{ fontSize: "11px", color: subColor || C.inkMuted, marginTop: "3px", fontWeight: "500" }}>{sub}</div>}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Chart ── */}
+      {aiPf.snapshots?.length >= 2 && (
+        <div style={{ background: "rgba(255,255,255,0.72)", border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 20px", marginBottom: "20px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "12px" }}>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>Performance comparée</span>
+            <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#1E3A5F", fontWeight: "600" }}>
+              <span style={{ width: "18px", height: "2.5px", background: "#1E3A5F", borderRadius: "2px", display: "inline-block" }}/>IA
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#10B981", fontWeight: "600" }}>
+              <span style={{ width: "18px", height: "2px", background: "#10B981", borderRadius: "2px", display: "inline-block" }}/>Vous
+            </span>
+            {loadingPrices && <span style={{ fontSize: "11px", color: C.inkSubtle }}>actualisation…</span>}
+          </div>
+          <PerformanceChart aiSnapshots={aiPf.snapshots} userSnapshots={userSnaps} inceptionDate={aiPf.inception_date} />
+        </div>
+      )}
+
+      {/* ── Stratégie actuelle ── */}
+      {aiPf.strategie_courante && (
+        <div style={{ background: "linear-gradient(135deg,rgba(30,58,95,0.07),rgba(30,58,95,0.02))", border: "1px solid rgba(30,58,95,0.13)", borderRadius: "14px", padding: "14px 18px", marginBottom: "20px" }}>
+          <div style={{ fontSize: "10px", fontWeight: "700", color: "#1E3A5F", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "5px" }}>Stratégie en cours</div>
+          <div style={{ fontSize: "13px", color: C.ink, lineHeight: 1.55 }}>{aiPf.strategie_courante}</div>
+        </div>
+      )}
+
+      {/* ── Positions + Trades ── */}
+      <div style={{ display: "grid", gridTemplateColumns: aiPf.positions.length > 0 && aiPf.trades?.length > 0 ? "1fr 1fr" : "1fr", gap: "20px", marginBottom: "20px" }}>
+
+        {/* Positions */}
+        {aiPf.positions.length > 0 && (
+          <div style={{ background: "rgba(255,255,255,0.72)", border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px" }}>
+            <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink, marginBottom: "12px" }}>
+              Positions ({aiPf.positions.length})
+              <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: "500", color: C.inkMuted }}>
+                {hidden ? "••••" : fmtEur(val - aiPf.cash)} investis
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+              {[...aiPf.positions].sort((a, b) => {
+                const va = a.quantite * (prices[a.ticker] || a.dernier_cours || a.prix_achat_moyen);
+                const vb = b.quantite * (prices[b.ticker] || b.dernier_cours || b.prix_achat_moyen);
+                return vb - va;
+              }).map(p => {
+                const cours = prices[p.ticker] || p.dernier_cours || p.prix_achat_moyen;
+                const pvPct = ((cours - p.prix_achat_moyen) / (p.prix_achat_moyen || 1)) * 100;
+                const valPos = p.quantite * cours;
+                const pctPf  = val > 0 ? (valPos / val) * 100 : 0;
+                return (
+                  <div key={p.ticker} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 11px", background: C.snowDim, borderRadius: "10px" }}>
+                    <div>
+                      <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{p.nom}</div>
+                      <div style={{ fontSize: "10px", color: C.inkMuted, marginTop: "1px" }}>{p.ticker} · {p.quantite} titres · {pctPf.toFixed(0)}% PF</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{hidden ? "••••" : fmtEur(valPos)}</div>
+                      <div style={{ fontSize: "10px", fontWeight: "700", color: pvPct >= 0 ? "#059669" : "#DC2626" }}>
+                        {pvPct >= 0 ? "+" : ""}{pvPct.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Trades history */}
+        {aiPf.trades?.length > 0 && (
+          <div style={{ background: "rgba(255,255,255,0.72)", border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px" }}>
+            <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink, marginBottom: "12px" }}>Historique des trades</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "300px", overflowY: "auto" }}>
+              {aiPf.trades.slice(0, 20).map((t, i) => (
+                <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start", padding: "7px 9px", borderRadius: "9px", background: "#F8F9FA" }}>
+                  <span style={{ flexShrink: 0, fontSize: "9px", fontWeight: "800", padding: "3px 6px", borderRadius: "5px", marginTop: "1px",
+                    background: t.action === "BUY" ? "rgba(5,150,105,0.1)" : "rgba(220,38,38,0.08)",
+                    color: t.action === "BUY" ? "#059669" : "#DC2626" }}>
+                    {t.action === "BUY" ? "ACHAT" : "VENTE"}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>
+                      {t.nom} <span style={{ fontWeight: "400", color: C.inkMuted }}>×{t.quantite} @ {fmtEur(t.prix)}</span>
+                    </div>
+                    {t.raison && <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px", lineHeight: 1.35 }}>{t.raison}</div>}
+                    <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "1px" }}>
+                      {new Date(t.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Empty portfolio (no positions yet) ── */}
+      {aiPf.positions.length === 0 && aiPf.trades?.length === 0 && !cycling && (
+        <div style={{ textAlign: "center", padding: "32px", background: "rgba(255,255,255,0.6)", border: `1px solid ${C.border}`, borderRadius: "16px", marginBottom: "20px" }}>
+          <div style={{ fontSize: "32px", marginBottom: "10px" }}>💤</div>
+          <div style={{ fontSize: "14px", fontWeight: "700", color: C.ink, marginBottom: "6px" }}>Aucune position pour l'instant</div>
+          <div style={{ fontSize: "12px", color: C.inkMuted }}>Lancez un premier cycle pour que l'IA déploie son capital.</div>
+        </div>
+      )}
+
+      {/* ── Last cycle decisions ── */}
+      {cycleLog?.decisions?.length > 0 && (
+        <div style={{ background: "rgba(30,58,95,0.04)", border: "1px solid rgba(30,58,95,0.1)", borderRadius: "16px", padding: "16px 18px", marginBottom: "20px" }}>
+          <div style={{ fontSize: "12px", fontWeight: "700", color: "#1E3A5F", marginBottom: "10px" }}>
+            Décisions du cycle — {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+          </div>
+          {cycleLog.strategie && (
+            <div style={{ fontSize: "12px", color: C.ink, fontStyle: "italic", marginBottom: "10px", lineHeight: 1.5 }}>"{cycleLog.strategie}"</div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+            {cycleLog.decisions.map((d, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "baseline", gap: "8px", fontSize: "12px" }}>
+                <span style={{ flexShrink: 0, fontSize: "9px", fontWeight: "800", padding: "2px 6px", borderRadius: "5px",
+                  background: d.action === "BUY" ? "rgba(5,150,105,0.1)" : d.action === "SELL" ? "rgba(220,38,38,0.08)" : "rgba(100,116,139,0.08)",
+                  color: d.action === "BUY" ? "#059669" : d.action === "SELL" ? "#DC2626" : C.inkMuted }}>
+                  {d.action === "BUY" ? "ACHAT" : d.action === "SELL" ? "VENTE" : "HOLD"}
+                </span>
+                <span style={{ fontWeight: "600", color: C.ink }}>{d.nom}</span>
+                {d.quantite > 0 && <span style={{ color: C.inkMuted }}>×{d.quantite}{d.cours ? ` @ ${fmtEur(d.cours)}` : ""}</span>}
+                <span style={{ color: C.inkSubtle, flex: 1, fontSize: "11px" }}>— {d.raison}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Cron info footer ── */}
+      <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.5)", border: `1px solid ${C.border}`, borderRadius: "12px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+        <div style={{ fontSize: "12px", color: C.inkMuted }}>
+          <span>🤖 Cycle automatique : <strong>chaque dimanche à 22h (Paris)</strong></span>
+          <span style={{ marginLeft: "16px" }}>Prochain : <strong>{nextSunday}</strong></span>
+        </div>
+        {aiPf.last_cycle && (
+          <span style={{ fontSize: "11px", color: C.inkSubtle }}>
+            Dernier : {new Date(aiPf.last_cycle).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+          </span>
+        )}
+      </div>
+
+    </div>
+  );
+}
