@@ -555,12 +555,14 @@ function CourbeEvolution({ hidden, positions, account }) {
         }
         if (!Object.keys(isinTickers).length) { if (!cancelled) { setYahooPoints(null); setYahooLoading(false); } return; }
 
-        // ── Cas spécial 1J : données intraday 5 min ────────────────────────────
-        if (period === 1) {
+        // ── Cas spécial ≤ 7J : données intraday (5m pour 1J, 1h pour 5J/1S) ───
+        if (period <= 7) {
+          const intervalParam = period === 1 ? "5m" : "1h";
+          const rangeIntra    = period === 1 ? "1d" : `${period}d`;
           const priceByIsinIntra = {};
           await Promise.all(Object.entries(isinTickers).map(async ([isin, ticker]) => {
             try {
-              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=5m&range=1d`;
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${intervalParam}&range=${rangeIntra}`;
               const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
               if (!res.ok) return;
               const json = await res.json();
@@ -592,9 +594,10 @@ function CourbeEvolution({ hidden, positions, account }) {
               }
               if (valeur > 0) {
                 const d = new Date(ts);
-                const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
+                const time    = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
                 const dateStr = d.toISOString().slice(0, 10);
-                intraPts.push({ ts, date: dateStr, time, valeur });
+                const dayLabel = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", timeZone: "Europe/Paris" });
+                intraPts.push({ ts, date: dateStr, time, dayLabel, valeur });
               }
             }
             if (!cancelled) { setYahooPoints(intraPts.length >= 2 ? intraPts : null); setYahooLoading(false); }
@@ -695,9 +698,9 @@ function CourbeEvolution({ hidden, positions, account }) {
     ];
   }, [positions]);
 
-  // Pour 1J : données intraday Yahoo prioritaires (CSV ne contient que des points journaliers)
-  const dataSource = (period === 1 && yahooPoints) ? "yahoo" : csvFiltered ? "boursobank" : yahooPoints ? "yahoo" : "snapshots";
-  const rawPoints  = (period === 1 && yahooPoints) ? yahooPoints : (csvFiltered ?? yahooPoints ?? snapPoints ?? syntheticPoints);
+  // Pour ≤7J : données intraday Yahoo prioritaires (CSV ne contient que des points journaliers)
+  const dataSource = (period <= 7 && yahooPoints) ? "yahoo" : csvFiltered ? "boursobank" : yahooPoints ? "yahoo" : "snapshots";
+  const rawPoints  = (period <= 7 && yahooPoints) ? yahooPoints : (csvFiltered ?? yahooPoints ?? snapPoints ?? syntheticPoints);
 
   const { points, current, first, investi, perfCumFromCSV } = useMemo(() => {
     if (!rawPoints || rawPoints.length < 2) return { points: null };
@@ -770,10 +773,23 @@ function CourbeEvolution({ hidden, positions, account }) {
     }
   }
 
-  const xDates = [0, Math.floor((points.length-1)/2), points.length-1].map(i => ({
-    i, x: toX(i),
-    label: (period === 1 && points[i].time) ? points[i].time : points[i].date.slice(5).replace("-","/"),
-  }));
+  const xDates = (() => {
+    if (period <= 7 && points[0]?.time) {
+      // Un label par jour — prendre le premier point de chaque jour calendaire
+      const seen = new Set();
+      const labels = [];
+      points.forEach((p, i) => {
+        if (!seen.has(p.date)) {
+          seen.add(p.date);
+          labels.push({ i, x: toX(i), label: period === 1 ? p.time : p.dayLabel });
+        }
+      });
+      return labels;
+    }
+    return [0, Math.floor((points.length - 1) / 2), points.length - 1].map(i => ({
+      i, x: toX(i), label: points[i].date.slice(5).replace("-", "/"),
+    }));
+  })();
 
   // Couleurs thème clair
   const bg     = "#fff";
@@ -867,9 +883,9 @@ function CourbeEvolution({ hidden, positions, account }) {
         {/* Tooltip */}
         {hover && (() => {
           const p      = points[hover.idx];
-          const isIntraday = period === 1 && p.time;
+          const isIntraday = period <= 7 && p.time;
           const pLabel = isIntraday
-            ? p.time
+            ? (period === 1 ? p.time : `${p.dayLabel} ${p.time}`)
             : new Date(p.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
           const pctX   = (hover.x / W) * 100;
           const onLeft = hover.x > W * 0.55;
@@ -912,7 +928,7 @@ function CourbeEvolution({ hidden, positions, account }) {
               <span key={idx} style={{
                 position: "absolute", left: `${pct}%`,
                 transform: idx === 0 ? "none" : idx === points.length - 1 ? "translateX(-100%)" : "translateX(-50%)",
-                fontSize: "10px", color: inkMut, fontWeight: "500", whiteSpace: "nowrap",
+                fontSize: "11px", color: inkSub, fontWeight: "600", whiteSpace: "nowrap",
               }}>{label}</span>
             );
           })}
