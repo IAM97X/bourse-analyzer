@@ -5,7 +5,7 @@ import { load, save } from "../lib/storage";
 import { getKey, enqueueApi, callClaude, fetchWithProxy } from "../lib/api";
 import { useIsMobile, useIsTablet } from "../context/mobile";
 import { UI, DEFAULT_POSITIONS, SIGNAL_CONFIG, translateSecteur } from "../constants/config";
-import { fetchCoursAlphaVantage, fetchFMPQuote, parseBoursobankCSV, openLink, yahooFinanceUrl } from "../lib/market";
+import { parseBoursobankCSV, openLink, yahooFinanceUrl } from "../lib/market";
 import { ThinkingSpinner } from "./UI";
 import { LiveMarketPanel, SellSimulator, PriceRangeBar } from "./StockPanels";
 import PortfolioPieChart, { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
@@ -144,23 +144,8 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     setFetchingIds(prev => new Set([...prev, pos.id]));
     setFetchErrors(prev => { const n = { ...prev }; delete n[pos.id]; return n; });
     try {
-      // FMP en priorité (ISIN direct) → Alpha Vantage → fallback Claude
+      // Fallback IA si Yahoo n'a pas résolu le cours individuellement
       let cours = null;
-      if (getKey("fmp") && pos.isin) {
-        try {
-          const q = await fetchFMPQuote(pos.isin);
-          cours = q.price;
-        } catch (fmpErr) {
-          console.warn("FMP:", fmpErr.message, "→ fallback Alpha Vantage");
-        }
-      }
-      if (!cours && getKey("alphavantage")) {
-        try {
-          cours = await fetchCoursAlphaVantage(pos.nom, pos.isin);
-        } catch (avErr) {
-          console.warn("Alpha Vantage:", avErr.message, "→ fallback Claude");
-        }
-      }
       if (!cours) {
         const query = pos.isin
           ? `Cours actuel de ${pos.nom} ISIN ${pos.isin}. JSON: {"performance":{"cours_actuel":"32.140"}}`

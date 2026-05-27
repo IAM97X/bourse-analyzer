@@ -35,16 +35,11 @@ export function ApiKeysSection() {
           <div style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "14px", padding: "12px 16px", fontSize: "11px", color: C.navy, lineHeight: "1.6" }}>
             Clés stockées <strong>uniquement dans votre navigateur</strong> (localStorage).
           </div>
-          <div><label style={lbl}>Clé Anthropic (Claude IA) — <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noreferrer" style={{ color: C.navy }}>console.anthropic.com</a></label>
-            <input style={inp} type="password" placeholder="sk-ant-api03-…" value={keys.anthropic || ""} onChange={e => setKeys(k => ({ ...k, anthropic: e.target.value }))} autoComplete="off" spellCheck="false" /></div>
-          <div><label style={lbl}>Clé Google Custom Search — <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" style={{ color: C.navy }}>console.cloud.google.com</a></label>
-            <input style={inp} type="password" placeholder="AIzaSy…" value={keys.google || ""} onChange={e => setKeys(k => ({ ...k, google: e.target.value }))} autoComplete="off" spellCheck="false" /></div>
-          <div><label style={lbl}>Google CX (Search Engine ID)</label>
-            <input style={inp} type="text" placeholder="707b30d5e62e…" value={keys.cx || ""} onChange={e => setKeys(k => ({ ...k, cx: e.target.value }))} autoComplete="off" spellCheck="false" /></div>
-          <div><label style={lbl}>Clé Financial Modeling Prep (cours & historique ISIN) — <a href="https://financialmodelingprep.com/developer/docs" target="_blank" rel="noreferrer" style={{ color: C.navy }}>financialmodelingprep.com</a></label>
-            <input style={inp} type="password" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={keys.fmp || ""} onChange={e => setKeys(k => ({ ...k, fmp: e.target.value }))} autoComplete="off" spellCheck="false" /></div>
-          <div><label style={lbl}>Clé Alpha Vantage (fallback) — <a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noreferrer" style={{ color: C.navy }}>alphavantage.co</a></label>
-            <input style={inp} type="password" placeholder="AREI4UOU…" value={keys.alphavantage || ""} onChange={e => setKeys(k => ({ ...k, alphavantage: e.target.value }))} autoComplete="off" spellCheck="false" /></div>
+          <div>
+            <label style={lbl}>Clé Claude (IA avancée, optionnel) — <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noreferrer" style={{ color: C.navy }}>console.anthropic.com</a></label>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px" }}>L'IA Gemini est déjà incluse gratuitement. La clé Claude active des analyses plus poussées.</div>
+            <input style={inp} type="password" placeholder="sk-ant-api03-…" value={keys.anthropic || ""} onChange={e => setKeys(k => ({ ...k, anthropic: e.target.value }))} autoComplete="off" spellCheck="false" />
+          </div>
           <button onClick={handleSave} style={{ background: saved ? C.greenLight : C.navy, border: saved ? `1px solid rgba(5,150,105,0.2)` : "none", borderRadius: "12px", padding: "12px", color: saved ? C.green : "#fff", fontSize: "12px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>
             {saved ? "✓ Clés sauvegardées" : "Sauvegarder les clés"}
           </button>

@@ -80,9 +80,15 @@ export function enqueueApi(fn) {
 }
 
 export async function callGoogleSearch(query, nbResults = 5) {
-  const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&q=${encodeURIComponent(query)}&num=${nbResults}&lr=lang_fr`;
-  let res, data;
+  let url, res, data;
   try {
+    if (process.env.NODE_ENV === "production") {
+      url = `/api/google-search?q=${encodeURIComponent(query)}&num=${nbResults}`;
+    } else {
+      const k = getKey("google"), c = getKey("cx");
+      if (!k || !c) return `Aucun résultat Google pour : ${query}`;
+      url = `https://www.googleapis.com/customsearch/v1?key=${k}&cx=${c}&q=${encodeURIComponent(query)}&num=${nbResults}&lr=lang_fr`;
+    }
     res  = await fetch(url);
     data = await res.json();
   } catch (netErr) {

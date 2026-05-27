@@ -3,7 +3,7 @@ import { sanitizePositions, fmtEur } from "../lib/finance";
 import { load } from "../lib/storage";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
 import { TABS } from "../constants/tabs";
-import { fetchWithProxy, hasFMPKey, FMP_KEY, hasClaudeKey, hasAI } from "../lib/api";
+import { fetchWithProxy, hasClaudeKey, hasAI } from "../lib/api";
 import { fetchFMPHistorical } from "../lib/market";
 
 const SNAPSHOTS_KEY      = "bourse_snapshots";
@@ -53,20 +53,9 @@ function fmtPct(v) {
   return (v >= 0 ? "+" : "") + v.toFixed(2) + " %";
 }
 
-// Fetche l'historique journalier pour un ISIN — FMP en priorité, Yahoo en fallback
+// Fetche l'historique journalier pour un ISIN via Yahoo Finance
 async function fetchHistoricalByISIN(isin, ticker, fromDate, toDate) {
-  // 1. FMP (ISIN direct, données Euronext fiables)
-  if (hasFMPKey()) {
-    try {
-      const rows = await fetchFMPHistorical(isin, fromDate, toDate);
-      if (rows.length > 0) {
-        const map = {};
-        for (const r of rows) map[r.date] = r.close;
-        return map;
-      }
-    } catch {}
-  }
-  // 2. Yahoo Finance (fallback, nécessite ticker résolu)
+  // Yahoo Finance (ticker résolu)
   if (!ticker) return {};
   try {
     const rangeParam = (() => {
