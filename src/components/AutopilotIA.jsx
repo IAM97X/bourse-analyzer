@@ -168,7 +168,7 @@ function AllocBar({ cat, tgt, cur, onChange }) {
 
 // ─── Analyse stratégique ──────────────────────────────────────────────────
 function AnalyseStrategique({ analyse }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   if (!analyse) return null;
 
   const SECTIONS = [
@@ -238,7 +238,7 @@ export default function AutopilotIA({ account, profil, hidden }) {
   const [running, setRunning]         = useState(false);
   const [step, setStep]               = useState("");
   const [expanded, setExpanded]       = useState({});
-  const [showAllocEditor, setShowAllocEditor] = useState(true);
+  const [showAllocEditor, setShowAllocEditor] = useState(false);
   const [error, setError]             = useState(null);
   const blurStyle = hidden ? { filter: "blur(6px)", userSelect: "none" } : {};
 
