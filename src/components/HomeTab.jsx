@@ -555,14 +555,12 @@ function CourbeEvolution({ hidden, positions, account }) {
         }
         if (!Object.keys(isinTickers).length) { if (!cancelled) { setYahooPoints(null); setYahooLoading(false); } return; }
 
-        // ── Cas spécial ≤ 7J : données intraday (5m pour 1J, 1h pour 5J/1S) ───
-        if (period <= 7) {
-          const intervalParam = period === 1 ? "5m" : "1h";
-          const rangeIntra    = period === 1 ? "1d" : `${period}d`;
+        // ── 1J : intraday 5 min ────────────────────────────────────────────────
+        if (period === 1) {
           const priceByIsinIntra = {};
           await Promise.all(Object.entries(isinTickers).map(async ([isin, ticker]) => {
             try {
-              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${intervalParam}&range=${rangeIntra}`;
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=5m&range=1d`;
               const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
               if (!res.ok) return;
               const json = await res.json();
@@ -574,11 +572,9 @@ function CourbeEvolution({ hidden, positions, account }) {
                 .filter(p => p.price != null && isFinite(p.price));
             } catch {}
           }));
-
           const allTs = [...new Set(
             Object.values(priceByIsinIntra).flatMap(pts => pts.map(p => p.ts))
           )].sort((a, b) => a - b);
-
           if (allTs.length >= 2) {
             const lastP = {};
             const intraPts = [];
@@ -594,13 +590,64 @@ function CourbeEvolution({ hidden, positions, account }) {
               }
               if (valeur > 0) {
                 const d = new Date(ts);
-                const time    = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
-                const dateStr = d.toISOString().slice(0, 10);
-                const dayLabel = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", timeZone: "Europe/Paris" });
-                intraPts.push({ ts, date: dateStr, time, dayLabel, valeur });
+                const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
+                intraPts.push({ ts, date: d.toISOString().slice(0, 10), time, valeur });
               }
             }
             if (!cancelled) { setYahooPoints(intraPts.length >= 2 ? intraPts : null); setYahooLoading(false); }
+          } else {
+            if (!cancelled) { setYahooPoints(null); setYahooLoading(false); }
+          }
+          return;
+        }
+
+        // ── 5J / 1S : closes journaliers Yahoo (trading days) + dernier cours actuel ─
+        if (period <= 7) {
+          const rangeIntra = period <= 5 ? "5d" : "7d";
+          const priceMapByIsin = {};
+          await Promise.all(Object.entries(isinTickers).map(async ([isin, ticker]) => {
+            try {
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=${rangeIntra}`;
+              const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
+              if (!res.ok) return;
+              const json = await res.json();
+              const r = json?.chart?.result?.[0];
+              const tss = r?.timestamp || [];
+              const cls = r?.indicators?.quote?.[0]?.close || [];
+              const map = {};
+              for (let i = 0; i < tss.length; i++) {
+                if (cls[i] != null && isFinite(cls[i]))
+                  map[new Date(tss[i] * 1000).toISOString().slice(0, 10)] = cls[i];
+              }
+              if (Object.keys(map).length) priceMapByIsin[isin] = map;
+            } catch {}
+          }));
+          const allDates = [...new Set(Object.values(priceMapByIsin).flatMap(m => Object.keys(m)))].sort();
+          if (allDates.length >= 2) {
+            const lastP = {};
+            const dailyPts = [];
+            for (const date of allDates) {
+              for (const [isin, m] of Object.entries(priceMapByIsin)) {
+                if (m[date] != null) lastP[isin] = m[date];
+              }
+              let valeur = 0;
+              for (const pos of (positions || [])) {
+                if (!pos.isin || !lastP[pos.isin]) continue;
+                valeur += pos.quantite * lastP[pos.isin];
+              }
+              if (valeur > 0) dailyPts.push({ date, valeur });
+            }
+            // Ajouter le point courant (heure H) si plus récent que le dernier close
+            const today = new Date().toISOString().slice(0, 10);
+            const lastPt = dailyPts[dailyPts.length - 1];
+            if (lastPt && lastPt.date < today) {
+              const currentVal = (positions || []).reduce((s, pos) => {
+                const price = pos.dernierCours || lastP[pos.isin] || pos.pru;
+                return s + pos.quantite * price;
+              }, 0);
+              if (currentVal > 0) dailyPts.push({ date: today, valeur: currentVal });
+            }
+            if (!cancelled) { setYahooPoints(dailyPts.length >= 2 ? dailyPts : null); setYahooLoading(false); }
           } else {
             if (!cancelled) { setYahooPoints(null); setYahooLoading(false); }
           }
@@ -774,18 +821,23 @@ function CourbeEvolution({ hidden, positions, account }) {
   }
 
   const xDates = (() => {
-    if (period <= 7 && points[0]?.time) {
-      // Un label par jour — prendre le premier point de chaque jour calendaire
+    // 1J intraday : heures au premier point de chaque heure
+    if (period === 1 && points[0]?.time) {
       const seen = new Set();
       const labels = [];
       points.forEach((p, i) => {
-        if (!seen.has(p.date)) {
-          seen.add(p.date);
-          labels.push({ i, x: toX(i), label: period === 1 ? p.time : p.dayLabel });
-        }
+        const hour = p.time?.slice(0, 2);
+        if (hour && !seen.has(hour) && p.time?.endsWith("00")) { seen.add(hour); labels.push({ i, x: toX(i), label: p.time }); }
       });
+      // Fallback si aucune heure ronde
+      if (!labels.length) return [0, Math.floor((points.length-1)/2), points.length-1].map(i => ({ i, x: toX(i), label: points[i].time }));
       return labels;
     }
+    // 5J/1S daily (≤ 7 points) : afficher chaque date
+    if (period <= 7 && points.length <= 10) {
+      return points.map((p, i) => ({ i, x: toX(i), label: p.date.slice(5).replace("-", "/") }));
+    }
+    // Autres périodes : 3 labels
     return [0, Math.floor((points.length - 1) / 2), points.length - 1].map(i => ({
       i, x: toX(i), label: points[i].date.slice(5).replace("-", "/"),
     }));
@@ -883,9 +935,9 @@ function CourbeEvolution({ hidden, positions, account }) {
         {/* Tooltip */}
         {hover && (() => {
           const p      = points[hover.idx];
-          const isIntraday = period <= 7 && p.time;
-          const pLabel = isIntraday
-            ? (period === 1 ? p.time : `${p.dayLabel} ${p.time}`)
+          const isIntraday1J = period === 1 && p.time;
+          const pLabel = isIntraday1J
+            ? p.time
             : new Date(p.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
           const pctX   = (hover.x / W) * 100;
           const onLeft = hover.x > W * 0.55;
