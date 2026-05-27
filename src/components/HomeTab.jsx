@@ -838,7 +838,7 @@ function CourbeEvolution({ hidden, positions, account }) {
     }
     // 5J/1S daily (≤ 7 points) : afficher chaque date
     if (period <= 7 && points.length <= 10) {
-      return points.map((p, i) => ({ i, x: toX(i), label: p.date.slice(5).replace("-", "/") }));
+      return points.map((p, i) => ({ i, x: toX(i), label: p.date.slice(5).split("-").reverse().join("/") }));
     }
     // Autres périodes : 3 labels
     return [0, Math.floor((points.length - 1) / 2), points.length - 1].map(i => ({
