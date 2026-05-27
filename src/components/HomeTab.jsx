@@ -488,10 +488,15 @@ function detectAndParseEvolutionCSV(text) {
 
 // ── Courbe d'évolution ────────────────────────────────────────────────────────
 const PERIODS = [
-  { label: "1M",  days: 30  },
-  { label: "3M",  days: 90  },
-  { label: "6M",  days: 180 },
-  { label: "1A",  days: 365 },
+  { label: "1J",   days: 1   },
+  { label: "5J",   days: 5   },
+  { label: "1S",   days: 7   },
+  { label: "1M",   days: 30  },
+  { label: "3M",   days: 90  },
+  { label: "6M",   days: 180 },
+  { label: "1A",   days: 365  },
+  { label: "3A",   days: 1095 },
+  { label: "5A",   days: 1825 },
   { label: "Tout", days: 9999 },
 ];
 
