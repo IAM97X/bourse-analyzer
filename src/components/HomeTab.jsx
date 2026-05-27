@@ -3,7 +3,7 @@ import { sanitizePositions, fmtEur } from "../lib/finance";
 import { load } from "../lib/storage";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
 import { TABS } from "../constants/tabs";
-import { fetchWithProxy, hasFMPKey, FMP_KEY } from "../lib/api";
+import { fetchWithProxy, hasFMPKey, FMP_KEY, hasClaudeKey } from "../lib/api";
 import { fetchFMPHistorical } from "../lib/market";
 
 const SNAPSHOTS_KEY      = "bourse_snapshots";
@@ -523,6 +523,14 @@ function CourbeEvolution({ hidden, positions, account }) {
   const handleCSVImport = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (csvPoints) {
+      const label = csvBroker ? `CSV ${csvBroker}` : "CSV existant";
+      const when = csvImportedAt ? ` (importé le ${csvImportedAt})` : "";
+      if (!window.confirm(`Remplacer le ${label}${when} ?`)) {
+        e.target.value = "";
+        return;
+      }
+    }
     const reader = new FileReader();
     reader.onload = (ev) => {
       const { rows, broker } = detectAndParseEvolutionCSV(ev.target.result);
@@ -1021,16 +1029,22 @@ export default function HomeTab({ account = "PEA", onTabChange, hidden, profil: 
     : (profil?.versementsPEA > 0 ? profil.versementsPEA : calcCapitalVerse(account));
 
   if (!positions.length) return (
-    <div style={{ textAlign: "center", padding: "60px 20px", color: "rgba(255,255,255,0.5)" }}>
-      <div style={{ fontSize: "40px", marginBottom: "16px" }}>📂</div>
-      <div style={{ fontSize: "15px", fontWeight: "700", color: "#fff", marginBottom: "8px" }}>Portefeuille vide</div>
-      <div style={{ fontSize: "13px", lineHeight: "1.6" }}>
-        Ajoutez vos positions dans l'onglet <strong>Positions</strong> pour voir votre tableau de bord.
+    <div style={{ textAlign: "center", padding: "60px 20px" }}>
+      <div style={{ fontSize: "36px", marginBottom: "14px" }}>📂</div>
+      <div style={{ fontSize: "15px", fontWeight: "700", color: "#fff", marginBottom: "6px" }}>Portefeuille vide</div>
+      <div style={{ fontSize: "13px", lineHeight: "1.6", color: "rgba(255,255,255,0.55)", marginBottom: "20px" }}>
+        Ajoutez vos positions pour voir votre tableau de bord.
       </div>
       <button onClick={() => onTabChange(TABS.PORTFOLIO)}
-        style={{ marginTop: "20px", background: "#1a3a5c", color: "#fff", border: "none", borderRadius: "12px", padding: "12px 24px", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
-        Ajouter des positions →
+        style={{ display: "block", width: "100%", maxWidth: "280px", margin: "0 auto 10px", background: "#1a3a5c", color: "#fff", border: "none", borderRadius: "12px", padding: "13px 24px", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+        Ajouter ma première position →
       </button>
+      {!hasClaudeKey() && (
+        <button onClick={() => onTabChange(TABS.PROFIL)}
+          style={{ display: "block", width: "100%", maxWidth: "280px", margin: "0 auto", background: "transparent", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "12px 24px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>
+          Activer l'IA (clé Claude) →
+        </button>
+      )}
     </div>
   );
 
