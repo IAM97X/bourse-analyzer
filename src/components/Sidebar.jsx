@@ -101,7 +101,7 @@ export const NAV_GROUPS = [
   ]},
 ];
 
-function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false }) {
+function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi }) {
   const isMobile = useIsMobile();
   const allPositions = sanitizePositions(load("bourse_portfolio", []));
   const positions    = allPositions.filter(p => (p.compte || "PEA") === (account || "PEA"));
@@ -177,6 +177,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
             {group.items.map(({ key, label, icon }) => {
               const isActive = active === key;
               const isFeatured = group.featured;
+              const isScoringLoading = key === TABS.MARCHE && marketScoringUi === "loading";
               return (
                 <button key={key} className={`ba-sidebar-item${isActive ? " ba-sidebar-item-active" : ""}`}
                   onClick={() => handleNav(key)} title={c ? label : undefined}
@@ -205,8 +206,14 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                     <span style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", width: "3px", height: "18px", borderRadius: "2px", background: "#B07D2E" }} />
                   )}
                   {c
-                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", color: isActive ? "#fff" : C.inkSubtle, opacity: isActive ? 1 : 0.6 }}>{icon}</span>
-                    : <span style={{ flex: 1, paddingLeft: isFeatured && !isActive ? "10px" : 0 }}>{label}</span>
+                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", color: isActive ? "#fff" : C.inkSubtle, opacity: isActive ? 1 : 0.6, position: "relative" }}>
+                        {icon}
+                        {isScoringLoading && <span style={{ position: "absolute", top: "-3px", right: "-3px", width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", animation: "pulse 1.2s ease-in-out infinite" }} />}
+                      </span>
+                    : <span style={{ flex: 1, paddingLeft: isFeatured && !isActive ? "10px" : 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                        {label}
+                        {isScoringLoading && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", animation: "pulse 1.2s ease-in-out infinite", flexShrink: 0 }} />}
+                      </span>
                   }
                   {!c && isFeatured && !isActive && <span style={{ fontSize: "10px", background: "#B07D2E", color: "#FFF8E7", borderRadius: "6px", padding: "2px 7px", fontWeight: "700", letterSpacing: "0.4px", flexShrink: 0 }}>IA</span>}
                 </button>
@@ -265,12 +272,12 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
   );
 }
 
-export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, refreshAgo, toggleDark, toggleCompact, darkMode, compact, hidden, mobileOpen, onMobileClose, account, onSwitchAccount }) {
+export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, refreshAgo, toggleDark, toggleCompact, darkMode, compact, hidden, mobileOpen, onMobileClose, account, onSwitchAccount, marketScoringUi }) {
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(() => load("bourse_sidebar_collapsed", false));
   const toggleCollapse = () => { const v = !collapsed; setCollapsed(v); save("bourse_sidebar_collapsed", v); };
 
-  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, account, onSwitchAccount };
+  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi };
 
   if (isMobile) {
     if (!mobileOpen) return null;

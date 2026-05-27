@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { C, shadow } from "../constants/theme";
 import { sanitizePositions, fmtEur, isETFName, linReg } from "../lib/finance";
 import { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
@@ -444,12 +444,27 @@ function GlobalProjectionChart({ positions, onClose }) {
 }
 
 // ─── Marché Tab ─────────────────────────────────────────────────────────────
+function timeAgo(ts) {
+  if (!ts) return null;
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60)  return "à l'instant";
+  if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
+  return `il y a ${Math.floor(diff / 86400)} j`;
+}
+
 function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, marketScoringUi, onRunScoring }) {
   const [allPositions, setAllPositions] = useState(() => sanitizePositions(load("bourse_portfolio", DEFAULT_POSITIONS)));
   const positions = allPositions.filter(p => (p.compte || "PEA") === account);
   const [selectedPosId, setSelectedPosId] = useState(null);
   const [aiPotentiel, setAiPotentiel]   = useState(() => load(AI_POTENTIEL_KEY, null));
   const [aiPotLoading, setAiPotLoading] = useState(false);
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+  const scoredAgo = timeAgo(load("bourse_market_scores_ts", null));
 
   useEffect(() => {
     setAllPositions(sanitizePositions(load("bourse_portfolio", DEFAULT_POSITIONS)));
@@ -482,7 +497,18 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             <div style={{ fontWeight: "700", fontSize: "14px", color: C.ink }}>
               <Tooltip term="SCORING">Scoring IA Dynamique</Tooltip>
             </div>
-            <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px" }}>Analyse temps réel de chaque position — actualités + signaux marché</div>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
+              Analyse temps réel de chaque position — actualités + signaux marché
+              {marketScoringUi === "loading" && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#B07D2E", fontWeight: "600" }}>
+                  <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", display: "inline-block", animation: "pulse 1.2s ease-in-out infinite" }} />
+                  Analyse en cours…
+                </span>
+              )}
+              {marketScoringUi !== "loading" && scoredAgo && (
+                <span style={{ color: C.inkSubtle, opacity: 0.7 }}>· Mis à jour {scoredAgo}</span>
+              )}
+            </div>
           </div>
           <button
             onClick={() => onRunScoring && onRunScoring(positions)}

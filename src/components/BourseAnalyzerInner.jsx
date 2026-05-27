@@ -262,6 +262,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       const scores = data?.classement;
       if (scores && scores.length > 0) {
         save("bourse_market_scores", scores);
+        save("bourse_market_scores_ts", Date.now());
         const hist = load("bourse_signal_history", []);
         hist.unshift({ date: new Date().toISOString(), scores });
         save("bourse_signal_history", hist.slice(0, 30));
@@ -322,6 +323,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         hidden={hiddenValues}
         mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)}
         account={account} onSwitchAccount={switchAccount}
+        marketScoringUi={marketScoringUi}
       />
 
       {/* Main */}
