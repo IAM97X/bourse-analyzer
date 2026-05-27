@@ -456,7 +456,7 @@ function timeAgo(ts) {
 function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, marketScoringUi, onRunScoring }) {
   const [allPositions, setAllPositions] = useState(() => sanitizePositions(load("bourse_portfolio", DEFAULT_POSITIONS)));
   const positions = allPositions.filter(p => (p.compte || "PEA") === account);
-  const [selectedPosId, setSelectedPosId] = useState(null);
+  const [selectedPosId, setSelectedPosId] = useState("__global__");
   const [aiPotentiel, setAiPotentiel]   = useState(() => load(AI_POTENTIEL_KEY, null));
   const [aiPotLoading, setAiPotLoading] = useState(false);
   const [, setTick] = useState(0);
