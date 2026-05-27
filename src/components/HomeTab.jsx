@@ -555,6 +555,55 @@ function CourbeEvolution({ hidden, positions, account }) {
         }
         if (!Object.keys(isinTickers).length) { if (!cancelled) { setYahooPoints(null); setYahooLoading(false); } return; }
 
+        // ── Cas spécial 1J : données intraday 5 min ────────────────────────────
+        if (period === 1) {
+          const priceByIsinIntra = {};
+          await Promise.all(Object.entries(isinTickers).map(async ([isin, ticker]) => {
+            try {
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=5m&range=1d`;
+              const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
+              if (!res.ok) return;
+              const json = await res.json();
+              const r = json?.chart?.result?.[0];
+              const tss = r?.timestamp || [];
+              const cls = r?.indicators?.quote?.[0]?.close || [];
+              priceByIsinIntra[isin] = tss
+                .map((t, i) => ({ ts: t * 1000, price: cls[i] }))
+                .filter(p => p.price != null && isFinite(p.price));
+            } catch {}
+          }));
+
+          const allTs = [...new Set(
+            Object.values(priceByIsinIntra).flatMap(pts => pts.map(p => p.ts))
+          )].sort((a, b) => a - b);
+
+          if (allTs.length >= 2) {
+            const lastP = {};
+            const intraPts = [];
+            for (const ts of allTs) {
+              for (const [isin, pts] of Object.entries(priceByIsinIntra)) {
+                const hit = pts.find(p => p.ts === ts);
+                if (hit) lastP[isin] = hit.price;
+              }
+              let valeur = 0;
+              for (const pos of (positions || [])) {
+                if (!pos.isin || !lastP[pos.isin]) continue;
+                valeur += pos.quantite * lastP[pos.isin];
+              }
+              if (valeur > 0) {
+                const d = new Date(ts);
+                const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
+                const dateStr = d.toISOString().slice(0, 10);
+                intraPts.push({ ts, date: dateStr, time, valeur });
+              }
+            }
+            if (!cancelled) { setYahooPoints(intraPts.length >= 2 ? intraPts : null); setYahooLoading(false); }
+          } else {
+            if (!cancelled) { setYahooPoints(null); setYahooLoading(false); }
+          }
+          return;
+        }
+
         const rangeParam = period >= 9999 ? "5y" : period >= 365 ? "1y" : period >= 180 ? "6mo" : period >= 90 ? "3mo" : "1mo";
 
         // Fetch prix historiques — FMP (ISIN direct) prioritaire, Yahoo en fallback
@@ -646,9 +695,9 @@ function CourbeEvolution({ hidden, positions, account }) {
     ];
   }, [positions]);
 
-  // Priorité : CSV Boursobank > Yahoo reconstruit > Snapshots > Synthèse
-  const dataSource = csvFiltered ? "boursobank" : yahooPoints ? "yahoo" : "snapshots";
-  const rawPoints  = csvFiltered ?? yahooPoints ?? snapPoints ?? syntheticPoints;
+  // Pour 1J : données intraday Yahoo prioritaires (CSV ne contient que des points journaliers)
+  const dataSource = (period === 1 && yahooPoints) ? "yahoo" : csvFiltered ? "boursobank" : yahooPoints ? "yahoo" : "snapshots";
+  const rawPoints  = (period === 1 && yahooPoints) ? yahooPoints : (csvFiltered ?? yahooPoints ?? snapPoints ?? syntheticPoints);
 
   const { points, current, first, investi, perfCumFromCSV } = useMemo(() => {
     if (!rawPoints || rawPoints.length < 2) return { points: null };
@@ -721,7 +770,10 @@ function CourbeEvolution({ hidden, positions, account }) {
     }
   }
 
-  const xDates = [0, Math.floor((points.length-1)/2), points.length-1].map(i => ({ i, x: toX(i), label: points[i].date.slice(5).replace("-","/") }));
+  const xDates = [0, Math.floor((points.length-1)/2), points.length-1].map(i => ({
+    i, x: toX(i),
+    label: (period === 1 && points[i].time) ? points[i].time : points[i].date.slice(5).replace("-","/"),
+  }));
 
   // Couleurs thème clair
   const bg     = "#fff";
@@ -814,9 +866,12 @@ function CourbeEvolution({ hidden, positions, account }) {
 
         {/* Tooltip */}
         {hover && (() => {
-          const p     = points[hover.idx];
-          const pDate = new Date(p.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
-          const pctX  = (hover.x / W) * 100;
+          const p      = points[hover.idx];
+          const isIntraday = period === 1 && p.time;
+          const pLabel = isIntraday
+            ? p.time
+            : new Date(p.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+          const pctX   = (hover.x / W) * 100;
           const onLeft = hover.x > W * 0.55;
           const perfPeriod = points[0].valeur > 0 ? (p.valeur - points[0].valeur) / points[0].valeur * 100 : null;
           const perfDisplay = (p.perfCumulee != null && p.perfCumulee > -100 && p.perfCumulee < 2000)
@@ -838,7 +893,7 @@ function CourbeEvolution({ hidden, positions, account }) {
               zIndex: 20,
               boxShadow: "0 4px 20px rgba(26,45,74,0.13)",
             }}>
-              <div style={{ fontSize: "10px", color: inkSub, fontWeight: "500", marginBottom: "4px", whiteSpace: "nowrap" }}>{pDate}</div>
+              <div style={{ fontSize: "10px", color: inkSub, fontWeight: "500", marginBottom: "4px", whiteSpace: "nowrap" }}>{pLabel}</div>
               <div style={{ fontSize: "17px", fontWeight: "800", color: ink, letterSpacing: "-0.03em", whiteSpace: "nowrap" }}>{fmtEur(p.valeur)}</div>
               {perfDisplay !== null && (
                 <div style={{ display: "inline-block", marginTop: "4px", background: `${pClr}14`, borderRadius: "6px", padding: "2px 7px" }}>
