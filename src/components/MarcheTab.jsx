@@ -483,10 +483,13 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
   const SIG_PHRASE = { ACHAT: "Momentum favorable, à surveiller", RENFORCER: "Position solide, tu peux étoffer", ATTENDRE: "Pas d'action urgente", PRUDENCE: "Contexte dégradé, reste vigilant", VENDRE: "Signal négatif détecté" };
 
   const scores = Array.isArray(marketScores) ? marketScores : [];
+  const tickerCache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY_M) || "{}"); } catch { return {}; } })();
   const scoredPositions = positions.map(p => {
     const s = scores.find(sc => sc.isin === p.isin || sc.nom?.toLowerCase() === p.nom?.toLowerCase());
-    return { ...p, _score: s || null };
+    const hasRealtime = !!(p.ticker || (p.isin && tickerCache[p.isin]));
+    return { ...p, _score: s || null, _hasRealtime: hasRealtime };
   }).sort((a, b) => (b._score?.score_marche ?? -1) - (a._score?.score_marche ?? -1));
+  const realtimeCount = scoredPositions.filter(p => p._hasRealtime).length;
 
   return (
     <div>
@@ -507,6 +510,11 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
               )}
               {marketScoringUi !== "loading" && scoredAgo && (
                 <span style={{ color: C.inkSubtle, opacity: 0.7 }}>· Mis à jour {scoredAgo}</span>
+              )}
+              {marketScoringUi !== "loading" && scores.length > 0 && realtimeCount < positions.length && (
+                <span style={{ color: "#B07D2E", fontWeight: "600" }} title="Ces positions n'ont pas de ticker Yahoo — scorées sur la base de connaissance Claude uniquement">
+                  · ⚠ {positions.length - realtimeCount} sans ticker
+                </span>
               )}
             </div>
           </div>
@@ -567,6 +575,12 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
                   {s.catalyseur_cle && (
                     <div style={{ fontSize: "11px", color: C.inkSubtle, display: "flex", alignItems: "center", gap: "5px" }}>
                       <span style={{ fontWeight: "700", color: C.inkMuted }}>Catalyseur :</span> {s.catalyseur_cle}
+                    </div>
+                  )}
+                  {!pos._hasRealtime && (
+                    <div style={{ fontSize: "10px", color: "#B07D2E", background: "rgba(217,119,6,0.08)", border: "1px solid rgba(217,119,6,0.2)", borderRadius: "6px", padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px", alignSelf: "flex-start" }}
+                      title="Aucun ticker Yahoo trouvé pour cette position — le score s'appuie sur la base de connaissance Claude sans données temps réel. Renseignez le ticker manuellement dans l'onglet Positions pour activer les données temps réel.">
+                      ⚠ Base de connaissance uniquement — <strong>ajouter le ticker</strong> pour activer les données RT
                     </div>
                   )}
                 </div>
