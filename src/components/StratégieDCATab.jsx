@@ -868,7 +868,13 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
           </div>
           {(profil?.dcaCroissanceMontant > 0) && (profil?.dcaCroissancePeriode > 0) && (
             <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "8px" }}>
-              Ex : {dcaSim}€ → {dcaSim + profil.dcaCroissanceMontant}€ après {profil.dcaCroissancePeriode} ans → {dcaSim + profil.dcaCroissanceMontant * 2}€ après {profil.dcaCroissancePeriode * 2} ans…
+              {(() => {
+                const base = Number(dcaSim);
+                const inc  = Number(profil.dcaCroissanceMontant);
+                const per  = Number(profil.dcaCroissancePeriode);
+                const anS  = n => n <= 1 ? "an" : "ans";
+                return `Ex : ${base}€ → ${base + inc}€ après ${per} ${anS(per)} → ${base + inc * 2}€ après ${per * 2} ${anS(per * 2)}…`;
+              })()}
             </div>
           )}
         </div>
