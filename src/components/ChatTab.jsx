@@ -3,7 +3,7 @@ import { C, shadow } from "../constants/theme";
 import { COURTIERS_DETAIL } from "../constants/courtiers";
 import { load, save } from "../lib/storage";
 import { sanitizePositions } from "../lib/finance";
-import { callClaudeConversation, hasClaudeKey, CLAUDE_MODELS, ANTHROPIC_API_KEY, CLAUDE_ENDPOINT } from "../lib/api";
+import { callClaudeConversation, hasClaudeKey, hasAI, CLAUDE_MODELS, ANTHROPIC_API_KEY, CLAUDE_ENDPOINT } from "../lib/api";
 import { useIsMobile } from "../context/mobile";
 import { IconChat } from "./Sidebar";
 
@@ -319,12 +319,12 @@ Règles strictes :
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            {!hasClaudeKey() && (
+            {!hasAI() && (
               <div style={{ textAlign: "center", paddingTop: "16px" }}>
                 <div style={{ fontSize: "36px", marginBottom: "12px" }}>🔑</div>
-                <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Clé Claude non configurée</div>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>IA non disponible</div>
                 <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "20px", lineHeight: "1.6" }}>
-                  L'assistant IA nécessite une clé API Claude.<br/>L'inscription est <strong>gratuite</strong> et inclut des crédits offerts.
+                  Configurez une clé API Claude pour activer l'assistant.<br/>L'inscription est <strong>gratuite</strong> et inclut des crédits offerts.
                 </div>
                 <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
                   style={{ display: "inline-block", background: "linear-gradient(135deg, #1E3A5F, #2D5986)", color: "#fff", borderRadius: "10px", padding: "10px 20px", fontSize: "12px", fontWeight: "700", textDecoration: "none", marginBottom: "12px" }}>
@@ -333,7 +333,7 @@ Règles strictes :
                 <div style={{ fontSize: "10px", color: C.inkSubtle, lineHeight: "1.6" }}>Puis ajoutez votre clé dans<br/><strong>Profil → Clés API</strong></div>
               </div>
             )}
-            {hasClaudeKey() && messages.length === 0 && (
+            {hasAI() && messages.length === 0 && (
               <div style={{ paddingTop: "6px", display: "flex", flexDirection: "column", gap: "14px" }}>
                 {!hasPositions && (
                   <div style={{ padding: "14px 16px", background: "linear-gradient(135deg, rgba(30,58,95,0.08), rgba(37,99,235,0.06))", border: `1px solid rgba(30,58,95,0.15)`, borderRadius: "14px" }}>
@@ -414,13 +414,13 @@ Règles strictes :
             <div ref={messagesEndRef} />
           </div>
 
-          <div style={{ padding: "10px 14px 14px", borderTop: `1px solid ${C.border}`, display: "flex", gap: "8px", flexShrink: 0, background: C.snow, opacity: hasClaudeKey() ? 1 : 0.4, pointerEvents: hasClaudeKey() ? "auto" : "none" }}>
+          <div style={{ padding: "10px 14px 14px", borderTop: `1px solid ${C.border}`, display: "flex", gap: "8px", flexShrink: 0, background: C.snow, opacity: hasAI() ? 1 : 0.4, pointerEvents: hasAI() ? "auto" : "none" }}>
             <input
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder={hasClaudeKey() ? "Posez votre question…" : "Clé Claude requise"}
+              placeholder={hasAI() ? "Posez votre question…" : "IA non disponible"}
               style={{ flex: 1, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 13px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none" }}
             />
             <button onClick={send} disabled={!input.trim() || loading}

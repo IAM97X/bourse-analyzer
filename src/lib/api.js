@@ -46,10 +46,32 @@ export const ALPHAVANTAGE_KEY  = { toString() { return getKey("alphavantage"); }
 export const FMP_KEY           = { toString() { return getKey("fmp"); } };
 export const hasFMPKey         = () => !!getKey("fmp");
 export const hasClaudeKey = () => !!getKey("anthropic");
+// IA disponible = clé Claude OU proxy Gemini serveur (production)
+export const hasAI = () => hasClaudeKey() || process.env.NODE_ENV === "production";
 
 export const CLAUDE_ENDPOINT = process.env.NODE_ENV === "production"
   ? "/api/claude"
   : "https://api.anthropic.com/v1/messages";
+
+export const GEMINI_ENDPOINT = "/api/gemini";
+
+// Retourne l'endpoint et les headers à utiliser selon la clé dispo
+function resolveAIEndpoint(maxTokens = 1500, system = "", messages = []) {
+  if (hasClaudeKey()) {
+    return {
+      endpoint: CLAUDE_ENDPOINT,
+      headers: { "Content-Type": "application/json", "x-api-key": `${ANTHROPIC_API_KEY}`, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      buildBody: (model, mt) => ({ model, max_tokens: mt, system, messages }),
+      parseText: (data) => (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n"),
+    };
+  }
+  return {
+    endpoint: GEMINI_ENDPOINT,
+    headers: { "Content-Type": "application/json" },
+    buildBody: (_, mt) => ({ system, messages, max_tokens: mt }),
+    parseText: (data) => (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n"),
+  };
+}
 
 let _apiQueue = Promise.resolve();
 export function enqueueApi(fn) {
@@ -75,35 +97,40 @@ export async function callGoogleSearch(query, nbResults = 5) {
 }
 
 export async function callClaude(system, userMessage, useSearch = false, _retries = 4, skipChaining = false, maxTokens = null, model = null) {
-  if (useSearch && getKey("google") && getKey("cx") && !skipChaining) {
+  // Web search uniquement disponible avec Claude + clé Google
+  if (useSearch && hasClaudeKey() && getKey("google") && getKey("cx") && !skipChaining) {
     return callClaudeChained(system, userMessage);
   }
-  const bodyObj = { model: model || CLAUDE_MODELS.standard, max_tokens: maxTokens || (useSearch ? 4000 : 1500), system, messages: [{ role: "user", content: userMessage }] };
-  if (useSearch) bodyObj.tools = [{ type: "web_search_20250305", name: "web_search" }];
-  const headers = { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
-  if (useSearch) headers["anthropic-beta"] = "web-search-2025-03-05";
+  const mt = maxTokens || (useSearch ? 4000 : 1500);
+  const messages = [{ role: "user", content: userMessage }];
+  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(mt, system, messages);
+  const bodyObj = buildBody(model || CLAUDE_MODELS.standard, mt);
+  if (useSearch && hasClaudeKey()) {
+    bodyObj.tools = [{ type: "web_search_20250305", name: "web_search" }];
+    headers["anthropic-beta"] = "web-search-2025-03-05";
+  }
   for (let attempt = 0; attempt < _retries; attempt++) {
     let res, data;
     try {
-      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      res  = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(bodyObj) });
       data = await res.json();
     } catch (networkErr) {
       if (attempt < _retries - 1) { await delay(2000 * (attempt + 1)); continue; }
       throw new Error(`Erreur réseau : ${networkErr.message}`);
     }
-    if (res.status === 429 || data?.error?.type === "rate_limit_error") {
+    if (res.status === 429) {
       if (attempt < _retries - 1) { await delay(8000 * (attempt + 1)); continue; }
-      throw new Error(`Limite de taux (429). Réessayez dans 1 minute.`);
+      throw new Error(`Limite de taux. Réessayez dans 1 minute.`);
     }
     if (res.status === 500 || res.status === 529) {
       if (attempt < _retries - 1) { await delay(5000 * (attempt + 1)); continue; }
       const err = new Error("Service temporairement indisponible — Réessayez dans quelques instants.");
       err.retryable = true; throw err;
     }
-    if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez votre clé Anthropic dans les Paramètres.`);
-    if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
-    const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+    if (res.status === 402) throw new Error(`Crédit insuffisant. Vérifiez votre facturation.`);
+    if (res.status === 401) throw new Error(`Clé API invalide. Vérifiez vos paramètres.`);
+    if (data.error) throw new Error(`[${res.status}] ${data.error.message || data.error}`);
+    const text = parseText(data);
     if (!text) throw new Error("Réponse vide.");
     const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
@@ -112,14 +139,11 @@ export async function callClaude(system, userMessage, useSearch = false, _retrie
     try {
       return JSON.parse(jsonStr);
     } catch {
-      let repaired = jsonStr
-        .replace(/,\s*([\]}])/g, "$1")
-        .replace(/[\x00-\x1F\x7F]/g, " ");
+      let repaired = jsonStr.replace(/,\s*([\]}])/g, "$1").replace(/[\x00-\x1F\x7F]/g, " ");
       try { return JSON.parse(repaired); } catch {
         const lastComma = repaired.lastIndexOf(",");
         if (lastComma > 0) {
-          const truncated = repaired.substring(0, lastComma) + "]}";
-          try { return JSON.parse(truncated); } catch { /* ignore */ }
+          try { return JSON.parse(repaired.substring(0, lastComma) + "]}"); } catch {}
         }
         throw new Error(`JSON Parse error: ${text.slice(0, 200)}`);
       }
@@ -129,73 +153,47 @@ export async function callClaude(system, userMessage, useSearch = false, _retrie
 }
 
 export async function callClaudeHaiku(system, userMessage) {
-  const bodyObj = {
-    model: CLAUDE_MODELS.fast,
-    max_tokens: 2000,
-    system,
-    messages: [{ role: "user", content: userMessage }],
-  };
-  const headers = { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
+  const messages = [{ role: "user", content: userMessage }];
+  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(2000, system, messages);
+  const bodyObj = buildBody(CLAUDE_MODELS.fast, 2000);
   for (let attempt = 0; attempt < 3; attempt++) {
     let res, data;
     try {
-      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      res  = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(bodyObj) });
       data = await res.json();
     } catch (networkErr) {
       if (attempt < 2) { await delay(3000); continue; }
       throw new Error(`Erreur réseau : ${networkErr.message}`);
     }
-    if (res.status === 429 || data?.error?.type === "rate_limit_error") {
-      if (attempt < 2) { await delay(10000 * (attempt + 1)); continue; }
-      throw new Error(`Limite de taux (429). Réessayez dans 1 minute.`);
-    }
-    if (res.status === 500 || res.status === 529) {
-      if (attempt < 2) { await delay(5000 * (attempt + 1)); continue; }
-      const err = new Error("Service temporairement indisponible — Réessayez dans quelques instants.");
-      err.retryable = true; throw err;
-    }
-    if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez votre clé Anthropic dans les Paramètres.`);
-    if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
-    const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+    if (res.status === 429) { if (attempt < 2) { await delay(10000 * (attempt + 1)); continue; } throw new Error(`Limite de taux.`); }
+    if (res.status === 500 || res.status === 529) { if (attempt < 2) { await delay(5000 * (attempt + 1)); continue; } throw new Error("Service indisponible."); }
+    if (data.error) throw new Error(`[${res.status}] ${data.error.message || data.error}`);
+    const text = parseText(data);
     if (!text) throw new Error("Réponse vide.");
     const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
-    if (s === -1 || e === -1) throw new Error("JSON introuvable dans la réponse.");
+    if (s === -1 || e === -1) throw new Error("JSON introuvable.");
     return JSON.parse(clean.substring(s, e + 1));
   }
   throw new Error("Nombre de tentatives maximum atteint.");
 }
 
 export async function callClaudeConversation(system, messages, _retries = 3) {
-  const headers = {
-    "Content-Type": "application/json",
-    "x-api-key": ANTHROPIC_API_KEY,
-    "anthropic-version": "2023-06-01",
-    "anthropic-dangerous-direct-browser-access": "true",
-  };
-  const bodyObj = { model: CLAUDE_MODELS.fast, max_tokens: 1500, system, messages };
+  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(1500, system, messages);
+  const bodyObj = buildBody(CLAUDE_MODELS.fast, 1500);
   for (let attempt = 0; attempt < _retries; attempt++) {
     let res, data;
     try {
-      res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers, body: JSON.stringify(bodyObj) });
+      res  = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(bodyObj) });
       data = await res.json();
     } catch (networkErr) {
       if (attempt < _retries - 1) { await delay(2000 * (attempt + 1)); continue; }
       throw new Error(`Erreur réseau : ${networkErr.message}`);
     }
-    if (res.status === 429 || data?.error?.type === "rate_limit_error") {
-      if (attempt < _retries - 1) { await delay(8000 * (attempt + 1)); continue; }
-      throw new Error(`Limite de taux (429). Réessayez dans 1 minute.`);
-    }
-    if (res.status === 500 || res.status === 529) {
-      if (attempt < _retries - 1) { await delay(5000 * (attempt + 1)); continue; }
-      throw new Error("Service temporairement indisponible — Réessayez dans quelques instants.");
-    }
-    if (res.status === 402) throw new Error(`Crédit insuffisant (402). Vérifiez console.anthropic.com → Billing.`);
-    if (res.status === 401) throw new Error(`Clé API invalide (401). Vérifiez votre clé Anthropic dans les Paramètres.`);
-    if (data.error) throw new Error(`[${res.status}] ${data.error.message}`);
-    const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+    if (res.status === 429) { if (attempt < _retries - 1) { await delay(8000 * (attempt + 1)); continue; } throw new Error(`Limite de taux.`); }
+    if (res.status === 500 || res.status === 529) { if (attempt < _retries - 1) { await delay(5000 * (attempt + 1)); continue; } throw new Error("Service indisponible."); }
+    if (data.error) throw new Error(`[${res.status}] ${data.error.message || data.error}`);
+    const text = parseText(data);
     if (!text) throw new Error("Réponse vide.");
     return text.trim();
   }

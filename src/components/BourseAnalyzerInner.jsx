@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { C, shadow } from "../constants/theme";
 import { SYSTEM_PROMPT, MARKET_SCORING_PROMPT } from "../constants/prompts";
 import { load, save } from "../lib/storage";
-import { callClaude, enqueueApi, hasClaudeKey, fetchWithProxy } from "../lib/api";
+import { callClaude, enqueueApi, hasClaudeKey, hasAI, fetchWithProxy } from "../lib/api";
 import { fetchYahooAnalysts, fetchGoogleNewsRSS, formatExternalContext } from "../lib/market";
 import { useIsMobile } from "../context/mobile";
 import { UI, DEFAULT_PROFIL } from "../constants/config";
@@ -497,7 +497,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         <div className="ba-content" style={{ flex: 1, overflowY: "auto", padding: "32px 36px", position: "relative" }}>
           <div className="ba-content-inner" style={{ position: "relative", maxWidth: "1200px", margin: "0 auto" }}>
           {/* Bannière sans clé Claude */}
-          {!hasClaudeKey() && (
+          {!hasAI() && (
             <div style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "18px", padding: "14px 20px", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <span style={{ fontSize: "18px" }}>🔑</span>

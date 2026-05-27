@@ -3,7 +3,7 @@ import { sanitizePositions, fmtEur } from "../lib/finance";
 import { load } from "../lib/storage";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
 import { TABS } from "../constants/tabs";
-import { fetchWithProxy, hasFMPKey, FMP_KEY, hasClaudeKey } from "../lib/api";
+import { fetchWithProxy, hasFMPKey, FMP_KEY, hasClaudeKey, hasAI } from "../lib/api";
 import { fetchFMPHistorical } from "../lib/market";
 
 const SNAPSHOTS_KEY      = "bourse_snapshots";
@@ -1039,7 +1039,7 @@ export default function HomeTab({ account = "PEA", onTabChange, hidden, profil: 
         style={{ display: "block", width: "100%", maxWidth: "280px", margin: "0 auto 10px", background: "#1a3a5c", color: "#fff", border: "none", borderRadius: "12px", padding: "13px 24px", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
         Ajouter ma première position →
       </button>
-      {!hasClaudeKey() && (
+      {!hasAI() && (
         <button onClick={() => onTabChange(TABS.PROFIL)}
           style={{ display: "block", width: "100%", maxWidth: "280px", margin: "0 auto", background: "transparent", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "12px 24px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>
           Activer l'IA (clé Claude) →
