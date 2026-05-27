@@ -76,28 +76,28 @@ const IconUser = () => (
     <path d="M2 14c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="currentColor" fillOpacity="0.1"/>
   </svg>
 );
+const IconBrain = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 2.5C6.2 2.5 4.8 3.8 4.6 5.4C3.5 5.7 2.5 6.8 2.5 8.2C2.5 9.6 3.5 10.7 4.8 11L5.2 12C5.5 12.8 6.3 13.2 7.1 13L8 12.7L8.9 13C9.7 13.2 10.5 12.8 10.8 12L11.2 11C12.5 10.7 13.5 9.6 13.5 8.2C13.5 6.8 12.5 5.7 11.4 5.4C11.2 3.8 9.8 2.5 8 2.5Z" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+    <line x1="8" y1="2.5" x2="8" y2="12.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.5"/>
+    <path d="M5.5 5.8C6.2 6.8 7 7.2 8 7.2C9 7.2 9.8 6.8 10.5 5.8" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+  </svg>
+);
+const IconMore = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <circle cx="3.5" cy="8" r="1.5" fill="currentColor"/>
+    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+    <circle cx="12.5" cy="8" r="1.5" fill="currentColor"/>
+  </svg>
+);
 
 export const NAV_GROUPS = [
   { items: [
-    { key: TABS.HOME,      label: "Accueil",   icon: <IconHome/> },
-    { key: TABS.PORTFOLIO, label: "Positions", icon: <IconPositions/> },
-  ]},
-  { label: "ANALYSE", items: [
-    { key: TABS.HISTORIQUE, label: "Répartition",  icon: <IconPie/> },
-    { key: TABS.OPERATIONS, label: "Transactions", icon: <IconSwap/> },
-  ]},
-  { label: "STRATÉGIE", items: [
-    { key: TABS.MARCHE,     label: "Signaux IA",  icon: <IconTrending/> },
-    { key: TABS.DCA,        label: "Plan DCA",    icon: <IconTarget/> },
-    { key: TABS.PROJECTION, label: "Projection",  icon: <IconWave/> },
-  ]},
-  { label: "IA", featured: true, items: [
-    { key: TABS.CHAT,      label: "Conseiller Privé", icon: <IconChat/> },
-    { key: TABS.AUTOPILOT, label: "Autopilot IA",     icon: <IconAutopilot/> },
-  ]},
-  { label: "COMPTE", items: [
-    { key: TABS.PROFIL,   label: "Profil investisseur", icon: <IconUser/> },
-    { key: TABS.SETTINGS, label: "Paramètres",          icon: <IconGear/> },
+    { key: TABS.HOME,       label: "Accueil",   icon: <IconHome/>,      group: [TABS.HOME] },
+    { key: TABS.PORTFOLIO,  label: "Positions", icon: <IconPositions/>, group: [TABS.PORTFOLIO] },
+    { key: TABS.DCA,        label: "DCA",       icon: <IconTarget/>,    group: [TABS.DCA, TABS.AUTOPILOT, TABS.PROJECTION] },
+    { key: TABS.MARCHE,     label: "IA",        icon: <IconBrain/>,     group: [TABS.MARCHE, TABS.CHAT], featured: true },
+    { key: TABS.PLUS,       label: "Plus",      icon: <IconMore/>,      group: [TABS.PLUS, TABS.HISTORIQUE, TABS.OPERATIONS, TABS.PROFIL, TABS.SETTINGS] },
   ]},
 ];
 
@@ -174,13 +174,19 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                 {group.label}
               </div>
             )}
-            {group.items.map(({ key, label, icon }) => {
-              const isActive = active === key;
-              const isFeatured = group.featured;
-              const isScoringLoading = key === TABS.MARCHE && marketScoringUi === "loading";
+            {group.items.map((item) => {
+              const { key, label, icon, group: itemGroup, featured: itemFeatured } = item;
+              const isActive = (itemGroup || [key]).includes(active);
+              const isFeatured = itemFeatured || group.featured;
+              const isScoringLoading = (itemGroup || [key]).includes(TABS.MARCHE) && marketScoringUi === "loading";
+              const handleClick = () => {
+                if (key === TABS.PLUS) { handleNav(TABS.PLUS); return; }
+                if ((itemGroup || [key]).includes(active)) { if (onClose) onClose(); return; }
+                handleNav(key);
+              };
               return (
                 <button key={key} className={`ba-sidebar-item${isActive ? " ba-sidebar-item-active" : ""}`}
-                  onClick={() => handleNav(key)} title={c ? label : undefined}
+                  onClick={handleClick} title={c ? label : undefined}
                   style={{
                     width: "100%", display: "flex", alignItems: "center",
                     gap: 0,

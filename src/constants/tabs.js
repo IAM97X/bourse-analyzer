@@ -10,4 +10,5 @@ export const TABS = {
   AUTOPILOT:  "autopilot",
   PROFIL:     "profil",
   SETTINGS:   "settings",
+  PLUS:       "plus",
 };

@@ -25,6 +25,53 @@ import PWAInstallBanner from "./PWAInstallBanner";
 import HomeTab from "./HomeTab";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
+
+const DCA_TABS  = [TABS.DCA, TABS.AUTOPILOT, TABS.PROJECTION];
+const IA_TABS   = [TABS.MARCHE, TABS.CHAT];
+const PLUS_TABS = [TABS.PLUS, TABS.HISTORIQUE, TABS.OPERATIONS, TABS.PROFIL, TABS.SETTINGS];
+
+const TAB_LABELS = {
+  [TABS.HOME]:       "Accueil",
+  [TABS.PORTFOLIO]:  "Positions",
+  [TABS.DCA]:        "Plan DCA",
+  [TABS.AUTOPILOT]:  "Autopilot IA",
+  [TABS.PROJECTION]: "Simulateur",
+  [TABS.MARCHE]:     "Signaux IA",
+  [TABS.CHAT]:       "Conseiller Privé",
+  [TABS.HISTORIQUE]: "Répartition",
+  [TABS.OPERATIONS]: "Transactions",
+  [TABS.PROFIL]:     "Profil investisseur",
+  [TABS.SETTINGS]:   "Paramètres",
+  [TABS.PLUS]:       "Plus",
+};
+
+function PillBar({ pills, active, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: "8px", marginBottom: "28px", flexWrap: "wrap" }}>
+      {pills.map(({ key, label }) => {
+        const isActive = active === key;
+        return (
+          <button key={key} onClick={() => onChange(key)}
+            style={{
+              padding: "8px 20px", borderRadius: "50px", cursor: "pointer",
+              fontSize: "13px", fontWeight: isActive ? "700" : "500",
+              fontFamily: "'Inter', sans-serif",
+              background: isActive
+                ? "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)"
+                : "rgba(255,255,255,0.75)",
+              color: isActive ? "#fff" : "#0F172A",
+              boxShadow: isActive ? "0 4px 16px rgba(30,58,95,0.3)" : "0 1px 4px rgba(0,0,0,0.06)",
+              border: isActive ? "none" : "1px solid rgba(15,23,42,0.1)",
+              transition: "all 0.18s",
+            }}>
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 const DEFAULT_SCREENING_STOCKS = [
   "Valneva", "Median Technologies", "Riber", "Guillemot", "Solutions 30",
   "Genomic Vision", "Obiz", "Osmoz Technologies", "NovaBay Pharmaceuticals",
@@ -308,7 +355,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     return () => window.removeEventListener("keydown", handler);
   }, [refreshAll]);
 
-  const tabLabel = NAV_GROUPS.flatMap(g => g.items).find(i => i.key === activeTab)?.label || "";
+  const tabLabel = TAB_LABELS[activeTab] || "";
 
   return (
     <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%)", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif", filter: darkMode ? "invert(1) hue-rotate(200deg) saturate(0.9)" : "none" }}>
@@ -512,9 +559,59 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </a>
             </div>
           )}
+            {/* Sub-pill navigation for DCA group */}
+            {DCA_TABS.includes(activeTab) && (
+              <PillBar
+                pills={[
+                  { key: TABS.DCA,        label: "Plan DCA" },
+                  { key: TABS.AUTOPILOT,  label: "Autopilot IA" },
+                  { key: TABS.PROJECTION, label: "Simulateur" },
+                ]}
+                active={activeTab}
+                onChange={changeTab}
+              />
+            )}
+
+            {/* Sub-pill navigation for IA group */}
+            {IA_TABS.includes(activeTab) && (
+              <PillBar
+                pills={[
+                  { key: TABS.MARCHE, label: "Signaux IA" },
+                  { key: TABS.CHAT,   label: "Conseiller" },
+                ]}
+                active={activeTab}
+                onChange={changeTab}
+              />
+            )}
+
+            {/* Plus — menu page */}
+            {activeTab === TABS.PLUS && (
+              <div style={{ animation: "fadeIn 0.3s ease" }}>
+                <div style={{ marginBottom: "28px" }}>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#0F172A", letterSpacing: "-0.03em" }}>Explorer</div>
+                  <div style={{ fontSize: "13px", color: "#64748B", marginTop: "4px" }}>Analyse, historique et configuration</div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", maxWidth: "560px" }}>
+                  {[
+                    { key: TABS.HISTORIQUE, emoji: "📊", label: "Répartition", desc: "Allocation sectorielle et géographique de votre portefeuille" },
+                    { key: TABS.OPERATIONS, emoji: "↔️", label: "Transactions", desc: "Historique complet de vos achats, ventes et dividendes" },
+                    { key: TABS.PROFIL,     emoji: "👤", label: "Profil",       desc: "Stratégie, horizon de placement et préférences" },
+                    { key: TABS.SETTINGS,   emoji: "⚙️", label: "Paramètres",  desc: "Clés API, synchronisation cloud et options" },
+                  ].map(({ key, emoji, label, desc }) => (
+                    <button key={key} onClick={() => changeTab(key)} className="ba-card-hover"
+                      style={{ background: "rgba(255,255,255,0.75)", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "18px", padding: "20px 18px", textAlign: "left", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+                      <div style={{ fontSize: "26px", marginBottom: "10px", lineHeight: 1 }}>{emoji}</div>
+                      <div style={{ fontSize: "14px", fontWeight: "700", color: "#0F172A", marginBottom: "5px" }}>{label}</div>
+                      <div style={{ fontSize: "12px", color: "#64748B", lineHeight: 1.4 }}>{desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {activeTab === TABS.HOME       && <HomeTab account={account} profil={profil} marketScores={marketScores} onTabChange={changeTab} hidden={hiddenValues} />}
             {activeTab === TABS.PORTFOLIO  && <><MarketStatusBar /><DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} /><PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} /></>}
-{activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
+            {activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
             {activeTab === TABS.PROJECTION && <ProjectionTab profil={profil} account={account} />}
             {activeTab === TABS.HISTORIQUE && <HistoriqueTab portfolioVersion={portfolioVersion} account={account} />}
             {activeTab === TABS.DCA        && <StratégieDCATab profil={profil} portfolioVersion={portfolioVersion} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} onSaveProfil={p => { setProfil(p); save("bourse_profil", p); }} account={account} />}
