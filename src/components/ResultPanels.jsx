@@ -382,6 +382,32 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
         </Card>
       </div>
 
+      {/* Analyse technique */}
+      {data.analyse_technique && (
+        <Card title="Analyse technique" icon="📉" accentColor={C.navy}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", marginBottom: "12px" }}>
+            <StatBox label="Tendance"   value={data.analyse_technique.tendance}   color={data.analyse_technique.tendance === "Haussière" ? C.green : data.analyse_technique.tendance === "Baissière" ? C.red : C.goldDark} />
+            <StatBox label="RSI"        value={data.analyse_technique.rsi}        color={parseFloat(data.analyse_technique.rsi) > 70 ? C.red : parseFloat(data.analyse_technique.rsi) < 30 ? C.green : C.goldDark} />
+            <StatBox label="Support"    value={data.analyse_technique.support} />
+            <StatBox label="Résistance" value={data.analyse_technique.resistance} />
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
+            {data.analyse_technique.ma50  && <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "5px 12px", fontSize: "12px", color: C.inkMuted }}><strong style={{ color: C.ink }}>MM50</strong> {data.analyse_technique.ma50}</div>}
+            {data.analyse_technique.ma200 && <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "5px 12px", fontSize: "12px", color: C.inkMuted }}><strong style={{ color: C.ink }}>MM200</strong> {data.analyse_technique.ma200}</div>}
+            {data.analyse_technique.macd  && <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "5px 12px", fontSize: "12px", color: C.inkMuted }}><strong style={{ color: C.ink }}>MACD</strong> {data.analyse_technique.macd}</div>}
+          </div>
+          {data.analyse_technique.signal_technique && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+              <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px" }}>Signal tech.</span>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: "#fff", background: data.analyse_technique.signal_technique === "ACHAT" ? C.green : data.analyse_technique.signal_technique === "PRUDENCE" ? C.red : C.goldDark, borderRadius: "5px", padding: "2px 8px" }}>{data.analyse_technique.signal_technique}</span>
+            </div>
+          )}
+          {data.analyse_technique.commentaire_technique && (
+            <p style={{ fontSize: "12px", color: C.inkMuted, lineHeight: "1.65", margin: 0 }}>{data.analyse_technique.commentaire_technique}</p>
+          )}
+        </Card>
+      )}
+
       {/* Points forts / vigilance */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
         <Card title="Points forts" icon="✅" accentColor={C.green}>
