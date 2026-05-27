@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { save } from "../lib/storage";
 import { C, shadow } from "../constants/theme";
+import { hasClaudeKey } from "../lib/api";
 
 export const ONBOARDING_KEY = "bourse_onboarding_v1";
 
@@ -35,11 +36,12 @@ export default function OnboardingWizard({ onComplete }) {
   const [qty, setQty]         = useState("");
   const [horizon, setHorizon] = useState("moyen");
   const [dca, setDca]         = useState("");
+  const [apiKey, setApiKey]   = useState("");
+  const [showKey, setShowKey] = useState(false);
 
   const skip = () => finalize(true);
 
   function finalize(skipPosition = false) {
-    // Profil
     const profil = {
       capital: 0, risque: "equilibre",
       horizon,
@@ -51,6 +53,13 @@ export default function OnboardingWizard({ onComplete }) {
     };
     save("bourse_profil", profil);
     save("bourse_account", compte === "CTO" ? "CTO" : "PEA");
+
+    if (apiKey.trim()) {
+      try {
+        const existing = JSON.parse(localStorage.getItem("bourse_api_keys") || "{}");
+        localStorage.setItem("bourse_api_keys", JSON.stringify({ ...existing, anthropic: apiKey.trim() }));
+      } catch {}
+    }
 
     // 1ère position
     if (!skipPosition && nom.trim() && parseFloat(pru) > 0 && parseFloat(qty) > 0) {
@@ -101,7 +110,8 @@ export default function OnboardingWizard({ onComplete }) {
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Prix d'achat (€)</div>
+              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "2px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Prix d'achat (€)</div>
+              <div style={{ fontSize: "10px", color: C.inkSubtle, marginBottom: "5px" }}>= PRU · prix moyen par titre</div>
               <input style={inp} type="number" min="0" step="0.01" placeholder="ex : 24,50" value={pru} onChange={e => setPru(e.target.value)} />
             </div>
             <div style={{ flex: 1 }}>
@@ -129,7 +139,10 @@ export default function OnboardingWizard({ onComplete }) {
             ))}
           </div>
           <div>
-            <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>DCA mensuel (optionnel)</div>
+            <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Montant DCA mensuel (optionnel)</div>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px", lineHeight: "1.5" }}>
+              Le DCA (Dollar Cost Averaging) consiste à investir un montant fixe chaque mois, quelle que soit la situation du marché.
+            </div>
             <div style={{ position: "relative" }}>
               <input style={{ ...inp, paddingRight: "36px" }} type="number" min="0" step="10" placeholder="ex : 100" value={dca} onChange={e => setDca(e.target.value)} />
               <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", color: C.inkMuted }}>€/mois</span>
@@ -137,6 +150,47 @@ export default function OnboardingWizard({ onComplete }) {
           </div>
         </div>
       ),
+    },
+    {
+      icon: "🤖",
+      title: "Activez votre Conseiller IA",
+      subtitle: "Votre Conseiller Privé répond à toutes vos questions et analyse votre portefeuille 24h/24.",
+      content: (
+        <div>
+          {hasClaudeKey() ? (
+            <div style={{ padding: "16px", background: "rgba(5,150,105,0.08)", border: "1px solid rgba(5,150,105,0.2)", borderRadius: "12px", textAlign: "center" }}>
+              <div style={{ fontSize: "22px", marginBottom: "6px" }}>✓</div>
+              <div style={{ fontSize: "13px", fontWeight: "700", color: C.green }}>Clé API déjà configurée</div>
+              <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "4px" }}>Votre Conseiller IA est prêt.</div>
+            </div>
+          ) : (
+            <div>
+              <div style={{ padding: "12px 14px", background: C.paleBlue, borderRadius: "10px", marginBottom: "14px", fontSize: "12px", color: C.navy, lineHeight: "1.6" }}>
+                L'IA utilise Claude d'Anthropic. L'inscription est <strong>gratuite</strong> et inclut des crédits offerts pour commencer.
+              </div>
+              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Clé API Claude</div>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showKey ? "text" : "password"}
+                  style={{ ...inp, paddingRight: "60px", fontFamily: "monospace", fontSize: "12px" }}
+                  placeholder="sk-ant-..."
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                />
+                <button onClick={() => setShowKey(v => !v)}
+                  style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", color: C.inkSubtle, fontFamily: "Inter,sans-serif" }}>
+                  {showKey ? "Masquer" : "Voir"}
+                </button>
+              </div>
+              <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
+                style={{ display: "block", marginTop: "10px", textAlign: "center", fontSize: "12px", color: C.navy, fontWeight: "600", textDecoration: "none" }}>
+                Créer un compte gratuit → console.anthropic.com
+              </a>
+            </div>
+          )}
+        </div>
+      ),
+      skipLabel: "Configurer plus tard →",
     },
   ];
 

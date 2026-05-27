@@ -264,7 +264,21 @@ Règles strictes :
     { emoji: "💰", fact: "Les frais de gestion d'un fonds actif à 1,5%/an coûtent 38% de capital en moins sur 30 ans vs 0,2%/an.", source: "Calcul d'impact des frais" },
     { emoji: "🕰️", fact: "Le meilleur moment pour investir était hier. Le deuxième meilleur moment, c'est aujourd'hui.", source: "Proverbe boursier" },
   ];
-  const todaySuggestions = ALL_SUGGESTIONS.slice(dayIndex % ALL_SUGGESTIONS.length).concat(ALL_SUGGESTIONS.slice(0, dayIndex % ALL_SUGGESTIONS.length)).slice(0, 4);
+  const BEGINNER_SUGGESTIONS = [
+    "Par où commencer pour investir en bourse ?",
+    "PEA ou CTO, lequel choisir pour débuter ?",
+    "C'est quoi un ETF et pourquoi en acheter ?",
+    "Comment investir avec seulement 100€/mois ?",
+    "Quels sont les risques de la bourse ?",
+    "Qu'est-ce que le DCA et comment ça marche ?",
+    "Comment choisir mon premier investissement ?",
+    "C'est quoi le PRU ?",
+  ];
+
+  const hasPositions = (() => { try { return JSON.parse(localStorage.getItem("bourse_portfolio") || "[]").filter(p => (p.compte || "PEA") === account).length > 0; } catch { return false; } })();
+  const todaySuggestions = hasPositions
+    ? ALL_SUGGESTIONS.slice(dayIndex % ALL_SUGGESTIONS.length).concat(ALL_SUGGESTIONS.slice(0, dayIndex % ALL_SUGGESTIONS.length)).slice(0, 4)
+    : BEGINNER_SUGGESTIONS.slice(0, 4);
   const todayDidYouKnow = DIDYOUKNOW[dayIndex % DIDYOUKNOW.length];
 
   return (
@@ -321,6 +335,14 @@ Règles strictes :
             )}
             {hasClaudeKey() && messages.length === 0 && (
               <div style={{ paddingTop: "6px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                {!hasPositions && (
+                  <div style={{ padding: "14px 16px", background: "linear-gradient(135deg, rgba(30,58,95,0.08), rgba(37,99,235,0.06))", border: `1px solid rgba(30,58,95,0.15)`, borderRadius: "14px" }}>
+                    <div style={{ fontSize: "12px", fontWeight: "700", color: C.navy, marginBottom: "6px" }}>Bienvenue ! Je suis votre Conseiller Privé.</div>
+                    <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: "1.6" }}>
+                      Vous débutez en bourse ? Je suis là pour vous guider. Posez-moi n'importe quelle question — je m'adapte à votre niveau et à votre profil.
+                    </div>
+                  </div>
+                )}
                 <div style={{ background: "linear-gradient(135deg, #0C1829 0%, #1A3558 100%)", borderRadius: "16px", padding: "14px 16px", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: "-10px", right: "-10px", fontSize: "60px", opacity: 0.07, lineHeight: 1 }}>💡</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
@@ -484,8 +506,17 @@ export default function ChatTab({ profil, account, portfolioVersion, marketScore
 
   const buildSystemPrompt = () => {
     const { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine } = buildPortfolioContext();
+    const isNewUser = positions.length === 0;
     return `Tu es le Conseiller Privé IA de cet investisseur. Tu as accès à toutes ses données et réponds en français, de façon concise et personnalisée.
-
+${isNewUser ? `
+MODE GUIDE DÉBUTANT : cet investisseur n'a pas encore de positions. Ton rôle est de l'accompagner pas à pas dans ses premiers investissements.
+- Commence toujours par comprendre ses objectifs et sa situation avant de recommander quoi que ce soit
+- Explique les concepts financiers simplement, avec des analogies concrètes
+- Si on te demande "par où commencer", propose une roadmap claire en 3 étapes : (1) définir son profil, (2) choisir une enveloppe fiscale (PEA recommandé pour les Français), (3) commencer par un ETF World diversifié
+- Adapte tes réponses à son horizon (${profil?.horizon || "non défini"}) et son compte (${account || "PEA"})
+- Sois encourageant mais réaliste sur les risques
+- Ne recommande jamais de produits à levier, options, cryptos ou produits complexes à un débutant
+` : ""}
 COMPTE : ${account || "PEA"} | PROFIL : risque=${profil?.risque || "N/A"}, horizon=${profil?.horizon || "N/A"}, DCA=${profil?.dcaMensuel || 0}€/mois, courtier=${profil?.courtier || "boursobank"}, espèces disponibles=${account === "CTO" ? (profil?.especesCTO || 0) : (profil?.especesPEA || 0)}€
 
 CONDITIONS TARIFAIRES COURTIER : ${COURTIERS_DETAIL[profil?.courtier || "boursobank"]}
