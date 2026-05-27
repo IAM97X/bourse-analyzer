@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtCours, fmtPct, sanitizePositions, isETFName, getEuronextUrl, linReg, computeMA, computeRSI } from "../lib/finance";
 import { load, save } from "../lib/storage";
-import { enqueueApi, callClaude, callClaudeHaiku } from "../lib/api";
+import { enqueueApi, callClaude, callClaudeHaiku, fetchWithProxy } from "../lib/api";
 import { useIsMobile } from "../context/mobile";
 import { ThinkingSpinner, Card, StatBox, LoadingPanel } from "./UI";
 import CompanyAvatar from "./CompanyAvatar";
@@ -83,8 +83,59 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
           `Analyse complète ETF DCA pour : ${pos.nom}${pos.isin ? ` (ISIN: ${pos.isin})` : ""}. Profil : DCA ${dcaMensuel}€/mois sur PEA, horizon 10 ans. JSON uniquement.`, true));
         data._isEtf = true;
       } else {
+        // Calcul local MA50/MA200/RSI depuis Yahoo Finance avant d'appeler Claude
+        let technicalCtx = "";
+        try {
+          const tickerCache = (() => { try { return JSON.parse(localStorage.getItem("bourse_isin_ticker_cache") || "{}"); } catch { return {}; } })();
+          let ticker = (pos.isin && tickerCache[pos.isin]) || pos.ticker || null;
+          if (!ticker && pos.isin) {
+            const sRes = await fetchWithProxy(
+              `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(pos.isin)}&quotesCount=3&newsCount=0`,
+              { signal: AbortSignal.timeout(8000) }
+            );
+            if (sRes.ok) {
+              const sJson = await sRes.json();
+              const hit = (sJson?.quotes || []).find(q => ["EQUITY","ETF","MUTUALFUND"].includes(q.quoteType));
+              if (hit?.symbol) {
+                ticker = hit.symbol;
+                try { tickerCache[pos.isin] = ticker; localStorage.setItem("bourse_isin_ticker_cache", JSON.stringify(tickerCache)); } catch {}
+              }
+            }
+          }
+          if (ticker) {
+            const histRes = await fetchWithProxy(
+              `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1wk&range=2y`,
+              { signal: AbortSignal.timeout(12000) }
+            );
+            if (histRes.ok) {
+              const histJson = await histRes.json();
+              const r = histJson?.chart?.result?.[0];
+              const closes = (r?.indicators?.quote?.[0]?.close || []).filter(v => v != null && isFinite(v));
+              if (closes.length >= 15) {
+                const ma50arr  = computeMA(closes, 50);
+                const ma200arr = computeMA(closes, 200);
+                const rsiArr   = computeRSI(closes, 14);
+                const last = closes.length - 1;
+                const ma50  = ma50arr[last]  != null ? ma50arr[last].toFixed(3)  : null;
+                const ma200 = ma200arr[last] != null ? ma200arr[last].toFixed(3) : null;
+                const rsi   = rsiArr[last]   != null ? Math.round(rsiArr[last])  : null;
+                const cours = closes[last];
+                if (ma50 || ma200 || rsi) {
+                  const tendance = ma200 && cours > parseFloat(ma200) ? "au-dessus de la MM200 (haussier LT)" : ma200 ? "en dessous de la MM200 (baissier LT)" : "";
+                  technicalCtx = `\n\nDONNÉES TECHNIQUES CALCULÉES LOCALEMENT (Yahoo Finance hebdo, temps réel) :` +
+                    (ma50  ? `\n- MM50 : ${ma50} €`  : "") +
+                    (ma200 ? `\n- MM200 : ${ma200} €` : "") +
+                    (rsi   ? `\n- RSI(14) : ${rsi}` : "") +
+                    (tendance ? `\n- Cours ${tendance}` : "") +
+                    `\nUtilise DIRECTEMENT ces valeurs dans analyse_technique.ma50, analyse_technique.ma200 et analyse_technique.rsi — NE PAS faire de web_search pour ces indicateurs.`;
+                }
+              }
+            }
+          }
+        } catch { /* technique non bloquante */ }
+
         data = await enqueueApi(() => callClaude(SYSTEM_PROMPT,
-          `Analyse complète de ${pos.nom}${pos.isin ? ` (ISIN: ${pos.isin})` : ""}. Contexte marché actuel. Pourquoi c'est l'action prioritaire à renforcer ce mois dans une stratégie DCA 10 ans ? JSON uniquement.`, true));
+          `Analyse complète de ${pos.nom}${pos.isin ? ` (ISIN: ${pos.isin})` : ""}. Contexte marché actuel. Pourquoi c'est l'action prioritaire à renforcer ce mois dans une stratégie DCA 10 ans ? JSON uniquement.${technicalCtx}`, true));
       }
       setPriorityAnalysis(data);
       setAnalysisUi(UI.RESULT);
