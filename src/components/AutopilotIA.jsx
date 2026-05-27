@@ -179,44 +179,48 @@ function AnalyseStrategique({ analyse }) {
     { key: "pea_alertes",    label: "Éligibilité PEA",               dot: "#F97316" },
   ];
 
+  const ink    = "#1a2d4a";
+  const inkSub = "rgba(26,45,74,0.5)";
+  const border = "rgba(26,45,74,0.10)";
+
   return (
-    <div style={{ background: "linear-gradient(135deg,#0d1f3c 0%,#162a4a 100%)", borderRadius: "16px", marginBottom: "12px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
+    <div style={{ background: "#fff", borderRadius: "16px", marginBottom: "12px", overflow: "hidden", border: `1px solid ${border}`, boxShadow: "0 2px 12px rgba(26,45,74,0.07)" }}>
       <button onClick={() => setOpen(v => !v)}
         style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "none", border: "none", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "13px", fontWeight: "800", color: "#fff" }}>Analyse stratégique</span>
-          <span style={{ fontSize: "9px", fontWeight: "700", color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.09)", borderRadius: "4px", padding: "2px 7px", letterSpacing: "0.8px", textTransform: "uppercase" }}>Conseiller IA</span>
+          <span style={{ fontSize: "13px", fontWeight: "800", color: ink }}>Analyse stratégique</span>
+          <span style={{ fontSize: "9px", fontWeight: "700", color: inkSub, background: "rgba(26,45,74,0.07)", borderRadius: "4px", padding: "2px 7px", letterSpacing: "0.8px", textTransform: "uppercase" }}>Conseiller IA</span>
         </div>
-        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>{open ? "▲" : "▼"}</span>
+        <span style={{ fontSize: "11px", color: inkSub }}>{open ? "▲" : "▼"}</span>
       </button>
 
       {open && (
-        <div style={{ padding: "2px 18px 18px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+        <div style={{ padding: "2px 18px 18px", borderTop: `1px solid ${border}` }}>
           {SECTIONS.map(s => analyse[s.key] && (
             <div key={s.key} style={{ marginTop: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px" }}>
                 <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
-                <span style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.9px" }}>{s.label}</span>
+                <span style={{ fontSize: "10px", fontWeight: "700", color: inkSub, textTransform: "uppercase", letterSpacing: "0.9px" }}>{s.label}</span>
               </div>
-              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)", lineHeight: 1.65, paddingLeft: "12px" }}>{analyse[s.key]}</div>
+              <div style={{ fontSize: "12px", color: ink, lineHeight: 1.65, paddingLeft: "12px" }}>{analyse[s.key]}</div>
             </div>
           ))}
 
           {analyse.actions_prioritaires?.length > 0 && (
             <div style={{ marginTop: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#34D399", flexShrink: 0 }} />
-                <span style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.9px" }}>Actions prioritaires</span>
+                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#059669", flexShrink: 0 }} />
+                <span style={{ fontSize: "10px", fontWeight: "700", color: inkSub, textTransform: "uppercase", letterSpacing: "0.9px" }}>Actions prioritaires</span>
               </div>
               {analyse.actions_prioritaires.map((a, i) => (
-                <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", padding: "10px 12px" }}>
-                  <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontSize: "10px", fontWeight: "800", color: "#34D399" }}>{a.rang}</span>
+                <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "8px", background: "#f8fafc", border: `1px solid ${border}`, borderRadius: "10px", padding: "10px 12px" }}>
+                  <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(5,150,105,0.10)", border: "1px solid rgba(5,150,105,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: "10px", fontWeight: "800", color: "#059669" }}>{a.rang}</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "12px", fontWeight: "700", color: "#fff", marginBottom: "3px" }}>{a.titre}</div>
-                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", lineHeight: 1.55 }}>{a.detail}</div>
-                    {a.impact && <div style={{ fontSize: "10px", color: "#60A5FA", marginTop: "4px", fontWeight: "600" }}>→ {a.impact}</div>}
+                    <div style={{ fontSize: "12px", fontWeight: "700", color: ink, marginBottom: "3px" }}>{a.titre}</div>
+                    <div style={{ fontSize: "11px", color: inkSub, lineHeight: 1.55 }}>{a.detail}</div>
+                    {a.impact && <div style={{ fontSize: "10px", color: "#2563eb", marginTop: "4px", fontWeight: "600" }}>→ {a.impact}</div>}
                   </div>
                 </div>
               ))}
