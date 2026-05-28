@@ -95,8 +95,8 @@ export const NAV_GROUPS = [
   { items: [
     { key: TABS.HOME,       label: "Accueil",   icon: <IconHome/>,      group: [TABS.HOME] },
     { key: TABS.PORTFOLIO,  label: "Positions", icon: <IconPositions/>, group: [TABS.PORTFOLIO] },
-    { key: TABS.DCA,        label: "DCA",       icon: <IconTarget/>,    group: [TABS.DCA, TABS.AUTOPILOT, TABS.PROJECTION] },
-    { key: TABS.MARCHE,     label: "IA",        icon: <IconBrain/>,     group: [TABS.MARCHE, TABS.CHAT], featured: true },
+    { key: TABS.DCA,        label: "DCA",       icon: <IconTarget/>,    group: [TABS.DCA, TABS.PROJECTION] },
+    { key: TABS.MARCHE,     label: "IA",        icon: <IconBrain/>,     group: [TABS.MARCHE, TABS.CHAT, TABS.AUTOPILOT], featured: true },
     { key: TABS.PLUS,       label: "Plus",      icon: <IconMore/>,      group: [TABS.PLUS, TABS.HISTORIQUE, TABS.OPERATIONS, TABS.PROFIL, TABS.SETTINGS] },
   ]},
 ];

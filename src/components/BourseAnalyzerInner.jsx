@@ -28,8 +28,8 @@ import HomeTab from "./HomeTab";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 
-const DCA_TABS  = [TABS.DCA, TABS.AUTOPILOT, TABS.PROJECTION];
-const IA_TABS   = [TABS.MARCHE, TABS.CHAT, TABS.AI_PORTFOLIO];
+const DCA_TABS  = [TABS.DCA, TABS.PROJECTION];
+const IA_TABS   = [TABS.MARCHE, TABS.CHAT, TABS.AUTOPILOT, TABS.AI_PORTFOLIO];
 const PLUS_TABS = [TABS.PLUS, TABS.HISTORIQUE, TABS.OPERATIONS, TABS.PROFIL, TABS.SETTINGS];
 
 const TAB_LABELS = {
@@ -600,7 +600,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               <PillBar
                 pills={[
                   { key: TABS.DCA,        label: "Plan DCA" },
-                  { key: TABS.AUTOPILOT,  label: "Autopilot IA" },
                   { key: TABS.PROJECTION, label: "Simulateur" },
                 ]}
                 active={activeTab}
@@ -613,6 +612,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               <PillBar
                 pills={[
                   { key: TABS.MARCHE,        label: "Signaux IA" },
+                  { key: TABS.AUTOPILOT,     label: "Autopilot IA" },
                   { key: TABS.CHAT,          label: "Conseiller" },
                   { key: TABS.AI_PORTFOLIO,  label: "Portefeuille IA" },
                 ]}
