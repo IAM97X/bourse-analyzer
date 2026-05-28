@@ -145,10 +145,10 @@ const CTO_EXTRA_UNIVERSE = [
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(503).json({ error: "Service IA non configuré" });
-
-  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf } = req.body || {};
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key } = req.body || {};
+  const anthropicKey = claude_key || process.env.ANTHROPIC_API_KEY;
+  if (!geminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA non configuré" });
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
 
   const valeurTotale = portfolio.cash + (portfolio.positions || []).reduce((s, p) => {
@@ -256,30 +256,11 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
     generationConfig: { maxOutputTokens: 2000, temperature: 0.35 },
   };
 
-  // Fallback chain : tenter chaque modèle jusqu'au premier succès
-  const MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-1.5-flash",
-  ];
-
-  async function callGemini(modelId) {
-    const upstream = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`,
-      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(30000) }
-    );
-    const data = await upstream.json();
-    if (data.error) throw new Error(data.error.message || `Erreur ${modelId}`);
-    const text = data.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
-    if (!text) throw new Error(`Réponse vide (${modelId})`);
-    return text;
-  }
-
   function friendlyError(msg) {
     if (!msg) return "L'IA n'a pas pu répondre.";
     const m = msg.toLowerCase();
     if (m.includes("quota") || m.includes("rate") || m.includes("limit"))
-      return "Quota IA temporairement atteint. Réessaie dans quelques secondes — un modèle de secours sera utilisé automatiquement.";
+      return "Quota IA temporairement atteint. Réessaie dans quelques secondes.";
     if (m.includes("timeout") || m.includes("timed out"))
       return "L'IA a mis trop de temps à répondre. Réessaie dans un instant.";
     if (m.includes("json") || m.includes("parse"))
@@ -289,14 +270,68 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
     return "Erreur IA — réessaie dans un instant.";
   }
 
+  function parseJson(text) {
+    const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
+    if (s === -1 || e === -1) throw new Error("JSON introuvable dans la réponse IA");
+    return JSON.parse(clean.substring(s, e + 1));
+  }
+
+  // ── Claude (priorité si clé disponible) ──────────────────────────────────────
+  if (anthropicKey) {
+    try {
+      const systemPrompt = body.systemInstruction.parts[0].text;
+      const userMsg = body.contents[0].parts[0].text;
+      const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 2000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userMsg }],
+        }),
+        signal: AbortSignal.timeout(45000),
+      });
+      const data = await upstream.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+      if (!text) throw new Error("Réponse vide (Claude)");
+      const result = parseJson(text);
+      return res.status(200).json({ ...result, _model: "claude-haiku-4-5" });
+    } catch (e) {
+      // Si erreur Claude : on ne tombe pas sur Gemini (clé Gemini peut ne pas exister)
+      if (!geminiKey) return res.status(500).json({ error: friendlyError(e.message) });
+      // Sinon fallback Gemini
+    }
+  }
+
+  // ── Gemini fallback ───────────────────────────────────────────────────────────
+  if (!geminiKey) return res.status(503).json({ error: "Service IA non configuré" });
+
+  const MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
+
+  async function callGemini(modelId) {
+    const upstream = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${geminiKey}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(30000) }
+    );
+    const data = await upstream.json();
+    if (data.error) throw new Error(data.error.message || `Erreur ${modelId}`);
+    const text = data.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
+    if (!text) throw new Error(`Réponse vide (${modelId})`);
+    return text;
+  }
+
   let lastError = null;
   for (const modelId of MODELS) {
     try {
       const text = await callGemini(modelId);
-      const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
-      if (s === -1 || e === -1) throw new Error("JSON introuvable dans la réponse IA");
-      const result = JSON.parse(clean.substring(s, e + 1));
+      const result = parseJson(text);
       return res.status(200).json({ ...result, _model: modelId });
     } catch (e) {
       lastError = e;
