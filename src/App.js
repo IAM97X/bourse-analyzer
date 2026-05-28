@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, Component } from "react";
 import ReactDOM from "react-dom";
 import { C, shadow } from "./constants/theme";
 import { SYSTEM_PROMPT, PORTFOLIO_PROMPT, ETF_DCA_PROMPT, MARKET_SCORING_PROMPT, AVIS_PARSE_PROMPT, SUGGESTIONS } from "./constants/prompts";
@@ -66,7 +66,22 @@ const DEFAULT_SCREENING_STOCKS = [
   }
 })();
 
-// ─── CSV import ──────────────────────────────────────────────────────────────
+// ─── Error Boundary ──────────────────────────────────────────────────────────
+class AppErrorBoundary extends Component {
+  state = { error: null };
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", fontFamily: "Inter,sans-serif", padding: "24px", textAlign: "center" }}>
+        <div style={{ fontSize: "32px", marginBottom: "12px" }}>⚠️</div>
+        <div style={{ fontSize: "16px", fontWeight: "700", color: "#0F172A", marginBottom: "8px" }}>Une erreur s'est produite</div>
+        <div style={{ fontSize: "12px", color: "#64748B", marginBottom: "20px", maxWidth: "400px", wordBreak: "break-word" }}>{this.state.error?.message || "Erreur inconnue"}</div>
+        <button onClick={() => window.location.reload()} style={{ background: "#1E3A5F", color: "#fff", border: "none", borderRadius: "10px", padding: "10px 24px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Recharger</button>
+      </div>
+    );
+  }
+}
 
 const MIN_WIDTH = 768;
 
@@ -196,5 +211,5 @@ export default function BourseAnalyzer() {
   );
 
   if (state === "auth") return <AuthPage onSession={handleSession} />;
-  return <MobileProvider><BourseAnalyzerInner userName={userName} onLogout={handleLogout} /></MobileProvider>;
+  return <AppErrorBoundary><MobileProvider><BourseAnalyzerInner userName={userName} onLogout={handleLogout} /></MobileProvider></AppErrorBoundary>;
 }
