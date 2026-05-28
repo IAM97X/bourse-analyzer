@@ -1,9 +1,28 @@
+// ETFs éligibles BoursoMarkets (0% de frais si ordre ≥ 200€)
+// TER = frais de gestion annuels (déjà dans le prix, info pour l'IA)
+export const BOURSOMARKETS_ETFS = {
+  "CW8.PA":   { nom: "Amundi MSCI World",             ter: 0.38 },
+  "PANX.PA":  { nom: "Amundi Nasdaq-100 ESG",          ter: 0.23 },
+  "PUST.PA":  { nom: "Amundi PEA S&P 500 ESG",         ter: 0.18 },
+  "EWLD.PA":  { nom: "iShares MSCI World PEA",         ter: 0.20 },
+  "PAEEM.PA": { nom: "Amundi PEA Emerging Markets",    ter: 0.20 },
+  "PCEU.PA":  { nom: "Amundi PEA MSCI Europe",         ter: 0.15 },
+  "LYPS.PA":  { nom: "Lyxor Core S&P 500",             ter: 0.15 },
+  "RS2K.PA":  { nom: "Amundi Russell 2000",            ter: 0.35 },
+  "AASI.PA":  { nom: "Amundi PEA Asie-Pacifique",      ter: 0.20 },
+  "LQQ.PA":   { nom: "Lyxor Nasdaq-100 x2 Lev",        ter: 0.60 },
+  "UST.PA":   { nom: "Lyxor S&P 500 x2 Lev",           ter: 0.35 },
+  "C40.PA":   { nom: "Amundi CAC 40",                  ter: 0.25 },
+  "CACC.PA":  { nom: "BNP Paribas Easy CAC 40",        ter: 0.25 },
+  "ESE.PA":   { nom: "BNP Paribas Easy S&P 500",       ter: 0.15 },
+};
+
 export const COURTIERS = {
   // pea          = compte PEA proposé
   // minOrdre     = minimum légal par ordre
   // minOrdreETF  = minimum pratique ETF
   // fractionne   = achat fractionné possible
-  boursobank:    { nom: "Boursobank",          pea: true,  minOrdre: 100, minOrdreETF: 200, minOrdreSmallCap: 100, fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.006, 1.99) },
+  boursobank:    { nom: "Boursobank",          pea: true,  minOrdre: 100, minOrdreETF: 200, minOrdreSmallCap: 100, fractionne: false, boursomarkets: true,  frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.006, 1.99) },
   fortuneo:      { nom: "Fortuneo",            pea: true,  minOrdre: 0,   minOrdreETF: 100, minOrdreSmallCap: 100, fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
   bourse_direct: { nom: "Bourse Direct",       pea: true,  minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : m <= 300 ? 0.99 : m <= 2000 ? 1.90 : Math.max(m * 0.00095, 3.00) },
   hello_bank:    { nom: "Hello bank!",         pea: true,  minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 5.00 : Math.max(m * 0.01, 5.00) },

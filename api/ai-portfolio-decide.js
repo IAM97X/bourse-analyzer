@@ -1,11 +1,21 @@
 // POST /api/ai-portfolio-decide
 // Reçoit l'état du portefeuille IA + les cours actuels, retourne les décisions BUY/SELL/HOLD
 
+// BoursoMarkets ETFs = 0% frais si ordre ≥ 200€. TER = frais de gestion annuels (dans le prix).
+const BOURSOMARKETS_ETFS = {
+  "CW8.PA":   { ter: 0.38 }, "PANX.PA":  { ter: 0.23 }, "PUST.PA":  { ter: 0.18 },
+  "EWLD.PA":  { ter: 0.20 }, "PAEEM.PA": { ter: 0.20 }, "PCEU.PA":  { ter: 0.15 },
+  "LYPS.PA":  { ter: 0.15 }, "RS2K.PA":  { ter: 0.35 }, "AASI.PA":  { ter: 0.20 },
+  "C40.PA":   { ter: 0.25 }, "ESE.PA":   { ter: 0.15 },
+};
+
 const PEA_UNIVERSE = [
   { symbol: "CW8.PA",   nom: "Amundi MSCI World",        secteur: "ETF Monde" },
   { symbol: "PANX.PA",  nom: "Amundi Nasdaq-100",         secteur: "ETF Tech" },
   { symbol: "PUST.PA",  nom: "Amundi S&P 500 ESG",        secteur: "ETF USA" },
   { symbol: "EWLD.PA",  nom: "iShares MSCI World PEA",    secteur: "ETF Monde" },
+  { symbol: "PAEEM.PA", nom: "Amundi PEA Emerging Mkts",  secteur: "ETF Émergents" },
+  { symbol: "PCEU.PA",  nom: "Amundi PEA MSCI Europe",    secteur: "ETF Europe" },
   { symbol: "AI.PA",    nom: "Air Liquide",                secteur: "Industrie" },
   { symbol: "MC.PA",    nom: "LVMH",                       secteur: "Luxe" },
   { symbol: "TTE.PA",   nom: "TotalEnergies",              secteur: "Énergie" },
@@ -62,9 +72,15 @@ module.exports = async function handler(req, res) {
     ? (((valeurTotale - portfolio.capital_initial) / portfolio.capital_initial) * 100).toFixed(2)
     : "0.00";
 
+  const isBourso = courtier_info?.toLowerCase().includes("boursobank");
   const univAvecPrix = PEA_UNIVERSE
     .filter(s => prices[s.symbol])
-    .map(s => `- ${s.nom} (${s.symbol}): ${prices[s.symbol]}€ [${s.secteur}]`)
+    .map(s => {
+      const bm = isBourso && BOURSOMARKETS_ETFS[s.symbol];
+      const ter = bm ? ` | TER ${BOURSOMARKETS_ETFS[s.symbol].ter}%/an` : "";
+      const fees = bm ? " | ✅ BoursoMarkets 0€ frais si ≥200€" : "";
+      return `- ${s.nom} (${s.symbol}): ${prices[s.symbol]}€ [${s.secteur}${ter}${fees}]`;
+    })
     .join('\n');
 
   const positionsText = portfolio.positions?.length > 0
@@ -128,6 +144,7 @@ ${minETFNum > 0 ? `- Ordre minimum ETF: ${minETFNum}€ par transaction. NE PAS 
 - Pas d'achat fractionné : arrondir à l'entier inférieur (Math.floor)
 - Si 1er cycle (aucune position): déployer 60-70% en 3-5 positions diversifiées sectoriellement
 - Éviter de vendre une position achetée au cycle précédent sans raison forte
+${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (0€ frais si ≥200€) pour maximiser l'efficacité. Comparer les TERs pour choisir entre ETFs à exposition similaire (ex. EWLD 0.20% < CW8 0.38% = même exposition monde, coût moindre)." : ""}
 
 === FORMAT REQUIS (JSON strict, sans markdown) ===
 {

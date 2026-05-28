@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { C } from "../constants/theme";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur } from "../lib/finance";
-import { COURTIERS, COURTIERS_DETAIL, getCourtierForAccount } from "../constants/courtiers";
+import { COURTIERS, COURTIERS_DETAIL, BOURSOMARKETS_ETFS, getCourtierForAccount } from "../constants/courtiers";
 import { DEFAULT_PROFIL } from "../constants/config";
 
 const AI_PF_KEY = "bourse_ai_portfolio";
@@ -33,7 +33,12 @@ function totalValue(pf, prices) {
   }, 0);
 }
 
-const ETF_TICKERS = new Set(["CW8.PA","PANX.PA","PUST.PA","EWLD.PA","IWDA.AS","CSPX.AS"]);
+// ── Fee calculator (BoursoMarkets = 0€ si ≥200€) ─────────────────────────────
+function calcFee(ticker, montant, courtierConstraints) {
+  const { boursomarkets = false, frais } = courtierConstraints;
+  if (boursomarkets && BOURSOMARKETS_ETFS[ticker] && montant >= 200) return 0;
+  return frais ? frais(montant) : 0;
+}
 
 // ── Apply AI decisions to portfolio ──────────────────────────────────────────
 function applyDecisions(portfolio, decisions, prices, courtierConstraints = {}) {
@@ -50,14 +55,13 @@ function applyDecisions(portfolio, decisions, prices, courtierConstraints = {}) 
 
     if (d.action === "BUY") {
       const montant = d.quantite * prix;
-      // Enforce courtier minimum order amount
-      const isETF = ETF_TICKERS.has(d.ticker);
+      const isETF = !!BOURSOMARKETS_ETFS[d.ticker];
       const minReq = isETF ? Math.max(minOrdre, minOrdreETF) : minOrdre;
       if (montant < minReq) continue;
-      // Enforce no fractional shares
       if (!fractionne && !Number.isInteger(d.quantite)) continue;
-      if (montant > cash - cashMin) continue;
-      cash -= montant;
+      const fee = calcFee(d.ticker, montant, courtierConstraints);
+      if (montant + fee > cash - cashMin) continue;
+      cash -= (montant + fee);
       const existing = positions.find(p => p.ticker === d.ticker);
       if (existing) {
         const tot = existing.quantite + d.quantite;
@@ -67,15 +71,17 @@ function applyDecisions(portfolio, decisions, prices, courtierConstraints = {}) 
       } else {
         positions.push({ ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix_achat_moyen: prix, dernier_cours: prix });
       }
-      newTrades.push({ date: new Date().toISOString(), action: "BUY", ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix, montant, raison: d.raison || "" });
+      newTrades.push({ date: new Date().toISOString(), action: "BUY", ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix, montant, frais: fee, raison: d.raison || "" });
     } else if (d.action === "SELL") {
       const existing = positions.find(p => p.ticker === d.ticker);
       if (!existing || existing.quantite < d.quantite) continue;
-      cash += d.quantite * prix;
+      const montant = d.quantite * prix;
+      const fee = calcFee(d.ticker, montant, courtierConstraints);
+      cash += (montant - fee);
       existing.quantite -= d.quantite;
       existing.dernier_cours = prix;
       if (existing.quantite === 0) positions = positions.filter(p => p.ticker !== d.ticker);
-      newTrades.push({ date: new Date().toISOString(), action: "SELL", ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix, montant: d.quantite * prix, raison: d.raison || "" });
+      newTrades.push({ date: new Date().toISOString(), action: "SELL", ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix, montant, frais: fee, raison: d.raison || "" });
     }
   }
 
@@ -603,11 +609,15 @@ export default function AIPortfolioTab({ account, hidden }) {
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>
-                      {t.nom} <span style={{ fontWeight: "400", color: C.inkMuted }}>×{t.quantite} @ {fmtEur(t.prix)}</span>
+                      {t.nom}
+                      {t.quantite > 0 && <span style={{ fontWeight: "400", color: C.inkMuted }}> ×{t.quantite} @ {fmtEur(t.prix)}</span>}
+                      {t.montant > 0 && t.quantite === 0 && <span style={{ fontWeight: "600", color: "#1E3A5F" }}> +{fmtEur(t.montant)}</span>}
                     </div>
                     {t.raison && <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px", lineHeight: 1.35 }}>{t.raison}</div>}
-                    <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "1px" }}>
-                      {new Date(t.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "1px", display: "flex", gap: "8px" }}>
+                      <span>{new Date(t.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
+                      {t.frais === 0 && (t.action === "BUY" || t.action === "SELL") && <span style={{ color: "#059669", fontWeight: "700" }}>0€ frais BM</span>}
+                      {t.frais > 0 && <span>{fmtEur(t.frais)} frais</span>}
                     </div>
                   </div>
                 </div>
