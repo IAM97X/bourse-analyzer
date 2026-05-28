@@ -276,6 +276,20 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
     return text;
   }
 
+  function friendlyError(msg) {
+    if (!msg) return "L'IA n'a pas pu répondre.";
+    const m = msg.toLowerCase();
+    if (m.includes("quota") || m.includes("rate") || m.includes("limit"))
+      return "Quota IA temporairement atteint. Réessaie dans quelques secondes — un modèle de secours sera utilisé automatiquement.";
+    if (m.includes("timeout") || m.includes("timed out"))
+      return "L'IA a mis trop de temps à répondre. Réessaie dans un instant.";
+    if (m.includes("json") || m.includes("parse"))
+      return "L'IA a retourné une réponse mal formée. Relance un cycle.";
+    if (m.includes("503") || m.includes("unavailable") || m.includes("overloaded"))
+      return "Le service IA est temporairement surchargé. Réessaie dans quelques secondes.";
+    return "Erreur IA — réessaie dans un instant.";
+  }
+
   let lastError = null;
   for (const modelId of MODELS) {
     try {
@@ -287,10 +301,9 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
       return res.status(200).json({ ...result, _model: modelId });
     } catch (e) {
       lastError = e;
-      // Quota / rate-limit → essayer le modèle suivant
       const isQuota = e.message?.toLowerCase().includes("quota") || e.message?.toLowerCase().includes("rate");
       if (!isQuota) break;
     }
   }
-  res.status(500).json({ error: lastError?.message || "Tous les modèles IA sont indisponibles" });
+  res.status(500).json({ error: friendlyError(lastError?.message) });
 };
