@@ -521,7 +521,7 @@ export default function AutopilotIA({ account, profil, hidden }) {
 
 PROFIL INVESTISSEUR :
 - Risque : ${profilLabel} | Horizon : ${horizonLabel}
-- DCA mensuel : ${dcaMensuel}€/mois | Courtier : ${profil?.courtier || "boursobank"}
+- DCA mensuel : ${dcaMensuel}€/mois | Courtier : ${(profil?.courtierPEA || profil?.courtierCTO || profil?.courtier || "boursobank")}
 
 PORTEFEUILLE ACTUEL :
 ${portfolioCtx}

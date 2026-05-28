@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { C } from "../constants/theme";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur } from "../lib/finance";
-import { COURTIERS_DETAIL } from "../constants/courtiers";
+import { COURTIERS_DETAIL, getCourtierForAccount } from "../constants/courtiers";
 import { DEFAULT_PROFIL } from "../constants/config";
 
 const AI_PF_KEY = "bourse_ai_portfolio";
@@ -307,7 +307,7 @@ export default function AIPortfolioTab({ account, hidden }) {
 
       // 2. Call AI decision endpoint
       const profil = load("bourse_profil", DEFAULT_PROFIL);
-      const courtierKey = profil.courtier || "boursobank";
+      const courtierKey = getCourtierForAccount(profil, account);
       const courtier_info = COURTIERS_DETAIL[courtierKey] || COURTIERS_DETAIL.boursobank;
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",

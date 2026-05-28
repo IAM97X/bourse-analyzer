@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { sanitizePositions, fmtEur } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
+import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { TABS } from "../constants/tabs";
 import { fetchWithProxy, hasClaudeKey, hasAI } from "../lib/api";
 import { fetchFMPHistorical } from "../lib/market";
@@ -148,14 +149,8 @@ function ColValeur({ positions, especes, cumul, hidden }) {
 
 // ── Colonne 2 : Infos compte ───────────────────────────────────────────────────
 function ColCompte({ account, profil }) {
-  const courtierLabel = {
-    boursobank: "Boursobank",
-    degiro:     "DEGIRO",
-    fortuneo:   "Fortuneo",
-    saxo:       "Saxo Banque",
-    bourse_direct: "Bourse Direct",
-    interactive_brokers: "Interactive Brokers",
-  }[profil.courtier] || (profil.courtier || "—");
+  const courtierKey = getCourtierForAccount(profil, account);
+  const courtierLabel = COURTIERS[courtierKey]?.nom || courtierKey || "—";
 
   const risqueLabel = {
     prudent:    "Prudent",

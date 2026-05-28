@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { load, save } from "../lib/storage";
 import { fmtEur } from "../lib/finance";
+import { COURTIERS } from "../constants/courtiers";
 
 // ─── API Keys Section (réutilisée dans Paramètres) ────────────────────────────
 export function ApiKeysSection() {
@@ -174,19 +175,29 @@ function ProfilTab({ profil, onChange }) {
             })()}
           </div>
 
-          {/* Courtier */}
+          {/* Courtiers PEA + CTO */}
           <div style={{ marginBottom: "22px" }}>
-            <label style={lbl}>Courtier</label>
-            <select value={form.courtier || "boursobank"} onChange={e => setForm(f => ({ ...f, courtier: e.target.value }))}
-              style={{ ...inp, fontSize: "13px" }}>
-              <option value="boursobank">Boursobank</option>
-              <option value="degiro">DEGIRO</option>
-              <option value="fortuneo">Fortuneo</option>
-              <option value="saxo">Saxo Banque</option>
-              <option value="bourse_direct">Bourse Direct</option>
-              <option value="interactive_brokers">Interactive Brokers</option>
-              <option value="autre">Autre</option>
-            </select>
+            <label style={lbl}>Courtiers</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div>
+                <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600", marginBottom: "5px" }}>PEA</div>
+                <select value={form.courtierPEA || form.courtier || "boursobank"} onChange={e => setForm(f => ({ ...f, courtierPEA: e.target.value }))}
+                  style={{ ...inp, fontSize: "12px" }}>
+                  {Object.entries(COURTIERS).filter(([, v]) => v.pea).map(([k, v]) => (
+                    <option key={k} value={k}>{v.nom}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600", marginBottom: "5px" }}>CTO</div>
+                <select value={form.courtierCTO || form.courtier || "degiro"} onChange={e => setForm(f => ({ ...f, courtierCTO: e.target.value }))}
+                  style={{ ...inp, fontSize: "12px" }}>
+                  {Object.entries(COURTIERS).map(([k, v]) => (
+                    <option key={k} value={k}>{v.nom}{!v.pea ? " (CTO)" : ""}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Horizon */}

@@ -47,7 +47,7 @@ export default function OnboardingWizard({ onComplete }) {
       horizon,
       dcaMensuel: parseFloat(dca) || 0,
       dcaDuree: 12,
-      courtier: "boursobank",
+      courtierPEA: "boursobank", courtierCTO: "degiro",
       especesPEA: 0, especesCTO: 0,
       versementsPEA: 0, versementsCTO: 0,
     };

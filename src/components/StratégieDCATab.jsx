@@ -7,13 +7,13 @@ import { useIsMobile } from "../context/mobile";
 import { ThinkingSpinner, Card, StatBox, LoadingPanel } from "./UI";
 import CompanyAvatar from "./CompanyAvatar";
 import { SIGNAL_CONFIG, UI, MOIS_FR, DEFAULT_POSITIONS } from "../constants/config";
-import { COURTIERS, calcFraisCourtage, tauxFraisCourtage } from "../constants/courtiers";
+import { COURTIERS, calcFraisCourtage, tauxFraisCourtage, getCourtierForAccount } from "../constants/courtiers";
 import { SYSTEM_PROMPT, ETF_DCA_PROMPT } from "../constants/prompts";
 
 function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunScoring, onSaveProfil }) {
   const dcaMensuel   = Number(profil?.dcaMensuel) || 0;
   const dcaDuree     = Number(profil?.dcaDuree) || 120;
-  const courtierKey  = profil?.courtier || "boursobank";
+  const courtierKey  = getCourtierForAccount(profil, "PEA");
   const courtierCfg  = COURTIERS[courtierKey] || COURTIERS.boursobank;
   const [priorityAnalysis, setPriorityAnalysis] = useState(null);
   const [analysisUi, setAnalysisUi]             = useState(UI.IDLE);
@@ -541,7 +541,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
             <span style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600" }}>Courtier :</span>
             <select
               value={courtierKey}
-              onChange={e => onSaveProfil && onSaveProfil({ ...profil, courtier: e.target.value })}
+              onChange={e => onSaveProfil && onSaveProfil({ ...profil, courtierPEA: e.target.value })}
               style={{ fontSize: "10px", fontWeight: "700", color: C.navy, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 6px", background: C.snow, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
               {Object.entries(COURTIERS).map(([k, v]) => <option key={k} value={k}>{v.nom}</option>)}
             </select>

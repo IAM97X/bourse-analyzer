@@ -12,7 +12,7 @@ export const SIGNAL_CONFIG = {
 
 export const RISQUE_PCT = { prudent: 0.05, equilibre: 0.10, dynamique: 0.15, "tres-dynamique": 0.20 };
 
-export const DEFAULT_PROFIL = { capital: 0, horizon: "moyen", risque: "equilibre", especesPEA: 0, especesCTO: 0, versementsPEA: 0, versementsCTO: 0, dcaMensuel: 0, dcaDuree: 12, courtier: "boursobank" };
+export const DEFAULT_PROFIL = { capital: 0, horizon: "moyen", risque: "equilibre", especesPEA: 0, especesCTO: 0, versementsPEA: 0, versementsCTO: 0, dcaMensuel: 0, dcaDuree: 12, courtierPEA: "boursobank", courtierCTO: "degiro" };
 export const DEFAULT_POSITIONS = [];
 
 export const MOIS_FR = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];

@@ -6,7 +6,7 @@ import { load, save } from "../lib/storage";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
 import { callClaude, enqueueApi, getKey, fetchWithProxy } from "../lib/api";
-import { COURTIERS } from "../constants/courtiers";
+import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { ThinkingSpinner } from "./UI";
 import Tooltip from "./Tooltip";
 
@@ -624,7 +624,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             const dcaMensuel = Number(profil?.dcaMensuel) || 0;
             const objectifEuros = Number(profil?.objectifEuros) || 0;
             const risque = profil?.risque || "equilibre";
-            const courtierCfg = COURTIERS[profil?.courtier || "boursobank"] || COURTIERS.boursobank;
+            const courtierCfg = COURTIERS[getCourtierForAccount(profil, account)] || COURTIERS.boursobank;
             const minETF = courtierCfg.minOrdreETF || courtierCfg.minOrdre || 50;
             const minSC  = courtierCfg.minOrdreSmallCap || courtierCfg.minOrdre || 100;
             const fractionne = courtierCfg.fractionne || false;

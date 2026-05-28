@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { C, shadow } from "../constants/theme";
-import { COURTIERS_DETAIL } from "../constants/courtiers";
+import { COURTIERS_DETAIL, getCourtierForAccount } from "../constants/courtiers";
 import { load, save } from "../lib/storage";
 import { sanitizePositions } from "../lib/finance";
 import { callClaudeConversation, hasClaudeKey, hasAI, CLAUDE_MODELS, ANTHROPIC_API_KEY, CLAUDE_ENDPOINT } from "../lib/api";
@@ -517,9 +517,9 @@ MODE GUIDE DÉBUTANT : cet investisseur n'a pas encore de positions. Ton rôle e
 - Sois encourageant mais réaliste sur les risques
 - Ne recommande jamais de produits à levier, options, cryptos ou produits complexes à un débutant
 ` : ""}
-COMPTE : ${account || "PEA"} | PROFIL : risque=${profil?.risque || "N/A"}, horizon=${profil?.horizon || "N/A"}, DCA=${profil?.dcaMensuel || 0}€/mois, courtier=${profil?.courtier || "boursobank"}, espèces disponibles=${account === "CTO" ? (profil?.especesCTO || 0) : (profil?.especesPEA || 0)}€
+COMPTE : ${account || "PEA"} | PROFIL : risque=${profil?.risque || "N/A"}, horizon=${profil?.horizon || "N/A"}, DCA=${profil?.dcaMensuel || 0}€/mois, courtier=${getCourtierForAccount(profil, account)}, espèces disponibles=${account === "CTO" ? (profil?.especesCTO || 0) : (profil?.especesPEA || 0)}€
 
-CONDITIONS TARIFAIRES COURTIER : ${COURTIERS_DETAIL[profil?.courtier || "boursobank"]}
+CONDITIONS TARIFAIRES COURTIER : ${COURTIERS_DETAIL[getCourtierForAccount(profil, account)] || COURTIERS_DETAIL.autre}
 Tu connais donc exactement les frais applicables — ne demande JAMAIS à l'utilisateur ses frais de courtage, calcule-les directement.
 
 PORTEFEUILLE (${positions.length} positions) :

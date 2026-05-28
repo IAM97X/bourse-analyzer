@@ -1,26 +1,42 @@
 export const COURTIERS = {
-  // minOrdre      = minimum légal par ordre (toutes classes)
-  // minOrdreETF   = minimum pratique pour un achat ETF
-  // minOrdreSmallCap = minimum pratique pour un achat small cap
-  // fractionne    = achat fractionné possible (Trade Republic…)
-  boursobank:    { nom: "Boursobank",     minOrdre: 100, minOrdreETF: 200, minOrdreSmallCap: 100, fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.006, 1.99) },
-  fortuneo:      { nom: "Fortuneo",       minOrdre: 0,   minOrdreETF: 100, minOrdreSmallCap: 100, fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
-  bourse_direct: { nom: "Bourse Direct",  minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : m <= 300 ? 0.99 : m <= 2000 ? 1.90 : Math.max(m * 0.00095, 3.00) },
-  trade_rep:     { nom: "Trade Republic", minOrdre: 1,   minOrdreETF: 1,   minOrdreSmallCap: 1,   fractionne: true,  frais: m => m <= 0 ? 0 : 1.00 },
-  degiro:        { nom: "DEGIRO",         minOrdre: 0,   minOrdreETF: 1,   minOrdreSmallCap: 10,  fractionne: false, frais: m => m <= 0 ? 0 : Math.max(0.50 + m * 0.00004, 0.50) },
-  saxo:          { nom: "Saxo Banque",    minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : Math.max(m * 0.0008, 4.00) },
-  autre:         { nom: "Autre",          minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
+  // pea          = compte PEA proposé
+  // minOrdre     = minimum légal par ordre
+  // minOrdreETF  = minimum pratique ETF
+  // fractionne   = achat fractionné possible
+  boursobank:    { nom: "Boursobank",          pea: true,  minOrdre: 100, minOrdreETF: 200, minOrdreSmallCap: 100, fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.006, 1.99) },
+  fortuneo:      { nom: "Fortuneo",            pea: true,  minOrdre: 0,   minOrdreETF: 100, minOrdreSmallCap: 100, fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
+  bourse_direct: { nom: "Bourse Direct",       pea: true,  minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : m <= 300 ? 0.99 : m <= 2000 ? 1.90 : Math.max(m * 0.00095, 3.00) },
+  hello_bank:    { nom: "Hello bank!",         pea: true,  minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 5.00 : Math.max(m * 0.01, 5.00) },
+  bforbank:      { nom: "BforBank",            pea: true,  minOrdre: 0,   minOrdreETF: 100, minOrdreSmallCap: 100, fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
+  saxo:          { nom: "Saxo Banque",         pea: true,  minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : Math.max(m * 0.0008, 4.00) },
+  interactive:   { nom: "Interactive Brokers", pea: true,  minOrdre: 0,   minOrdreETF: 1,   minOrdreSmallCap: 1,   fractionne: false, frais: m => m <= 0 ? 0 : Math.max(m * 0.0005, 1.25) },
+  trade_rep:     { nom: "Trade Republic",      pea: false, minOrdre: 1,   minOrdreETF: 1,   minOrdreSmallCap: 1,   fractionne: true,  frais: m => m <= 0 ? 0 : 1.00 },
+  degiro:        { nom: "DEGIRO",              pea: false, minOrdre: 0,   minOrdreETF: 1,   minOrdreSmallCap: 10,  fractionne: false, frais: m => m <= 0 ? 0 : Math.max(0.50 + m * 0.00004, 0.50) },
+  revolut:       { nom: "Revolut",             pea: false, minOrdre: 1,   minOrdreETF: 1,   minOrdreSmallCap: 1,   fractionne: true,  frais: m => m <= 0 ? 0 : 1.00 },
+  xtb:           { nom: "XTB",                 pea: false, minOrdre: 0,   minOrdreETF: 1,   minOrdreSmallCap: 1,   fractionne: true,  frais: m => m <= 0 ? 0 : m <= 100000 ? 0 : m * 0.002 },
+  autre:         { nom: "Autre",               pea: true,  minOrdre: 0,   minOrdreETF: 50,  minOrdreSmallCap: 50,  fractionne: false, frais: m => m <= 0 ? 0 : m <= 500 ? 1.99 : Math.max(m * 0.005, 3.99) },
 };
 
 export const COURTIERS_DETAIL = {
-  boursobank:    "Boursobank (profil Découverte) — RÈGLES IMPÉRATIVES : (1) MINIMUMS PAR TYPE : ETF = 200€ minimum obligatoire ; actions individuelles (dont small caps) = 100€ minimum — ne jamais suggérer un montant inférieur à ces seuils. (2) Pas d'achat fractionné : titres entiers uniquement, calculer le nombre entier de titres achetables. (3) Frais : 1,99€ fixe pour ordres ≤500€ ; 0,60% au-delà. (4) Boursomarkets : 0% de frais si ordre ≥200€ sur titres éligibles. (5) TTF : +0,4% sur achats d'actions françaises dont capitalisation > 1 milliard€. (6) Settlement T+2. (7) 0€ de frais de garde. (8) PEA plafond 150 000€. (9) Horaires : 9h-17h30, horaires étendus 17h35-22h00. (10) Types d'ordres : marché, limité, stop, stop limité.",
-  fortuneo:      "Fortuneo — PEA/CTO : 1,99€ fixe ≤500€ ; 0,50% (min 3,99€) au-delà. Pas de minimum d'ordre. Pas de frais de garde. Settlement T+2. Pas d'achat fractionné.",
-  bourse_direct: "Bourse Direct — PEA/CTO : 0,99€ fixe ≤300€ ; 1,90€ ≤2000€ ; 0,095% (min 3€) au-delà. Pas de minimum d'ordre. Settlement T+2. Pas d'achat fractionné.",
-  trade_rep:     "Trade Republic — CTO uniquement (pas de PEA) : 1€ fixe par ordre. Achat fractionné disponible. Settlement T+2. Pas de frais de change sur €.",
-  degiro:        "DEGIRO — CTO uniquement (pas de PEA) : 0,50€ + 0,004% par ordre. ETF gratuits selon liste. Settlement T+2. Frais de change 0,25%. Pas d'achat fractionné.",
-  saxo:          "Saxo Banque — PEA/CTO : 0,08% par ordre (min 4€). Settlement T+2. Pas d'achat fractionné.",
+  boursobank:    "Boursobank (Découverte) — PEA/CTO. MINIMUMS : ETF ≥200€, actions ≥100€. Frais : 1,99€ fixe ≤500€ ; 0,60% au-delà. Boursomarkets : 0% si ≥200€. TTF +0,4% sur grandes caps françaises. Pas d'achat fractionné. Settlement T+2. Horaires : 9h-17h30 (étendus 17h35-22h).",
+  fortuneo:      "Fortuneo — PEA/CTO. Frais : 1,99€ fixe ≤500€ ; 0,50% (min 3,99€) au-delà. Pas de minimum. Pas d'achat fractionné. Settlement T+2.",
+  bourse_direct: "Bourse Direct — PEA/CTO. Frais : 0,99€ ≤300€ ; 1,90€ ≤2000€ ; 0,095% (min 3€) au-delà. Pas de minimum. Pas d'achat fractionné. Settlement T+2.",
+  hello_bank:    "Hello bank! (BNP Paribas) — PEA/CTO. Frais : 5€ fixe ≤500€ ; 1% (min 5€) au-delà. Pas de minimum. Pas d'achat fractionné. Settlement T+2.",
+  bforbank:      "BforBank (Crédit Agricole) — PEA/CTO. Frais : 1,99€ fixe ≤500€ ; 0,50% (min 3,99€) au-delà. Pas d'achat fractionné. Settlement T+2.",
+  saxo:          "Saxo Banque — PEA/CTO. Frais : 0,08% (min 4€) par ordre. Pas d'achat fractionné. Settlement T+2.",
+  interactive:   "Interactive Brokers — PEA/CTO. Frais : 0,05% (min 1,25€) par ordre. Pas d'achat fractionné. Settlement T+2. Frais de change si hors €.",
+  trade_rep:     "Trade Republic — CTO uniquement (pas de PEA). Frais : 1€ fixe par ordre. Achat fractionné disponible. Settlement T+2. Pas de frais de change sur €.",
+  degiro:        "DEGIRO — CTO uniquement (pas de PEA). Frais : 0,50€ + 0,004% par ordre. ETF gratuits selon liste. Frais de change 0,25%. Pas d'achat fractionné. Settlement T+2.",
+  revolut:       "Revolut — CTO uniquement (pas de PEA). Frais : 1€/ordre (Standard, 10 ordres gratuits/mois) ou inclus en Premium/Metal. Achat fractionné disponible. Settlement T+2.",
+  xtb:           "XTB — CTO uniquement (pas de PEA). Frais : 0% jusqu'à 100 000€/mois de volume, puis 0,2%. Achat fractionné disponible. Pas de frais de garde. Settlement T+2.",
   autre:         "Courtier non précisé — frais estimés : 1,99€ fixe ≤500€ ; 0,50% (min 3,99€) au-delà. Pas d'achat fractionné.",
 };
+
+// Retourne le courtier adapté au type de compte (rétrocompat avec ancien champ 'courtier')
+export function getCourtierForAccount(profil, account) {
+  if (account === "CTO") return profil?.courtierCTO || profil?.courtier || "degiro";
+  return profil?.courtierPEA || profil?.courtier || "boursobank";
+}
 
 export function calcFraisCourtage(montant, courtierKey) {
   const c = COURTIERS[courtierKey] || COURTIERS.boursobank;
