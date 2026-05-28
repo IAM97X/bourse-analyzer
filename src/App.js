@@ -76,7 +76,8 @@ class AppErrorBoundary extends Component {
       <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", fontFamily: "Inter,sans-serif", padding: "24px", textAlign: "center" }}>
         <div style={{ fontSize: "32px", marginBottom: "12px" }}>⚠️</div>
         <div style={{ fontSize: "16px", fontWeight: "700", color: "#0F172A", marginBottom: "8px" }}>Une erreur s'est produite</div>
-        <div style={{ fontSize: "12px", color: "#64748B", marginBottom: "20px", maxWidth: "400px", wordBreak: "break-word" }}>{this.state.error?.message || "Erreur inconnue"}</div>
+        <div style={{ fontSize: "12px", color: "#64748B", marginBottom: "8px", maxWidth: "500px", wordBreak: "break-word" }}>{this.state.error?.message || "Erreur inconnue"}</div>
+        <pre style={{ fontSize: "9px", color: "#94A3B8", maxWidth: "90vw", overflowX: "auto", textAlign: "left", background: "#F8FAFC", padding: "8px", borderRadius: "8px", marginBottom: "16px", whiteSpace: "pre-wrap" }}>{this.state.error?.stack}</pre>
         <button onClick={() => window.location.reload()} style={{ background: "#1E3A5F", color: "#fff", border: "none", borderRadius: "10px", padding: "10px 24px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Recharger</button>
       </div>
     );
