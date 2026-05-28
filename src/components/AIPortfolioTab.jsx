@@ -336,7 +336,8 @@ export default function AIPortfolioTab({ account, hidden }) {
     const isFirstOfMonth = todayParis.slice(8, 10) === "01";
     const dcaMensuel = profil.dcaMensuel || 0;
 
-    let workingPf = aiPf;
+    // Copie propre pour éviter toute référence circulaire React sur l'objet state
+    let workingPf = JSON.parse(safeStringify(aiPf));
     let dcaInjected = false;
 
     if (isFirstOfMonth && dcaMensuel > 0 && workingPf.last_dca_date !== currentMonth) {
