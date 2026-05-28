@@ -130,6 +130,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [localUserName, setLocalUserName]       = useState(userName || "");
   const [editingName, setEditingName]           = useState(false);
   const [avatarEmoji, setAvatarEmoji]           = useState(() => load("bourse_avatar_emoji", ""));
+  const [aiName, setAiName]                     = useState(() => load("bourse_ai_name", ""));
   const [emojiPickerOpen, setEmojiPickerOpen]   = useState(false);
   const [emojiCat, setEmojiCat]                 = useState(0);
   const emojiTriggerRef                         = useRef(null);
@@ -455,7 +456,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 </div>
                 {emojiPickerOpen && createPortal(
                   <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, left: Math.max(8, Math.min((emojiTriggerRef.current?.getBoundingClientRect().right ?? 240) - 240, window.innerWidth - 248)), background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.16)", zIndex: 99999, width: "240px" }}>
-                    {/* Nom + déconnexion */}
+                    {/* Nom + IA + déconnexion */}
                     <div style={{ padding: "12px 12px 10px", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: "8px" }}>
                       <input
                         value={localUserName}
@@ -467,6 +468,14 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                         }}
                         onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
                         placeholder="Votre prénom ou pseudo"
+                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "13px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }}
+                      />
+                      <input
+                        value={aiName}
+                        onChange={e => setAiName(e.target.value)}
+                        onBlur={() => { save("bourse_ai_name", aiName.trim()); }}
+                        onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
+                        placeholder="Nom de votre IA (ex : Atlas)"
                         style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "13px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }}
                       />
                       <button onClick={onLogout}

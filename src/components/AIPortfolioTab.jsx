@@ -213,8 +213,12 @@ function EmptyState({ onInit, account, error }) {
 
   return (
     <div style={{ maxWidth: "480px", margin: "48px auto 0", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
-      <div style={{ fontSize: "52px", marginBottom: "20px", lineHeight: 1 }}>{load("bourse_avatar_emoji", "🤖") || "🤖"}</div>
-      <div style={{ fontSize: "22px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginBottom: "10px" }}>Portefeuille IA autonome</div>
+      {(() => { const n = load("bourse_ai_name", "") || ""; const e = load("bourse_avatar_emoji", "") || ""; return (<>
+        <div style={{ fontSize: "52px", marginBottom: "12px", lineHeight: 1 }}>{e || "🤖"}</div>
+        <div style={{ fontSize: "22px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginBottom: "10px" }}>
+          {n ? `${n} — Portefeuille autonome` : "Portefeuille IA autonome"}
+        </div>
+      </>); })()}
       <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.7, marginBottom: "28px" }}>
         L'IA reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome. Elle tourne 3 fois par jour — à l'ouverture, à midi et avant la clôture — avec les mêmes contraintes que vous : courtier, horaires Euronext, PEA.
       </div>
@@ -569,7 +573,8 @@ export default function AIPortfolioTab({ account, hidden }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Portefeuille IA</span>
+            {(load("bourse_avatar_emoji", "") || "") && <span style={{ fontSize: "20px", lineHeight: 1 }}>{load("bourse_avatar_emoji", "")}</span>}
+            <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{load("bourse_ai_name", "") || "Portefeuille IA"}</span>
             <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg,#080B0F,#2D5986)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
           </div>
           <div style={{ fontSize: "12px", color: C.inkMuted, marginTop: "3px" }}>

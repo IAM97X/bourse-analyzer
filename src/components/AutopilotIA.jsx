@@ -683,7 +683,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
             <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>AI</span>
           </div>
           <div>
-            <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot IA</div>
+            <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot Atlas</div>
             <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {universe.length} instruments · Profil {profilLabel}</div>
           </div>
         </div>
@@ -761,7 +761,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
         <span style={{ fontSize: "14px", flexShrink: 0, marginTop: "1px" }}>💡</span>
         <div style={{ fontSize: "11px", color: "#7A5A10", lineHeight: 1.6 }}>
           <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,15–0,25 $ en crédits Anthropic.<br />
-          Conseil : lancez l'Autopilot <strong>1 à 2 fois par semaine</strong> maximum.
+          Conseil : lancez Autopilot Atlas <strong>1 à 2 fois par semaine</strong> maximum.
         </div>
       </div>
 

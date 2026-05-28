@@ -7,7 +7,7 @@ export const supabase = SB_URL && SB_KEY ? createClient(SB_URL, SB_KEY) : null;
 export const SYNC_KEYS = [
   "bourse_portfolio", "bourse_profil", "bourse_dividendes_log",
   "bourse_pea_ouverture", "bourse_cto_ouverture", "bourse_account",
-  "bourse_dark", "bourse_compact", "bourse_hidden", "bourse_avatar_emoji",
+  "bourse_dark", "bourse_compact", "bourse_hidden", "bourse_avatar_emoji", "bourse_ai_name",
   "bourse_sidebar_collapsed", "bourse_active_tab",
   "bourse_avis_operes", "bourse_snapshots", "bourse_dividendes",
   "bourse_api_keys", "bourse_impot_sortie", "bourse_local_name",
