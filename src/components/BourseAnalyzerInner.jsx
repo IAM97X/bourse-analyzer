@@ -38,7 +38,7 @@ const TAB_LABELS = {
   [TABS.HOME]:       "Accueil",
   [TABS.PORTFOLIO]:  "Positions",
   [TABS.DCA]:        "Plan DCA",
-  [TABS.AUTOPILOT]:  "Autopilot IA",
+  [TABS.AUTOPILOT]:  "Autopilot Atlas",
   [TABS.PROJECTION]: "Simulateur",
   [TABS.MARCHE]:        "Signaux IA",
   [TABS.CHAT]:          "Conseiller Privé",
@@ -637,7 +637,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               <PillBar
                 pills={[
                   { key: TABS.MARCHE,        label: "Signaux IA" },
-                  { key: TABS.AUTOPILOT,     label: "Autopilot IA" },
+                  { key: TABS.AUTOPILOT,     label: "Autopilot Atlas" },
                   { key: TABS.CHAT,          label: "Conseiller" },
                   { key: TABS.AI_PORTFOLIO,  label: "Portefeuille IA" },
                 ]}
