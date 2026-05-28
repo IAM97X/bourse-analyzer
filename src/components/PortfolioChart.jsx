@@ -234,7 +234,7 @@ export default function PortfolioChart({ hidden, account }) {
   const [rebuilding, setRebuilding] = useState(false);
   const [rebuildMsg, setRebuildMsg] = useState(null);
   const [snapVersion, setSnapVersion] = useState(0);
-  const [visibleCurves, setVisibleCurves] = useState({ valeur: true, verse: true, pv: true });
+  const [visibleCurves, setVisibleCurves] = useState({ valeur: true, verse: true, pv: true, drawdown: false });
   const svgRef = useRef(null);
 
   const changePidx = i => { setPidx(i); try { localStorage.setItem("bourse_chart_pidx", String(i)); } catch {} };
@@ -356,10 +356,20 @@ export default function PortfolioChart({ hidden, account }) {
   const pvLabel = lastPV >= 0 ? "Plus-value" : "Perte";
   const pvLegColor = lastPV >= 0 ? "#059669" : "#C0392B";
   const LEGEND = [
-    { key: "valeur", label: "Valeur",        color: lineColor,   dash: false },
-    { key: "verse",  label: "Capital versé", color: "#C8972A",   dash: true  },
-    { key: "pv",     label: pvLabel,         color: pvLegColor,  dash: false, fill: true },
+    { key: "valeur",    label: "Valeur",        color: lineColor,   dash: false },
+    { key: "verse",     label: "Capital versé", color: "#C8972A",   dash: true  },
+    { key: "pv",        label: pvLabel,         color: pvLegColor,  dash: false, fill: true },
+    { key: "drawdown",  label: "Drawdown",      color: "#EF4444",   dash: false, fill: true },
   ];
+
+  // Drawdown : (valeur - max_courant) / max_courant * 100
+  const ddVals = (() => {
+    let runMax = vals[0];
+    return vals.map(v => { runMax = Math.max(runMax, v); return runMax > 0 ? (v - runMax) / runMax * 100 : 0; });
+  })();
+  const minDD = Math.min(...ddVals);
+  const DDH = 60; // hauteur du strip drawdown
+  const yDD = v => DDH - (v - minDD) / (0 - minDD || 1) * (DDH - 4);
 
   return (
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "20px 22px 16px", marginTop: "16px", boxShadow: shadow.card }}>
@@ -493,6 +503,23 @@ export default function PortfolioChart({ hidden, account }) {
           </>
         )}
       </svg>
+
+      {/* ── Drawdown strip ── */}
+      {visibleCurves.drawdown && (
+        <div style={{ marginTop: "8px" }}>
+          <div style={{ fontSize: "9px", color: "#EF4444", fontWeight: "700", marginBottom: "2px", fontFamily: "Inter,sans-serif" }}>
+            DRAWDOWN MAX {minDD.toFixed(1)}%
+          </div>
+          <svg viewBox={`0 0 ${VW} ${DDH}`} style={{ width: "100%", height: `${DDH}px`, display: "block" }}>
+            <line x1={ML} x2={ML+CW} y1={yDD(0)} y2={yDD(0)} stroke="rgba(148,163,184,0.3)" strokeWidth="1" />
+            <path d={`M ${ddVals.map((v, i) => `${xS(dates[i]).toFixed(1)},${yDD(v).toFixed(1)}`).join(" L ")} L ${xS(dates[dates.length-1]).toFixed(1)},${yDD(0).toFixed(1)} L ${xS(dates[0]).toFixed(1)},${yDD(0).toFixed(1)} Z`}
+              fill="rgba(239,68,68,0.15)" />
+            <polyline points={ddVals.map((v, i) => `${xS(dates[i]).toFixed(1)},${yDD(v).toFixed(1)}`).join(" ")}
+              fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinejoin="round" />
+            <text x={ML+CW+4} y={yDD(minDD)+4} fontSize="8" fill="#EF4444" fontFamily="Inter,sans-serif" fontWeight="700">{minDD.toFixed(1)}%</text>
+          </svg>
+        </div>
+      )}
 
       {/* ── Légende cliquable ── */}
       <div style={{ display: "flex", gap: "18px", justifyContent: "center", marginTop: "14px", flexWrap: "wrap" }}>

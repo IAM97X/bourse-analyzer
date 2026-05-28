@@ -1,3 +1,11 @@
+@media print {
+  .ba-sidebar, nav, [data-print-hide], .ba-topbar,
+  .ba-toolbar, .market-status-bar { display: none !important; }
+  body, #root { background: white !important; filter: none !important; }
+  .ba-content-inner { max-width: 100% !important; padding: 0 !important; }
+  * { box-shadow: none !important; }
+}
+
 @keyframes ba-spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }

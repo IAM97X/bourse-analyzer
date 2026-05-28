@@ -64,3 +64,28 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
+
+self.addEventListener("push", (event) => {
+  const data = event.data?.json().catch(() => ({})) ?? {};
+  const title = data.title || "Bourse Analyzer";
+  const options = {
+    body: data.body || "",
+    icon: "/logo192.png",
+    badge: "/logo192.png",
+    tag: data.tag || "bourse-alert",
+    data: { url: data.url || "/" },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((c) => c.url.includes(self.location.origin));
+      if (existing) { existing.focus(); existing.navigate(url); }
+      else self.clients.openWindow(url);
+    })
+  );
+});

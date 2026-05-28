@@ -614,20 +614,45 @@ function BenchmarkComparaison() {
     return (closes[closes.length - 1] - closes[0]) / closes[0] * 100;
   };
 
+  const fetchPerfSince = async (symbol, fromTs) => {
+    const to = Math.floor(Date.now() / 1000);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${Math.floor(fromTs/1000)}&period2=${to}&interval=1d`;
+    const res = await fetchWithProxy(yahooUrl, { signal: AbortSignal.timeout(25000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const closes = (json?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || []).filter(v => v != null);
+    if (closes.length < 2) throw new Error("Pas de données");
+    return (closes[closes.length - 1] - closes[0]) / closes[0] * 100;
+  };
+
+  // Date d'achat moyenne pondérée par montant investi
+  const weightedPurchaseTs = (() => {
+    const pos = portPos.filter(p => p.dateAchat && p.pru && p.quantite);
+    if (!pos.length) {
+      const d = load("bourse_pea_ouverture", "") || load("bourse_cto_ouverture", "");
+      return d ? new Date(d).getTime() : null;
+    }
+    const totalInv = pos.reduce((s, p) => s + p.pru * p.quantite, 0);
+    if (totalInv <= 0) return null;
+    return pos.reduce((s, p) => s + new Date(p.dateAchat).getTime() * (p.pru * p.quantite / totalInv), 0);
+  })();
+
   const fetchAll = async () => {
     setLoading(true); setErrors({});
     const INDICES = [
-      { key: "cac40", symbol: "^FCHI"     },  // CAC 40
-      { key: "cact",  symbol: "^CACT"     },  // CAC All-Tradable
-      { key: "stoxx", symbol: "^STOXX50E" },  // EURO STOXX 50
-      { key: "cw8",   symbol: "CW8.PA"    },  // Amundi MSCI World PEA
+      { key: "cac40", symbol: "^FCHI"     },
+      { key: "cact",  symbol: "^CACT"     },
+      { key: "stoxx", symbol: "^STOXX50E" },
+      { key: "cw8",   symbol: "CW8.PA"    },
     ];
     const results = {}; const errs = {};
     await Promise.all(INDICES.flatMap(({ key, symbol }) => [
       fetchPerf(symbol, 6).then(v  => { results[`${key}_6m`] = v; }).catch(e => { errs[`${key}_6m`] = e.message; }),
       fetchPerf(symbol, 12).then(v => { results[`${key}_1y`] = v; }).catch(e => { errs[`${key}_1y`] = e.message; }),
+      weightedPurchaseTs
+        ? fetchPerfSince(symbol, weightedPurchaseTs).then(v => { results[`${key}_pru`] = v; }).catch(e => { errs[`${key}_pru`] = e.message; })
+        : Promise.resolve(),
     ]));
-    // Persist en cache
     try { localStorage.setItem(BENCHMARK_CACHE_KEY, JSON.stringify({ ts: Date.now(), indices: results, errors: errs })); } catch {}
     setIndices(results);
     setErrors(errs);
@@ -649,19 +674,27 @@ function BenchmarkComparaison() {
     return <span style={{ fontSize: size, fontWeight: "800", color: value >= 0 ? C.green : C.red }}>{value >= 0 ? "+" : ""}{value.toFixed(2).replace(".", ",")}%</span>;
   };
 
-  const Row = ({ label, v6m, v1y, e6m, e1y, bold }) => (
+  const pruLabel = weightedPurchaseTs ? `Depuis PRU (${new Date(weightedPurchaseTs).toLocaleDateString("fr-FR", { month:"short", year:"2-digit" })})` : null;
+
+  const Row = ({ label, v6m, v1y, vpru, e6m, e1y, epru, bold }) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
       padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
-      <span style={{ fontSize: "13px", fontWeight: bold ? "700" : "500", color: bold ? C.ink : C.ink }}>{label}</span>
-      <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-        <div style={{ textAlign: "right", minWidth: "70px" }}>
+      <span style={{ fontSize: "13px", fontWeight: bold ? "700" : "500", color: C.ink }}>{label}</span>
+      <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+        <div style={{ textAlign: "right", minWidth: "60px" }}>
           <div style={{ fontSize: "9px", color: C.inkSubtle, marginBottom: "2px" }}>6 mois</div>
           <PerfVal value={v6m} err={e6m} />
         </div>
-        <div style={{ textAlign: "right", minWidth: "70px" }}>
+        <div style={{ textAlign: "right", minWidth: "60px" }}>
           <div style={{ fontSize: "9px", color: C.inkSubtle, marginBottom: "2px" }}>1 an</div>
           <PerfVal value={v1y} err={e1y} />
         </div>
+        {pruLabel && (
+          <div style={{ textAlign: "right", minWidth: "70px" }}>
+            <div style={{ fontSize: "9px", color: C.navy, fontWeight: "700", marginBottom: "2px" }}>Depuis PRU</div>
+            <PerfVal value={vpru} err={epru} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -692,10 +725,10 @@ function BenchmarkComparaison() {
       </div>
 
       {/* VS indices */}
-      <Row label="VS CAC 40"             v6m={indices?.cac40_6m} v1y={indices?.cac40_1y} e6m={errors.cac40_6m} e1y={errors.cac40_1y} />
-      <Row label="VS CAC All Tradable"  v6m={indices?.cact_6m}  v1y={indices?.cact_1y}  e6m={errors.cact_6m}  e1y={errors.cact_1y} />
-      <Row label="VS EURO STOXX 50"     v6m={indices?.stoxx_6m} v1y={indices?.stoxx_1y} e6m={errors.stoxx_6m} e1y={errors.stoxx_1y} />
-      <Row label="VS CW8 MSCI World PEA" v6m={indices?.cw8_6m}  v1y={indices?.cw8_1y}   e6m={errors.cw8_6m}   e1y={errors.cw8_1y} />
+      <Row label="VS CAC 40"              v6m={indices?.cac40_6m} v1y={indices?.cac40_1y} vpru={indices?.cac40_pru} e6m={errors.cac40_6m} e1y={errors.cac40_1y} epru={errors.cac40_pru} />
+      <Row label="VS CAC All Tradable"   v6m={indices?.cact_6m}  v1y={indices?.cact_1y}  vpru={indices?.cact_pru}  e6m={errors.cact_6m}  e1y={errors.cact_1y}  epru={errors.cact_pru} />
+      <Row label="VS EURO STOXX 50"      v6m={indices?.stoxx_6m} v1y={indices?.stoxx_1y} vpru={indices?.stoxx_pru} e6m={errors.stoxx_6m} e1y={errors.stoxx_1y} epru={errors.stoxx_pru} />
+      <Row label="VS CW8 MSCI World PEA" v6m={indices?.cw8_6m}   v1y={indices?.cw8_1y}  vpru={indices?.cw8_pru}  e6m={errors.cw8_6m}   e1y={errors.cw8_1y}   epru={errors.cw8_pru} />
 
       {/* Risque */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", position: "relative" }}>

@@ -163,12 +163,19 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         if (pos.alerteBasse && cours <= pos.alerteBasse) newAlerts.push({ nom: pos.nom, type: "STOP-LOSS ATTEINT", color: C.red, cours, seuil: pos.alerteBasse });
         if (newAlerts.length > 0) {
           setAlerts(prev => [...prev, ...newAlerts]);
-          // Web Notifications
+          // Push notifications via SW (PWA) ou Web Notification classique
           if ("Notification" in window) {
             Notification.requestPermission().then(perm => {
-              if (perm === "granted") {
-                newAlerts.forEach(a => new Notification(`Bourse — ${a.nom}`, { body: `${a.type} · ${fmtCours(a.cours)} (seuil ${fmtCours(a.seuil)})`, icon: "/favicon.ico" }));
-              }
+              if (perm !== "granted") return;
+              newAlerts.forEach(a => {
+                const title = `Bourse — ${a.nom}`;
+                const body = `${a.type} · ${fmtCours(a.cours)} (seuil ${fmtCours(a.seuil)})`;
+                if ("serviceWorker" in navigator) {
+                  navigator.serviceWorker.ready.then(reg => reg.showNotification(title, { body, icon: "/logo192.png", badge: "/logo192.png", tag: `alert-${a.nom}`, data: { url: "/" } })).catch(() => new Notification(title, { body, icon: "/favicon.ico" }));
+                } else {
+                  new Notification(title, { body, icon: "/favicon.ico" });
+                }
+              });
             });
           }
         }
@@ -497,6 +504,13 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           <button onClick={() => setShowCaptures(true)}
             style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
             📂{isMobile ? "" : " Voir"}
+          </button>
+        )}
+
+        {positions.length > 0 && (
+          <button onClick={() => window.print()} data-print-hide
+            style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
+            🖨️{isMobile ? "" : " PDF"}
           </button>
         )}
 

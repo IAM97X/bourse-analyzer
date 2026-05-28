@@ -3,6 +3,7 @@ import { C, shadow } from "../constants/theme";
 import { SYSTEM_PROMPT, MARKET_SCORING_PROMPT } from "../constants/prompts";
 import { load, save } from "../lib/storage";
 import { callClaude, enqueueApi, hasClaudeKey, hasAI, fetchWithProxy } from "../lib/api";
+import { computeRSI } from "../lib/finance";
 import { fetchYahooAnalysts, fetchGoogleNewsRSS, formatExternalContext } from "../lib/market";
 import { useIsMobile } from "../context/mobile";
 import { UI, DEFAULT_PROFIL } from "../constants/config";
@@ -311,6 +312,28 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         return { pos, analysts, news };
       }));
 
+      // Fetch RSI14 + volume moyen 20j pour chaque position via Yahoo Finance chart
+      const rsiData = await Promise.all(positions.map(async (pos) => {
+        const ticker = pos.ticker || (pos.isin && tickerCache[pos.isin]) || null;
+        if (!ticker) return { id: pos.id, rsi: null, volRatio: null };
+        try {
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=60d`;
+          const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(6000) });
+          if (!res.ok) return { id: pos.id, rsi: null, volRatio: null };
+          const json = await res.json();
+          const result = json?.chart?.result?.[0];
+          const closes = result?.indicators?.quote?.[0]?.close?.filter(v => v != null) ?? [];
+          const volumes = result?.indicators?.quote?.[0]?.volume?.filter(v => v != null) ?? [];
+          const rsiArr = computeRSI(closes, 14);
+          const lastRsi = rsiArr.filter(v => v !== null).at(-1);
+          const volAvg20 = volumes.length >= 20 ? volumes.slice(-21, -1).reduce((s, v) => s + v, 0) / 20 : null;
+          const volLast = volumes.at(-1) ?? null;
+          const volRatio = (volAvg20 && volLast) ? +(volLast / volAvg20).toFixed(2) : null;
+          return { id: pos.id, rsi: lastRsi != null ? +lastRsi.toFixed(1) : null, volRatio };
+        } catch { return { id: pos.id, rsi: null, volRatio: null }; }
+      }));
+      const rsiMap = Object.fromEntries(rsiData.map(r => [r.id, r]));
+
       // Construire le bloc de contexte par position
       const contextBlocks = externalData
         .map(({ pos, analysts, news }) => formatExternalContext(pos.nom, analysts, news))
@@ -322,7 +345,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         const pv = cours - p.pru;
         const pvPct = p.pru > 0 ? ((pv / p.pru) * 100).toFixed(1) : "0.0";
         const pvSign = pv >= 0 ? "+" : "";
-        return `- ${p.nom}${p.isin ? ` (ISIN: ${p.isin})` : ""}${p.ticker ? ` [${p.ticker}]` : ""}, PRU ${p.pru}€, cours ${cours}€, qté ${p.quantite}, valeur ${valeur}€, PV ${pvSign}${pvPct}%`;
+        const rsi = rsiMap[p.id];
+        const rsiStr = rsi?.rsi != null ? `, RSI14=${rsi.rsi}` : "";
+        const volStr = rsi?.volRatio != null ? `, vol×${rsi.volRatio}` : "";
+        return `- ${p.nom}${p.isin ? ` (ISIN: ${p.isin})` : ""}${p.ticker ? ` [${p.ticker}]` : ""}, PRU ${p.pru}€, cours ${cours}€, qté ${p.quantite}, valeur ${valeur}€, PV ${pvSign}${pvPct}%${rsiStr}${volStr}`;
       }).join("\n");
 
       const userMsg = `Portefeuille PEA à analyser (DCA long terme, 10 ans) :\n${posListe}\n\nDONNÉES MARCHÉ EN TEMPS RÉEL :\n${contextBlocks}\n\nJSON uniquement.`;
