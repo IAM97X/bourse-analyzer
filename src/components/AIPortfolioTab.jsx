@@ -5,7 +5,7 @@ import { sanitizePositions, fmtEur } from "../lib/finance";
 import { COURTIERS, COURTIERS_DETAIL, BOURSOMARKETS_ETFS, getCourtierForAccount } from "../constants/courtiers";
 import { DEFAULT_PROFIL } from "../constants/config";
 
-const AI_PF_KEY = "bourse_ai_portfolio";
+const aiPfKey = (account) => `bourse_ai_portfolio_${account || "PEA"}`;
 
 // ── Batch price fetch via /api/yahoo ──────────────────────────────────────────
 async function fetchBatchPrices(symbols) {
@@ -240,14 +240,22 @@ function getParisTime() {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AIPortfolioTab({ account, hidden }) {
-  const [aiPf, setAiPf]         = useState(() => load(AI_PF_KEY, null));
+  const [aiPf, setAiPf]         = useState(() => load(aiPfKey(account), null));
   const [cycling, setCycling]   = useState(false);
   const [cycleLog, setCycleLog] = useState(null);
   const [error, setError]       = useState(null);
   const [prices, setPrices]     = useState({});
   const [loadingPrices, setLoadingPrices] = useState(false);
 
-  // Refresh current position prices on mount
+  // Reload correct portfolio when account switches (PEA ↔ CTO)
+  useEffect(() => {
+    setAiPf(load(aiPfKey(account), null));
+    setCycleLog(null);
+    setError(null);
+    setPrices({});
+  }, [account]);
+
+  // Refresh current position prices on mount / account change
   useEffect(() => {
     if (!aiPf?.positions?.length) return;
     setLoadingPrices(true);
@@ -288,7 +296,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       last_synced_liquidites: Math.round(liquidites * 100) / 100,
     };
     setAiPf(newPf);
-    save(AI_PF_KEY, newPf);
+    save(aiPfKey(account), newPf);
     setError(null);
   }, [account]);
 
@@ -322,7 +330,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       };
       dcaInjected = true;
       setAiPf(workingPf);
-      save(AI_PF_KEY, workingPf);
+      save(aiPfKey(account), workingPf);
     }
 
     // Sync liquidités réelles : si l'utilisateur a ajouté du cash sur son compte
@@ -341,11 +349,11 @@ export default function AIPortfolioTab({ account, hidden }) {
         ].slice(0, 100),
       };
       setAiPf(workingPf);
-      save(AI_PF_KEY, workingPf);
+      save(aiPfKey(account), workingPf);
     } else if (lastSynced === null) {
       // Premier cycle : mémoriser la valeur de référence
       workingPf = { ...workingPf, last_synced_liquidites: currentLiquidites };
-      save(AI_PF_KEY, workingPf);
+      save(aiPfKey(account), workingPf);
     }
 
     try {
@@ -420,7 +428,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       else if (session === "CLÔTURE") updatedPf.last_evening_cycle = now;
 
       setAiPf(updatedPf);
-      save(AI_PF_KEY, updatedPf);
+      save(aiPfKey(account), updatedPf);
       setCycleLog({ decisions, strategie, session, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0 });
     } catch (e) {
       setError(e.message);
@@ -447,7 +455,7 @@ export default function AIPortfolioTab({ account, hidden }) {
   const handleReset = () => {
     if (!window.confirm("Réinitialiser le Portefeuille IA ? Toutes les données (trades, performance) seront perdues.")) return;
     setAiPf(null);
-    save(AI_PF_KEY, null);
+    save(aiPfKey(account), null);
     setCycleLog(null);
     setError(null);
     setPrices({});
