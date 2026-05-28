@@ -812,7 +812,7 @@ Retourne ce JSON exact (aucun texte autour) :
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
           {/* Bouton Projection globale */}
-          <button onClick={() => setSelectedPosId(selectedPosId === "__global__" ? null : "__global__")} style={{
+          <button onClick={() => setSelectedPosId("__global__")} style={{
             padding: "6px 14px", borderRadius: "20px",
             border: `1.5px solid ${selectedPosId === "__global__" ? "#7C3AED" : C.border}`,
             background: selectedPosId === "__global__" ? "rgba(124,58,237,0.12)" : C.snowOff,

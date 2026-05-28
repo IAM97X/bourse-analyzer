@@ -79,19 +79,10 @@ export default function Tooltip({ term, children, text }) {
       onMouseEnter={cancelHide}
       onMouseLeave={scheduleHide}
     >
-      <div style={{ marginBottom: "7px" }}>
+      <div>
         <span style={{ fontWeight: "700", color: "#818CF8" }}>{term} — </span>
         {definition}
       </div>
-      <button onClick={askAssistant} style={{
-        display: "flex", alignItems: "center", gap: "5px",
-        background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)",
-        borderRadius: "6px", padding: "4px 9px", cursor: "pointer",
-        fontSize: "10px", fontWeight: "700", color: "#818CF8",
-        fontFamily: "Inter, sans-serif",
-      }}>
-        <span>💬</span> En savoir plus avec l'assistant
-      </button>
     </div>
   ) : null;
 
