@@ -28,9 +28,10 @@ import HomeTab from "./HomeTab";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 
+const PORTFOLIO_TABS = [TABS.PORTFOLIO, TABS.HISTORIQUE, TABS.OPERATIONS];
 const DCA_TABS  = [TABS.DCA, TABS.PROJECTION];
 const IA_TABS   = [TABS.MARCHE, TABS.CHAT, TABS.AUTOPILOT, TABS.AI_PORTFOLIO];
-const PLUS_TABS = [TABS.PLUS, TABS.HISTORIQUE, TABS.OPERATIONS, TABS.PROFIL, TABS.SETTINGS];
+const PLUS_TABS = [TABS.PLUS, TABS.PROFIL, TABS.SETTINGS];
 
 const TAB_LABELS = {
   [TABS.HOME]:       "Accueil",
@@ -595,6 +596,19 @@ function BourseAnalyzerInner({ userName, onLogout }) {
           {!hasClaudeKey() && hasAI() && !load("bourse_gemini_banner_dismissed", false) && (
             <GeminiBanner onDismiss={() => { save("bourse_gemini_banner_dismissed", true); setPortfolioVersion(v => v + 1); }} onSettings={() => changeTab(TABS.SETTINGS)} />
           )}
+            {/* Sub-pill navigation for Positions group */}
+            {PORTFOLIO_TABS.includes(activeTab) && (
+              <PillBar
+                pills={[
+                  { key: TABS.PORTFOLIO,  label: "Positions" },
+                  { key: TABS.HISTORIQUE, label: "Répartition" },
+                  { key: TABS.OPERATIONS, label: "Transactions" },
+                ]}
+                active={activeTab}
+                onChange={changeTab}
+              />
+            )}
+
             {/* Sub-pill navigation for DCA group */}
             {DCA_TABS.includes(activeTab) && (
               <PillBar
@@ -625,15 +639,13 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             {activeTab === TABS.PLUS && (
               <div style={{ animation: "fadeIn 0.3s ease" }}>
                 <div style={{ marginBottom: "20px" }}>
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#0F172A", letterSpacing: "-0.03em" }}>Explorer</div>
-                  <div style={{ fontSize: "12px", color: "#64748B", marginTop: "3px" }}>Analyse, historique et configuration</div>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#0F172A", letterSpacing: "-0.03em" }}>Compte</div>
+                  <div style={{ fontSize: "12px", color: "#64748B", marginTop: "3px" }}>Profil et configuration</div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "480px" }}>
                   {[
-                    { key: TABS.HISTORIQUE, icon: "📊", label: "Répartition",  desc: "Allocation sectorielle et géographique", color: "#EFF6FF", accent: "#3B82F6" },
-                    { key: TABS.OPERATIONS, icon: "↔️",  label: "Transactions", desc: "Historique achats, ventes et dividendes",  color: "#F0FDF4", accent: "#22C55E" },
-                    { key: TABS.PROFIL,     icon: "👤",  label: "Profil",       desc: "Stratégie, horizon et préférences",        color: "#FFF7ED", accent: "#F97316" },
-                    { key: TABS.SETTINGS,   icon: "⚙️",  label: "Paramètres",  desc: "Clés API, cloud et options",               color: "#F8FAFC", accent: "#64748B" },
+                    { key: TABS.PROFIL,   icon: "👤", label: "Profil",    desc: "Stratégie, horizon et préférences", color: "#FFF7ED", accent: "#F97316" },
+                    { key: TABS.SETTINGS, icon: "⚙️", label: "Paramètres", desc: "Clés API, cloud et options",        color: "#F8FAFC", accent: "#64748B" },
                   ].map(({ key, icon, label, desc, color, accent }) => (
                     <button key={key} onClick={() => changeTab(key)} className="ba-card-hover"
                       style={{ display: "flex", alignItems: "center", gap: "14px", background: "rgba(255,255,255,0.85)", border: "1px solid rgba(15,23,42,0.07)", borderRadius: "14px", padding: "14px 16px", textAlign: "left", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", width: "100%" }}>
@@ -652,7 +664,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             )}
 
             {/* Back button for Plus sub-tabs */}
-            {[TABS.HISTORIQUE, TABS.OPERATIONS, TABS.PROFIL, TABS.SETTINGS].includes(activeTab) && (
+            {[TABS.PROFIL, TABS.SETTINGS].includes(activeTab) && (
               <button onClick={() => changeTab(TABS.PLUS)}
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginBottom: "20px", background: "rgba(255,255,255,0.75)", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "50px", padding: "7px 14px 7px 10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#64748B", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -663,7 +675,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             )}
 
             {activeTab === TABS.HOME       && <HomeTab account={account} profil={profil} marketScores={marketScores} onTabChange={changeTab} hidden={hiddenValues} />}
-            {activeTab === TABS.PORTFOLIO  && <><MarketStatusBar /><DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} /><PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} /></>}
+            {PORTFOLIO_TABS.includes(activeTab) && <><MarketStatusBar /><DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} /></>}
+            {activeTab === TABS.PORTFOLIO  && <PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} />}
             {activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
             {activeTab === TABS.PROJECTION && <ProjectionTab profil={profil} account={account} />}
             {activeTab === TABS.HISTORIQUE && <HistoriqueTab portfolioVersion={portfolioVersion} account={account} />}
