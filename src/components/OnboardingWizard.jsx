@@ -31,17 +31,12 @@ const choiceBtn = (active) => ({
 export default function OnboardingWizard({ onComplete }) {
   const [step, setStep]       = useState(0);
   const [compte, setCompte]   = useState("PEA");
-  const [nom, setNom]         = useState("");
-  const [pru, setPru]         = useState("");
-  const [qty, setQty]         = useState("");
   const [horizon, setHorizon] = useState("moyen");
   const [dca, setDca]         = useState("");
   const [apiKey, setApiKey]   = useState("");
   const [showKey, setShowKey] = useState(false);
 
-  const skip = () => finalize(true);
-
-  function finalize(skipPosition = false) {
+  function finalize() {
     const profil = {
       capital: 0, risque: "equilibre",
       horizon,
@@ -61,27 +56,15 @@ export default function OnboardingWizard({ onComplete }) {
       } catch {}
     }
 
-    // 1ère position
-    if (!skipPosition && nom.trim() && parseFloat(pru) > 0 && parseFloat(qty) > 0) {
-      const pos = [{
-        nom: nom.trim(), isin: "", pru: parseFloat(pru),
-        quantite: parseFloat(qty), compte,
-        dernierCours: null, intradayVariation: null,
-      }];
-      save("bourse_portfolio", pos);
-    }
-
     try { localStorage.setItem(ONBOARDING_KEY, "1"); } catch {}
     onComplete();
   }
-
-  const step2Valid = nom.trim() && parseFloat(pru) > 0 && parseFloat(qty) > 0;
 
   const steps = [
     {
       icon: "👋",
       title: "Bienvenue !",
-      subtitle: "Pour personnaliser ton expérience, dis-moi en 3 étapes comment tu investis.",
+      subtitle: "Pour personnaliser ton expérience, dis-moi en 2 étapes comment tu investis.",
       content: (
         <div>
           <div style={{ fontSize: "12px", fontWeight: "600", color: C.inkSubtle, marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Ton type de compte</div>
@@ -97,31 +80,6 @@ export default function OnboardingWizard({ onComplete }) {
           </div>
         </div>
       ),
-    },
-    {
-      icon: "📈",
-      title: "Ta première action",
-      subtitle: "Ajoute une position pour commencer à suivre ton portefeuille.",
-      content: (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <div>
-            <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Nom de l'action</div>
-            <input style={inp} placeholder="ex : Total Energies, Apple…" value={nom} onChange={e => setNom(e.target.value)} />
-          </div>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "2px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Prix d'achat (€)</div>
-              <div style={{ fontSize: "10px", color: C.inkSubtle, marginBottom: "5px" }}>= PRU · prix moyen par titre</div>
-              <input style={inp} type="number" min="0" step="0.01" placeholder="ex : 24,50" value={pru} onChange={e => setPru(e.target.value)} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Quantité</div>
-              <input style={inp} type="number" min="0" step="1" placeholder="ex : 10" value={qty} onChange={e => setQty(e.target.value)} />
-            </div>
-          </div>
-        </div>
-      ),
-      skipLabel: "Je n'ai pas encore de position →",
     },
     {
       icon: "🎯",
@@ -141,7 +99,7 @@ export default function OnboardingWizard({ onComplete }) {
           <div>
             <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Montant DCA mensuel (optionnel)</div>
             <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px", lineHeight: "1.5" }}>
-              Le DCA (Dollar Cost Averaging) consiste à investir un montant fixe chaque mois, quelle que soit la situation du marché.
+              Le DCA consiste à investir un montant fixe chaque mois, quelle que soit la situation du marché.
             </div>
             <div style={{ position: "relative" }}>
               <input style={{ ...inp, paddingRight: "36px" }} type="number" min="0" step="10" placeholder="ex : 100" value={dca} onChange={e => setDca(e.target.value)} />
@@ -171,20 +129,12 @@ export default function OnboardingWizard({ onComplete }) {
               </div>
               <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Clé Claude (optionnel)</div>
               <div style={{ position: "relative" }}>
-                <input
-                  type={showKey ? "text" : "password"}
-                  style={{ ...inp, paddingRight: "60px", fontFamily: "monospace", fontSize: "12px" }}
-                  placeholder="sk-ant-..."
-                  value={apiKey}
-                  onChange={e => setApiKey(e.target.value)}
-                />
-                <button onClick={() => setShowKey(v => !v)}
-                  style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", color: C.inkSubtle, fontFamily: "Inter,sans-serif" }}>
+                <input type={showKey ? "text" : "password"} style={{ ...inp, paddingRight: "60px", fontFamily: "monospace", fontSize: "12px" }} placeholder="sk-ant-..." value={apiKey} onChange={e => setApiKey(e.target.value)} />
+                <button onClick={() => setShowKey(v => !v)} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", color: C.inkSubtle, fontFamily: "Inter,sans-serif" }}>
                   {showKey ? "Masquer" : "Voir"}
                 </button>
               </div>
-              <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
-                style={{ display: "block", marginTop: "10px", textAlign: "center", fontSize: "12px", color: C.navy, fontWeight: "600", textDecoration: "none" }}>
+              <a href="https://console.anthropic.com" target="_blank" rel="noreferrer" style={{ display: "block", marginTop: "10px", textAlign: "center", fontSize: "12px", color: C.navy, fontWeight: "600", textDecoration: "none" }}>
                 Créer un compte → console.anthropic.com
               </a>
             </div>
@@ -195,15 +145,8 @@ export default function OnboardingWizard({ onComplete }) {
               </div>
               <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Clé API Claude</div>
               <div style={{ position: "relative" }}>
-                <input
-                  type={showKey ? "text" : "password"}
-                  style={{ ...inp, paddingRight: "60px", fontFamily: "monospace", fontSize: "12px" }}
-                  placeholder="sk-ant-..."
-                  value={apiKey}
-                  onChange={e => setApiKey(e.target.value)}
-                />
-                <button onClick={() => setShowKey(v => !v)}
-                  style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", color: C.inkSubtle, fontFamily: "Inter,sans-serif" }}>
+                <input type={showKey ? "text" : "password"} style={{ ...inp, paddingRight: "60px", fontFamily: "monospace", fontSize: "12px" }} placeholder="sk-ant-..." value={apiKey} onChange={e => setApiKey(e.target.value)} />
+                <button onClick={() => setShowKey(v => !v)} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", color: C.inkSubtle, fontFamily: "Inter,sans-serif" }}>
                   {showKey ? "Masquer" : "Voir"}
                 </button>
               </div>
@@ -249,26 +192,21 @@ export default function OnboardingWizard({ onComplete }) {
               ←
             </button>
           )}
-          <button
-            onClick={() => {
-              if (isLast) { finalize(false); }
-              else { setStep(s => s + 1); }
-            }}
-            disabled={step === 1 && !step2Valid && nom.trim() !== ""}
-            style={{ flex: 1, padding: "13px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${C.navyPill} 0%, #2563EB 100%)`, color: "#fff", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: shadow.pill, opacity: (step === 1 && !step2Valid && nom.trim() !== "") ? 0.5 : 1 }}>
+          <button onClick={() => isLast ? finalize() : setStep(s => s + 1)}
+            style={{ flex: 1, padding: "13px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${C.navyPill} 0%, #2563EB 100%)`, color: "#fff", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: shadow.pill }}>
             {isLast ? "Commencer →" : "Suivant →"}
           </button>
         </div>
 
         {/* Skip */}
         {s.skipLabel && (
-          <button onClick={() => { setStep(s => s + 1); }}
+          <button onClick={() => isLast ? finalize() : setStep(s => s + 1)}
             style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: C.inkSubtle, fontSize: "12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
             {s.skipLabel}
           </button>
         )}
         {step === 0 && (
-          <button onClick={skip}
+          <button onClick={finalize}
             style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: C.inkSubtle, fontSize: "11px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
             Passer l'introduction
           </button>
