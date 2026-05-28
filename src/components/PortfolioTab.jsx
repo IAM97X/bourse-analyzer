@@ -192,11 +192,15 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   const totalPVpct   = totalInvesti > 0 ? (totalPV / totalInvesti) * 100 : 0;
 
   const openForm = (pos = null) => {
+    const pru = pos?.pru || 0;
+    const hautePct = (pos?.alerteHaute && pru > 0) ? +((pos.alerteHaute / pru - 1) * 100).toFixed(1) : "";
+    const bassePct = (pos?.alerteBasse && pru > 0) ? +((pos.alerteBasse / pru - 1) * 100).toFixed(1) : "";
     setForm(pos
       ? { nom: pos.nom, isin: pos.isin || "", pru: pos.pru, quantite: pos.quantite,
           alerteHaute: pos.alerteHaute ?? "", alerteBasse: pos.alerteBasse ?? "",
+          alerteHautePct: hautePct, alerteBassePct: bassePct,
           ticker: pos.ticker || "", dateAchat: pos.dateAchat || "", compte: pos.compte || account }
-      : { nom: "", isin: "", pru: "", quantite: "", alerteHaute: "", alerteBasse: "", ticker: "", dateAchat: new Date().toISOString().slice(0,10), compte: account });
+      : { nom: "", isin: "", pru: "", quantite: "", alerteHaute: "", alerteBasse: "", alerteHautePct: "", alerteBassePct: "", ticker: "", dateAchat: new Date().toISOString().slice(0,10), compte: account });
     setEditId(pos ? pos.id : null); setShowForm(true);
   };
 
@@ -523,8 +527,26 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
             <div><label style={lbl}>Quantité</label><input style={inp} placeholder="11" value={form.quantite} onChange={e => setForm(f => ({ ...f, quantite: e.target.value }))} /></div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: "10px", marginBottom: "16px" }}>
-            <div><label style={lbl}>Objectif / Alerte haute (€)</label><input style={inp} placeholder="Optionnel" value={form.alerteHaute} onChange={e => setForm(f => ({ ...f, alerteHaute: e.target.value }))} /></div>
-            <div><label style={lbl}>Stop-loss / Alerte basse (€)</label><input style={inp} placeholder="Optionnel" value={form.alerteBasse} onChange={e => setForm(f => ({ ...f, alerteBasse: e.target.value }))} /></div>
+            <div>
+              <label style={lbl}>🔔 Objectif (% depuis PRU)</label>
+              <input style={inp} placeholder="+50" value={form.alerteHautePct ?? ""} onChange={e => {
+                const raw = e.target.value;
+                const pct = parseFloat(raw.replace(",", "."));
+                const pruNum = parseFloat(String(form.pru).replace(",", ".")) || 0;
+                setForm(f => ({ ...f, alerteHautePct: raw, alerteHaute: (!isNaN(pct) && pruNum > 0) ? (pruNum * (1 + pct / 100)).toFixed(3) : f.alerteHaute }));
+              }} />
+              {(() => { const pruNum = parseFloat(String(form.pru).replace(",", ".")) || 0; const pct = parseFloat(String(form.alerteHautePct).replace(",", ".")); return (!isNaN(pct) && pruNum > 0) ? <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "3px" }}>≈ {fmtCours(pruNum * (1 + pct / 100))}</div> : null; })()}
+            </div>
+            <div>
+              <label style={lbl}>🔔 Stop-loss (% depuis PRU)</label>
+              <input style={inp} placeholder="-15" value={form.alerteBassePct ?? ""} onChange={e => {
+                const raw = e.target.value;
+                const pct = parseFloat(raw.replace(",", "."));
+                const pruNum = parseFloat(String(form.pru).replace(",", ".")) || 0;
+                setForm(f => ({ ...f, alerteBassePct: raw, alerteBasse: (!isNaN(pct) && pruNum > 0) ? (pruNum * (1 + pct / 100)).toFixed(3) : f.alerteBasse }));
+              }} />
+              {(() => { const pruNum = parseFloat(String(form.pru).replace(",", ".")) || 0; const pct = parseFloat(String(form.alerteBassePct).replace(",", ".")); return (!isNaN(pct) && pruNum > 0) ? <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "3px" }}>≈ {fmtCours(pruNum * (1 + pct / 100))}</div> : null; })()}
+            </div>
             <div>
               <label style={lbl}>Ticker Yahoo Finance <span style={{ color: C.inkSubtle, fontWeight: "500", textTransform: "none", letterSpacing: 0 }}>(si non trouvé auto)</span></label>
               <input style={inp} placeholder="ex: ALSMA.PA" value={form.ticker || ""} onChange={e => setForm(f => ({ ...f, ticker: e.target.value }))} data-gramm="false" spellCheck="false" />
@@ -864,6 +886,10 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                     return <span title={ia.resume || ""} style={{ fontSize: "10px", fontWeight: "800", color: sigColor, background: sigColor + "18", border: `1px solid ${sigColor}40`, borderRadius: "5px", padding: "2px 8px", letterSpacing: "0.5px", cursor: "default", whiteSpace: "nowrap" }}>{ia.signal}</span>;
                   })()}
                   {badge && <span style={{ background: badge.bg, border: `1px solid ${badge.border}`, borderRadius: "5px", padding: "2px 8px", fontSize: "10px", color: badge.color, fontWeight: "700", whiteSpace: "nowrap" }}>{badge.label}</span>}
+                  {!badge && (pos.alerteHaute || pos.alerteBasse) && (
+                    <span title={[pos.alerteHaute && `Obj: ${fmtCours(pos.alerteHaute)}`, pos.alerteBasse && `Stop: ${fmtCours(pos.alerteBasse)}`].filter(Boolean).join(" · ")}
+                      style={{ fontSize: "11px", color: C.inkSubtle, cursor: "default", lineHeight: 1 }}>🔔</span>
+                  )}
                   {alerteConcentration && <span style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "5px", padding: "2px 8px", fontSize: "10px", color: C.red, fontWeight: "700", whiteSpace: "nowrap" }}>⚠ {poids.toFixed(0)}% concentr.</span>}
                 </div>
                 {/* Droite : cours + P/V + actions */}
