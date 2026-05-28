@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(503).json({ error: "Service IA non configuré" });
 
-  const { portfolio, prices, account, session_type, courtier_info } = req.body || {};
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount } = req.body || {};
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
 
   const valeurTotale = portfolio.cash + (portfolio.positions || []).reduce((s, p) => {
@@ -93,8 +93,12 @@ module.exports = async function handler(req, res) {
     ? `\n=== CONTRAINTES COURTIER ===\n${courtier_info}`
     : "";
 
+  const dcaCtx = dca_injected && dca_amount > 0
+    ? `\n⚡ DCA MENSUEL INJECTÉ CE CYCLE: +${dca_amount}€ viennent d'être ajoutés au cash disponible (apport mensuel du 1er du mois). Priorité absolue : déployer une partie de cet apport en positions de conviction, en complément du cash existant.`
+    : "";
+
   const userMsg = `DATE DU CYCLE: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-${sessionCtx}${courtierCtx}
+${sessionCtx}${courtierCtx}${dcaCtx}
 
 === ÉTAT DU PORTEFEUILLE IA (${account || 'PEA'}) ===
 Capital initial: ${portfolio.capital_initial}€

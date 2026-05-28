@@ -206,6 +206,7 @@ function EmptyState({ onInit, account, error }) {
 
       <div style={{ marginTop: "20px", fontSize: "11px", color: C.inkSubtle, lineHeight: 1.7 }}>
         Cycles automatiques à 9h05 (ouverture) et 17h15 (clôture), jours ouvrés.<br/>
+        {profil.dcaMensuel > 0 && <>DCA de <strong>{fmtEur(profil.dcaMensuel)}</strong> injecté automatiquement le 1er de chaque mois.<br/></>}
         Déclenchez aussi un cycle manuellement à tout moment.
       </div>
     </div>
@@ -268,6 +269,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       snapshots: [{ date: today, valeur: capital }],
       last_cycle: null, strategie_courante: null,
       last_morning_cycle: null, last_evening_cycle: null,
+      last_dca_date: null,
     };
     setAiPf(newPf);
     save(AI_PF_KEY, newPf);
@@ -279,6 +281,32 @@ export default function AIPortfolioTab({ account, hidden }) {
     setCycling(true);
     setError(null);
     setCycleLog(null);
+
+    // DCA mensuel : injecter l'apport le 1er de chaque mois
+    const { todayParis } = getParisTime();
+    const currentMonth = todayParis.slice(0, 7); // "YYYY-MM"
+    const isFirstOfMonth = todayParis.slice(8, 10) === "01";
+    const profilDca = load("bourse_profil", DEFAULT_PROFIL);
+    const dcaMensuel = profilDca.dcaMensuel || 0;
+
+    let workingPf = aiPf;
+    let dcaInjected = false;
+
+    if (isFirstOfMonth && dcaMensuel > 0 && workingPf.last_dca_date !== currentMonth) {
+      workingPf = {
+        ...workingPf,
+        cash: workingPf.cash + dcaMensuel,
+        last_dca_date: currentMonth,
+        trades: [
+          { date: new Date().toISOString(), action: "DCA", ticker: "—", nom: "Apport mensuel DCA", quantite: 0, prix: 0, montant: dcaMensuel, raison: `Versement DCA du 1er ${currentMonth} — +${dcaMensuel}€` },
+          ...(workingPf.trades || [])
+        ].slice(0, 100),
+      };
+      dcaInjected = true;
+      setAiPf(workingPf);
+      save(AI_PF_KEY, workingPf);
+    }
+
     try {
       // 1. Fetch current prices for all universe symbols + current positions
       const universeTickers = [
@@ -288,7 +316,7 @@ export default function AIPortfolioTab({ account, hidden }) {
         "AM.PA","DG.PA","ENGI.PA","PUB.PA","ORA.PA","CA.PA","LR.PA","TEP.PA",
         "MT.AS","BESI.AS","SOI.PA","ALO.PA","RNO.PA","BIOR.PA","ERF.PA","VIRP.PA",
       ];
-      const allTickers = [...new Set([...universeTickers, ...(aiPf.positions || []).map(p => p.ticker)])];
+      const allTickers = [...new Set([...universeTickers, ...(workingPf.positions || []).map(p => p.ticker)])];
       const freshPrices = await fetchBatchPrices(allTickers);
       setPrices(freshPrices);
 
@@ -303,7 +331,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portfolio: aiPf, prices: freshPrices, account, session_type: session, courtier_info }),
+        body: JSON.stringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0 }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {
@@ -314,7 +342,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       if (!decisions) throw new Error("Réponse IA invalide");
 
       // 3. Apply trades locally
-      const updatedPf = applyDecisions(aiPf, decisions, freshPrices);
+      const updatedPf = applyDecisions(workingPf, decisions, freshPrices);
       updatedPf.strategie_courante = strategie || updatedPf.strategie_courante;
       const now = new Date().toISOString();
       if (session === "OUVERTURE") updatedPf.last_morning_cycle = now;
@@ -322,7 +350,7 @@ export default function AIPortfolioTab({ account, hidden }) {
 
       setAiPf(updatedPf);
       save(AI_PF_KEY, updatedPf);
-      setCycleLog({ decisions, strategie, session });
+      setCycleLog({ decisions, strategie, session, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0 });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -534,9 +562,9 @@ export default function AIPortfolioTab({ account, hidden }) {
               {aiPf.trades.slice(0, 20).map((t, i) => (
                 <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start", padding: "7px 9px", borderRadius: "9px", background: "#F8F9FA" }}>
                   <span style={{ flexShrink: 0, fontSize: "9px", fontWeight: "800", padding: "3px 6px", borderRadius: "5px", marginTop: "1px",
-                    background: t.action === "BUY" ? "rgba(5,150,105,0.1)" : "rgba(220,38,38,0.08)",
-                    color: t.action === "BUY" ? "#059669" : "#DC2626" }}>
-                    {t.action === "BUY" ? "ACHAT" : "VENTE"}
+                    background: t.action === "BUY" ? "rgba(5,150,105,0.1)" : t.action === "DCA" ? "rgba(30,58,95,0.1)" : "rgba(220,38,38,0.08)",
+                    color: t.action === "BUY" ? "#059669" : t.action === "DCA" ? "#1E3A5F" : "#DC2626" }}>
+                    {t.action === "BUY" ? "ACHAT" : t.action === "DCA" ? "DCA" : "VENTE"}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>
@@ -572,6 +600,13 @@ export default function AIPortfolioTab({ account, hidden }) {
           {cycleLog.strategie && (
             <div style={{ fontSize: "12px", color: C.ink, fontStyle: "italic", marginBottom: "10px", lineHeight: 1.5 }}>"{cycleLog.strategie}"</div>
           )}
+          {cycleLog.dca_injected && cycleLog.dca_amount > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "7px", padding: "7px 10px", background: "rgba(30,58,95,0.06)", borderRadius: "9px", marginBottom: "8px", fontSize: "12px" }}>
+              <span style={{ fontSize: "9px", fontWeight: "800", padding: "2px 6px", borderRadius: "5px", background: "rgba(30,58,95,0.12)", color: "#1E3A5F" }}>DCA</span>
+              <span style={{ fontWeight: "600", color: C.ink }}>Apport mensuel injecté</span>
+              <span style={{ color: C.inkMuted }}>+{fmtEur(cycleLog.dca_amount)} ajoutés au cash</span>
+            </div>
+          )}
           <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
             {cycleLog.decisions.map((d, i) => (
               <div key={i} style={{ display: "flex", alignItems: "baseline", gap: "8px", fontSize: "12px" }}>
@@ -594,6 +629,23 @@ export default function AIPortfolioTab({ account, hidden }) {
         <div style={{ fontSize: "12px", color: C.inkMuted }}>
           <span>🤖 Cycle automatique : <strong>ouverture 9h05 · clôture 17h15 (Paris, jours ouvrés)</strong></span>
           <span style={{ marginLeft: "16px" }}>Prochain : <strong>{nextCycleLabel}</strong></span>
+          {(() => {
+            const dcaAmt = load("bourse_profil", DEFAULT_PROFIL).dcaMensuel || 0;
+            if (!dcaAmt) return null;
+            const lastDca = aiPf.last_dca_date;
+            const { todayParis } = getParisTime();
+            const currentMonth = todayParis.slice(0, 7);
+            const dcaDone = lastDca === currentMonth;
+            return (
+              <span style={{ marginLeft: "16px" }}>
+                💳 DCA <strong>{fmtEur(dcaAmt)}/mois</strong>
+                {dcaDone
+                  ? <span style={{ color: "#059669", marginLeft: "4px" }}>✓ injecté ce mois</span>
+                  : <span style={{ color: C.inkSubtle, marginLeft: "4px" }}>· le 1er du mois</span>
+                }
+              </span>
+            );
+          })()}
         </div>
         {aiPf.last_cycle && (
           <span style={{ fontSize: "11px", color: C.inkSubtle }}>
