@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { C } from "../constants/theme";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur } from "../lib/finance";
+import { COURTIERS_DETAIL } from "../constants/courtiers";
+import { DEFAULT_PROFIL } from "../constants/config";
 
 const AI_PF_KEY = "bourse_ai_portfolio";
 
@@ -167,21 +169,26 @@ function PerformanceChart({ aiSnapshots, userSnapshots, inceptionDate, height = 
 // ── Empty / Init state ────────────────────────────────────────────────────────
 function EmptyState({ onInit, account, error }) {
   const userPositions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === account);
-  const capital = userPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+  const profil = load("bourse_profil", DEFAULT_PROFIL);
+  const liquidites = account === "PEA" ? (profil.especesPEA || 0) : (profil.especesCTO || 0);
+  const valeurPositions = userPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+  const capital = valeurPositions + liquidites;
 
   return (
     <div style={{ maxWidth: "480px", margin: "48px auto 0", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
       <div style={{ fontSize: "52px", marginBottom: "20px", lineHeight: 1 }}>🤖</div>
       <div style={{ fontSize: "22px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginBottom: "10px" }}>Portefeuille IA autonome</div>
       <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.7, marginBottom: "28px" }}>
-        L'IA gère un portefeuille virtuel avec le même capital que vous. Elle analyse le marché chaque semaine de façon autonome et tente de vous battre — et de battre le marché.
+        L'IA reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome. Elle tourne 2 fois par jour — à l'ouverture et avant la clôture — avec les mêmes contraintes que vous : courtier, horaires Euronext, PEA.
       </div>
 
       {capital > 0 && (
         <div style={{ background: "linear-gradient(135deg, rgba(30,58,95,0.07), rgba(30,58,95,0.03))", border: "1px solid rgba(30,58,95,0.14)", borderRadius: "18px", padding: "22px 24px", marginBottom: "24px" }}>
-          <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkMuted, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>Capital de départ (miroir {account})</div>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkMuted, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>Point de départ — miroir {account}</div>
           <div style={{ fontSize: "32px", fontWeight: "900", color: C.ink, letterSpacing: "-0.04em" }}>{fmtEur(capital)}</div>
-          <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "5px" }}>100% cash · l'IA déployera lors du 1er cycle</div>
+          <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "5px" }}>
+            {fmtEur(capital - liquidites)} en positions · {fmtEur(liquidites)} de liquidités
+          </div>
         </div>
       )}
 
@@ -198,7 +205,7 @@ function EmptyState({ onInit, account, error }) {
       </button>
 
       <div style={{ marginTop: "20px", fontSize: "11px", color: C.inkSubtle, lineHeight: 1.7 }}>
-        Cycle automatique chaque dimanche soir.<br/>
+        Cycles automatiques à 9h05 (ouverture) et 17h15 (clôture), jours ouvrés.<br/>
         Déclenchez aussi un cycle manuellement à tout moment.
       </div>
     </div>
@@ -224,28 +231,59 @@ export default function AIPortfolioTab({ account, hidden }) {
       .finally(() => setLoadingPrices(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-trigger 2x/jour : ouverture ~9h05 et clôture ~17h15 (Paris, jours ouvrés)
+  useEffect(() => {
+    if (!aiPf) return;
+    const check = () => {
+      if (cycling) return;
+      const now = new Date();
+      const fmt = (type) => parseInt(new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", [type]: "numeric", hour12: false }).format(now));
+      const h = fmt("hour"), m = fmt("minute");
+      const dow = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(now);
+      if (dow === "Sat" || dow === "Sun") return;
+      const todayParis = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Paris" }).format(now);
+      if (h === 9 && m >= 5 && m <= 20 && !aiPf.last_morning_cycle?.startsWith(todayParis)) handleRunCycle("OUVERTURE");
+      else if (h === 17 && m >= 15 && m <= 30 && !aiPf.last_evening_cycle?.startsWith(todayParis)) handleRunCycle("CLÔTURE");
+    };
+    check();
+    const t = setInterval(check, 60000);
+    return () => clearInterval(t);
+  }, [aiPf, cycling, handleRunCycle]);
+
   const handleInit = useCallback(() => {
     const userPositions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === account);
-    const capital = userPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+    const profil = load("bourse_profil", DEFAULT_PROFIL);
+    const liquidites = account === "PEA" ? (profil.especesPEA || 0) : (profil.especesCTO || 0);
+    const valeurPositions = userPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
+    const capital = valeurPositions + liquidites;
     if (capital <= 0) {
       setError("Ajoutez d'abord des positions à votre portefeuille pour définir le capital de départ.");
       return;
     }
+    const aiPositions = userPositions.map(p => ({
+      ticker: p.ticker || p.isin || p.nom,
+      nom: p.nom,
+      isin: p.isin || "",
+      quantite: p.quantite,
+      prix_achat_moyen: p.pru,
+      dernier_cours: p.dernierCours || p.pru,
+    }));
     const today = new Date().toISOString().slice(0, 10);
     const newPf = {
       active: true, account, inception_date: today,
       capital_initial: Math.round(capital * 100) / 100,
-      cash: Math.round(capital * 100) / 100,
-      positions: [], trades: [],
+      cash: Math.round(liquidites * 100) / 100,
+      positions: aiPositions, trades: [],
       snapshots: [{ date: today, valeur: capital }],
       last_cycle: null, strategie_courante: null,
+      last_morning_cycle: null, last_evening_cycle: null,
     };
     setAiPf(newPf);
     save(AI_PF_KEY, newPf);
     setError(null);
   }, [account]);
 
-  const handleRunCycle = useCallback(async () => {
+  const handleRunCycle = useCallback(async (session = null) => {
     if (!aiPf || cycling) return;
     setCycling(true);
     setError(null);
@@ -268,10 +306,13 @@ export default function AIPortfolioTab({ account, hidden }) {
       }
 
       // 2. Call AI decision endpoint
+      const profil = load("bourse_profil", DEFAULT_PROFIL);
+      const courtierKey = profil.courtier || "boursobank";
+      const courtier_info = COURTIERS_DETAIL[courtierKey] || COURTIERS_DETAIL.boursobank;
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portfolio: aiPf, prices: freshPrices, account }),
+        body: JSON.stringify({ portfolio: aiPf, prices: freshPrices, account, session_type: session, courtier_info }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {
@@ -284,10 +325,13 @@ export default function AIPortfolioTab({ account, hidden }) {
       // 3. Apply trades locally
       const updatedPf = applyDecisions(aiPf, decisions, freshPrices);
       updatedPf.strategie_courante = strategie || updatedPf.strategie_courante;
+      const now = new Date().toISOString();
+      if (session === "OUVERTURE") updatedPf.last_morning_cycle = now;
+      else if (session === "CLÔTURE") updatedPf.last_evening_cycle = now;
 
       setAiPf(updatedPf);
       save(AI_PF_KEY, updatedPf);
-      setCycleLog({ decisions, strategie });
+      setCycleLog({ decisions, strategie, session });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -325,10 +369,21 @@ export default function AIPortfolioTab({ account, hidden }) {
   const fp = (p, fallback = "—") => p === null || p === undefined ? fallback : (p >= 0 ? "+" : "") + p.toFixed(2) + "%";
   const perfColor = (p) => p === null ? C.inkMuted : p >= 0 ? "#059669" : "#DC2626";
 
-  const nextSunday = (() => {
-    const d = new Date();
-    const days = d.getDay() === 0 ? 7 : 7 - d.getDay();
-    return new Date(d.getTime() + days * 86400000).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  const nextCycleLabel = (() => {
+    const now = new Date();
+    const parisFmt = (type) => parseInt(new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", [type]: "numeric", hour12: false }).format(now));
+    const h = parisFmt("hour"), m = parisFmt("minute");
+    const todayParis = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Paris" }).format(now);
+    const dow = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(now);
+    const isWeekend = dow === "Sat" || dow === "Sun";
+    const morningDone = aiPf?.last_morning_cycle?.startsWith(todayParis);
+    const eveningDone = aiPf?.last_evening_cycle?.startsWith(todayParis);
+    if (!isWeekend && !(h > 9 || (h === 9 && m >= 5)) && !morningDone) return "aujourd'hui à 9h05";
+    if (!isWeekend && !(h > 17 || (h === 17 && m >= 15)) && !eveningDone) return "aujourd'hui à 17h15";
+    // Find next weekday
+    const next = new Date(now);
+    do { next.setDate(next.getDate() + 1); } while (["Sat","Sun"].includes(new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(next)));
+    return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "long", day: "numeric", month: "long" }).format(next) + " à 9h05";
   })();
 
   const inceptionFmt = aiPf.inception_date
@@ -535,8 +590,8 @@ export default function AIPortfolioTab({ account, hidden }) {
       {/* ── Cron info footer ── */}
       <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.5)", border: `1px solid ${C.border}`, borderRadius: "12px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
         <div style={{ fontSize: "12px", color: C.inkMuted }}>
-          <span>🤖 Cycle automatique : <strong>chaque dimanche à 22h (Paris)</strong></span>
-          <span style={{ marginLeft: "16px" }}>Prochain : <strong>{nextSunday}</strong></span>
+          <span>🤖 Cycle automatique : <strong>ouverture 9h05 · clôture 17h15 (Paris, jours ouvrés)</strong></span>
+          <span style={{ marginLeft: "16px" }}>Prochain : <strong>{nextCycleLabel}</strong></span>
         </div>
         {aiPf.last_cycle && (
           <span style={{ fontSize: "11px", color: C.inkSubtle }}>

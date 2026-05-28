@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(503).json({ error: "Service IA non configuré" });
 
-  const { portfolio, prices, account } = req.body || {};
+  const { portfolio, prices, account, session_type, courtier_info } = req.body || {};
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
 
   const valeurTotale = portfolio.cash + (portfolio.positions || []).reduce((s, p) => {
@@ -83,7 +83,18 @@ module.exports = async function handler(req, res) {
   const posMax = (valeurTotale * 0.20).toFixed(0);
   const cashMin = (valeurTotale * 0.05).toFixed(0);
 
+  const sessionCtx = session_type === "OUVERTURE"
+    ? "SESSION OUVERTURE (9h05) : Cherche les opportunités d'achat, déploie le cash disponible sur les meilleures convictions du moment. Achats prioritaires."
+    : session_type === "CLÔTURE"
+    ? "SESSION CLÔTURE (17h15) : Revois les positions en perte, coupe les stops-loss atteints, sécurise les gains excessifs. Ventes prioritaires si nécessaire."
+    : "CYCLE MANUEL : Analyse complète buy/sell/hold.";
+
+  const courtierCtx = courtier_info
+    ? `\n=== CONTRAINTES COURTIER ===\n${courtier_info}`
+    : "";
+
   const userMsg = `DATE DU CYCLE: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+${sessionCtx}${courtierCtx}
 
 === ÉTAT DU PORTEFEUILLE IA (${account || 'PEA'}) ===
 Capital initial: ${portfolio.capital_initial}€
@@ -121,7 +132,7 @@ ${univAvecPrix}
 
   const body = {
     systemInstruction: {
-      parts: [{ text: "Tu es un gestionnaire de portefeuille IA autonome et compétitif gérant un PEA fictif. Ton objectif : battre le marché (CAC40/MSCI World) et l'investisseur humain sur le long terme. Tu raisonnes comme un professionnel : analyse macro, momentum de prix, valorisation relative (P/E sectoriel), rotation sectorielle, gestion du risque et du drawdown. Tu es discipliné, rationnel, sans émotions. Tu justifies chaque décision en une phrase précise et factuelle." }]
+      parts: [{ text: "Tu es un gestionnaire de portefeuille IA autonome gérant un PEA réel. Tu tournes 2 fois par jour : à l'ouverture (achats) et à la clôture (revue/ventes). Tu hérites des positions et liquidités réelles de l'investisseur et tu prends le relais de façon autonome. Ton objectif : battre le marché (CAC40/MSCI World) et l'investisseur humain sur le long terme. Tu respectes strictement les contraintes du courtier (minimums, frais, pas de fractionné). Tu raisonnes comme un professionnel : analyse macro, momentum, rotation sectorielle, gestion du drawdown. Tu es discipliné, rationnel, sans émotions. Chaque décision est justifiée en une phrase précise et factuelle." }]
     },
     contents: [{ role: "user", parts: [{ text: userMsg }] }],
     generationConfig: { maxOutputTokens: 2000, temperature: 0.35 },
