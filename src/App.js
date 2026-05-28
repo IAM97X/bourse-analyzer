@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo, Component } from "react";
-import ReactDOM from "react-dom";
+import { createPortal } from "react-dom";
 import { C, shadow } from "./constants/theme";
 import { SYSTEM_PROMPT, PORTFOLIO_PROMPT, ETF_DCA_PROMPT, MARKET_SCORING_PROMPT, AVIS_PARSE_PROMPT, SUGGESTIONS } from "./constants/prompts";
 import { MARKETS_CFG, MARKET_HOLIDAYS, getMarketStatus } from "./constants/markets";

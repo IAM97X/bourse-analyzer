@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import ReactDOM from "react-dom";
+import { createPortal } from "react-dom";
 import { C, shadow } from "../constants/theme";
 import { SYSTEM_PROMPT, MARKET_SCORING_PROMPT } from "../constants/prompts";
 import { load, save } from "../lib/storage";
@@ -453,7 +453,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                     ? <span style={{ fontSize: "16px", lineHeight: 1 }}>{avatarEmoji}</span>
                     : <span style={{ color: "#C1E8FF", fontWeight: "700", fontSize: "12px" }}>{(localUserName || "P")[0].toUpperCase()}</span>}
                 </div>
-                {emojiPickerOpen && ReactDOM.createPortal(
+                {emojiPickerOpen && createPortal(
                   <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, left: Math.max(8, Math.min((emojiTriggerRef.current?.getBoundingClientRect().right ?? 240) - 240, window.innerWidth - 248)), background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.16)", zIndex: 99999, width: "240px" }}>
                     {/* Nom + déconnexion */}
                     <div style={{ padding: "12px 12px 10px", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -530,7 +530,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                       : <span style={{ color: "#C1E8FF", fontWeight: "700", fontSize: "12px" }}>{(localUserName || "P")[0].toUpperCase()}</span>}
                   </div>
                   {/* Popup emoji — portal pour échapper à overflow:hidden du topbar */}
-                  {emojiPickerOpen && ReactDOM.createPortal(
+                  {emojiPickerOpen && createPortal(
                     <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, left: Math.max(8, Math.min((emojiTriggerRef.current?.getBoundingClientRect().right ?? 240) - 240, window.innerWidth - 248)), background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 99999, width: "240px" }}>
                       <div style={{ display: "flex", height: "210px", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
                         <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
