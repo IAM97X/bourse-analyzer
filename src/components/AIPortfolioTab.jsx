@@ -351,11 +351,14 @@ export default function AIPortfolioTab({ account, hidden }) {
     try {
       // 1. Fetch current prices for all universe symbols + current positions
       const universeTickers = [
-        "CW8.PA","PANX.PA","PUST.PA","EWLD.PA","AI.PA","MC.PA","TTE.PA","SAN.PA",
-        "OR.PA","BNP.PA","SU.PA","AXA.PA","EL.PA","ASML.AS","ADYEN.AS","CAP.PA",
-        "DSY.PA","STMPA.PA","SAF.PA","AIR.PA","RMS.PA","KER.PA","GLE.PA","HO.PA",
-        "AM.PA","DG.PA","ENGI.PA","PUB.PA","ORA.PA","CA.PA","LR.PA","TEP.PA",
-        "MT.AS","BESI.AS","SOI.PA","ALO.PA","RNO.PA","BIOR.PA","ERF.PA","VIRP.PA",
+        // ETFs BoursoMarkets
+        "CW8.PA","PANX.PA","PUST.PA","EWLD.PA","PAEEM.PA","PCEU.PA","LYPS.PA","RS2K.PA",
+        // Actions CAC40 / Euronext
+        "AI.PA","MC.PA","TTE.PA","SAN.PA","OR.PA","BNP.PA","SU.PA","AXA.PA",
+        "EL.PA","ASML.AS","ADYEN.AS","CAP.PA","DSY.PA","STMPA.PA","SAF.PA","AIR.PA",
+        "RMS.PA","KER.PA","GLE.PA","HO.PA","AM.PA","DG.PA","ENGI.PA","PUB.PA",
+        "ORA.PA","CA.PA","LR.PA","TEP.PA","MT.AS","BESI.AS","SOI.PA","ALO.PA",
+        "RNO.PA","BIOR.PA","ERF.PA","VIRP.PA",
       ];
       const allTickers = [...new Set([...universeTickers, ...(workingPf.positions || []).map(p => p.ticker)])];
       const freshPrices = await fetchBatchPrices(allTickers);
