@@ -13,7 +13,7 @@ export const SYNC_KEYS = [
   "bourse_api_keys", "bourse_impot_sortie", "bourse_local_name",
   "bourse_price_history", "bourse_evolution_csv", "bourse_isin_ticker_cache",
   "bourse_autopilot_result_PEA", "bourse_autopilot_result_CTO",
-  "bourse_ai_portfolio",
+  "bourse_ai_portfolio", "bourse_ai_portfolio_PEA", "bourse_ai_portfolio_CTO",
 ];
 
 let _syncUserId = null;

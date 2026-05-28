@@ -7,6 +7,27 @@ import { DEFAULT_PROFIL } from "../constants/config";
 
 const aiPfKey = (account) => `bourse_ai_portfolio_${account || "PEA"}`;
 
+// Résout l'ISIN en ticker Yahoo via le cache existant
+const isIsinFormat = (s) => s && /^[A-Z]{2}[A-Z0-9]{9,10}$/.test(s);
+function resolveTickerFromCache(p) {
+  const cache = (() => { try { return JSON.parse(localStorage.getItem("bourse_isin_ticker_cache") || "{}"); } catch { return {}; } })();
+  if (p.ticker && !isIsinFormat(p.ticker)) return p.ticker; // ticker Yahoo valide
+  return cache[p.isin] || cache[p.ticker] || p.ticker || p.isin || p.nom;
+}
+
+// JSON.stringify sans références circulaires ni fonctions
+function safeStringify(obj) {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (_, val) => {
+    if (typeof val === "function") return undefined;
+    if (typeof val === "object" && val !== null) {
+      if (seen.has(val)) return "[Circular]";
+      seen.add(val);
+    }
+    return val;
+  });
+}
+
 // ── Batch price fetch via /api/yahoo ──────────────────────────────────────────
 async function fetchBatchPrices(symbols) {
   const prices = {};
@@ -276,7 +297,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       return;
     }
     const aiPositions = userPositions.map(p => ({
-      ticker: p.ticker || p.isin || p.nom,
+      ticker: resolveTickerFromCache(p),
       nom: p.nom,
       isin: p.isin || "",
       quantite: p.quantite,
@@ -410,7 +431,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF }),
+        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {
