@@ -149,7 +149,7 @@ function AuthPage({ onSession }) {
   };
 
   const handleFinish = () => {
-    localStorage.setItem("bourse_api_keys", JSON.stringify(keys));
+    save("bourse_api_keys", keys);
     const s = JSON.parse(localStorage.getItem("bourse_session") || "{}");
     onSession(s.name || displayName.trim() || "Utilisateur");
   };

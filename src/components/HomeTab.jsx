@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { sanitizePositions, fmtEur } from "../lib/finance";
-import { load } from "../lib/storage";
+import { load, save } from "../lib/storage";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
 import { TABS } from "../constants/tabs";
 import { fetchWithProxy, hasClaudeKey, hasAI } from "../lib/api";
@@ -525,7 +525,7 @@ function CourbeEvolution({ hidden, positions, account }) {
       const { rows, broker } = detectAndParseEvolutionCSV(ev.target.result);
       if (rows.length > 1) {
         const payload = { rows, broker, importedAt: Date.now() };
-        try { localStorage.setItem(EVOLUTION_CSV_KEY, JSON.stringify(payload)); } catch {}
+        save(EVOLUTION_CSV_KEY, payload);
         setCsvData(payload);
       }
     };

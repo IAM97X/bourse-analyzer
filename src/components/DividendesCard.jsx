@@ -18,7 +18,7 @@ function DividendesCard({ positions }) {
   const rendementGlobal   = totalInvesti > 0 ? (totalAnnuelEstime / totalInvesti) * 100 : 0;
   const totalPercu        = log.reduce((s, e) => s + (parseFloat(e.montant) || 0), 0);
 
-  const saveLog = (newLog) => { setLog(newLog); try { localStorage.setItem(DIV_LOG_KEY, JSON.stringify(newLog)); } catch {} };
+  const saveLog = (newLog) => { setLog(newLog); save(DIV_LOG_KEY, newLog); };
 
   const addEntry = () => {
     const pos = positions.find(p => p.id === form.posId);

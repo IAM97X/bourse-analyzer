@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtPct, linReg } from "../lib/finance";
-import { load } from "../lib/storage";
+import { load, save } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
 import { useIsMobile } from "../context/mobile";
 import { StatBox, ThinkingSpinner } from "./UI";
@@ -600,7 +600,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
             <div style={{ display: "flex", alignItems: "center", gap: "4px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "4px 8px" }}>
               <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle }}>Impôt sortie</span>
               <input type="text" inputMode="decimal" value={impotSortieStr}
-                onChange={e => { const raw = e.target.value; setImpotSortieStr(raw); const v = parseFloat(raw.replace(",", ".")); if (!isNaN(v)) localStorage.setItem("bourse_impot_sortie", v); }}
+                onChange={e => { const raw = e.target.value; setImpotSortieStr(raw); const v = parseFloat(raw.replace(",", ".")); if (!isNaN(v)) save("bourse_impot_sortie", v); }}
                 style={{ width: "32px", border: "none", background: "transparent", fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textAlign: "center", outline: "none", fontFamily: "Inter,sans-serif" }} />
               <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle }}>%</span>
             </div>

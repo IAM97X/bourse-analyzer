@@ -11,7 +11,7 @@ export function ApiKeysSection() {
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
-    localStorage.setItem("bourse_api_keys", JSON.stringify(keys));
+    save("bourse_api_keys", keys);
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
 
@@ -44,7 +44,7 @@ export function ApiKeysSection() {
             {saved ? "✓ Clés sauvegardées" : "Sauvegarder les clés"}
           </button>
           {hasKeys && (
-            <button onClick={() => { localStorage.removeItem("bourse_api_keys"); setKeys({}); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "12px", padding: "9px", color: C.inkMuted, fontSize: "11px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>
+            <button onClick={() => { save("bourse_api_keys", {}); setKeys({}); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "12px", padding: "9px", color: C.inkMuted, fontSize: "11px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>
               Effacer les clés
             </button>
           )}
@@ -61,10 +61,8 @@ export function AccountDatesSection() {
   const [saved, setSaved]     = useState(false);
 
   const handleSave = () => {
-    if (peaDate) save("bourse_pea_ouverture", peaDate);
-    else try { localStorage.removeItem("bourse_pea_ouverture"); } catch {}
-    if (ctoDate) save("bourse_cto_ouverture", ctoDate);
-    else try { localStorage.removeItem("bourse_cto_ouverture"); } catch {}
+    save("bourse_pea_ouverture", peaDate || "");
+    save("bourse_cto_ouverture", ctoDate || "");
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
 

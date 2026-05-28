@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { C, shadow } from "../constants/theme";
 import { fmtEur } from "../lib/finance";
-import { load } from "../lib/storage";
+import { load, save } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
 
 const SNAPSHOTS_KEY = "bourse_snapshots";
@@ -216,7 +216,7 @@ async function rebuildPortfolioHistory(account, onProgress) {
   synth.forEach(s   => byDate[s.date] = s);
   existing.forEach(s => byDate[s.date] = s);
   const merged = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date)).slice(-730);
-  localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(merged));
+  save(SNAPSHOTS_KEY, merged);
   return { count: merged.length, resolved: resolvedIsins.length, total: allIsins.length };
 }
 

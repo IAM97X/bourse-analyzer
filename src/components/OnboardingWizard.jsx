@@ -57,7 +57,7 @@ export default function OnboardingWizard({ onComplete }) {
     if (apiKey.trim()) {
       try {
         const existing = JSON.parse(localStorage.getItem("bourse_api_keys") || "{}");
-        localStorage.setItem("bourse_api_keys", JSON.stringify({ ...existing, anthropic: apiKey.trim() }));
+        save("bourse_api_keys", { ...existing, anthropic: apiKey.trim() });
       } catch {}
     }
 

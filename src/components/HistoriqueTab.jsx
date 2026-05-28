@@ -1025,7 +1025,7 @@ function takeSnapshot(positions) {
   filtered.push({ date: today, valeur, investi, coutBase, capitalVerse });
   // Garder les 365 derniers jours
   filtered.sort((a, b) => a.date.localeCompare(b.date));
-  localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(filtered.slice(-365)));
+  save(SNAPSHOTS_KEY, filtered.slice(-365));
 }
 
 function VersementsChart({ points }) {
