@@ -308,7 +308,7 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
   if (anthropicKey) {
     try {
       const systemPrompt = body.systemInstruction.parts[0].text;
-      const userMsg = body.contents[0].parts[0].text;
+      const claudeUserMsg = body.contents[0].parts[0].text;
       const upstream = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -320,20 +320,26 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
           model: "claude-haiku-4-5-20251001",
           max_tokens: 2000,
           system: systemPrompt,
-          messages: [{ role: "user", content: userMsg }],
+          messages: [{ role: "user", content: claudeUserMsg }],
         }),
         signal: AbortSignal.timeout(45000),
       });
       const data = await upstream.json();
-      if (data.error) throw new Error(data.error.message);
+      if (data.error) {
+        const msg = data.error.message || "";
+        // Erreur d'auth → pas la peine d'essayer Gemini, signaler directement
+        if (msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("auth") || msg.toLowerCase().includes("api_key") || data.error.type === "authentication_error") {
+          return res.status(500).json({ error: `Clé Claude invalide ou expirée — vérifie ta clé Anthropic dans Paramètres → Clés API.` });
+        }
+        throw new Error(msg);
+      }
       const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
       if (!text) throw new Error("Réponse vide (Claude)");
       const result = parseJson(text);
       return res.status(200).json({ ...result, _model: "claude-haiku-4-5" });
     } catch (e) {
-      // Si erreur Claude : on ne tombe pas sur Gemini (clé Gemini peut ne pas exister)
-      if (!geminiKey) return res.status(500).json({ error: friendlyError(e.message) });
-      // Sinon fallback Gemini
+      if (!geminiKey) return res.status(500).json({ error: `Claude : ${friendlyError(e.message)}` });
+      // Fallback Gemini silencieux uniquement pour erreurs non-auth
     }
   }
 
