@@ -5,6 +5,13 @@ export const ONBOARDING_KEY = "bourse_onboarding_v1";
 
 const SLIDES = [
   {
+    icon: "⚠️",
+    title: "Information importante",
+    desc: null, // rendered separately
+    color: "rgba(245,158,11,0.07)",
+    disclaimer: true,
+  },
+  {
     icon: "📊",
     title: "Suivez votre portefeuille",
     desc: "Ajoutez vos positions, consultez vos cours en temps réel, vos plus-values et la répartition sectorielle de votre portefeuille PEA ou CTO.",
@@ -61,9 +68,17 @@ export default function OnboardingWizard({ onComplete }) {
         <div style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", textAlign: "center", marginBottom: "10px", lineHeight: 1.2 }}>
           {s.title}
         </div>
-        <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.7", textAlign: "center", marginBottom: "32px" }}>
-          {s.desc}
-        </div>
+        {s.disclaimer ? (
+          <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "14px", padding: "16px 18px", marginBottom: "24px", fontSize: "12px", color: "#78350F", lineHeight: "1.75" }}>
+            Bourse Analyzer est un <strong>outil de suivi et d'aide à la décision</strong> — il ne constitue pas un conseil en investissement financier au sens de la réglementation AMF.<br/><br/>
+            Les analyses, scores et recommandations générés par l'IA sont fournis à titre <strong>purement informatif</strong>. Ils ne tiennent pas compte de votre situation patrimoniale complète, de vos objectifs personnels ni de votre tolérance au risque individuelle.<br/><br/>
+            <strong>Tout investissement comporte un risque de perte en capital.</strong> Les performances passées ne préjugent pas des performances futures. Consultez un conseiller financier agréé pour toute décision d'investissement importante.
+          </div>
+        ) : (
+          <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.7", textAlign: "center", marginBottom: "32px" }}>
+            {s.desc}
+          </div>
+        )}
 
         {/* Actions */}
         <div style={{ display: "flex", gap: "8px" }}>
@@ -75,15 +90,17 @@ export default function OnboardingWizard({ onComplete }) {
           )}
           <button onClick={isLast ? finish : () => setStep(s => s + 1)}
             style={{ flex: 1, padding: "13px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${C.navyPill} 0%, #2563EB 100%)`, color: "#fff", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: shadow.pill }}>
-            {isLast ? "Commencer →" : "Suivant →"}
+            {isLast ? "Commencer →" : s.disclaimer ? "J'ai compris →" : "Suivant →"}
           </button>
         </div>
 
-        {/* Skip */}
-        <button onClick={finish}
-          style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: C.inkSubtle, fontSize: "12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
-          Passer →
-        </button>
+        {/* Skip — masqué sur la slide disclaimer */}
+        {!s.disclaimer && (
+          <button onClick={finish}
+            style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: C.inkSubtle, fontSize: "12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+            Passer →
+          </button>
+        )}
 
       </div>
     </div>
