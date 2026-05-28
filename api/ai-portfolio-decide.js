@@ -146,7 +146,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key, autopilot_context, app_context } = req.body || {};
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key, autopilot_context, app_context, market_open } = req.body || {};
   const anthropicKey = claude_key || process.env.ANTHROPIC_API_KEY;
   if (!geminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA non configuré" });
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
@@ -192,6 +192,10 @@ module.exports = async function handler(req, res) {
   const minOrdreNum = courtier_min_ordre || 0;
   const minETFNum   = courtier_min_etf   || 0;
 
+  const marketCtx = market_open === false
+    ? "\n⚠️ MARCHÉ FERMÉ : Les marchés sont actuellement fermés. Tu dois UNIQUEMENT émettre des décisions HOLD pour toutes les positions. Aucun BUY ni SELL ne peut être exécuté maintenant. Tu peux noter des observations stratégiques dans le résumé (opportunités à surveiller, ordres à préparer pour la prochaine ouverture), mais la liste des décisions doit être 100% HOLD."
+    : "";
+
   const sessionCtx = session_type === "OUVERTURE"
     ? "SESSION OUVERTURE (9h05) : Cherche les opportunités d'achat, déploie le cash disponible sur les meilleures convictions du moment. Achats prioritaires."
     : session_type === "MIDI"
@@ -234,6 +238,7 @@ Dividendes reçus :
 ${(app_context.dividendes_recus || []).map(d => `  • ${d}`).join("\n") || "  Aucun"}` : "";
 
   const userMsg = `DATE DU CYCLE: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+${marketCtx}
 ${sessionCtx}${courtierCtx}${dcaCtx}${autopilotCtx}${appCtx}
 
 === ÉTAT DU PORTEFEUILLE IA (${account || 'PEA'}) ===

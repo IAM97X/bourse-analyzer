@@ -5,6 +5,7 @@ import { sanitizePositions, fmtEur } from "../lib/finance";
 import { getKey } from "../lib/api";
 import { COURTIERS, COURTIERS_DETAIL, BOURSOMARKETS_ETFS, getCourtierForAccount } from "../constants/courtiers";
 import { DEFAULT_PROFIL } from "../constants/config";
+import { MARKETS_CFG, getMarketStatus } from "../constants/markets";
 
 const aiPfKey = (account) => `bourse_ai_portfolio_${account || "PEA"}`;
 
@@ -474,7 +475,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, autopilot_context, app_context }),
+        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, autopilot_context, app_context, market_open: getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).open }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {
@@ -594,6 +595,14 @@ export default function AIPortfolioTab({ account, hidden }) {
             style={{ width: "34px", height: "34px", borderRadius: "10px", background: C.snowDim, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: "14px", color: C.inkMuted, transition: "all 0.15s" }}>↺</button>
         </div>
       </div>
+
+      {/* ── Marché fermé ── */}
+      {!getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).open && (
+        <div style={{ background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)", borderRadius: "12px", padding: "10px 14px", marginBottom: "14px", fontSize: "12px", color: "#92400E", display: "flex", alignItems: "center", gap: "8px" }}>
+          <span>⚠️</span>
+          <span>Marché Paris fermé — un cycle lancé maintenant analysera le portefeuille mais n'exécutera aucun trade jusqu'à la prochaine ouverture.</span>
+        </div>
+      )}
 
       {/* ── Error ── */}
       {error && (
