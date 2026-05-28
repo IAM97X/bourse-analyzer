@@ -437,10 +437,38 @@ export default function AIPortfolioTab({ account, hidden }) {
         opportunites: (autopilotRaw.opportunites || []).slice(0, 5).map(o => `${o.nom} (${o.symbol}) — ${o.signal || ""} — ${o.raison || ""}`),
         generated_at: autopilotRaw.generatedAt || null,
       } : null;
+
+      // Contexte app complet
+      const marketScoring = (() => { try { return JSON.parse(localStorage.getItem("bourse_market_scoring") || "[]"); } catch { return []; } })();
+      const userPositions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === account);
+      const snapshots = load("bourse_snapshots", []).slice(-20);
+      const recentTrades = load("bourse_avis_operes", []).filter(o => (o.compte || "PEA") === account).slice(-15);
+      const dividendes = load("bourse_dividendes", []).filter(d => (d.compte || "PEA") === account).slice(-10);
+
+      const app_context = {
+        profil_investisseur: {
+          risque: profil.risque || "equilibre",
+          horizon: profil.horizon || "moyen",
+          versements_pea: profil.versementsPEA || 0,
+          versements_cto: profil.versementsCTO || 0,
+          objectif: profil.objectif || null,
+        },
+        portefeuille_reel: userPositions.map(p => ({
+          nom: p.nom, ticker: resolveTickerFromCache(p),
+          quantite: p.quantite, pru: p.pru,
+          cours: p.dernierCours || p.pru,
+          perf_pct: p.pru > 0 ? +((((p.dernierCours || p.pru) - p.pru) / p.pru) * 100).toFixed(2) : 0,
+        })),
+        scoring_marche: marketScoring.slice(0, 10).map(s => `${s.nom} — ${s.signal || "?"} (${s.score_marche || "?"}/20) — ${s.resume || ""}`),
+        historique_valeur: snapshots.map(s => `${s.date}: ${s.valeur?.toFixed(0)}€`),
+        transactions_recentes: recentTrades.map(o => `${o.date} ${o.type} ${o.quantite}×${o.titre} à ${o.prixUnitaire}€`),
+        dividendes_recus: dividendes.map(d => `${d.date} ${d.titre}: +${d.montant}€`),
+      };
+
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, autopilot_context }),
+        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, autopilot_context, app_context }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {

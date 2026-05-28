@@ -501,11 +501,19 @@ export default function ChatTab({ profil, account, portfolioVersion, marketScore
     const scoresLine = scores.length > 0
       ? `Signaux IA marché : ${scores.map(s => `${s.nom}→${s.signal}(${s.score_marche}/20)`).join(", ")}`
       : "Pas de signaux IA.";
-    return { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine };
+    const dividendes = load("bourse_dividendes", []).filter(d => (d.compte || "PEA") === (account || "PEA")).slice(-10);
+    const divLine = dividendes.length > 0
+      ? `Dividendes reçus : ${dividendes.map(d => `${d.date} ${d.titre} +${d.montant}€`).join(" | ")}`
+      : "Aucun dividende enregistré.";
+    const aiPf = load(`bourse_ai_portfolio_${account || "PEA"}`, null);
+    const aiPfLine = aiPf ? `Portefeuille IA autonome : valeur=${((aiPf.cash || 0) + (aiPf.positions || []).reduce((s, p) => s + p.quantite * (p.dernier_cours || p.prix_achat_moyen || 0), 0)).toFixed(0)}€, capital initial=${aiPf.capital_initial || 0}€, ${aiPf.positions?.length || 0} positions, dernier cycle=${aiPf.last_morning_cycle || aiPf.last_evening_cycle || "jamais"}` : "Portefeuille IA non activé.";
+    const autopilotRaw = load(`bourse_autopilot_last_${account || "PEA"}_${profil?.risque || "equilibre"}`, null);
+    const autopilotLine = autopilotRaw?.resume ? `Analyse Autopilot (${autopilotRaw.generatedAt ? new Date(autopilotRaw.generatedAt).toLocaleDateString("fr-FR") : "N/A"}) : score marché ${autopilotRaw.score_marche || "N/A"}/20 — ${autopilotRaw.resume}` : "Pas d'analyse Autopilot récente.";
+    return { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine, divLine, aiPfLine, autopilotLine };
   };
 
   const buildSystemPrompt = () => {
-    const { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine } = buildPortfolioContext();
+    const { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine, divLine, aiPfLine, autopilotLine } = buildPortfolioContext();
     const isNewUser = positions.length === 0;
     return `Tu es le Conseiller Privé IA de cet investisseur. Tu as accès à toutes ses données et réponds en français, de façon concise et personnalisée.
 ${isNewUser ? `
@@ -529,6 +537,9 @@ RÉSUMÉ : valeur=${totalActuel.toFixed(0)}€, investi=${totalInvesti.toFixed(0
 ${snapLine}
 ${opsLine}
 ${scoresLine}
+${divLine}
+${aiPfLine}
+${autopilotLine}
 
 STRATÉGIE DCA DE L'INVESTISSEUR : le DCA mensuel (${profil?.dcaMensuel || 0}€/mois) est EXCLUSIVEMENT réservé aux ETF (Amundi, Lyxor, iShares, etc.). Les actions individuelles (small caps, mid caps, grandes capitalisations) ne font JAMAIS l'objet de DCA — ni dans le plan, ni dans l'explication, ni dans la logique présentée. Pour les actions individuelles, parler uniquement d'"achat opportuniste", de "renforcement ponctuel" ou d'"achat au comptant" — JAMAIS de DCA. Si l'utilisateur pose une question sur son DCA, réorienter systématiquement vers les ETF.
 

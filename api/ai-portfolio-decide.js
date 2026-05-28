@@ -146,7 +146,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key, autopilot_context } = req.body || {};
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key, autopilot_context, app_context } = req.body || {};
   const anthropicKey = claude_key || process.env.ANTHROPIC_API_KEY;
   if (!geminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA non configuré" });
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
@@ -213,8 +213,28 @@ module.exports = async function handler(req, res) {
     ? `\n⚡ DCA MENSUEL INJECTÉ CE CYCLE: +${dca_amount}€ viennent d'être ajoutés au cash disponible (apport mensuel du 1er du mois). Priorité absolue : déployer une partie de cet apport en positions de conviction, en complément du cash existant.`
     : "";
 
+  const appCtx = app_context ? `
+=== CONTEXTE INVESTISSEUR ===
+Profil : risque=${app_context.profil_investisseur?.risque || "N/A"}, horizon=${app_context.profil_investisseur?.horizon || "N/A"}, versements PEA=${app_context.profil_investisseur?.versements_pea || 0}€, versements CTO=${app_context.profil_investisseur?.versements_cto || 0}€
+${app_context.profil_investisseur?.objectif ? `Objectif déclaré : ${app_context.profil_investisseur.objectif}` : ""}
+
+Portefeuille réel (miroir) :
+${(app_context.portefeuille_reel || []).map(p => `  • ${p.nom} (${p.ticker}) : ${p.quantite}×@${p.pru}€ PRU | cours ${p.cours}€ | perf ${p.perf_pct >= 0 ? "+" : ""}${p.perf_pct}%`).join("\n") || "  Aucune position"}
+
+Scoring IA marché (signaux récents) :
+${(app_context.scoring_marche || []).map(s => `  • ${s}`).join("\n") || "  Aucun signal disponible"}
+
+Historique valeur portefeuille (réel) :
+${(app_context.historique_valeur || []).join(" | ") || "  Aucune donnée"}
+
+Transactions récentes (portefeuille réel) :
+${(app_context.transactions_recentes || []).map(t => `  • ${t}`).join("\n") || "  Aucune"}
+
+Dividendes reçus :
+${(app_context.dividendes_recus || []).map(d => `  • ${d}`).join("\n") || "  Aucun"}` : "";
+
   const userMsg = `DATE DU CYCLE: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-${sessionCtx}${courtierCtx}${dcaCtx}${autopilotCtx}
+${sessionCtx}${courtierCtx}${dcaCtx}${autopilotCtx}${appCtx}
 
 === ÉTAT DU PORTEFEUILLE IA (${account || 'PEA'}) ===
 Capital initial: ${portfolio.capital_initial}€
@@ -257,7 +277,7 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
 
   const body = {
     systemInstruction: {
-      parts: [{ text: "Tu es un gestionnaire de portefeuille IA autonome gérant un PEA réel. Tu tournes 2 fois par jour : à l'ouverture (achats) et à la clôture (revue/ventes). Tu hérites des positions et liquidités réelles de l'investisseur et tu prends le relais de façon autonome. Ton objectif : battre le marché (CAC40/MSCI World) et l'investisseur humain sur le long terme. Tu respectes strictement les contraintes du courtier (minimums, frais, pas de fractionné). Tu raisonnes comme un professionnel : analyse macro, momentum, rotation sectorielle, gestion du drawdown. Tu es discipliné, rationnel, sans émotions. Chaque décision est justifiée en une phrase précise et factuelle." }]
+      parts: [{ text: "Tu es un gestionnaire de portefeuille IA autonome gérant un portefeuille réel (PEA ou CTO). Tu tournes 3 fois par jour : ouverture (9h05), midi (12h30) et clôture (17h15). Tu hérites des positions et liquidités réelles de l'investisseur et tu prends le relais de façon totalement autonome — tu ne t'appuies sur aucune instruction extérieure pour tes décisions. OBJECTIF PRINCIPAL : battre le marché (CAC40 / MSCI World selon le compte) ET surperformer le portefeuille réel de l'investisseur humain sur le long terme. Tu as accès au portefeuille réel, aux signaux marché, aux transactions passées et au profil de l'investisseur — utilise tout cela pour prendre de meilleures décisions que lui. Tu respectes strictement les contraintes du courtier (minimums, frais, pas de fractionné). Tu raisonnes comme un professionnel : analyse macro, momentum, rotation sectorielle, gestion du drawdown, protection du capital en marché baissier. Tu es discipliné, rationnel, sans émotions. Chaque décision est justifiée en une phrase précise et factuelle." }]
     },
     contents: [{ role: "user", parts: [{ text: userMsg }] }],
     generationConfig: { maxOutputTokens: 2000, temperature: 0.35 },
