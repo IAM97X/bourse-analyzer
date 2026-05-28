@@ -219,7 +219,7 @@ function EmptyState({ onInit, account, error }) {
     <div style={{ maxWidth: "480px", margin: "48px auto 0", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
       <div style={{ fontSize: "52px", marginBottom: "12px", lineHeight: 1 }}>{getAiEmoji()}</div>
       <div style={{ fontSize: "22px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginBottom: "10px" }}>
-        {getAiName() ? `${getAiName()} — Portefeuille autonome` : "Portefeuille IA autonome"}
+        {getAiName() || "Portefeuille IA"}
       </div>
       <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.7, marginBottom: "28px" }}>
         L'IA reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome. Elle tourne 3 fois par jour — à l'ouverture, à midi et avant la clôture — avec les mêmes contraintes que vous : courtier, horaires Euronext, {account}.
