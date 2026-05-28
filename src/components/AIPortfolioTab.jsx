@@ -352,13 +352,23 @@ export default function AIPortfolioTab({ account, hidden }) {
       // 1. Fetch current prices for all universe symbols + current positions
       const universeTickers = [
         // ETFs BoursoMarkets
-        "CW8.PA","PANX.PA","PUST.PA","EWLD.PA","PAEEM.PA","PCEU.PA","LYPS.PA","RS2K.PA",
-        // Actions CAC40 / Euronext
-        "AI.PA","MC.PA","TTE.PA","SAN.PA","OR.PA","BNP.PA","SU.PA","AXA.PA",
-        "EL.PA","ASML.AS","ADYEN.AS","CAP.PA","DSY.PA","STMPA.PA","SAF.PA","AIR.PA",
-        "RMS.PA","KER.PA","GLE.PA","HO.PA","AM.PA","DG.PA","ENGI.PA","PUB.PA",
-        "ORA.PA","CA.PA","LR.PA","TEP.PA","MT.AS","BESI.AS","SOI.PA","ALO.PA",
-        "RNO.PA","BIOR.PA","ERF.PA","VIRP.PA",
+        "CW8.PA","EWLD.PA","PUST.PA","LYPS.PA","PANX.PA","PAEEM.PA","PCEU.PA","RS2K.PA","AASI.PA",
+        // France CAC40/SBF120
+        "MC.PA","RMS.PA","KER.PA","OR.PA","AI.PA","SU.PA","LR.PA","SGO.PA","DG.PA",
+        "SAF.PA","AIR.PA","HO.PA","AM.PA","TTE.PA","ENGI.PA","VIE.PA",
+        "SAN.PA","EL.PA","BIOR.PA","ERF.PA","VIRP.PA",
+        "BNP.PA","GLE.PA","ACA.PA","AXA.PA",
+        "CAP.PA","DSY.PA","PUB.PA","EDEN.PA","TEP.PA","STMPA.PA","SOI.PA",
+        "ORA.PA","VIV.PA","ML.PA","RNO.PA","ALO.PA","CA.PA","UBI.PA",
+        // Netherlands
+        "ASML.AS","ADYEN.AS","BESI.AS","MT.AS","HEIA.AS","WKL.AS","INGA.AS",
+        "ABN.AS","AKZA.AS","RAND.AS","IMCD.AS","NN.AS","PHIA.AS",
+        // Germany
+        "SAP.DE","SIE.DE","ALV.DE","ADS.DE","IFX.DE","BAS.DE","MRK.DE","DTE.DE","DHL.DE","BAYN.DE",
+        // Spain
+        "ITX.MC","IBE.MC","SAN.MC",
+        // Belgium
+        "UCB.BR","ABI.BR","KBC.BR",
       ];
       const allTickers = [...new Set([...universeTickers, ...(workingPf.positions || []).map(p => p.ticker)])];
       const freshPrices = await fetchBatchPrices(allTickers);
