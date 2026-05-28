@@ -211,13 +211,30 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
   return (
     <Card title={`Stratégie DCA — ${moisLabel}`} icon="📅" accentColor={C.navy}>
       {/* Résumé budget */}
-      <div className="ba-g4" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: "8px", marginBottom: "12px" }}>
+      <div className="ba-g4" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: "8px", marginBottom: "10px" }}>
         <StatBox label="DCA mensuel"     value={fmtEur(dcaMensuel)} color={C.navy} sensitive />
         <StatBox label="Durée restante"  value={durLabel(dcaDuree)} />
         <StatBox label="Investi"         value={fmtEur(capitalReel)} color={C.ink} sensitive />
         <StatBox label="Valeur actuelle" value={fmtEur(totalActuel)} color={C.navy} sensitive />
         <StatBox label="Plus-value"      value={fmtPct(capitalReel > 0 ? (totalActuel - capitalReel) / capitalReel * 100 : 0)} color={totalActuel >= capitalReel ? C.green : C.red} sensitive />
       </div>
+      {/* Info inflation */}
+      {dcaMensuel > 0 && (() => {
+        const inflation = parseFloat(localStorage.getItem("bourse_inflation_rate") || "2.5") || 2.5;
+        const ans = [1, 3, 5, 10].map(y => ({ y, v: dcaMensuel * Math.pow(1 + inflation / 100, y) }));
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "10px", padding: "8px 14px", marginBottom: "12px" }}>
+            <span style={{ fontSize: "11px", color: C.goldDark, fontWeight: "700" }}>📉 Inflation {inflation}%/an</span>
+            <span style={{ fontSize: "11px", color: C.inkSubtle }}>Pour maintenir le même pouvoir d'achat :</span>
+            {ans.map(({ y, v }) => (
+              <span key={y} style={{ fontSize: "11px", color: C.goldDark, fontWeight: "600", background: "rgba(245,158,11,0.1)", borderRadius: "6px", padding: "2px 8px" }}>
+                +{y}an{y > 1 ? "s" : ""} → {fmtEur(v)}/mois
+              </span>
+            ))}
+            <span style={{ fontSize: "10px", color: C.inkSubtle, marginLeft: "auto" }}>Taux ajustable dans DCA › Simulateur</span>
+          </div>
+        );
+      })()}
 
       {/* Bandeau scoring IA marché */}
       {marketScoringUi === UI.LOADING && (
