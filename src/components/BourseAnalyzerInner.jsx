@@ -74,6 +74,26 @@ function PillBar({ pills, active, onChange }) {
   );
 }
 
+function GeminiBanner({ onDismiss, onSettings }) {
+  return (
+    <div style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.07), rgba(99,102,241,0.04))", border: "1px solid rgba(59,130,246,0.2)", borderRadius: "16px", padding: "12px 16px", marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <span style={{ fontSize: "16px" }}>✨</span>
+        <div>
+          <div style={{ fontSize: "12px", fontWeight: "700", color: "#1D4ED8" }}>IA Gemini active — gratuit</div>
+          <div style={{ fontSize: "11px", color: "#3B82F6", marginTop: "1px" }}>Pour des analyses plus précises, ajoutez une clé Claude dans les Paramètres.</div>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <button onClick={onSettings} style={{ fontSize: "11px", fontWeight: "700", color: "#1D4ED8", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", borderRadius: "8px", padding: "5px 12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          Ajouter Claude
+        </button>
+        <button onClick={onDismiss} style={{ background: "none", border: "none", color: "#93C5FD", cursor: "pointer", fontSize: "14px", padding: "2px 4px", lineHeight: 1 }} title="Fermer">×</button>
+      </div>
+    </div>
+  );
+}
+
 const DEFAULT_SCREENING_STOCKS = [
   "Valneva", "Median Technologies", "Riber", "Guillemot", "Solutions 30",
   "Genomic Vision", "Obiz", "Osmoz Technologies", "NovaBay Pharmaceuticals",
@@ -545,21 +565,9 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         {/* Content */}
         <div className="ba-content" style={{ flex: 1, overflowY: "auto", padding: "32px 36px", position: "relative" }}>
           <div className="ba-content-inner" style={{ position: "relative", maxWidth: "1200px", margin: "0 auto" }}>
-          {/* Bannière sans clé Claude */}
-          {!hasAI() && (
-            <div style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "18px", padding: "14px 20px", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "18px" }}>🔑</span>
-                <div>
-                  <div style={{ fontSize: "12px", fontWeight: "700", color: "#92400E" }}>Fonctionnalités IA désactivées</div>
-                  <div style={{ fontSize: "11px", color: "#A16207", marginTop: "1px" }}>Ajoutez une clé Claude pour activer l'analyse IA, le scoring de marché et l'assistant.</div>
-                </div>
-              </div>
-              <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
-                style={{ fontSize: "11px", fontWeight: "700", color: "#92400E", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.35)", borderRadius: "8px", padding: "6px 14px", textDecoration: "none", whiteSpace: "nowrap" }}>
-                Obtenir une clé gratuite →
-              </a>
-            </div>
+          {/* Bannière Gemini actif / Claude recommandé */}
+          {!hasClaudeKey() && hasAI() && !load("bourse_gemini_banner_dismissed", false) && (
+            <GeminiBanner onDismiss={() => { save("bourse_gemini_banner_dismissed", true); setPortfolioVersion(v => v + 1); }} onSettings={() => changeTab(TABS.SETTINGS)} />
           )}
             {/* Sub-pill navigation for DCA group */}
             {DCA_TABS.includes(activeTab) && (

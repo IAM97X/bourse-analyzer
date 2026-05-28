@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { save } from "../lib/storage";
 import { C, shadow } from "../constants/theme";
-import { hasClaudeKey } from "../lib/api";
+import { hasClaudeKey, hasAI } from "../lib/api";
 
 export const ONBOARDING_KEY = "bourse_onboarding_v1";
 
@@ -160,15 +160,16 @@ export default function OnboardingWizard({ onComplete }) {
           {hasClaudeKey() ? (
             <div style={{ padding: "16px", background: "rgba(5,150,105,0.08)", border: "1px solid rgba(5,150,105,0.2)", borderRadius: "12px", textAlign: "center" }}>
               <div style={{ fontSize: "22px", marginBottom: "6px" }}>✓</div>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: C.green }}>Clé API déjà configurée</div>
-              <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "4px" }}>Votre Conseiller IA est prêt.</div>
+              <div style={{ fontSize: "13px", fontWeight: "700", color: C.green }}>Clé Claude configurée</div>
+              <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "4px" }}>Analyses avancées activées.</div>
             </div>
-          ) : (
+          ) : hasAI() ? (
             <div>
-              <div style={{ padding: "12px 14px", background: C.paleBlue, borderRadius: "10px", marginBottom: "14px", fontSize: "12px", color: C.navy, lineHeight: "1.6" }}>
-                L'IA utilise Claude d'Anthropic. L'inscription est <strong>gratuite</strong> et inclut des crédits offerts pour commencer.
+              <div style={{ padding: "12px 14px", background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.18)", borderRadius: "10px", marginBottom: "14px" }}>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: "#1D4ED8", marginBottom: "4px" }}>✨ IA Gemini déjà active — gratuit</div>
+                <div style={{ fontSize: "12px", color: "#3B82F6", lineHeight: "1.6" }}>Votre conseiller IA fonctionne dès maintenant sans clé. Pour des analyses encore plus précises, vous pouvez ajouter une clé Claude (optionnel).</div>
               </div>
-              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Clé API Claude</div>
+              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Clé Claude (optionnel)</div>
               <div style={{ position: "relative" }}>
                 <input
                   type={showKey ? "text" : "password"}
@@ -184,8 +185,28 @@ export default function OnboardingWizard({ onComplete }) {
               </div>
               <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
                 style={{ display: "block", marginTop: "10px", textAlign: "center", fontSize: "12px", color: C.navy, fontWeight: "600", textDecoration: "none" }}>
-                Créer un compte gratuit → console.anthropic.com
+                Créer un compte → console.anthropic.com
               </a>
+            </div>
+          ) : (
+            <div>
+              <div style={{ padding: "12px 14px", background: C.paleBlue, borderRadius: "10px", marginBottom: "14px", fontSize: "12px", color: C.navy, lineHeight: "1.6" }}>
+                Ajoutez une clé Claude pour activer toutes les fonctions IA.
+              </div>
+              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Clé API Claude</div>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showKey ? "text" : "password"}
+                  style={{ ...inp, paddingRight: "60px", fontFamily: "monospace", fontSize: "12px" }}
+                  placeholder="sk-ant-..."
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                />
+                <button onClick={() => setShowKey(v => !v)}
+                  style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", color: C.inkSubtle, fontFamily: "Inter,sans-serif" }}>
+                  {showKey ? "Masquer" : "Voir"}
+                </button>
+              </div>
             </div>
           )}
         </div>
