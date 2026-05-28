@@ -95,6 +95,53 @@ const PEA_UNIVERSE = [
   { symbol: "KBC.BR",   nom: "KBC Groupe",                 secteur: "Banque" },
 ];
 
+// Univers CTO uniquement (non éligibles PEA) — ajoutés en plus du PEA_UNIVERSE
+const CTO_EXTRA_UNIVERSE = [
+  // ── ETFs World/US (non PEA) ─────────────────────────────────────────────────
+  { symbol: "IWDA.AS",  nom: "iShares Core MSCI World",   secteur: "ETF Monde" },
+  { symbol: "CSPX.AS",  nom: "iShares Core S&P 500",      secteur: "ETF USA" },
+  { symbol: "EQQQ.AS",  nom: "Invesco Nasdaq-100",        secteur: "ETF Tech" },
+  { symbol: "VWCE.DE",  nom: "Vanguard FTSE All-World",   secteur: "ETF Monde" },
+  { symbol: "VUSA.AS",  nom: "Vanguard S&P 500",          secteur: "ETF USA" },
+  // ── US Tech ─────────────────────────────────────────────────────────────────
+  { symbol: "NVDA",     nom: "NVIDIA",                    secteur: "Semi-conducteurs/IA" },
+  { symbol: "MSFT",     nom: "Microsoft",                 secteur: "Tech/Cloud" },
+  { symbol: "AAPL",     nom: "Apple",                     secteur: "Tech/Consumer" },
+  { symbol: "AMZN",     nom: "Amazon",                    secteur: "Tech/E-commerce" },
+  { symbol: "GOOGL",    nom: "Alphabet (Google)",         secteur: "Tech/Publicité" },
+  { symbol: "META",     nom: "Meta Platforms",            secteur: "Réseaux sociaux/IA" },
+  { symbol: "TSLA",     nom: "Tesla",                     secteur: "Auto/Énergie" },
+  { symbol: "AVGO",     nom: "Broadcom",                  secteur: "Semi-conducteurs" },
+  { symbol: "TSM",      nom: "TSMC",                      secteur: "Semi-conducteurs" },
+  { symbol: "ORCL",     nom: "Oracle",                    secteur: "Tech/Cloud" },
+  { symbol: "CRM",      nom: "Salesforce",                secteur: "SaaS" },
+  { symbol: "AMD",      nom: "AMD",                       secteur: "Semi-conducteurs" },
+  { symbol: "PLTR",     nom: "Palantir",                  secteur: "IA/Défense" },
+  // ── US Finance ──────────────────────────────────────────────────────────────
+  { symbol: "JPM",      nom: "JPMorgan Chase",            secteur: "Banque" },
+  { symbol: "BRK-B",    nom: "Berkshire Hathaway",        secteur: "Conglomérat/Finance" },
+  { symbol: "V",        nom: "Visa",                      secteur: "Paiements" },
+  { symbol: "MA",       nom: "Mastercard",                secteur: "Paiements" },
+  { symbol: "GS",       nom: "Goldman Sachs",             secteur: "Banque invest." },
+  // ── US Santé / Pharma ────────────────────────────────────────────────────────
+  { symbol: "LLY",      nom: "Eli Lilly",                 secteur: "Pharma/GLP-1" },
+  { symbol: "UNH",      nom: "UnitedHealth",              secteur: "Santé" },
+  { symbol: "JNJ",      nom: "Johnson & Johnson",         secteur: "Santé" },
+  { symbol: "NVO",      nom: "Novo Nordisk",              secteur: "Pharma/GLP-1" },
+  // ── US Consumer / Défense ────────────────────────────────────────────────────
+  { symbol: "COST",     nom: "Costco",                    secteur: "Distribution" },
+  { symbol: "WMT",      nom: "Walmart",                   secteur: "Distribution" },
+  { symbol: "RTX",      nom: "RTX Corporation",           secteur: "Défense/Aéro" },
+  { symbol: "LMT",      nom: "Lockheed Martin",           secteur: "Défense" },
+  // ── UK — London Stock Exchange ───────────────────────────────────────────────
+  { symbol: "AZN.L",    nom: "AstraZeneca",               secteur: "Pharma" },
+  { symbol: "SHEL.L",   nom: "Shell",                     secteur: "Énergie" },
+  { symbol: "HSBA.L",   nom: "HSBC",                      secteur: "Banque" },
+  { symbol: "BP.L",     nom: "BP",                        secteur: "Énergie" },
+  { symbol: "RIO.L",    nom: "Rio Tinto",                 secteur: "Mines/Matériaux" },
+  { symbol: "ARM.L",    nom: "Arm Holdings",              secteur: "Semi-conducteurs/IA" },
+];
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -113,11 +160,14 @@ module.exports = async function handler(req, res) {
     ? (((valeurTotale - portfolio.capital_initial) / portfolio.capital_initial) * 100).toFixed(2)
     : "0.00";
 
+  const isCTO = account === "CTO";
   const isBourso = courtier_info?.toLowerCase().includes("boursobank");
-  const univAvecPrix = PEA_UNIVERSE
+  const activeUniverse = isCTO ? [...PEA_UNIVERSE, ...CTO_EXTRA_UNIVERSE] : PEA_UNIVERSE;
+
+  const univAvecPrix = activeUniverse
     .filter(s => prices[s.symbol])
     .map(s => {
-      const bm = isBourso && BOURSOMARKETS_ETFS[s.symbol];
+      const bm = isBourso && !isCTO && BOURSOMARKETS_ETFS[s.symbol];
       const ter = bm ? ` | TER ${BOURSOMARKETS_ETFS[s.symbol].ter}%/an` : "";
       const fees = bm ? " | ✅ BoursoMarkets 0€ frais si ≥200€" : "";
       return `- ${s.nom} (${s.symbol}): ${prices[s.symbol]}€ [${s.secteur}${ter}${fees}]`;
@@ -172,7 +222,8 @@ ${positionsText}
 DERNIERS TRADES (historique):
 ${lastTradesText}
 
-=== UNIVERS INVESTISSABLE PEA (cours temps réel) ===
+=== UNIVERS INVESTISSABLE ${isCTO ? "CTO (PEA + actions mondiales)" : "PEA (valeurs européennes éligibles)"} — cours temps réel ===
+${isCTO ? "⚠️ CTO : fiscalité flat tax 30% sur plus-values et dividendes. Pas de plafond de versement. Actions mondiales accessibles (US, UK, EU…)." : "⚠️ PEA : exonération d'impôt après 5 ans. Plafond versements 150 000€. Uniquement valeurs UE/EEE + ETFs UCITS domiciliés UE."}
 ${univAvecPrix}
 
 === CONTRAINTES STRICTES ===

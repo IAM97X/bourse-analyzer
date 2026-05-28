@@ -350,7 +350,7 @@ export default function AIPortfolioTab({ account, hidden }) {
 
     try {
       // 1. Fetch current prices for all universe symbols + current positions
-      const universeTickers = [
+      const PEA_TICKERS = [
         // ETFs BoursoMarkets
         "CW8.PA","EWLD.PA","PUST.PA","LYPS.PA","PANX.PA","PAEEM.PA","PCEU.PA","RS2K.PA","AASI.PA",
         // France CAC40/SBF120
@@ -370,6 +370,23 @@ export default function AIPortfolioTab({ account, hidden }) {
         // Belgium
         "UCB.BR","ABI.BR","KBC.BR",
       ];
+      const CTO_EXTRA_TICKERS = [
+        // ETFs World non-PEA
+        "IWDA.AS","CSPX.AS","EQQQ.AS","VWCE.DE","VUSA.AS",
+        // US Tech
+        "NVDA","MSFT","AAPL","AMZN","GOOGL","META","TSLA","AVGO","TSM","ORCL","CRM","AMD","PLTR",
+        // US Finance
+        "JPM","BRK-B","V","MA","GS",
+        // US Santé
+        "LLY","UNH","JNJ","NVO",
+        // US Consumer/Défense
+        "COST","WMT","RTX","LMT",
+        // UK
+        "AZN.L","SHEL.L","HSBA.L","BP.L","RIO.L","ARM.L",
+      ];
+      const universeTickers = account === "CTO"
+        ? [...PEA_TICKERS, ...CTO_EXTRA_TICKERS]
+        : PEA_TICKERS;
       const allTickers = [...new Set([...universeTickers, ...(workingPf.positions || []).map(p => p.ticker)])];
       const freshPrices = await fetchBatchPrices(allTickers);
       setPrices(freshPrices);
