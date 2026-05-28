@@ -241,21 +241,6 @@ export default function AIPortfolioTab({ account, hidden }) {
       .finally(() => setLoadingPrices(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-trigger 2x/jour : ouverture ~9h05 et clôture ~17h15 (Paris, jours ouvrés)
-  useEffect(() => {
-    if (!aiPf) return;
-    const check = () => {
-      if (cycling) return;
-      const { h, m, todayParis, isWeekend } = getParisTime();
-      if (isWeekend) return;
-      if (h === 9 && m >= 5 && m <= 20 && !aiPf.last_morning_cycle?.startsWith(todayParis)) handleRunCycle("OUVERTURE");
-      else if (h === 17 && m >= 15 && m <= 30 && !aiPf.last_evening_cycle?.startsWith(todayParis)) handleRunCycle("CLÔTURE");
-    };
-    check();
-    const t = setInterval(check, 60000);
-    return () => clearInterval(t);
-  }, [aiPf, cycling, handleRunCycle]);
-
   const handleInit = useCallback(() => {
     const userPositions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === account);
     const profil = load("bourse_profil", DEFAULT_PROFIL);
@@ -344,6 +329,21 @@ export default function AIPortfolioTab({ account, hidden }) {
       setCycling(false);
     }
   }, [aiPf, cycling, account]);
+
+  // Auto-trigger 2x/jour : ouverture ~9h05 et clôture ~17h15 (Paris, jours ouvrés)
+  useEffect(() => {
+    if (!aiPf) return;
+    const check = () => {
+      if (cycling) return;
+      const { h, m, todayParis, isWeekend } = getParisTime();
+      if (isWeekend) return;
+      if (h === 9 && m >= 5 && m <= 20 && !aiPf.last_morning_cycle?.startsWith(todayParis)) handleRunCycle("OUVERTURE");
+      else if (h === 17 && m >= 15 && m <= 30 && !aiPf.last_evening_cycle?.startsWith(todayParis)) handleRunCycle("CLÔTURE");
+    };
+    check();
+    const t = setInterval(check, 60000);
+    return () => clearInterval(t);
+  }, [aiPf, cycling, handleRunCycle]);
 
   const handleReset = () => {
     if (!window.confirm("Réinitialiser le Portefeuille IA ? Toutes les données (trades, performance) seront perdues.")) return;
