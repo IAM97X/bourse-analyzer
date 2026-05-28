@@ -213,10 +213,10 @@ function EmptyState({ onInit, account, error }) {
 
   return (
     <div style={{ maxWidth: "480px", margin: "48px auto 0", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
-      <div style={{ fontSize: "52px", marginBottom: "20px", lineHeight: 1 }}>🤖</div>
+      <div style={{ fontSize: "52px", marginBottom: "20px", lineHeight: 1 }}>{load("bourse_avatar_emoji", "🤖") || "🤖"}</div>
       <div style={{ fontSize: "22px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginBottom: "10px" }}>Portefeuille IA autonome</div>
       <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.7, marginBottom: "28px" }}>
-        L'IA reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome. Elle tourne 2 fois par jour — à l'ouverture et avant la clôture — avec les mêmes contraintes que vous : courtier, horaires Euronext, PEA.
+        L'IA reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome. Elle tourne 3 fois par jour — à l'ouverture, à midi et avant la clôture — avec les mêmes contraintes que vous : courtier, horaires Euronext, PEA.
       </div>
 
       {capital > 0 && (
@@ -242,7 +242,7 @@ function EmptyState({ onInit, account, error }) {
       </button>
 
       <div style={{ marginTop: "20px", fontSize: "11px", color: C.inkSubtle, lineHeight: 1.7 }}>
-        Cycles automatiques à 9h05 (ouverture) et 17h15 (clôture), jours ouvrés.<br/>
+        Cycles automatiques à 9h05 (ouverture), 12h30 (midi) et 17h15 (clôture), jours ouvrés.<br/>
         {profil.dcaMensuel > 0 && <>DCA de <strong>{fmtEur(profil.dcaMensuel)}</strong> injecté automatiquement le 1er de chaque mois.<br/></>}
         Déclenchez aussi un cycle manuellement à tout moment.
       </div>
@@ -430,10 +430,17 @@ export default function AIPortfolioTab({ account, hidden }) {
       const courtierKey = getCourtierForAccount(profil, account);
       const courtierObj = COURTIERS[courtierKey] || COURTIERS.boursobank;
       const courtier_info = COURTIERS_DETAIL[courtierKey] || COURTIERS_DETAIL.boursobank;
+      const autopilotRaw = load(`bourse_autopilot_last_${account}_${profil.risque || "equilibre"}`, null);
+      const autopilot_context = autopilotRaw ? {
+        resume: autopilotRaw.resume || null,
+        score_marche: autopilotRaw.score_marche || null,
+        opportunites: (autopilotRaw.opportunites || []).slice(0, 5).map(o => `${o.nom} (${o.symbol}) — ${o.signal || ""} — ${o.raison || ""}`),
+        generated_at: autopilotRaw.generatedAt || null,
+      } : null;
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined }),
+        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, autopilot_context }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {
@@ -448,6 +455,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       updatedPf.strategie_courante = strategie || updatedPf.strategie_courante;
       const now = new Date().toISOString();
       if (session === "OUVERTURE") updatedPf.last_morning_cycle = now;
+      else if (session === "MIDI") updatedPf.last_noon_cycle = now;
       else if (session === "CLÔTURE") updatedPf.last_evening_cycle = now;
 
       setAiPf(updatedPf);
@@ -460,7 +468,7 @@ export default function AIPortfolioTab({ account, hidden }) {
     }
   }, [aiPf, cycling, account]);
 
-  // Auto-trigger 2x/jour : ouverture ~9h05 et clôture ~17h15 (Paris, jours ouvrés)
+  // Auto-trigger 3x/jour : 9h05 (ouverture), 12h30 (midi), 17h15 (clôture) — Paris, jours ouvrés
   useEffect(() => {
     if (!aiPf) return;
     const check = () => {
@@ -468,6 +476,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       const { h, m, todayParis, isWeekend } = getParisTime();
       if (isWeekend) return;
       if (h === 9 && m >= 5 && m <= 20 && !aiPf.last_morning_cycle?.startsWith(todayParis)) handleRunCycle("OUVERTURE");
+      else if (h === 12 && m >= 30 && m <= 45 && !aiPf.last_noon_cycle?.startsWith(todayParis)) handleRunCycle("MIDI");
       else if (h === 17 && m >= 15 && m <= 30 && !aiPf.last_evening_cycle?.startsWith(todayParis)) handleRunCycle("CLÔTURE");
     };
     check();
@@ -509,8 +518,10 @@ export default function AIPortfolioTab({ account, hidden }) {
     try {
       const { h, m, todayParis, isWeekend } = getParisTime();
       const morningDone = aiPf?.last_morning_cycle?.startsWith(todayParis);
+      const noonDone    = aiPf?.last_noon_cycle?.startsWith(todayParis);
       const eveningDone = aiPf?.last_evening_cycle?.startsWith(todayParis);
       if (!isWeekend && (h < 9 || (h === 9 && m < 5)) && !morningDone) return "aujourd'hui à 9h05";
+      if (!isWeekend && (h < 12 || (h === 12 && m < 30)) && !noonDone) return "aujourd'hui à 12h30";
       if (!isWeekend && (h < 17 || (h === 17 && m < 15)) && !eveningDone) return "aujourd'hui à 17h15";
       const next = new Date();
       do { next.setDate(next.getDate() + 1); } while (["Sat","Sun"].includes(new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(next)));
@@ -733,7 +744,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       {/* ── Cron info footer ── */}
       <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.5)", border: `1px solid ${C.border}`, borderRadius: "12px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
         <div style={{ fontSize: "12px", color: C.inkMuted }}>
-          <span>🤖 Cycle automatique : <strong>ouverture 9h05 · clôture 17h15 (Paris, jours ouvrés)</strong></span>
+          <span>{load("bourse_avatar_emoji", "🤖") || "🤖"} Cycle automatique : <strong>9h05 · 12h30 · 17h15 (Paris, jours ouvrés)</strong></span>
           <span style={{ marginLeft: "16px" }}>Prochain : <strong>{nextCycleLabel}</strong></span>
           {(() => {
             const dcaAmt = load("bourse_profil", DEFAULT_PROFIL).dcaMensuel || 0;

@@ -146,7 +146,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key } = req.body || {};
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key, autopilot_context } = req.body || {};
   const anthropicKey = claude_key || process.env.ANTHROPIC_API_KEY;
   if (!geminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA non configuré" });
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
@@ -194,20 +194,27 @@ module.exports = async function handler(req, res) {
 
   const sessionCtx = session_type === "OUVERTURE"
     ? "SESSION OUVERTURE (9h05) : Cherche les opportunités d'achat, déploie le cash disponible sur les meilleures convictions du moment. Achats prioritaires."
+    : session_type === "MIDI"
+    ? "SESSION MIDI (12h30) : Revue intermédiaire. Ajuste les positions si un signal fort est apparu depuis l'ouverture. Ventes partielles si un titre a fortement monté ou si une alerte se confirme. Achats opportunistes uniquement si évident."
     : session_type === "CLÔTURE"
     ? "SESSION CLÔTURE (17h15) : Revois les positions en perte, coupe les stops-loss atteints, sécurise les gains excessifs. Ventes prioritaires si nécessaire."
     : "CYCLE MANUEL : Analyse complète buy/sell/hold.";
 
+  const autopilotCtx = autopilot_context
+    ? `\n=== ANALYSE AUTOPILOT (contexte marché récent) ===\nScore marché : ${autopilot_context.score_marche || "N/A"}/20\nContexte : ${autopilot_context.resume || "N/A"}\nOpportunités identifiées :\n${(autopilot_context.opportunites || []).map(o => `  • ${o}`).join('\n') || "  Aucune"}\nGénéré le : ${autopilot_context.generated_at ? new Date(autopilot_context.generated_at).toLocaleDateString('fr-FR') : "N/A"}`
+    : "";
+
   const courtierCtx = courtier_info
     ? `\n=== CONTRAINTES COURTIER ===\n${courtier_info}`
     : "";
+
 
   const dcaCtx = dca_injected && dca_amount > 0
     ? `\n⚡ DCA MENSUEL INJECTÉ CE CYCLE: +${dca_amount}€ viennent d'être ajoutés au cash disponible (apport mensuel du 1er du mois). Priorité absolue : déployer une partie de cet apport en positions de conviction, en complément du cash existant.`
     : "";
 
   const userMsg = `DATE DU CYCLE: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-${sessionCtx}${courtierCtx}${dcaCtx}
+${sessionCtx}${courtierCtx}${dcaCtx}${autopilotCtx}
 
 === ÉTAT DU PORTEFEUILLE IA (${account || 'PEA'}) ===
 Capital initial: ${portfolio.capital_initial}€
