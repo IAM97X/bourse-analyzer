@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import ReactDOM from "react-dom";
 import { C, shadow } from "../constants/theme";
 import { SYSTEM_PROMPT, MARKET_SCORING_PROMPT } from "../constants/prompts";
 import { load, save } from "../lib/storage";
@@ -131,6 +132,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [avatarEmoji, setAvatarEmoji]           = useState(() => load("bourse_avatar_emoji", ""));
   const [emojiPickerOpen, setEmojiPickerOpen]   = useState(false);
   const [emojiCat, setEmojiCat]                 = useState(0);
+  const emojiTriggerRef                         = useRef(null);
   const AVATAR_EMOJI_CATS = [
     { icon: "😊", label: "Visages", emojis: ["😊","😎","🤩","😏","🥸","🤓","😇","🥳","😈","👻","💀","🤖","👽","🎭"] },
     { icon: "👩", label: "Femmes",  emojis: ["👸","🧙‍♀️","🦸‍♀️","🧝‍♀️","🧜‍♀️","🧚‍♀️","🧛‍♀️","🧟‍♀️","💃","👩‍💻","👩‍🚀","🧑‍🎤","🧑‍🎨","🧕"] },
@@ -445,14 +447,14 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </div>
               {/* Droite : avatar seul */}
               <div data-emoji-picker style={{ position: "relative", flexShrink: 0 }}>
-                <div onClick={() => setEmojiPickerOpen(o => !o)} title="Compte"
+                <div ref={emojiTriggerRef} onClick={() => setEmojiPickerOpen(o => !o)} title="Compte"
                   style={{ width: "34px", height: "34px", borderRadius: "50%", background: C.sb, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", userSelect: "none" }}>
                   {avatarEmoji
                     ? <span style={{ fontSize: "16px", lineHeight: 1 }}>{avatarEmoji}</span>
                     : <span style={{ color: "#C1E8FF", fontWeight: "700", fontSize: "12px" }}>{(localUserName || "P")[0].toUpperCase()}</span>}
                 </div>
-                {emojiPickerOpen && (
-                  <div style={{ position: "absolute", top: "44px", right: 0, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.16)", zIndex: 9999, width: "240px", overflow: "visible" }}>
+                {emojiPickerOpen && ReactDOM.createPortal(
+                  <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, right: window.innerWidth - (emojiTriggerRef.current?.getBoundingClientRect().right ?? window.innerWidth), background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.16)", zIndex: 99999, width: "240px" }}>
                     {/* Nom + déconnexion */}
                     <div style={{ padding: "12px 12px 10px", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: "8px" }}>
                       <input
@@ -497,7 +499,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                       </div>
                     )}
                   </div>
-                )}
+                  , document.body)}
               </div>
             </>
           ) : (
@@ -521,15 +523,15 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 </button>
                 <div data-emoji-picker style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "12px", borderLeft: `1px solid ${C.border}`, position: "relative" }}>
                   {/* Bouton emoji */}
-                  <div onClick={() => setEmojiPickerOpen(o => !o)} title="Changer l'emoji"
+                  <div ref={emojiTriggerRef} onClick={() => setEmojiPickerOpen(o => !o)} title="Changer l'emoji"
                     style={{ width: "32px", height: "32px", borderRadius: "50%", background: C.sb, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", userSelect: "none" }}>
                     {avatarEmoji
                       ? <span style={{ fontSize: "16px", lineHeight: 1 }}>{avatarEmoji}</span>
                       : <span style={{ color: "#C1E8FF", fontWeight: "700", fontSize: "12px" }}>{(localUserName || "P")[0].toUpperCase()}</span>}
                   </div>
-                  {/* Popup emoji */}
-                  {emojiPickerOpen && (
-                    <div style={{ position: "absolute", top: "44px", right: 0, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 9999, width: "220px", overflow: "visible" }}>
+                  {/* Popup emoji — portal pour échapper à overflow:hidden du topbar */}
+                  {emojiPickerOpen && ReactDOM.createPortal(
+                    <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, right: window.innerWidth - (emojiTriggerRef.current?.getBoundingClientRect().right ?? window.innerWidth), background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 99999, width: "240px" }}>
                       <div style={{ display: "flex", height: "210px", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
                         <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
                           {AVATAR_EMOJI_CATS.map((cat, i) => (
@@ -554,7 +556,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                         </div>
                       )}
                     </div>
-                  )}
+                  , document.body)}
                   {/* Nom + déconnexion */}
                   <div style={{ position: "relative" }}>
                     <div onClick={() => setEditingName(o => !o)} style={{ lineHeight: 1, cursor: "pointer" }}>
