@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { C } from "../constants/theme";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur } from "../lib/finance";
-import { COURTIERS_DETAIL, getCourtierForAccount } from "../constants/courtiers";
+import { COURTIERS, COURTIERS_DETAIL, getCourtierForAccount } from "../constants/courtiers";
 import { DEFAULT_PROFIL } from "../constants/config";
 
 const AI_PF_KEY = "bourse_ai_portfolio";
@@ -33,8 +33,11 @@ function totalValue(pf, prices) {
   }, 0);
 }
 
+const ETF_TICKERS = new Set(["CW8.PA","PANX.PA","PUST.PA","EWLD.PA","IWDA.AS","CSPX.AS"]);
+
 // ── Apply AI decisions to portfolio ──────────────────────────────────────────
-function applyDecisions(portfolio, decisions, prices) {
+function applyDecisions(portfolio, decisions, prices, courtierConstraints = {}) {
+  const { minOrdre = 0, minOrdreETF = 0, fractionne = false } = courtierConstraints;
   let cash = portfolio.cash;
   let positions = (portfolio.positions || []).map(p => ({ ...p }));
   const newTrades = [];
@@ -47,6 +50,12 @@ function applyDecisions(portfolio, decisions, prices) {
 
     if (d.action === "BUY") {
       const montant = d.quantite * prix;
+      // Enforce courtier minimum order amount
+      const isETF = ETF_TICKERS.has(d.ticker);
+      const minReq = isETF ? Math.max(minOrdre, minOrdreETF) : minOrdre;
+      if (montant < minReq) continue;
+      // Enforce no fractional shares
+      if (!fractionne && !Number.isInteger(d.quantite)) continue;
       if (montant > cash - cashMin) continue;
       cash -= montant;
       const existing = positions.find(p => p.ticker === d.ticker);
@@ -270,6 +279,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       last_cycle: null, strategie_courante: null,
       last_morning_cycle: null, last_evening_cycle: null,
       last_dca_date: null,
+      last_synced_liquidites: Math.round(liquidites * 100) / 100,
     };
     setAiPf(newPf);
     save(AI_PF_KEY, newPf);
@@ -282,12 +292,14 @@ export default function AIPortfolioTab({ account, hidden }) {
     setError(null);
     setCycleLog(null);
 
+    // Charger le profil une seule fois
+    const profil = load("bourse_profil", DEFAULT_PROFIL);
+
     // DCA mensuel : injecter l'apport le 1er de chaque mois
     const { todayParis } = getParisTime();
     const currentMonth = todayParis.slice(0, 7); // "YYYY-MM"
     const isFirstOfMonth = todayParis.slice(8, 10) === "01";
-    const profilDca = load("bourse_profil", DEFAULT_PROFIL);
-    const dcaMensuel = profilDca.dcaMensuel || 0;
+    const dcaMensuel = profil.dcaMensuel || 0;
 
     let workingPf = aiPf;
     let dcaInjected = false;
@@ -304,6 +316,29 @@ export default function AIPortfolioTab({ account, hidden }) {
       };
       dcaInjected = true;
       setAiPf(workingPf);
+      save(AI_PF_KEY, workingPf);
+    }
+
+    // Sync liquidités réelles : si l'utilisateur a ajouté du cash sur son compte
+    const currentLiquidites = account === "PEA" ? (profil.especesPEA || 0) : (profil.especesCTO || 0);
+    const lastSynced = workingPf.last_synced_liquidites ?? null;
+    const deltaLiquidites = lastSynced !== null ? Math.round((currentLiquidites - lastSynced) * 100) / 100 : 0;
+
+    if (deltaLiquidites > 1) {
+      workingPf = {
+        ...workingPf,
+        cash: Math.round((workingPf.cash + deltaLiquidites) * 100) / 100,
+        last_synced_liquidites: currentLiquidites,
+        trades: [
+          { date: new Date().toISOString(), action: "DEPOT", ticker: "—", nom: "Liquidités synchronisées", quantite: 0, prix: 0, montant: deltaLiquidites, raison: `Nouveaux fonds détectés sur le ${account} — +${fmtEur(deltaLiquidites)}` },
+          ...(workingPf.trades || [])
+        ].slice(0, 100),
+      };
+      setAiPf(workingPf);
+      save(AI_PF_KEY, workingPf);
+    } else if (lastSynced === null) {
+      // Premier cycle : mémoriser la valeur de référence
+      workingPf = { ...workingPf, last_synced_liquidites: currentLiquidites };
       save(AI_PF_KEY, workingPf);
     }
 
@@ -325,13 +360,13 @@ export default function AIPortfolioTab({ account, hidden }) {
       }
 
       // 2. Call AI decision endpoint
-      const profil = load("bourse_profil", DEFAULT_PROFIL);
       const courtierKey = getCourtierForAccount(profil, account);
+      const courtierObj = COURTIERS[courtierKey] || COURTIERS.boursobank;
       const courtier_info = COURTIERS_DETAIL[courtierKey] || COURTIERS_DETAIL.boursobank;
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0 }),
+        body: JSON.stringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {
@@ -341,8 +376,8 @@ export default function AIPortfolioTab({ account, hidden }) {
       const { decisions, strategie } = await res.json();
       if (!decisions) throw new Error("Réponse IA invalide");
 
-      // 3. Apply trades locally
-      const updatedPf = applyDecisions(workingPf, decisions, freshPrices);
+      // 3. Apply trades locally (enforce courtier constraints)
+      const updatedPf = applyDecisions(workingPf, decisions, freshPrices, courtierObj);
       updatedPf.strategie_courante = strategie || updatedPf.strategie_courante;
       const now = new Date().toISOString();
       if (session === "OUVERTURE") updatedPf.last_morning_cycle = now;
@@ -562,9 +597,9 @@ export default function AIPortfolioTab({ account, hidden }) {
               {aiPf.trades.slice(0, 20).map((t, i) => (
                 <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start", padding: "7px 9px", borderRadius: "9px", background: "#F8F9FA" }}>
                   <span style={{ flexShrink: 0, fontSize: "9px", fontWeight: "800", padding: "3px 6px", borderRadius: "5px", marginTop: "1px",
-                    background: t.action === "BUY" ? "rgba(5,150,105,0.1)" : t.action === "DCA" ? "rgba(30,58,95,0.1)" : "rgba(220,38,38,0.08)",
-                    color: t.action === "BUY" ? "#059669" : t.action === "DCA" ? "#1E3A5F" : "#DC2626" }}>
-                    {t.action === "BUY" ? "ACHAT" : t.action === "DCA" ? "DCA" : "VENTE"}
+                    background: t.action === "BUY" ? "rgba(5,150,105,0.1)" : t.action === "DCA" || t.action === "DEPOT" ? "rgba(30,58,95,0.1)" : "rgba(220,38,38,0.08)",
+                    color: t.action === "BUY" ? "#059669" : t.action === "DCA" || t.action === "DEPOT" ? "#1E3A5F" : "#DC2626" }}>
+                    {t.action === "BUY" ? "ACHAT" : t.action === "DCA" ? "DCA" : t.action === "DEPOT" ? "DÉPÔT" : "VENTE"}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>

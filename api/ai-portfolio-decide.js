@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(503).json({ error: "Service IA non configuré" });
 
-  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount } = req.body || {};
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf } = req.body || {};
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
 
   const valeurTotale = portfolio.cash + (portfolio.positions || []).reduce((s, p) => {
@@ -82,6 +82,8 @@ module.exports = async function handler(req, res) {
 
   const posMax = (valeurTotale * 0.20).toFixed(0);
   const cashMin = (valeurTotale * 0.05).toFixed(0);
+  const minOrdreNum = courtier_min_ordre || 0;
+  const minETFNum   = courtier_min_etf   || 0;
 
   const sessionCtx = session_type === "OUVERTURE"
     ? "SESSION OUVERTURE (9h05) : Cherche les opportunités d'achat, déploie le cash disponible sur les meilleures convictions du moment. Achats prioritaires."
@@ -121,6 +123,9 @@ ${univAvecPrix}
 - Position max par titre: ${posMax}€ (20% du capital)
 - Cash minimum à conserver: ${cashMin}€ (5%)
 - Avant tout BUY: vérifier que quantite × cours ≤ cash_disponible - ${cashMin}€
+${minOrdreNum > 0 ? `- Ordre minimum courtier: ${minOrdreNum}€ par transaction (actions). NE PAS placer d'ordre < ${minOrdreNum}€.` : ""}
+${minETFNum > 0 ? `- Ordre minimum ETF: ${minETFNum}€ par transaction. NE PAS acheter un ETF pour < ${minETFNum}€.` : ""}
+- Pas d'achat fractionné : arrondir à l'entier inférieur (Math.floor)
 - Si 1er cycle (aucune position): déployer 60-70% en 3-5 positions diversifiées sectoriellement
 - Éviter de vendre une position achetée au cycle précédent sans raison forte
 
