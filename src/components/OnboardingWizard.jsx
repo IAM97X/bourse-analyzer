@@ -1,216 +1,90 @@
 import { useState } from "react";
-import { save } from "../lib/storage";
 import { C, shadow } from "../constants/theme";
-import { hasClaudeKey, hasAI } from "../lib/api";
 
 export const ONBOARDING_KEY = "bourse_onboarding_v1";
 
-const HORIZONS = [
-  { key: "court",     label: "Court",      sub: "< 2 ans" },
-  { key: "moyen",     label: "Moyen",      sub: "2–5 ans" },
-  { key: "long",      label: "Long",       sub: "5–10 ans" },
-  { key: "tres-long", label: "Très long",  sub: "> 10 ans" },
+const SLIDES = [
+  {
+    icon: "📊",
+    title: "Suivez votre portefeuille",
+    desc: "Ajoutez vos positions, consultez vos cours en temps réel, vos plus-values et la répartition sectorielle de votre portefeuille PEA ou CTO.",
+    color: "rgba(30,58,95,0.06)",
+  },
+  {
+    icon: "🧠",
+    title: "L'IA analyse pour vous",
+    desc: "Signaux IA, Autopilot, Conseiller privé et Portefeuille IA autonome — quatre outils pour analyser, recommander et agir sur votre portefeuille.",
+    color: "rgba(59,130,246,0.06)",
+  },
+  {
+    icon: "🎯",
+    title: "Planifiez votre DCA",
+    desc: "Définissez votre versement mensuel et laissez l'IA calculer le meilleur moment et les meilleures valeurs pour renforcer votre portefeuille.",
+    color: "rgba(5,150,105,0.06)",
+  },
+  {
+    icon: "⚙️",
+    title: "Configurez à votre rythme",
+    desc: "Renseignez votre profil, votre courtier et vos clés API dans Compte → Profil et Paramètres. Des infobulles vous guident partout dans l'app.",
+    color: "rgba(245,158,11,0.06)",
+  },
 ];
 
-const inp = {
-  width: "100%", padding: "11px 14px", borderRadius: "12px",
-  border: `1.5px solid ${C.border}`, background: C.snowOff,
-  fontSize: "14px", color: C.ink, fontFamily: "Inter,sans-serif",
-  outline: "none", boxSizing: "border-box",
-};
-
-const choiceBtn = (active) => ({
-  flex: 1, padding: "12px 8px", borderRadius: "12px", cursor: "pointer",
-  border: active ? `2px solid ${C.navyPill}` : `1.5px solid ${C.border}`,
-  background: active ? `rgba(30,58,95,0.07)` : C.snow,
-  color: active ? C.navyPill : C.inkMuted,
-  fontFamily: "Inter,sans-serif", fontWeight: active ? "700" : "500",
-  fontSize: "13px", transition: "all 0.15s",
-});
-
 export default function OnboardingWizard({ onComplete }) {
-  const [step, setStep]       = useState(0);
-  const [compte, setCompte]   = useState("PEA");
-  const [horizon, setHorizon] = useState("moyen");
-  const [dca, setDca]         = useState("");
-  const [apiKey, setApiKey]   = useState("");
-  const [showKey, setShowKey] = useState(false);
+  const [step, setStep] = useState(0);
 
-  function finalize() {
-    const profil = {
-      capital: 0, risque: "equilibre",
-      horizon,
-      dcaMensuel: parseFloat(dca) || 0,
-      dcaDuree: 12,
-      courtierPEA: "boursobank", courtierCTO: "degiro",
-      especesPEA: 0, especesCTO: 0,
-      versementsPEA: 0, versementsCTO: 0,
-    };
-    save("bourse_profil", profil);
-    save("bourse_account", compte === "CTO" ? "CTO" : "PEA");
+  const isLast = step === SLIDES.length - 1;
+  const s = SLIDES[step];
 
-    if (apiKey.trim()) {
-      try {
-        const existing = JSON.parse(localStorage.getItem("bourse_api_keys") || "{}");
-        save("bourse_api_keys", { ...existing, anthropic: apiKey.trim() });
-      } catch {}
-    }
-
+  const finish = () => {
     try { localStorage.setItem(ONBOARDING_KEY, "1"); } catch {}
     onComplete();
-  }
-
-  const steps = [
-    {
-      icon: "👋",
-      title: "Bienvenue !",
-      subtitle: "Pour personnaliser ton expérience, dis-moi en 2 étapes comment tu investis.",
-      content: (
-        <div>
-          <div style={{ fontSize: "12px", fontWeight: "600", color: C.inkSubtle, marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Ton type de compte</div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            {["PEA", "CTO", "Les deux"].map(c => (
-              <button key={c} style={choiceBtn(compte === c)} onClick={() => setCompte(c)}>{c}</button>
-            ))}
-          </div>
-          <div style={{ marginTop: "14px", padding: "12px 14px", background: "rgba(30,58,95,0.05)", borderRadius: "10px", fontSize: "12px", color: C.inkMuted, lineHeight: "1.6" }}>
-            {compte === "PEA" && "Le PEA est fiscalement avantageux après 5 ans. Idéal pour investir en actions européennes sur le long terme."}
-            {compte === "CTO" && "Le CTO est plus flexible — tu peux acheter n'importe quelle action dans le monde, sans plafond."}
-            {compte === "Les deux" && "Tu as les deux ? Parfait, tu pourras suivre chaque compte séparément dans l'app."}
-          </div>
-        </div>
-      ),
-    },
-    {
-      icon: "🎯",
-      title: "Ton objectif",
-      subtitle: "Ces infos permettent à l'IA d'adapter ses recommandations à ta situation.",
-      content: (
-        <div>
-          <div style={{ fontSize: "12px", fontWeight: "600", color: C.inkSubtle, marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Horizon d'investissement</div>
-          <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-            {HORIZONS.map(h => (
-              <button key={h.key} style={{ ...choiceBtn(horizon === h.key), display: "flex", flexDirection: "column", gap: "2px", padding: "10px 6px" }} onClick={() => setHorizon(h.key)}>
-                <span style={{ fontSize: "12px" }}>{h.label}</span>
-                <span style={{ fontSize: "10px", fontWeight: "400", opacity: 0.7 }}>{h.sub}</span>
-              </button>
-            ))}
-          </div>
-          <div>
-            <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Montant DCA mensuel (optionnel)</div>
-            <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px", lineHeight: "1.5" }}>
-              Le DCA consiste à investir un montant fixe chaque mois, quelle que soit la situation du marché.
-            </div>
-            <div style={{ position: "relative" }}>
-              <input style={{ ...inp, paddingRight: "36px" }} type="number" min="0" step="10" placeholder="ex : 100" value={dca} onChange={e => setDca(e.target.value)} />
-              <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "13px", color: C.inkMuted }}>€/mois</span>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      icon: "🤖",
-      title: "Activez votre Conseiller IA",
-      subtitle: "Votre Conseiller Privé répond à toutes vos questions et analyse votre portefeuille 24h/24.",
-      content: (
-        <div>
-          {hasClaudeKey() ? (
-            <div style={{ padding: "16px", background: "rgba(5,150,105,0.08)", border: "1px solid rgba(5,150,105,0.2)", borderRadius: "12px", textAlign: "center" }}>
-              <div style={{ fontSize: "22px", marginBottom: "6px" }}>✓</div>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: C.green }}>Clé Claude configurée</div>
-              <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "4px" }}>Analyses avancées activées.</div>
-            </div>
-          ) : hasAI() ? (
-            <div>
-              <div style={{ padding: "12px 14px", background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.18)", borderRadius: "10px", marginBottom: "14px" }}>
-                <div style={{ fontSize: "13px", fontWeight: "700", color: "#1D4ED8", marginBottom: "4px" }}>✨ IA Gemini déjà active — gratuit</div>
-                <div style={{ fontSize: "12px", color: "#3B82F6", lineHeight: "1.6" }}>Votre conseiller IA fonctionne dès maintenant sans clé. Pour des analyses encore plus précises, vous pouvez ajouter une clé Claude (optionnel).</div>
-              </div>
-              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Clé Claude (optionnel)</div>
-              <div style={{ position: "relative" }}>
-                <input type={showKey ? "text" : "password"} style={{ ...inp, paddingRight: "60px", fontFamily: "monospace", fontSize: "12px" }} placeholder="sk-ant-..." value={apiKey} onChange={e => setApiKey(e.target.value)} />
-                <button onClick={() => setShowKey(v => !v)} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", color: C.inkSubtle, fontFamily: "Inter,sans-serif" }}>
-                  {showKey ? "Masquer" : "Voir"}
-                </button>
-              </div>
-              <a href="https://console.anthropic.com" target="_blank" rel="noreferrer" style={{ display: "block", marginTop: "10px", textAlign: "center", fontSize: "12px", color: C.navy, fontWeight: "600", textDecoration: "none" }}>
-                Créer un compte → console.anthropic.com
-              </a>
-            </div>
-          ) : (
-            <div>
-              <div style={{ padding: "12px 14px", background: C.paleBlue, borderRadius: "10px", marginBottom: "14px", fontSize: "12px", color: C.navy, lineHeight: "1.6" }}>
-                Ajoutez une clé Claude pour activer toutes les fonctions IA.
-              </div>
-              <div style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Clé API Claude</div>
-              <div style={{ position: "relative" }}>
-                <input type={showKey ? "text" : "password"} style={{ ...inp, paddingRight: "60px", fontFamily: "monospace", fontSize: "12px" }} placeholder="sk-ant-..." value={apiKey} onChange={e => setApiKey(e.target.value)} />
-                <button onClick={() => setShowKey(v => !v)} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "11px", color: C.inkSubtle, fontFamily: "Inter,sans-serif" }}>
-                  {showKey ? "Masquer" : "Voir"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      ),
-      skipLabel: "Configurer plus tard →",
-    },
-  ];
-
-  const s = steps[step];
-  const isLast = step === steps.length - 1;
+  };
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,15,25,0.72)", backdropFilter: "blur(8px)", padding: "20px" }}>
-      <div style={{ background: "#fff", borderRadius: "28px", padding: "32px 28px 24px", maxWidth: "420px", width: "100%", boxShadow: shadow.float }}>
+      <div style={{ background: "#fff", borderRadius: "28px", padding: "36px 28px 28px", maxWidth: "400px", width: "100%", boxShadow: shadow.float }}>
 
         {/* Progress dots */}
-        <div style={{ display: "flex", justifyContent: "center", gap: "6px", marginBottom: "28px" }}>
-          {steps.map((_, i) => (
-            <div key={i} style={{ width: i === step ? "22px" : "6px", height: "6px", borderRadius: "3px", background: i <= step ? C.navyPill : C.border, transition: "all 0.3s" }} />
+        <div style={{ display: "flex", justifyContent: "center", gap: "6px", marginBottom: "32px" }}>
+          {SLIDES.map((_, i) => (
+            <div key={i} onClick={() => setStep(i)} style={{ width: i === step ? "22px" : "6px", height: "6px", borderRadius: "3px", background: i <= step ? C.navyPill : C.border, transition: "all 0.3s", cursor: "pointer" }} />
           ))}
         </div>
 
         {/* Icon */}
-        <div style={{ width: "64px", height: "64px", borderRadius: "20px", background: C.paleBlue, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", margin: "0 auto 16px" }}>
+        <div style={{ width: "72px", height: "72px", borderRadius: "22px", background: s.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", margin: "0 auto 20px" }}>
           {s.icon}
         </div>
 
-        {/* Title */}
-        <div style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", textAlign: "center", marginBottom: "6px" }}>{s.title}</div>
-        <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.6", textAlign: "center", marginBottom: "22px" }}>{s.subtitle}</div>
-
-        {/* Content */}
-        {s.content}
+        {/* Text */}
+        <div style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", textAlign: "center", marginBottom: "10px", lineHeight: 1.2 }}>
+          {s.title}
+        </div>
+        <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.7", textAlign: "center", marginBottom: "32px" }}>
+          {s.desc}
+        </div>
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: "8px", marginTop: "22px" }}>
+        <div style={{ display: "flex", gap: "8px" }}>
           {step > 0 && (
             <button onClick={() => setStep(s => s - 1)}
               style={{ padding: "12px 16px", borderRadius: "14px", border: `1px solid ${C.border}`, background: C.snowOff, color: C.inkMuted, fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
               ←
             </button>
           )}
-          <button onClick={() => isLast ? finalize() : setStep(s => s + 1)}
+          <button onClick={isLast ? finish : () => setStep(s => s + 1)}
             style={{ flex: 1, padding: "13px", borderRadius: "14px", border: "none", background: `linear-gradient(135deg, ${C.navyPill} 0%, #2563EB 100%)`, color: "#fff", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: shadow.pill }}>
             {isLast ? "Commencer →" : "Suivant →"}
           </button>
         </div>
 
         {/* Skip */}
-        {s.skipLabel && (
-          <button onClick={() => isLast ? finalize() : setStep(s => s + 1)}
-            style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: C.inkSubtle, fontSize: "12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
-            {s.skipLabel}
-          </button>
-        )}
-        {step === 0 && (
-          <button onClick={finalize}
-            style={{ display: "block", margin: "12px auto 0", background: "none", border: "none", color: C.inkSubtle, fontSize: "11px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
-            Passer l'introduction
-          </button>
-        )}
+        <button onClick={finish}
+          style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: C.inkSubtle, fontSize: "12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          Passer →
+        </button>
+
       </div>
     </div>
   );

@@ -212,6 +212,16 @@ function EmptyState({ onInit, account, error }) {
   );
 }
 
+// Paris time helper — sv-SE outputs "YYYY-MM-DD HH:MM:SS", clean to parse
+function getParisTime() {
+  const now = new Date();
+  const s = now.toLocaleString("sv-SE", { timeZone: "Europe/Paris" }); // "2026-05-28 11:30:00"
+  const [date, time] = s.split(" ");
+  const [h, m] = time.split(":").map(Number);
+  const dow = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(now);
+  return { h, m, todayParis: date, isWeekend: dow === "Sat" || dow === "Sun" };
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AIPortfolioTab({ account, hidden }) {
   const [aiPf, setAiPf]         = useState(() => load(AI_PF_KEY, null));
@@ -236,12 +246,8 @@ export default function AIPortfolioTab({ account, hidden }) {
     if (!aiPf) return;
     const check = () => {
       if (cycling) return;
-      const now = new Date();
-      const fmt = (type) => parseInt(new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", [type]: "numeric", hour12: false }).format(now));
-      const h = fmt("hour"), m = fmt("minute");
-      const dow = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(now);
-      if (dow === "Sat" || dow === "Sun") return;
-      const todayParis = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Paris" }).format(now);
+      const { h, m, todayParis, isWeekend } = getParisTime();
+      if (isWeekend) return;
       if (h === 9 && m >= 5 && m <= 20 && !aiPf.last_morning_cycle?.startsWith(todayParis)) handleRunCycle("OUVERTURE");
       else if (h === 17 && m >= 15 && m <= 30 && !aiPf.last_evening_cycle?.startsWith(todayParis)) handleRunCycle("CLÔTURE");
     };
@@ -370,20 +376,16 @@ export default function AIPortfolioTab({ account, hidden }) {
   const perfColor = (p) => p === null ? C.inkMuted : p >= 0 ? "#059669" : "#DC2626";
 
   const nextCycleLabel = (() => {
-    const now = new Date();
-    const parisFmt = (type) => parseInt(new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", [type]: "numeric", hour12: false }).format(now));
-    const h = parisFmt("hour"), m = parisFmt("minute");
-    const todayParis = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Paris" }).format(now);
-    const dow = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(now);
-    const isWeekend = dow === "Sat" || dow === "Sun";
-    const morningDone = aiPf?.last_morning_cycle?.startsWith(todayParis);
-    const eveningDone = aiPf?.last_evening_cycle?.startsWith(todayParis);
-    if (!isWeekend && !(h > 9 || (h === 9 && m >= 5)) && !morningDone) return "aujourd'hui à 9h05";
-    if (!isWeekend && !(h > 17 || (h === 17 && m >= 15)) && !eveningDone) return "aujourd'hui à 17h15";
-    // Find next weekday
-    const next = new Date(now);
-    do { next.setDate(next.getDate() + 1); } while (["Sat","Sun"].includes(new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(next)));
-    return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "long", day: "numeric", month: "long" }).format(next) + " à 9h05";
+    try {
+      const { h, m, todayParis, isWeekend } = getParisTime();
+      const morningDone = aiPf?.last_morning_cycle?.startsWith(todayParis);
+      const eveningDone = aiPf?.last_evening_cycle?.startsWith(todayParis);
+      if (!isWeekend && (h < 9 || (h === 9 && m < 5)) && !morningDone) return "aujourd'hui à 9h05";
+      if (!isWeekend && (h < 17 || (h === 17 && m < 15)) && !eveningDone) return "aujourd'hui à 17h15";
+      const next = new Date();
+      do { next.setDate(next.getDate() + 1); } while (["Sat","Sun"].includes(new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(next)));
+      return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "long", day: "numeric", month: "long" }).format(next) + " à 9h05";
+    } catch { return "prochain jour ouvré à 9h05"; }
   })();
 
   const inceptionFmt = aiPf.inception_date
