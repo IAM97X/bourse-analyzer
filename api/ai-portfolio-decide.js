@@ -256,24 +256,41 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
     generationConfig: { maxOutputTokens: 2000, temperature: 0.35 },
   };
 
-  try {
+  // Fallback chain : tenter chaque modèle jusqu'au premier succès
+  const MODELS = [
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+  ];
+
+  async function callGemini(modelId) {
     const upstream = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`,
       { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(30000) }
     );
     const data = await upstream.json();
-    if (data.error) throw new Error(data.error.message || "Erreur Gemini");
-
+    if (data.error) throw new Error(data.error.message || `Erreur ${modelId}`);
     const text = data.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
-    if (!text) throw new Error("Réponse vide de l'IA");
-
-    const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
-    if (s === -1 || e === -1) throw new Error("JSON introuvable dans la réponse IA");
-
-    const result = JSON.parse(clean.substring(s, e + 1));
-    res.status(200).json(result);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+    if (!text) throw new Error(`Réponse vide (${modelId})`);
+    return text;
   }
+
+  let lastError = null;
+  for (const modelId of MODELS) {
+    try {
+      const text = await callGemini(modelId);
+      const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const s = clean.indexOf("{"), e = clean.lastIndexOf("}");
+      if (s === -1 || e === -1) throw new Error("JSON introuvable dans la réponse IA");
+      const result = JSON.parse(clean.substring(s, e + 1));
+      return res.status(200).json({ ...result, _model: modelId });
+    } catch (e) {
+      lastError = e;
+      // Quota / rate-limit → essayer le modèle suivant
+      const isQuota = e.message?.toLowerCase().includes("quota") || e.message?.toLowerCase().includes("rate");
+      if (!isQuota) break;
+    }
+  }
+  res.status(500).json({ error: lastError?.message || "Tous les modèles IA sont indisponibles" });
 };
