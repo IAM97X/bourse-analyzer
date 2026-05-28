@@ -201,7 +201,7 @@ module.exports = async function handler(req, res) {
     : "CYCLE MANUEL : Analyse complète buy/sell/hold.";
 
   const autopilotCtx = autopilot_context
-    ? `\n=== ANALYSE AUTOPILOT (contexte marché récent) ===\nScore marché : ${autopilot_context.score_marche || "N/A"}/20\nContexte : ${autopilot_context.resume || "N/A"}\nOpportunités identifiées :\n${(autopilot_context.opportunites || []).map(o => `  • ${o}`).join('\n') || "  Aucune"}\nGénéré le : ${autopilot_context.generated_at ? new Date(autopilot_context.generated_at).toLocaleDateString('fr-FR') : "N/A"}`
+    ? `\n=== CONTEXTE MARCHÉ (source : Autopilot, à titre informatif) ===\nNote : ces données sont une lecture externe du marché. Tu restes autonome — tu n'es pas tenu de les suivre. Utilise-les comme signal supplémentaire parmi d'autres.\nScore marché global : ${autopilot_context.score_marche || "N/A"}/20\nLecture marché : ${autopilot_context.resume || "N/A"}\nTitres repérés par l'analyse externe :\n${(autopilot_context.opportunites || []).map(o => `  • ${o}`).join('\n') || "  Aucun"}\n(Analyse datant du : ${autopilot_context.generated_at ? new Date(autopilot_context.generated_at).toLocaleDateString('fr-FR') : "N/A"})`
     : "";
 
   const courtierCtx = courtier_info
