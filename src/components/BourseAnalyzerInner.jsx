@@ -405,7 +405,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                     : <span style={{ color: "#C1E8FF", fontWeight: "700", fontSize: "12px" }}>{(localUserName || "P")[0].toUpperCase()}</span>}
                 </div>
                 {emojiPickerOpen && (
-                  <div style={{ position: "absolute", top: "44px", right: 0, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.16)", zIndex: 9999, width: "240px", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: "44px", right: 0, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.16)", zIndex: 9999, width: "240px", overflow: "visible" }}>
                     {/* Nom + déconnexion */}
                     <div style={{ padding: "12px 12px 10px", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: "8px" }}>
                       <input
@@ -426,7 +426,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                       </button>
                     </div>
                     {/* Sélecteur emoji */}
-                    <div style={{ display: "flex", height: "200px" }}>
+                    <div style={{ display: "flex", height: "200px", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
                       <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
                         {AVATAR_EMOJI_CATS.map((cat, i) => (
                           <button key={i} onClick={() => setEmojiCat(i)} title={cat.label}
@@ -435,7 +435,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                           </button>
                         ))}
                       </div>
-                      <div style={{ flex: 1, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
+                      <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
                         {AVATAR_EMOJI_CATS[emojiCat].emojis.map(e => (
                           <button key={e} onClick={() => { pickEmoji(e); setEmojiPickerOpen(false); }}
                             style={{ width: "28px", height: "28px", borderRadius: "7px", border: avatarEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: avatarEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -482,8 +482,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                   </div>
                   {/* Popup emoji */}
                   {emojiPickerOpen && (
-                    <div style={{ position: "absolute", top: "44px", right: 0, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 9999, width: "220px", overflow: "hidden" }}>
-                      <div style={{ display: "flex", height: "210px" }}>
+                    <div style={{ position: "absolute", top: "44px", right: 0, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 9999, width: "220px", overflow: "visible" }}>
+                      <div style={{ display: "flex", height: "210px", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
                         <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
                           {AVATAR_EMOJI_CATS.map((cat, i) => (
                             <button key={i} onClick={() => setEmojiCat(i)} title={cat.label}
@@ -492,7 +492,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                             </button>
                           ))}
                         </div>
-                        <div style={{ flex: 1, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
+                        <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
                           {AVATAR_EMOJI_CATS[emojiCat].emojis.map(e => (
                             <button key={e} onClick={() => { pickEmoji(e); setEmojiPickerOpen(false); }}
                               style={{ width: "28px", height: "28px", borderRadius: "7px", border: avatarEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: avatarEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -590,26 +590,42 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             {/* Plus — menu page */}
             {activeTab === TABS.PLUS && (
               <div style={{ animation: "fadeIn 0.3s ease" }}>
-                <div style={{ marginBottom: "28px" }}>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: "#0F172A", letterSpacing: "-0.03em" }}>Explorer</div>
-                  <div style={{ fontSize: "13px", color: "#64748B", marginTop: "4px" }}>Analyse, historique et configuration</div>
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#0F172A", letterSpacing: "-0.03em" }}>Explorer</div>
+                  <div style={{ fontSize: "12px", color: "#64748B", marginTop: "3px" }}>Analyse, historique et configuration</div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", maxWidth: "560px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "480px" }}>
                   {[
-                    { key: TABS.HISTORIQUE, emoji: "📊", label: "Répartition", desc: "Allocation sectorielle et géographique de votre portefeuille" },
-                    { key: TABS.OPERATIONS, emoji: "↔️", label: "Transactions", desc: "Historique complet de vos achats, ventes et dividendes" },
-                    { key: TABS.PROFIL,     emoji: "👤", label: "Profil",       desc: "Stratégie, horizon de placement et préférences" },
-                    { key: TABS.SETTINGS,   emoji: "⚙️", label: "Paramètres",  desc: "Clés API, synchronisation cloud et options" },
-                  ].map(({ key, emoji, label, desc }) => (
+                    { key: TABS.HISTORIQUE, icon: "📊", label: "Répartition",  desc: "Allocation sectorielle et géographique", color: "#EFF6FF", accent: "#3B82F6" },
+                    { key: TABS.OPERATIONS, icon: "↔️",  label: "Transactions", desc: "Historique achats, ventes et dividendes",  color: "#F0FDF4", accent: "#22C55E" },
+                    { key: TABS.PROFIL,     icon: "👤",  label: "Profil",       desc: "Stratégie, horizon et préférences",        color: "#FFF7ED", accent: "#F97316" },
+                    { key: TABS.SETTINGS,   icon: "⚙️",  label: "Paramètres",  desc: "Clés API, cloud et options",               color: "#F8FAFC", accent: "#64748B" },
+                  ].map(({ key, icon, label, desc, color, accent }) => (
                     <button key={key} onClick={() => changeTab(key)} className="ba-card-hover"
-                      style={{ background: "rgba(255,255,255,0.75)", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "18px", padding: "20px 18px", textAlign: "left", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
-                      <div style={{ fontSize: "26px", marginBottom: "10px", lineHeight: 1 }}>{emoji}</div>
-                      <div style={{ fontSize: "14px", fontWeight: "700", color: "#0F172A", marginBottom: "5px" }}>{label}</div>
-                      <div style={{ fontSize: "12px", color: "#64748B", lineHeight: 1.4 }}>{desc}</div>
+                      style={{ display: "flex", alignItems: "center", gap: "14px", background: "rgba(255,255,255,0.85)", border: "1px solid rgba(15,23,42,0.07)", borderRadius: "14px", padding: "14px 16px", textAlign: "left", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", width: "100%" }}>
+                      <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{icon}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "14px", fontWeight: "700", color: "#0F172A" }}>{label}</div>
+                        <div style={{ fontSize: "12px", color: "#64748B", marginTop: "2px" }}>{desc}</div>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: "#CBD5E1" }}>
+                        <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                     </button>
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Back button for Plus sub-tabs */}
+            {[TABS.HISTORIQUE, TABS.OPERATIONS, TABS.PROFIL, TABS.SETTINGS].includes(activeTab) && (
+              <button onClick={() => changeTab(TABS.PLUS)}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginBottom: "20px", background: "rgba(255,255,255,0.75)", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "50px", padding: "7px 14px 7px 10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#64748B", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Plus
+              </button>
             )}
 
             {activeTab === TABS.HOME       && <HomeTab account={account} profil={profil} marketScores={marketScores} onTabChange={changeTab} hidden={hiddenValues} />}
