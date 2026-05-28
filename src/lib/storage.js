@@ -38,14 +38,23 @@ function scheduleSync(key, value) {
 }
 
 export async function pullFromCloud(userId) {
-  if (!supabase || !userId) return;
+  if (!supabase || !userId) return false;
   try {
     const { data } = await supabase
       .from("user_data").select("key, value").eq("user_id", userId);
-    if (data) data.forEach(({ key, value }) => {
-      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+    if (!data) return false;
+    let changed = false;
+    data.forEach(({ key, value }) => {
+      try {
+        const serialized = JSON.stringify(value);
+        if (localStorage.getItem(key) !== serialized) {
+          localStorage.setItem(key, serialized);
+          changed = true;
+        }
+      } catch {}
     });
-  } catch {}
+    return changed;
+  } catch { return false; }
 }
 
 export const load = (key, def) => {

@@ -144,7 +144,21 @@ export default function BourseAnalyzer() {
         setSyncUserId(session.user.id);
       }
     });
-    return () => subscription.unsubscribe();
+
+    // Re-sync au retour de focus (changement d'appareil ou d'onglet)
+    let lastSync = Date.now();
+    const onFocus = async () => {
+      if (Date.now() - lastSync < 30000) return; // max 1 pull toutes les 30s
+      lastSync = Date.now();
+      const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: {} }));
+      if (!session?.user) return;
+      const changed = await pullFromCloud(session.user.id);
+      if (changed) window.location.reload();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") onFocus(); });
+
+    return () => { subscription.unsubscribe(); window.removeEventListener("focus", onFocus); };
   }, []);
 
   const handleSession = (name) => {
