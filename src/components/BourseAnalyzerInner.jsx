@@ -407,7 +407,13 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     return () => window.removeEventListener("keydown", handler);
   }, [refreshAll]);
 
-  const tabLabel = TAB_LABELS[activeTab] || "";
+  const aiPortfolioLabel = (() => {
+    try {
+      const n = JSON.parse(localStorage.getItem("bourse_ai_config") || "{}").nom?.trim();
+      return n ? `${n} IA` : "Portefeuille IA";
+    } catch { return "Portefeuille IA"; }
+  })();
+  const tabLabel = activeTab === TABS.AI_PORTFOLIO ? aiPortfolioLabel : (TAB_LABELS[activeTab] || "");
 
   return (
     <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%)", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif", filter: darkMode ? "invert(1) hue-rotate(200deg) saturate(0.9)" : "none" }}>
@@ -650,7 +656,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                   { key: TABS.MARCHE,        label: "Signaux IA" },
                   { key: TABS.AUTOPILOT,     label: "Autopilot Atlas" },
                   { key: TABS.CHAT,          label: "Conseiller" },
-                  { key: TABS.AI_PORTFOLIO,  label: "Portefeuille IA" },
+                  { key: TABS.AI_PORTFOLIO,  label: aiPortfolioLabel },
                 ]}
                 active={activeTab}
                 onChange={changeTab}
