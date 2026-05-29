@@ -721,6 +721,9 @@ export default function AIPortfolioTab({ account, hidden }) {
                         <a href={`https://finance.yahoo.com/lookup?s=${p.isin || TICKER_ISIN_MAP[p.ticker] || p.ticker}`} target="_blank" rel="noopener noreferrer" style={{ color: C.inkMuted, textDecoration: "underline", textDecorationStyle: "dotted" }}>{p.ticker}</a>
                         {" · "}{p.quantite} titres · {pctPf.toFixed(0)}% PF
                       </div>
+                      <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px" }}>
+                        Cours {hidden ? "••••" : fmtEur(cours)} · PRU {hidden ? "••••" : fmtEur(p.prix_achat_moyen)}
+                      </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{hidden ? "••••" : fmtEur(valPos)}</div>
