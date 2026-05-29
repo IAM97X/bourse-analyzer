@@ -237,6 +237,9 @@ ${(app_context.transactions_recentes || []).map(t => `  • ${t}`).join("\n") ||
 Dividendes reçus :
 ${(app_context.dividendes_recus || []).map(d => `  • ${d}`).join("\n") || "  Aucun"}
 
+Répartition cible de l'investisseur (à titre informatif — tu n'es pas tenu de la respecter, mais tout écart significatif doit être justifié dans ton raisonnement) :
+${app_context.allocation_cible ? Object.entries(app_context.allocation_cible).filter(([,v]) => Number(v) > 0).map(([k,v]) => `  • ${k}: ${v}%`).join("\n") : "  Non définie"}
+
 Actualités marché (temps réel) :
 ${(app_context.actualites_marche || []).join("\n") || "  Aucune actualité disponible"}` : "";
 
