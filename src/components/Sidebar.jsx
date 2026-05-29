@@ -206,8 +206,11 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                     <span style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)", width: "3px", height: "18px", borderRadius: "2px", background: "#B07D2E" }} />
                   )}
                   {c
-                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", color: isActive ? "#fff" : C.inkSubtle, opacity: isActive ? 1 : 0.6, position: "relative" }}>
-                        {icon}
+                    ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                        {isFeatured
+                          ? <span style={{ fontSize: "11px", fontWeight: "800", fontFamily: "Inter,sans-serif", color: isActive ? "#F5D97A" : "#B07D2E", letterSpacing: "0.5px" }}>IA</span>
+                          : <span style={{ color: isActive ? "#fff" : C.inkSubtle, opacity: isActive ? 1 : 0.6 }}>{icon}</span>
+                        }
                         {isScoringLoading && <span style={{ position: "absolute", top: "-3px", right: "-3px", width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", animation: "pulse 1.2s ease-in-out infinite" }} />}
                       </span>
                     : <span style={{ flex: 1, paddingLeft: isFeatured && !isActive ? "10px" : 0, display: "flex", alignItems: "center", gap: "6px" }}>
