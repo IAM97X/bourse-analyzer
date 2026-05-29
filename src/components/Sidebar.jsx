@@ -131,7 +131,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
           ? <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
               <AppLogo size={38} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span></div>
+                <div style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: refreshing ? "linear-gradient(135deg, #1A4A8A, #4B9DD8, #A8DEFF, #2D6CB5, #1A4A8A)" : "linear-gradient(135deg, #2D6CB5, #5B9BD5)", backgroundSize: refreshing ? "300% 300%" : "100%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: refreshing ? "bn-next-wave 2s ease-in-out infinite" : "none" }}>Next</span></div>
               </div>
               <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "18px", color: C.inkMuted, cursor: "pointer", padding: "4px 8px", lineHeight: 1 }}>✕</button>
             </div>
@@ -144,7 +144,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                 </div>
               )}
               {!c && <div>
-                <div style={{ fontSize: "14px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span></div>
+                <div style={{ fontSize: "14px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: refreshing ? "linear-gradient(135deg, #1A4A8A, #4B9DD8, #A8DEFF, #2D6CB5, #1A4A8A)" : "linear-gradient(135deg, #2D6CB5, #5B9BD5)", backgroundSize: refreshing ? "300% 300%" : "100%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: refreshing ? "bn-next-wave 2s ease-in-out infinite" : "none" }}>Next</span></div>
               </div>}
             </>
         }

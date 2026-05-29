@@ -3,14 +3,15 @@ export default function AppLogo({ size = 28, animated = false }) {
 
   const kf = animated ? `
     @keyframes bn-seq-${id} {
-      0%,  15% { stroke: #85CFEF; }
-      30%, 100% { stroke: #1A4A8A; }
+      0%             { stroke: #1A4A8A; }
+      15%            { stroke: #A8DEFF; }
+      35%, 100%      { stroke: #1A4A8A; }
     }
   ` : "";
 
   const seqStyle = (delay) => animated ? {
     stroke: "#1A4A8A",
-    animation: `bn-seq-${id} 2.1s ease-in-out infinite`,
+    animation: `bn-seq-${id} 2.4s cubic-bezier(0.45,0,0.55,1) infinite`,
     animationDelay: `${delay}s`,
   } : undefined;
 
@@ -21,16 +22,16 @@ export default function AppLogo({ size = 28, animated = false }) {
         {!animated && (
           <defs>
             <linearGradient id={`${id}e1`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#1A4A8A"/>
-              <stop offset="100%" stopColor="#2D6CB5"/>
+              <stop offset="0%" stopColor="#1A3A6B"/>
+              <stop offset="100%" stopColor="#1E5299"/>
             </linearGradient>
             <linearGradient id={`${id}e2`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#2E72BE"/>
-              <stop offset="100%" stopColor="#4B9DD8"/>
+              <stop offset="0%" stopColor="#2563EB"/>
+              <stop offset="100%" stopColor="#3B82F6"/>
             </linearGradient>
             <linearGradient id={`${id}e3`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#4BA8E0"/>
-              <stop offset="100%" stopColor="#85CFEF"/>
+              <stop offset="0%" stopColor="#60A5FA"/>
+              <stop offset="100%" stopColor="#93C5FD"/>
             </linearGradient>
           </defs>
         )}
@@ -44,13 +45,13 @@ export default function AppLogo({ size = 28, animated = false }) {
         <ellipse cx="16" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#1A4A8A" : `url(#${id}e2)`}
           strokeWidth="4.5" fill="none"
-          style={seqStyle(0.7)}/>
+          style={seqStyle(0.8)}/>
 
         <ellipse cx="18" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#1A4A8A" : `url(#${id}e3)`}
           strokeWidth="4.5" fill="none"
           transform="rotate(28 18 16)"
-          style={seqStyle(1.4)}/>
+          style={seqStyle(1.6)}/>
       </svg>
     </>
   );
