@@ -799,9 +799,7 @@ export default function AIPortfolioTab({ account, hidden }) {
           <div style={{ fontSize: "12px", fontWeight: "700", color: "#1E3A5F", marginBottom: "10px" }}>
             Décisions du cycle — {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
           </div>
-          {cycleLog.strategie && (
-            <div style={{ fontSize: "12px", color: C.ink, fontStyle: "italic", marginBottom: "10px", lineHeight: 1.5 }}>"{cycleLog.strategie}"</div>
-          )}
+
           {cycleLog.dca_injected && cycleLog.dca_amount > 0 && (
             <div style={{ display: "flex", alignItems: "center", gap: "7px", padding: "7px 10px", background: "rgba(30,58,95,0.06)", borderRadius: "9px", marginBottom: "8px", fontSize: "12px" }}>
               <span style={{ fontSize: "9px", fontWeight: "800", padding: "2px 6px", borderRadius: "5px", background: "rgba(30,58,95,0.12)", color: "#1E3A5F" }}>DCA</span>
