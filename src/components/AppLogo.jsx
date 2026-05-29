@@ -30,17 +30,17 @@ export default function AppLogo({ size = 28, animated = false }) {
           </linearGradient>
         </defs>
 
-        <ellipse cx="14" cy="16" rx="5.8" ry="9.5"
-          stroke={`url(#${id}e1)`} strokeWidth="2.2" fill="none"
+        <ellipse cx="14" cy="16" rx="6.8" ry="10.5"
+          stroke={`url(#${id}e1)`} strokeWidth="3.2" fill="none"
           style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot1-${id} 6s linear infinite, bn-arc1-${id} 3s ease-in-out infinite` } : undefined}
           transform={animated ? undefined : "rotate(-28 14 16)"}/>
 
-        <ellipse cx="16" cy="16" rx="5.8" ry="9.5"
-          stroke={`url(#${id}e2)`} strokeWidth="2.2" fill="none"
+        <ellipse cx="16" cy="16" rx="6.8" ry="10.5"
+          stroke={`url(#${id}e2)`} strokeWidth="3.2" fill="none"
           style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot2-${id} 8s linear infinite, bn-arc2-${id} 4s ease-in-out infinite` } : undefined}/>
 
-        <ellipse cx="18" cy="16" rx="5.8" ry="9.5"
-          stroke={`url(#${id}e3)`} strokeWidth="2.2" fill="none"
+        <ellipse cx="18" cy="16" rx="6.8" ry="10.5"
+          stroke={`url(#${id}e3)`} strokeWidth="3.2" fill="none"
           style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot3-${id} 10s linear infinite, bn-arc3-${id} 5s ease-in-out infinite` } : undefined}
           transform={animated ? undefined : "rotate(28 18 16)"}/>
       </svg>
