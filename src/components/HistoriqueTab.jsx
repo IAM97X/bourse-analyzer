@@ -1862,10 +1862,10 @@ export function OperationsTab({ account = "PEA" }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <PerformanceGlobale positions={positions} account={account} />
-      <StatistiquesHistorique />
+      <PEAAvisOperes account={account} />
       <FeeWarnings account={account} />
       <Reconciliation account={account} />
-      <PEAAvisOperes account={account} />
+      <StatistiquesHistorique />
     </div>
   );
 }
