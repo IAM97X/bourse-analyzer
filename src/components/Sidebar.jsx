@@ -160,9 +160,9 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         </div>
       )}
 
-      <div className="ba-sidebar-nav" style={{ flex: 1, overflowY: "auto", padding: "12px 8px", display: "flex", flexDirection: "column" }}>
+      <div className="ba-sidebar-nav" style={{ flex: 1, overflowY: "auto", padding: "8px 8px", display: "flex", flexDirection: "column" }}>
         {NAV_GROUPS.map((group, gi) => (
-          <div key={gi} style={{ marginBottom: group.featured ? "8px" : "18px" }}>
+          <div key={gi} style={{ marginBottom: group.featured ? "2px" : "4px" }}>
             {group.label && !c && !group.featured && (
               <div className="ba-sidebar-group-label" style={{ padding: "0 10px", marginBottom: "6px", marginTop: gi > 0 ? "2px" : 0, fontSize: "10px", fontWeight: "700", letterSpacing: "1px", color: C.inkMuted, fontFamily: "Inter,sans-serif", textTransform: "uppercase" }}>
                 {group.label}
@@ -184,7 +184,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                   style={{
                     width: "100%", display: "flex", alignItems: "center",
                     gap: 0,
-                    padding: c ? "9px 0" : "9px 14px",
+                    padding: c ? "7px 0" : "7px 14px",
                     justifyContent: c ? "center" : "flex-start",
                     borderRadius: "10px",
                     background: isActive
