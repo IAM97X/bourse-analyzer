@@ -111,6 +111,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   });
   const [showTour, setShowTour] = useState(false);
   const [mobileNavOpen, setMobileNavOpen]       = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => load("bourse_sidebar_collapsed", true));
+  const toggleSidebarCollapse = useCallback(() => setSidebarCollapsed(v => { const next = !v; save("bourse_sidebar_collapsed", next); return next; }), []);
   const [account, setAccount]                   = useState(() => load("bourse_account", "PEA"));
   const switchAccount = (acc) => { setAccount(acc); save("bourse_account", acc); setActiveTab(TABS.PORTFOLIO); };
   const [activeTab, setActiveTab]               = useState(() => load("bourse_active_tab", TABS.HOME));
@@ -431,6 +433,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)}
         account={account} onSwitchAccount={switchAccount}
         marketScoringUi={marketScoringUi}
+        externalCollapsed={sidebarCollapsed} onExternalToggle={toggleSidebarCollapse}
       />
 
       {/* Main */}
@@ -526,105 +529,62 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             </>
           ) : (
             <>
-              {/* ── DESKTOP : titre page | marchés | contrôles + compte ── */}
-              {/* LEFT */}
-              <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
-                <span style={{ fontSize: "16px", fontWeight: "700", color: C.ink, letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tabLabel}</span>
+              {/* ── DESKTOP : hamburger | logo + titre | avatar ── */}
+              {/* LEFT — hamburger toggle sidebar */}
+              <button onClick={toggleSidebarCollapse} title="Menu"
+                style={{ width: "36px", height: "36px", background: "transparent", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "5px", padding: 0, flexShrink: 0 }}>
+                <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
+                <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
+                <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
+              </button>
+              {/* CENTER — logo + titre */}
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                <AppLogo size={24} animated />
+                <span style={{ fontSize: "15px", fontWeight: "700", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
               </div>
-              {/* CENTER — marchés */}
-              {(PORTFOLIO_TABS.includes(activeTab) || activeTab === TABS.HOME) && (
-                <div style={{ flex: 1, display: "flex", justifyContent: "center", overflow: "hidden" }}>
-                  <MarketStatusBar compact />
+              {/* RIGHT — avatar */}
+              <div data-emoji-picker style={{ position: "relative", flexShrink: 0 }}>
+                <div ref={emojiTriggerRef} onClick={() => setEmojiPickerOpen(o => !o)} title="Compte"
+                  style={{ width: "34px", height: "34px", borderRadius: "50%", background: C.sb, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", userSelect: "none" }}>
+                  {avatarEmoji
+                    ? <span style={{ fontSize: "16px", lineHeight: 1 }}>{avatarEmoji}</span>
+                    : <span style={{ color: "#C1E8FF", fontWeight: "700", fontSize: "12px" }}>{(localUserName || "P")[0].toUpperCase()}</span>}
                 </div>
-              )}
-              {/* RIGHT */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                {refreshAgo && <span style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "400" }}>{refreshAgo}</span>}
-                <button onClick={refreshAll} disabled={refreshing} title={updateAvailable ? "Nouvelle version disponible — cliquer pour mettre à jour" : "Actualiser"}
-                  style={{ position: "relative", width: "34px", height: "34px", background: updateAvailable ? C.green + "18" : "transparent", border: `1px solid ${updateAvailable ? C.green : C.border}`, borderRadius: "10px", cursor: refreshing ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", fontSize: "16px", color: updateAvailable ? C.green : C.inkMuted }}>
-                  <AppLogo size={20} animated={refreshing} />
-                  {updateAvailable && !refreshing && <span style={{ position: "absolute", top: "4px", right: "4px", width: "7px", height: "7px", borderRadius: "50%", background: C.green, boxShadow: `0 0 0 2px ${C.bg}` }} />}
-                </button>
-                <button onClick={toggleHidden} title={hiddenValues ? "Afficher les données" : "Masquer les données"}
-                  style={{ width: "34px", height: "34px", background: hiddenValues ? C.navyLight : "transparent", border: `1px solid ${C.border}`, borderRadius: "10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", color: hiddenValues ? C.navy : C.inkMuted }}>
-                  {hiddenValues ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  )}
-                </button>
-                <div data-emoji-picker style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "12px", borderLeft: `1px solid ${C.border}`, position: "relative" }}>
-                  {/* Bouton emoji */}
-                  <div ref={emojiTriggerRef} onClick={() => setEmojiPickerOpen(o => !o)} title="Changer l'emoji"
-                    style={{ width: "32px", height: "32px", borderRadius: "50%", background: C.sb, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", userSelect: "none" }}>
-                    {avatarEmoji
-                      ? <span style={{ fontSize: "16px", lineHeight: 1 }}>{avatarEmoji}</span>
-                      : <span style={{ color: "#C1E8FF", fontWeight: "700", fontSize: "12px" }}>{(localUserName || "P")[0].toUpperCase()}</span>}
-                  </div>
-                  {/* Popup emoji — portal pour échapper à overflow:hidden du topbar */}
-                  {emojiPickerOpen && createPortal(
-                    <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, left: Math.max(8, Math.min((emojiTriggerRef.current?.getBoundingClientRect().right ?? 240) - 240, window.innerWidth - 248)), background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 99999, width: "240px" }}>
-                      <div style={{ display: "flex", height: "210px", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
-                        <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
-                          {AVATAR_EMOJI_CATS.map((cat, i) => (
-                            <button key={i} onClick={() => setEmojiCat(i)} title={cat.label}
-                              style={{ width: "26px", height: "26px", borderRadius: "7px", border: "none", background: emojiCat === i ? C.navyLight : "transparent", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              {cat.icon}
-                            </button>
-                          ))}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
-                          {AVATAR_EMOJI_CATS[emojiCat].emojis.map(e => (
-                            <button key={e} onClick={() => { pickEmoji(e); setEmojiPickerOpen(false); }}
-                              style={{ width: "28px", height: "28px", borderRadius: "7px", border: avatarEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: avatarEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              {e}
-                            </button>
-                          ))}
-                        </div>
+                {emojiPickerOpen && createPortal(
+                  <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, right: 16, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 99999, width: "240px" }}>
+                    <div style={{ padding: "10px 12px 6px", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <input autoFocus value={localUserName} onChange={e => setLocalUserName(e.target.value)}
+                        onBlur={() => { const name = localUserName.trim() || "Utilisateur"; setLocalUserName(name); try { const s = JSON.parse(localStorage.getItem("bourse_session") || "{}"); localStorage.setItem("bourse_session", JSON.stringify({ ...s, name })); } catch {} }}
+                        onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setEmojiPickerOpen(false); }}
+                        placeholder="Votre prénom ou pseudo"
+                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
+                      <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px", color: C.red, fontSize: "11px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>🚪 Se déconnecter</button>
+                    </div>
+                    <div style={{ display: "flex", height: "180px", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
+                      <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
+                        {AVATAR_EMOJI_CATS.map((cat, i) => (
+                          <button key={i} onClick={() => setEmojiCat(i)} title={cat.label}
+                            style={{ width: "26px", height: "26px", borderRadius: "7px", border: "none", background: emojiCat === i ? C.navyLight : "transparent", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            {cat.icon}
+                          </button>
+                        ))}
                       </div>
-                      {avatarEmoji && (
-                        <div style={{ borderTop: `1px solid ${C.border}`, padding: "6px 10px" }}>
-                          <button onClick={() => { pickEmoji(""); setEmojiPickerOpen(false); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 8px", color: C.inkSubtle, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>✕ Retirer l'emoji</button>
-                        </div>
-                      )}
+                      <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
+                        {AVATAR_EMOJI_CATS[emojiCat].emojis.map(e => (
+                          <button key={e} onClick={() => { pickEmoji(e); setEmojiPickerOpen(false); }}
+                            style={{ width: "28px", height: "28px", borderRadius: "7px", border: avatarEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: avatarEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            {e}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  , document.body)}
-                  {/* Nom + déconnexion */}
-                  <div style={{ position: "relative" }}>
-                    <div onClick={() => setEditingName(o => !o)} style={{ lineHeight: 1, cursor: "pointer" }}>
-                      <div style={{ fontSize: "12px", fontWeight: "600", color: C.ink }}>{localUserName || "Mon PEA"}</div>
-                      <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "3px" }}>▾ Compte</div>
-                    </div>
-                    {editingName && (
-                      <div style={{ position: "absolute", top: "36px", right: 0, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 9999, width: "200px", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <input
-                          autoFocus
-                          value={localUserName}
-                          onChange={e => setLocalUserName(e.target.value)}
-                          onBlur={() => {
-                            const name = localUserName.trim() || "Utilisateur";
-                            setLocalUserName(name);
-                            try { const s = JSON.parse(localStorage.getItem("bourse_session") || "{}"); localStorage.setItem("bourse_session", JSON.stringify({ ...s, name })); } catch {}
-                          }}
-                          onKeyDown={e => { if (e.key === "Enter") { e.target.blur(); setEditingName(false); } if (e.key === "Escape") setEditingName(false); }}
-                          placeholder="Votre prénom ou pseudo"
-                          style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }}
-                        />
-                        <button onClick={onLogout}
-                          style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px", color: C.red, fontSize: "11px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>
-                          🚪 Se déconnecter
-                        </button>
+                    {avatarEmoji && (
+                      <div style={{ borderTop: `1px solid ${C.border}`, padding: "6px 10px" }}>
+                        <button onClick={() => { pickEmoji(""); setEmojiPickerOpen(false); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 8px", color: C.inkSubtle, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>✕ Retirer l'emoji</button>
                       </div>
                     )}
                   </div>
-                </div>
+                , document.body)}
               </div>
             </>
           )}
