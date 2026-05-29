@@ -3,12 +3,9 @@ export default function AppLogo({ size = 28, animated = false }) {
   const id = `bn${size}`;
 
   const kf = animated ? `
-    @keyframes bn-rot1-${id} { from{transform:rotate(-28deg)}  to{transform:rotate(332deg)}  }
-    @keyframes bn-rot2-${id} { from{transform:rotate(0deg)}    to{transform:rotate(360deg)}  }
-    @keyframes bn-rot3-${id} { from{transform:rotate(28deg)}   to{transform:rotate(388deg)}  }
-    @keyframes bn-arc1-${id} { 0%,100%{stroke-dasharray:5,45;stroke-dashoffset:0}  50%{stroke-dasharray:40,10;stroke-dashoffset:-22} }
-    @keyframes bn-arc2-${id} { 0%,100%{stroke-dasharray:5,45;stroke-dashoffset:0}  50%{stroke-dasharray:40,10;stroke-dashoffset:-22} }
-    @keyframes bn-arc3-${id} { 0%,100%{stroke-dasharray:5,45;stroke-dashoffset:0}  50%{stroke-dasharray:40,10;stroke-dashoffset:-22} }
+    @keyframes bn-rot1-${id} { from{transform:rotate(0deg)}   to{transform:rotate(360deg)}  }
+    @keyframes bn-rot2-${id} { from{transform:rotate(0deg)}   to{transform:rotate(360deg)}  }
+    @keyframes bn-rot3-${id} { from{transform:rotate(0deg)}   to{transform:rotate(360deg)}  }
   ` : "";
 
   return (
@@ -32,16 +29,16 @@ export default function AppLogo({ size = 28, animated = false }) {
 
         <ellipse cx="14" cy="16" rx="6.8" ry="10.5"
           stroke={`url(#${id}e1)`} strokeWidth="3.2" fill="none"
-          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot1-${id} 6s linear infinite, bn-arc1-${id} 3s ease-in-out infinite` } : undefined}
+          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot1-${id} 6s linear infinite` } : undefined}
           transform={animated ? undefined : "rotate(-28 14 16)"}/>
 
         <ellipse cx="16" cy="16" rx="6.8" ry="10.5"
           stroke={`url(#${id}e2)`} strokeWidth="3.2" fill="none"
-          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot2-${id} 8s linear infinite, bn-arc2-${id} 4s ease-in-out infinite` } : undefined}/>
+          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot2-${id} 8s linear infinite` } : undefined}/>
 
         <ellipse cx="18" cy="16" rx="6.8" ry="10.5"
           stroke={`url(#${id}e3)`} strokeWidth="3.2" fill="none"
-          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot3-${id} 10s linear infinite, bn-arc3-${id} 5s ease-in-out infinite` } : undefined}
+          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot3-${id} 10s linear infinite` } : undefined}
           transform={animated ? undefined : "rotate(28 18 16)"}/>
       </svg>
     </>
