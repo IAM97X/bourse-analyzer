@@ -99,7 +99,7 @@ function MobileBlock() {
         Application non disponible<br />sur mobile
       </div>
       <div style={{ marginTop: "14px", fontSize: "14px", color: "rgba(193,232,255,0.6)", lineHeight: 1.65, maxWidth: "300px" }}>
-        Bourse Analyzer est optimisé pour les écrans de <strong style={{ color: "rgba(193,232,255,0.9)" }}>tablette et ordinateur</strong>.
+        Orivo est optimisé pour les écrans de <strong style={{ color: "rgba(193,232,255,0.9)" }}>tablette et ordinateur</strong>.
       </div>
       <div style={{ marginTop: "32px", display: "flex", alignItems: "center", gap: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "14px", padding: "14px 20px" }}>
         <span style={{ fontSize: "22px" }}>💻</span>

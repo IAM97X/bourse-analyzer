@@ -196,7 +196,7 @@ function AuthPage({ onSession }) {
           <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "72px", height: "72px", borderRadius: "22px", background: "linear-gradient(145deg, #0d2d5e, #1a4a8a)", marginBottom: "16px", boxShadow: "0 12px 40px rgba(5,38,89,0.7), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
             <AppLogo size={44} />
           </div>
-          <div style={{ fontSize: "28px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>Bourse Analyzer</div>
+          <div style={{ fontSize: "28px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>Orivo</div>
           <div style={{ fontSize: "13px", color: "rgba(193,232,255,0.5)", marginTop: "8px", fontWeight: "400" }}>Mon assistant bourse personnel</div>
         </div>
 
@@ -331,7 +331,7 @@ function AuthPage({ onSession }) {
         </div>
 
         <div style={{ textAlign: "center", marginTop: "18px", fontSize: "10px", color: "rgba(193,232,255,0.25)", lineHeight: "1.6" }}>
-          {supabase ? "Compte Bourse Analyzer · Données chiffrées côté serveur" : "Mode local · Vos données restent sur votre appareil"}
+          {supabase ? "Compte Orivo · Données chiffrées côté serveur" : "Mode local · Vos données restent sur votre appareil"}
         </div>
       </div>
     </div>

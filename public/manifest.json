@@ -1,7 +1,7 @@
 {
-  "short_name": "Bourse",
-  "name": "Bourse Analyzer — PEA & CTO",
-  "description": "Suivi de portefeuille PEA/CTO avec analyse IA",
+  "short_name": "Orivo",
+  "name": "Orivo — PEA & CTO",
+  "description": "Suivi de portefeuille PEA/CTO avec analyse IA — by MGI",
   "icons": [
     {
       "src": "favicon.ico",
