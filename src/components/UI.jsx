@@ -3,38 +3,32 @@ import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
 
 const BN_KEYFRAMES = `
-  @keyframes bn-sp-rot1 { from{transform:rotate(-120deg)} to{transform:rotate(240deg)} }
-  @keyframes bn-sp-rot2 { from{transform:rotate(30deg)}   to{transform:rotate(390deg)} }
-  @keyframes bn-sp-rot3 { from{transform:rotate(150deg)}  to{transform:rotate(-210deg)} }
-  @keyframes bn-sp-arc1 { 0%,100%{stroke-dasharray:8,74;stroke-dashoffset:0} 50%{stroke-dasharray:65,17;stroke-dashoffset:-28} }
-  @keyframes bn-sp-arc2 { 0%,100%{stroke-dasharray:6,51;stroke-dashoffset:0} 50%{stroke-dasharray:44,13;stroke-dashoffset:-18} }
-  @keyframes bn-sp-arc3 { 0%,100%{stroke-dasharray:4,31;stroke-dashoffset:0} 50%{stroke-dasharray:27,8;stroke-dashoffset:-11} }
+  @keyframes ring-sp-spin { 0%,100%{transform:scaleX(1);opacity:1} 48%,52%{transform:scaleX(0.06);opacity:0.7} }
   @keyframes bn-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 `;
+
+const SP_RINGS = [
+  { r: 11,  sw: 3.0, back: "#0D1F3C", front: "#1D4ED8", hl: "#60A5FA", delay: "0s"    },
+  { r: 7.5, sw: 2.5, back: "#132E56", front: "#2563EB", hl: "#93C5FD", delay: "0.28s" },
+  { r: 4.5, sw: 2.0, back: "#1E3A6E", front: "#3B82F6", hl: "#BAE6FD", delay: "0.56s" },
+];
 
 export function OrivoSpinner({ size = 52, label, sublabel }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
       <style>{BN_KEYFRAMES}</style>
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-        <defs>
-          <linearGradient id="sp-g1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#1A3A6B"/><stop offset="100%" stopColor="#2563EB"/>
-          </linearGradient>
-          <linearGradient id="sp-g2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#2563EB"/><stop offset="100%" stopColor="#38BDF8"/>
-          </linearGradient>
-          <linearGradient id="sp-g3" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#38BDF8"/><stop offset="100%" stopColor="#7DD3FC"/>
-          </linearGradient>
-        </defs>
-        <circle cx="16" cy="16" r="13" stroke="url(#sp-g1)" strokeWidth="2.4" strokeLinecap="round" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot1 2.8s linear infinite, bn-sp-arc1 1.4s ease-in-out infinite" }}/>
-        <circle cx="16" cy="16" r="9"  stroke="url(#sp-g2)" strokeWidth="2"   strokeLinecap="round" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot2 2.1s linear infinite, bn-sp-arc2 1.05s ease-in-out infinite" }}/>
-        <circle cx="16" cy="16" r="5.5" stroke="url(#sp-g3)" strokeWidth="1.6" strokeLinecap="round" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot3 1.6s linear infinite, bn-sp-arc3 0.8s ease-in-out infinite" }}/>
-        <circle cx="16" cy="16" r="2" fill="#38BDF8" opacity="0.9"/>
+        {SP_RINGS.map(({ r, sw, back, front, hl, delay }, i) => {
+          const ty = 16 - r, by = 16 + r;
+          const hlEx = 16 + r * 0.866, hlEy = 16 - r * 0.5;
+          return (
+            <g key={i} style={{ transformOrigin:"16px 16px", animation:`ring-sp-spin 1.8s ease-in-out infinite`, animationDelay: delay }}>
+              <path d={`M 16 ${ty} A ${r} ${r} 0 0 0 16 ${by}`} stroke={back}  strokeWidth={sw} strokeLinecap="round" fill="none"/>
+              <path d={`M 16 ${ty} A ${r} ${r} 0 0 1 16 ${by}`} stroke={front} strokeWidth={sw} strokeLinecap="round" fill="none"/>
+              <path d={`M 16 ${ty} A ${r} ${r} 0 0 1 ${hlEx} ${hlEy}`} stroke={hl} strokeWidth={sw*0.45} strokeLinecap="round" fill="none" opacity="0.9"/>
+            </g>
+          );
+        })}
       </svg>
       {(label || sublabel) && (
         <div style={{ textAlign: "center" }}>
