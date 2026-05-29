@@ -243,7 +243,8 @@ ${sessionCtx}${courtierCtx}${dcaCtx}${autopilotCtx}${appCtx}
 
 === ÉTAT DU PORTEFEUILLE IA (${account || 'PEA'}) ===
 Capital initial: ${portfolio.capital_initial}€
-Cash disponible: ${portfolio.cash.toFixed(2)}€
+Cash total: ${portfolio.cash.toFixed(2)}€
+Cash réellement déployable (cash - réserve 5%): ${Math.max(0, portfolio.cash - Number(cashMin)).toFixed(2)}€${portfolio.cash <= Number(cashMin) ? " ⚠️ CASH INSUFFISANT — aucun BUY possible ce cycle. Émettre uniquement des HOLD." : ""}
 Valeur totale: ${valeurTotale.toFixed(2)}€
 Performance depuis création: ${perfTotal}%
 Nombre de positions: ${portfolio.positions?.length || 0}
