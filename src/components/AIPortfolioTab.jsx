@@ -6,6 +6,13 @@ import { getKey } from "../lib/api";
 import { COURTIERS, COURTIERS_DETAIL, BOURSOMARKETS_ETFS, getCourtierForAccount } from "../constants/courtiers";
 import { DEFAULT_PROFIL } from "../constants/config";
 import { MARKETS_CFG, getMarketStatus } from "../constants/markets";
+import { AUTOPILOT_UNIVERSE } from "../constants/universe";
+
+const TICKER_ISIN_MAP = Object.fromEntries(
+  [...(AUTOPILOT_UNIVERSE.PEA || []), ...(AUTOPILOT_UNIVERSE.CTO || [])]
+    .filter(u => u.isin)
+    .map(u => [u.symbol, u.isin])
+);
 
 const aiPfKey = (account) => `bourse_ai_portfolio_${account || "PEA"}`;
 
@@ -96,7 +103,7 @@ function applyDecisions(portfolio, decisions, prices, courtierConstraints = {}) 
         existing.quantite = tot;
         existing.dernier_cours = prix;
       } else {
-        positions.push({ ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix_achat_moyen: prix, dernier_cours: prix });
+        positions.push({ ticker: d.ticker, nom: d.nom, isin: d.isin || TICKER_ISIN_MAP[d.ticker] || "", quantite: d.quantite, prix_achat_moyen: prix, dernier_cours: prix });
       }
       newTrades.push({ date: new Date().toISOString(), action: "BUY", ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix, montant, frais: fee, raison: d.raison || "" });
     } else if (d.action === "SELL") {
@@ -706,7 +713,7 @@ export default function AIPortfolioTab({ account, hidden }) {
                     <div>
                       <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{p.nom}</div>
                       <div style={{ fontSize: "10px", color: C.inkMuted, marginTop: "1px" }}>
-                        <a href={`https://finance.yahoo.com/quote/${p.ticker}`} target="_blank" rel="noopener noreferrer" style={{ color: C.inkMuted, textDecoration: "underline", textDecorationStyle: "dotted" }}>{p.ticker}</a>
+                        <a href={`https://finance.yahoo.com/lookup?s=${p.isin || TICKER_ISIN_MAP[p.ticker] || p.ticker}`} target="_blank" rel="noopener noreferrer" style={{ color: C.inkMuted, textDecoration: "underline", textDecorationStyle: "dotted" }}>{p.ticker}</a>
                         {" · "}{p.quantite} titres · {pctPf.toFixed(0)}% PF
                       </div>
                     </div>
