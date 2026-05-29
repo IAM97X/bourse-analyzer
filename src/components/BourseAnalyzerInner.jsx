@@ -443,11 +443,16 @@ function BourseAnalyzerInner({ userName, onLogout }) {
           {isMobile ? (
             <>
               {/* Gauche : hamburger */}
-              <button onClick={() => setMobileNavOpen(true)} title="Menu"
+              <button onClick={() => setMobileNavOpen(o => !o)} title="Menu"
                 style={{ width: "40px", height: "40px", background: "transparent", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "5px", padding: 0, flexShrink: 0 }}>
-                <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
-                <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
-                <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
+                {mobileNavOpen
+                  ? <AppLogo size={24} />
+                  : <>
+                      <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
+                      <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
+                      <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
+                    </>
+                }
               </button>
               {/* Centre : logo + nom onglet */}
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", minWidth: 0 }}>
@@ -527,7 +532,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 <span style={{ fontSize: "16px", fontWeight: "700", color: C.ink, letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tabLabel}</span>
               </div>
               {/* CENTER — marchés */}
-              {PORTFOLIO_TABS.includes(activeTab) && (
+              {(PORTFOLIO_TABS.includes(activeTab) || activeTab === TABS.HOME) && (
                 <div style={{ flex: 1, display: "flex", justifyContent: "center", overflow: "hidden" }}>
                   <MarketStatusBar compact />
                 </div>

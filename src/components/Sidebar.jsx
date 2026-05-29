@@ -133,10 +133,17 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
               <div onClick={toggleCollapse} title={c ? "Déplier" : "Réduire"} style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", borderRadius: "10px", transition: "background 0.15s" }}
                 onMouseEnter={e => e.currentTarget.style.background = C.sbHover}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                <AppLogo size={26} />
+                {c
+                  ? <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <rect x="2" y="4"  width="14" height="1.8" rx="0.9" fill={C.inkMuted}/>
+                      <rect x="2" y="8.1" width="14" height="1.8" rx="0.9" fill={C.inkMuted}/>
+                      <rect x="2" y="12.2" width="14" height="1.8" rx="0.9" fill={C.inkMuted}/>
+                    </svg>
+                  : <AppLogo size={26} />
+                }
               </div>
               {!c && <div>
-                <div style={{ fontSize: "13px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>BourseNext</div>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, letterSpacing: "-0.04em" }}>Bourse<span style={{ fontWeight: "800", color: "#2563EB" }}>Next</span></div>
               </div>}
             </>
         }
@@ -280,7 +287,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
 
 export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, refreshAgo, toggleDark, toggleCompact, darkMode, compact, hidden, mobileOpen, onMobileClose, account, onSwitchAccount, marketScoringUi }) {
   const isMobile = useIsMobile();
-  const [collapsed, setCollapsed] = useState(() => load("bourse_sidebar_collapsed", false));
+  const [collapsed, setCollapsed] = useState(() => load("bourse_sidebar_collapsed", true));
   const toggleCollapse = () => { const v = !collapsed; setCollapsed(v); save("bourse_sidebar_collapsed", v); };
 
   const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi };
