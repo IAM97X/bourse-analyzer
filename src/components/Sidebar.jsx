@@ -117,13 +117,13 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: C.sb }}>
       {mobileCompact && (
         <div style={{ padding: "12px 0 10px", borderBottom: `1px solid ${C.sbBorder}`, display: "flex", justifyContent: "center", flexShrink: 0 }}>
-          <AppLogo size={26} />
+          <AppLogo size={26} animated />
         </div>
       )}
       {!mobileCompact && <div className="ba-sidebar-logo" style={{ padding: "18px 14px 16px", borderBottom: `1px solid ${C.sbBorder}`, display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, justifyContent: c ? "center" : "flex-start" }}>
         {isMobile
           ? <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-              <AppLogo size={30} />
+              <AppLogo size={30} animated />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #2563EB, #38BDF8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span></div>
               </div>
@@ -139,7 +139,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                       <rect x="2" y="8.1" width="14" height="1.8" rx="0.9" fill={C.inkMuted}/>
                       <rect x="2" y="12.2" width="14" height="1.8" rx="0.9" fill={C.inkMuted}/>
                     </svg>
-                  : <AppLogo size={26} />
+                  : <AppLogo size={26} animated />
                 }
               </div>
               {!c && <div>
