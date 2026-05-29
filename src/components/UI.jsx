@@ -32,7 +32,6 @@ export function OrivoSpinner({ size = 52, label, sublabel }) {
             <stop offset="100%" stopColor="#85CFEF"/>
           </linearGradient>
         </defs>
-        <rect width="32" height="32" rx="8" fill="url(#ospbg)"/>
         <ellipse cx="14" cy="16" rx="5.8" ry="9.5"
           stroke="url(#ospe1)" strokeWidth="2.2" fill="none"
           style={{ transformOrigin: "16px 16px", animation: "orivo-e1 1.8s linear infinite" }}/>

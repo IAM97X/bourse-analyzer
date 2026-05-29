@@ -37,7 +37,6 @@ export default function AppLogo({ size = 28, animated = false }) {
           </linearGradient>
         </defs>
 
-        <rect width="32" height="32" rx="8" fill={`url(#${id}bg)`}/>
 
         <ellipse cx="14" cy="16" rx="5.8" ry="9.5"
           stroke={`url(#${id}e1)`} strokeWidth="2"

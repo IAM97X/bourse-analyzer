@@ -24,6 +24,7 @@ import HistoriqueTab, { OperationsTab } from "./HistoriqueTab";
 import ProfilTab, { ParametresTab } from "./ProfilTab";
 import AIPortfolioTab from "./AIPortfolioTab";
 import OnboardingWizard, { ONBOARDING_KEY } from "./OnboardingWizard";
+import TourGuide, { shouldShowTour, markTourDone } from "./TourGuide";
 import PWAInstallBanner from "./PWAInstallBanner";
 import HomeTab from "./HomeTab";
 
@@ -108,6 +109,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return !localStorage.getItem(ONBOARDING_KEY); } catch { return false; }
   });
+  const [showTour, setShowTour] = useState(false);
   const [mobileNavOpen, setMobileNavOpen]       = useState(false);
   const [account, setAccount]                   = useState(() => load("bourse_account", "PEA"));
   const switchAccount = (acc) => { setAccount(acc); save("bourse_account", acc); setActiveTab(TABS.PORTFOLIO); };
@@ -732,7 +734,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       <PWAInstallBanner />
 
       {/* ── Onboarding Guide ── */}
-      {showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); window.location.reload(); }} />}
+      {showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); setShowTour(shouldShowTour()); }} />}
+
+      {/* ── Tour interactif ── */}
+      {showTour && <TourGuide changeTab={changeTab} onDone={() => { markTourDone(); setShowTour(false); }} />}
 
       {/* ── Bottom navigation bar (mobile only) ── */}
       <nav className="ba-bottom-nav">

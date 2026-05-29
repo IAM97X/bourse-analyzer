@@ -17,7 +17,7 @@ export default function MarketStatusBar({ compact = false }) {
               <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                 <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: open ? C.green : C.inkSubtle, display: "inline-block", flexShrink: 0, ...(open ? { animation: "marketPulse 3s ease-in-out infinite" } : {}) }} />
                 <span style={{ fontSize: "9px", fontWeight: "600", color: open ? C.green : C.inkSubtle }}>{reason}</span>
-                {!compact && <span style={{ fontSize: "10px", color: C.inkSubtle }}>· {hhmm}</span>}
+                <span style={{ fontSize: "9px", color: C.inkSubtle }}>· {hhmm}</span>
               </div>
             </div>
           </div>
