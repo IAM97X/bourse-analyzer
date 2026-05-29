@@ -2,18 +2,13 @@ import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
 
-const SP_RW = 4, SP_RH = 11;
-const spCoinPath = (cx) =>
-  `M ${cx-SP_RW} ${16-SP_RH} A ${SP_RW} ${SP_RW} 0 0 1 ${cx+SP_RW} ${16-SP_RH} ` +
-  `L ${cx+SP_RW} ${16+SP_RH} A ${SP_RW} ${SP_RW} 0 0 1 ${cx-SP_RW} ${16+SP_RH} Z`;
-const SP_COINS = [
-  { cx: 10, dark:"#040E1C", mid:"#0D2240", bright:"#1E4D8C", face:"#071828", delay:"0.3s" },
-  { cx: 22, dark:"#040E1C", mid:"#0D2240", bright:"#1E4D8C", face:"#071828", delay:"0.6s" },
-  { cx: 16, dark:"#0D2240", mid:"#1D4ED8", bright:"#60A5FA", face:"#2563EB", delay:"0s"   },
-];
-
 const BN_KEYFRAMES = `
-  @keyframes coin-sp-shine { 0%,100%{opacity:0.85;transform:scaleX(1)} 50%{opacity:1;transform:scaleX(1.04)} }
+  @keyframes bn-sp-rot1 { from{transform:rotate(-120deg)} to{transform:rotate(240deg)} }
+  @keyframes bn-sp-rot2 { from{transform:rotate(30deg)}   to{transform:rotate(390deg)} }
+  @keyframes bn-sp-rot3 { from{transform:rotate(150deg)}  to{transform:rotate(-210deg)} }
+  @keyframes bn-sp-arc1 { 0%,100%{stroke-dasharray:8,74;stroke-dashoffset:0} 50%{stroke-dasharray:65,17;stroke-dashoffset:-28} }
+  @keyframes bn-sp-arc2 { 0%,100%{stroke-dasharray:6,51;stroke-dashoffset:0} 50%{stroke-dasharray:44,13;stroke-dashoffset:-18} }
+  @keyframes bn-sp-arc3 { 0%,100%{stroke-dasharray:4,31;stroke-dashoffset:0} 50%{stroke-dasharray:27,8;stroke-dashoffset:-11} }
   @keyframes bn-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 `;
 
@@ -23,24 +18,23 @@ export function OrivoSpinner({ size = 52, label, sublabel }) {
       <style>{BN_KEYFRAMES}</style>
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
         <defs>
-          {SP_COINS.map(({ cx, dark, mid, bright }, i) => (
-            <linearGradient key={i} id={`spcg${i}`} gradientUnits="userSpaceOnUse"
-              x1={cx-SP_RW} y1="16" x2={cx+SP_RW} y2="16">
-              <stop offset="0%"   stopColor={dark}/>
-              <stop offset="35%"  stopColor={mid}/>
-              <stop offset="62%"  stopColor={bright}/>
-              <stop offset="100%" stopColor={dark}/>
-            </linearGradient>
-          ))}
+          <linearGradient id="sp-g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1A3A6B"/><stop offset="100%" stopColor="#2563EB"/>
+          </linearGradient>
+          <linearGradient id="sp-g2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#2563EB"/><stop offset="100%" stopColor="#38BDF8"/>
+          </linearGradient>
+          <linearGradient id="sp-g3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#38BDF8"/><stop offset="100%" stopColor="#7DD3FC"/>
+          </linearGradient>
         </defs>
-        {SP_COINS.map(({ cx, bright, face, delay }, i) => (
-          <g key={i} style={{ transformOrigin:`${cx}px 16px`, animation:`coin-sp-shine 1.8s ease-in-out infinite`, animationDelay: delay }}>
-            <path d={spCoinPath(cx)} fill={`url(#spcg${i})`}/>
-            <ellipse cx={cx-SP_RW} cy="16" rx="1.6" ry={SP_RH} fill={face} opacity="0.75"/>
-            <ellipse cx={cx} cy={16-SP_RH} rx={SP_RW} ry="1.4" fill={bright} opacity="0.45"/>
-            <rect x={cx+SP_RW*0.35} y={16-SP_RH+2} width={SP_RW*0.35} height={SP_RH*2-4} rx="0.8" fill={bright} opacity="0.22"/>
-          </g>
-        ))}
+        <circle cx="16" cy="16" r="13" stroke="url(#sp-g1)" strokeWidth="2.4" strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot1 2.8s linear infinite, bn-sp-arc1 1.4s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="9"  stroke="url(#sp-g2)" strokeWidth="2"   strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot2 2.1s linear infinite, bn-sp-arc2 1.05s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="5.5" stroke="url(#sp-g3)" strokeWidth="1.6" strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot3 1.6s linear infinite, bn-sp-arc3 0.8s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="2" fill="#38BDF8" opacity="0.9"/>
       </svg>
       {(label || sublabel) && (
         <div style={{ textAlign: "center" }}>
