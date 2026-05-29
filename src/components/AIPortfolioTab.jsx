@@ -696,7 +696,10 @@ export default function AIPortfolioTab({ account, hidden }) {
                   <div key={p.ticker} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 11px", background: C.snowDim, borderRadius: "10px" }}>
                     <div>
                       <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{p.nom}</div>
-                      <div style={{ fontSize: "10px", color: C.inkMuted, marginTop: "1px" }}>{p.ticker} · {p.quantite} titres · {pctPf.toFixed(0)}% PF</div>
+                      <div style={{ fontSize: "10px", color: C.inkMuted, marginTop: "1px" }}>
+                        <a href={`https://finance.yahoo.com/quote/${p.ticker}`} target="_blank" rel="noopener noreferrer" style={{ color: C.inkMuted, textDecoration: "underline", textDecorationStyle: "dotted" }}>{p.ticker}</a>
+                        {" · "}{p.quantite} titres · {pctPf.toFixed(0)}% PF
+                      </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{hidden ? "••••" : fmtEur(valPos)}</div>
