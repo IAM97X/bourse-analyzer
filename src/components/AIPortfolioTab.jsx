@@ -88,24 +88,29 @@ function applyDecisions(portfolio, decisions, prices, courtierConstraints = {}) 
     if (!prix) continue;
 
     if (d.action === "BUY") {
-      const montant = d.quantite * prix;
       const isETF = !!BOURSOMARKETS_ETFS[d.ticker];
       const minReq = isETF ? Math.max(minOrdre, minOrdreETF) : minOrdre;
+      // Ajuster la quantité pour atteindre le minimum si nécessaire
+      let qty = d.quantite;
+      if (minReq > 0 && qty * prix < minReq) qty = Math.ceil(minReq / prix);
+      if (!fractionne) qty = Math.floor(qty);
+      if (qty <= 0) continue;
+      const montant = qty * prix;
       if (montant < minReq) continue;
-      if (!fractionne && !Number.isInteger(d.quantite)) continue;
+      if (!fractionne && !Number.isInteger(qty)) continue;
       const fee = calcFee(d.ticker, montant, courtierConstraints);
       if (montant + fee > cash - cashMin) continue;
       cash -= (montant + fee);
       const existing = positions.find(p => p.ticker === d.ticker);
       if (existing) {
-        const tot = existing.quantite + d.quantite;
-        existing.prix_achat_moyen = (existing.prix_achat_moyen * existing.quantite + prix * d.quantite) / tot;
+        const tot = existing.quantite + qty;
+        existing.prix_achat_moyen = (existing.prix_achat_moyen * existing.quantite + prix * qty) / tot;
         existing.quantite = tot;
         existing.dernier_cours = prix;
       } else {
-        positions.push({ ticker: d.ticker, nom: d.nom, isin: d.isin || TICKER_ISIN_MAP[d.ticker] || "", quantite: d.quantite, prix_achat_moyen: prix, dernier_cours: prix });
+        positions.push({ ticker: d.ticker, nom: d.nom, isin: d.isin || TICKER_ISIN_MAP[d.ticker] || "", quantite: qty, prix_achat_moyen: prix, dernier_cours: prix });
       }
-      newTrades.push({ date: new Date().toISOString(), action: "BUY", ticker: d.ticker, nom: d.nom, quantite: d.quantite, prix, montant, frais: fee, raison: d.raison || "" });
+      newTrades.push({ date: new Date().toISOString(), action: "BUY", ticker: d.ticker, nom: d.nom, quantite: qty, prix, montant, frais: fee, raison: d.raison || "" });
     } else if (d.action === "SELL") {
       const existing = positions.find(p => p.ticker === d.ticker);
       if (!existing || existing.quantite < d.quantite) continue;
