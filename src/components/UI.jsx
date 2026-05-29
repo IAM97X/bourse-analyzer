@@ -3,12 +3,12 @@ import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
 
 const BN_KEYFRAMES = `
-  @keyframes bn-rot1 { from{transform:rotate(-120deg)} to{transform:rotate(240deg)} }
-  @keyframes bn-rot2 { from{transform:rotate(30deg)}   to{transform:rotate(390deg)} }
-  @keyframes bn-rot3 { from{transform:rotate(150deg)}  to{transform:rotate(-210deg)} }
-  @keyframes bn-arc1 { 0%,100%{stroke-dasharray:8,74;stroke-dashoffset:0} 50%{stroke-dasharray:65,17;stroke-dashoffset:-28} }
-  @keyframes bn-arc2 { 0%,100%{stroke-dasharray:6,51;stroke-dashoffset:0} 50%{stroke-dasharray:44,13;stroke-dashoffset:-18} }
-  @keyframes bn-arc3 { 0%,100%{stroke-dasharray:4,31;stroke-dashoffset:0} 50%{stroke-dasharray:27,8;stroke-dashoffset:-11} }
+  @keyframes bn-rot1 { from{transform:rotate(-28deg)}  to{transform:rotate(332deg)}  }
+  @keyframes bn-rot2 { from{transform:rotate(0deg)}    to{transform:rotate(360deg)}  }
+  @keyframes bn-rot3 { from{transform:rotate(28deg)}   to{transform:rotate(388deg)}  }
+  @keyframes bn-arc1 { 0%,100%{stroke-dasharray:5,45;stroke-dashoffset:0} 50%{stroke-dasharray:40,10;stroke-dashoffset:-22} }
+  @keyframes bn-arc2 { 0%,100%{stroke-dasharray:5,45;stroke-dashoffset:0} 50%{stroke-dasharray:40,10;stroke-dashoffset:-22} }
+  @keyframes bn-arc3 { 0%,100%{stroke-dasharray:5,45;stroke-dashoffset:0} 50%{stroke-dasharray:40,10;stroke-dashoffset:-22} }
   @keyframes bn-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 `;
 
@@ -18,23 +18,22 @@ export function OrivoSpinner({ size = 52, label, sublabel }) {
       <style>{BN_KEYFRAMES}</style>
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
         <defs>
-          <linearGradient id="bng1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#1A3A6B"/><stop offset="100%" stopColor="#2563EB"/>
+          <linearGradient id="bne1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1A4A8A"/><stop offset="100%" stopColor="#2D6CB5"/>
           </linearGradient>
-          <linearGradient id="bng2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#2563EB"/><stop offset="100%" stopColor="#38BDF8"/>
+          <linearGradient id="bne2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#2E72BE"/><stop offset="100%" stopColor="#4B9DD8"/>
           </linearGradient>
-          <linearGradient id="bng3" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#38BDF8"/><stop offset="100%" stopColor="#7DD3FC"/>
+          <linearGradient id="bne3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#4BA8E0"/><stop offset="100%" stopColor="#85CFEF"/>
           </linearGradient>
         </defs>
-        <circle cx="16" cy="16" r="13" stroke="url(#bng1)" strokeWidth="2.4" strokeLinecap="round" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"bn-rot1 2.8s linear infinite, bn-arc1 1.4s ease-in-out infinite" }}/>
-        <circle cx="16" cy="16" r="9" stroke="url(#bng2)" strokeWidth="2" strokeLinecap="round" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"bn-rot2 2.1s linear infinite, bn-arc2 1.05s ease-in-out infinite" }}/>
-        <circle cx="16" cy="16" r="5.5" stroke="url(#bng3)" strokeWidth="1.6" strokeLinecap="round" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"bn-rot3 1.6s linear infinite, bn-arc3 0.8s ease-in-out infinite" }}/>
-        <circle cx="16" cy="16" r="2" fill="#38BDF8" opacity="0.9"/>
+        <ellipse cx="14" cy="16" rx="5.8" ry="9.5" stroke="url(#bne1)" strokeWidth="2.2" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-rot1 1.8s linear infinite, bn-arc1 0.9s ease-in-out infinite" }}/>
+        <ellipse cx="16" cy="16" rx="5.8" ry="9.5" stroke="url(#bne2)" strokeWidth="2.2" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-rot2 2.4s linear infinite, bn-arc2 1.2s ease-in-out infinite" }}/>
+        <ellipse cx="18" cy="16" rx="5.8" ry="9.5" stroke="url(#bne3)" strokeWidth="2.2" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-rot3 3.2s linear infinite, bn-arc3 1.6s ease-in-out infinite" }}/>
       </svg>
       {(label || sublabel) && (
         <div style={{ textAlign: "center" }}>

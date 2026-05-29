@@ -14,10 +14,20 @@ const HEADERS = {
   "Sec-Fetch-Site": "same-site",
 };
 
+const ALLOWED_ORIGINS = [
+  "https://boursenext.fr",
+  "https://www.boursenext.fr",
+  "http://localhost:3000",
+  "http://localhost:3001",
+];
+
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = req.headers.origin || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin);
+  res.setHeader("Access-Control-Allow-Origin", allowed ? origin : "");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   if (req.method === "OPTIONS") return res.status(200).end();
+  if (!allowed) return res.status(403).json({ error: "Origine non autorisée" });
 
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: "url required" });
