@@ -3,38 +3,38 @@ import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
 
 const BN_KEYFRAMES = `
-  @keyframes sonic3d-sp { 0%,100%{transform:scaleY(0.08);opacity:0.5} 45%,55%{transform:scaleY(1);opacity:1} }
+  @keyframes bn-sp-rot1 { from{transform:rotate(-120deg)} to{transform:rotate(240deg)} }
+  @keyframes bn-sp-rot2 { from{transform:rotate(30deg)}   to{transform:rotate(390deg)} }
+  @keyframes bn-sp-rot3 { from{transform:rotate(150deg)}  to{transform:rotate(-210deg)} }
+  @keyframes bn-sp-arc1 { 0%,100%{stroke-dasharray:8,74;stroke-dashoffset:0} 50%{stroke-dasharray:65,17;stroke-dashoffset:-28} }
+  @keyframes bn-sp-arc2 { 0%,100%{stroke-dasharray:6,51;stroke-dashoffset:0} 50%{stroke-dasharray:44,13;stroke-dashoffset:-18} }
+  @keyframes bn-sp-arc3 { 0%,100%{stroke-dasharray:4,31;stroke-dashoffset:0} 50%{stroke-dasharray:27,8;stroke-dashoffset:-11} }
   @keyframes bn-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 `;
-
-const SP_RINGS = [
-  { rx: 11,  ry: 4.2,  sw: 4.8, back: "#071828", front: "#1D4ED8", hl: "#60A5FA", delay: "0s"   },
-  { rx: 7.5, ry: 2.85, sw: 4.2, back: "#0D2240", front: "#2563EB", hl: "#93C5FD", delay: "0.2s" },
-  { rx: 4,   ry: 1.52, sw: 3.6, back: "#132E56", front: "#3B82F6", hl: "#BAE6FD", delay: "0.4s" },
-];
 
 export function OrivoSpinner({ size = 52, label, sublabel }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
       <style>{BN_KEYFRAMES}</style>
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-        {SP_RINGS.map(({ rx, ry, sw, back, front, hl, delay }, i) => {
-          const lx = 16 - rx, rx_ = 16 + rx;
-          const hlx1 = 16 - rx * 0.5, hlx2 = 16 + rx * 0.5;
-          const hly = 16 - ry * 0.87;
-          return (
-            <g key={i} vectorEffect="non-scaling-stroke"
-              style={{ transformOrigin: "16px 16px", animation: `sonic3d-sp 1.8s ease-in-out infinite`, animationDelay: delay }}>
-              <path d={`M ${rx_} 16 A ${rx} ${ry} 0 0 1 ${lx} 16`}
-                stroke={back} strokeWidth={sw} strokeLinecap="round" fill="none" vectorEffect="non-scaling-stroke"/>
-              <path d={`M ${lx} 16 A ${rx} ${ry} 0 0 1 ${rx_} 16`}
-                stroke={front} strokeWidth={sw} strokeLinecap="round" fill="none" vectorEffect="non-scaling-stroke"/>
-              <path d={`M ${hlx1} ${hly} A ${rx} ${ry} 0 0 1 ${hlx2} ${hly}`}
-                stroke={hl} strokeWidth={sw * 0.38} strokeLinecap="round" fill="none"
-                opacity="0.85" vectorEffect="non-scaling-stroke"/>
-            </g>
-          );
-        })}
+        <defs>
+          <linearGradient id="sp-g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1A3A6B"/><stop offset="100%" stopColor="#2563EB"/>
+          </linearGradient>
+          <linearGradient id="sp-g2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#2563EB"/><stop offset="100%" stopColor="#38BDF8"/>
+          </linearGradient>
+          <linearGradient id="sp-g3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#38BDF8"/><stop offset="100%" stopColor="#7DD3FC"/>
+          </linearGradient>
+        </defs>
+        <circle cx="16" cy="16" r="13" stroke="url(#sp-g1)" strokeWidth="2.4" strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot1 2.8s linear infinite, bn-sp-arc1 1.4s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="9"  stroke="url(#sp-g2)" strokeWidth="2"   strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot2 2.1s linear infinite, bn-sp-arc2 1.05s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="5.5" stroke="url(#sp-g3)" strokeWidth="1.6" strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-sp-rot3 1.6s linear infinite, bn-sp-arc3 0.8s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="2" fill="#38BDF8" opacity="0.9"/>
       </svg>
       {(label || sublabel) && (
         <div style={{ textAlign: "center" }}>
