@@ -32,16 +32,16 @@ export default function AppLogo({ size = 28, animated = false }) {
         <ellipse cx="14" cy="16" rx="7.2" ry="11"
           stroke={animated ? undefined : `url(#${id}e1)`} strokeWidth="4.5" fill="none"
           transform="rotate(-28 14 16)"
-          style={animated ? { animation:`bn-col-${id} 3s ease-in-out infinite`, animationDelay:"0s" } : undefined}/>
+          style={animated ? { animation:`bn-col-${id} 2s ease-in-out infinite`, animationDelay:"0s" } : undefined}/>
 
         <ellipse cx="16" cy="16" rx="7.2" ry="11"
           stroke={animated ? undefined : `url(#${id}e2)`} strokeWidth="4.5" fill="none"
-          style={animated ? { animation:`bn-col-${id} 3s ease-in-out infinite`, animationDelay:"-1s" } : undefined}/>
+          style={animated ? { animation:`bn-col-${id} 2s ease-in-out infinite`, animationDelay:"-1s" } : undefined}/>
 
         <ellipse cx="18" cy="16" rx="7.2" ry="11"
           stroke={animated ? undefined : `url(#${id}e3)`} strokeWidth="4.5" fill="none"
           transform="rotate(28 18 16)"
-          style={animated ? { animation:`bn-col-${id} 3s ease-in-out infinite`, animationDelay:"-2s" } : undefined}/>
+          style={animated ? { animation:`bn-col-${id} 2s ease-in-out infinite`, animationDelay:"-2s" } : undefined}/>
       </svg>
     </>
   );
