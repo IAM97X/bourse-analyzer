@@ -6,6 +6,7 @@ import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { TABS } from "../constants/tabs";
 import { fetchWithProxy, hasClaudeKey, hasAI } from "../lib/api";
 import { fetchFMPHistorical } from "../lib/market";
+import MarketStatusBar from "./MarketStatusBar";
 
 const SNAPSHOTS_KEY      = "bourse_snapshots";
 const TICKER_CACHE_KEY   = "bourse_isin_ticker_cache";
@@ -91,10 +92,10 @@ function Row({ label, value, color, last, debug }) {
       borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.08)",
       cursor: debug ? "help" : undefined,
     }}>
-      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.65)", fontWeight: "400", lineHeight: "1.4", flex: "1" }}>
+      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", fontWeight: "400", lineHeight: "1.4", flex: "1" }}>
         {label}
       </span>
-      <span style={{ fontSize: "13px", fontWeight: "700", color: color || "#fff", whiteSpace: "nowrap", textAlign: "right" }}>
+      <span style={{ fontSize: "12px", fontWeight: "700", color: color || "#fff", whiteSpace: "nowrap", textAlign: "right" }}>
         {value}
       </span>
     </div>
@@ -106,8 +107,8 @@ function Card({ children }) {
   return (
     <div style={{
       background: "linear-gradient(160deg, #112240 0%, #1a3a5c 100%)",
-      borderRadius: "16px",
-      padding: "18px 20px",
+      borderRadius: "14px",
+      padding: "14px 16px",
       boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
       minWidth: 0,
     }}>
@@ -1034,7 +1035,8 @@ export default function HomeTab({ account = "PEA", onTabChange, hidden, profil: 
 
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "12px", marginBottom: "16px" }}>
+      <MarketStatusBar />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px", marginBottom: "16px" }}>
         <ColCompte  account={account} profil={profil} />
         <ColValeur  positions={positions} especes={especes} cumul={cumul} hidden={hidden} />
         <ColPerfs   positions={positions} account={account} profil={profil} />
