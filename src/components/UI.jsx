@@ -2,33 +2,45 @@ import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
 
+const SP_RW = 4, SP_RH = 11;
+const spCoinPath = (cx) =>
+  `M ${cx-SP_RW} ${16-SP_RH} A ${SP_RW} ${SP_RW} 0 0 1 ${cx+SP_RW} ${16-SP_RH} ` +
+  `L ${cx+SP_RW} ${16+SP_RH} A ${SP_RW} ${SP_RW} 0 0 1 ${cx-SP_RW} ${16+SP_RH} Z`;
+const SP_COINS = [
+  { cx: 10, dark:"#040E1C", mid:"#0D2240", bright:"#1E4D8C", face:"#071828", delay:"0.3s" },
+  { cx: 22, dark:"#040E1C", mid:"#0D2240", bright:"#1E4D8C", face:"#071828", delay:"0.6s" },
+  { cx: 16, dark:"#0D2240", mid:"#1D4ED8", bright:"#60A5FA", face:"#2563EB", delay:"0s"   },
+];
+
 const BN_KEYFRAMES = `
-  @keyframes ring-sp-spin { 0%,100%{transform:scaleX(1);opacity:1} 48%,52%{transform:scaleX(0.06);opacity:0.7} }
+  @keyframes coin-sp-shine { 0%,100%{opacity:0.85;transform:scaleX(1)} 50%{opacity:1;transform:scaleX(1.04)} }
   @keyframes bn-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 `;
-
-const SP_RINGS = [
-  { r: 11,  sw: 3.0, back: "#0D1F3C", front: "#1D4ED8", hl: "#60A5FA", delay: "0s"    },
-  { r: 7.5, sw: 2.5, back: "#132E56", front: "#2563EB", hl: "#93C5FD", delay: "0.28s" },
-  { r: 4.5, sw: 2.0, back: "#1E3A6E", front: "#3B82F6", hl: "#BAE6FD", delay: "0.56s" },
-];
 
 export function OrivoSpinner({ size = 52, label, sublabel }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
       <style>{BN_KEYFRAMES}</style>
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-        {SP_RINGS.map(({ r, sw, back, front, hl, delay }, i) => {
-          const ty = 16 - r, by = 16 + r;
-          const hlEx = 16 + r * 0.866, hlEy = 16 - r * 0.5;
-          return (
-            <g key={i} style={{ transformOrigin:"16px 16px", animation:`ring-sp-spin 1.8s ease-in-out infinite`, animationDelay: delay }}>
-              <path d={`M 16 ${ty} A ${r} ${r} 0 0 0 16 ${by}`} stroke={back}  strokeWidth={sw} strokeLinecap="round" fill="none"/>
-              <path d={`M 16 ${ty} A ${r} ${r} 0 0 1 16 ${by}`} stroke={front} strokeWidth={sw} strokeLinecap="round" fill="none"/>
-              <path d={`M 16 ${ty} A ${r} ${r} 0 0 1 ${hlEx} ${hlEy}`} stroke={hl} strokeWidth={sw*0.45} strokeLinecap="round" fill="none" opacity="0.9"/>
-            </g>
-          );
-        })}
+        <defs>
+          {SP_COINS.map(({ cx, dark, mid, bright }, i) => (
+            <linearGradient key={i} id={`spcg${i}`} gradientUnits="userSpaceOnUse"
+              x1={cx-SP_RW} y1="16" x2={cx+SP_RW} y2="16">
+              <stop offset="0%"   stopColor={dark}/>
+              <stop offset="35%"  stopColor={mid}/>
+              <stop offset="62%"  stopColor={bright}/>
+              <stop offset="100%" stopColor={dark}/>
+            </linearGradient>
+          ))}
+        </defs>
+        {SP_COINS.map(({ cx, bright, face, delay }, i) => (
+          <g key={i} style={{ transformOrigin:`${cx}px 16px`, animation:`coin-sp-shine 1.8s ease-in-out infinite`, animationDelay: delay }}>
+            <path d={spCoinPath(cx)} fill={`url(#spcg${i})`}/>
+            <ellipse cx={cx-SP_RW} cy="16" rx="1.6" ry={SP_RH} fill={face} opacity="0.75"/>
+            <ellipse cx={cx} cy={16-SP_RH} rx={SP_RW} ry="1.4" fill={bright} opacity="0.45"/>
+            <rect x={cx+SP_RW*0.35} y={16-SP_RH+2} width={SP_RW*0.35} height={SP_RH*2-4} rx="0.8" fill={bright} opacity="0.22"/>
+          </g>
+        ))}
       </svg>
       {(label || sublabel) && (
         <div style={{ textAlign: "center" }}>
