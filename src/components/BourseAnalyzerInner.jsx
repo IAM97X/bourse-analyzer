@@ -540,7 +540,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </button>
               {/* CENTER — logo + nom app + titre onglet */}
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                <AppLogo size={24} animated />
+                <AppLogo size={24} animated={refreshing} />
                 <span style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
                   Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
                 </span>
