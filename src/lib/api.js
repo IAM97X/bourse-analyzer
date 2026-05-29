@@ -65,10 +65,11 @@ function resolveAIEndpoint(maxTokens = 1500, system = "", messages = []) {
       parseText: (data) => (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n"),
     };
   }
+  const geminiKey = getKey("gemini") || undefined;
   return {
     endpoint: GEMINI_ENDPOINT,
     headers: { "Content-Type": "application/json" },
-    buildBody: (_, mt) => ({ system, messages, max_tokens: mt }),
+    buildBody: (_, mt) => ({ system, messages, max_tokens: mt, ...(geminiKey ? { gemini_key: geminiKey } : {}) }),
     parseText: (data) => (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n"),
   };
 }

@@ -18,7 +18,7 @@ export function ApiKeysSection() {
 
   const inp = { width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "10px 14px", color: C.ink, fontSize: "12px", fontFamily: "monospace", outline: "none", boxSizing: "border-box" };
   const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", display: "block" };
-  const hasKeys = keys.anthropic || keys.google;
+  const hasKeys = keys.anthropic || keys.google || keys.gemini;
 
   return (
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "18px 20px", boxShadow: shadow.card }}>
@@ -37,8 +37,13 @@ export function ApiKeysSection() {
             Clés stockées <strong>uniquement dans votre navigateur</strong> (localStorage).
           </div>
           <div>
-            <label style={lbl}>Clé Claude (IA avancée, optionnel) — <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noreferrer" style={{ color: C.navy }}>console.anthropic.com</a></label>
-            <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px" }}>L'IA Gemini est déjà incluse gratuitement. La clé Claude active des analyses plus poussées.</div>
+            <label style={lbl}>Clé Gemini (Google AI Studio, gratuit) — <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ color: C.navy }}>aistudio.google.com</a></label>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px" }}>Quota gratuit généreux. Utilisée en priorité pour toutes les analyses IA.</div>
+            <input style={inp} type="password" placeholder="AIza…" value={keys.gemini || ""} onChange={e => setKeys(k => ({ ...k, gemini: e.target.value }))} autoComplete="off" spellCheck="false" />
+          </div>
+          <div>
+            <label style={lbl}>Clé Claude (Anthropic, analyses avancées) — <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noreferrer" style={{ color: C.navy }}>console.anthropic.com</a></label>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px" }}>Prioritaire sur Gemini si configurée. Active des analyses plus poussées.</div>
             <input style={inp} type="password" placeholder="sk-ant-api03-…" value={keys.anthropic || ""} onChange={e => setKeys(k => ({ ...k, anthropic: e.target.value }))} autoComplete="off" spellCheck="false" />
           </div>
           <button onClick={handleSave} style={{ background: saved ? C.greenLight : C.navy, border: saved ? `1px solid rgba(5,150,105,0.2)` : "none", borderRadius: "12px", padding: "12px", color: saved ? C.green : "#fff", fontSize: "12px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>

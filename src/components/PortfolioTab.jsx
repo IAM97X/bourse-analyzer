@@ -161,6 +161,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const newAlerts = [];
         if (pos.alerteHaute && cours >= pos.alerteHaute) newAlerts.push({ nom: pos.nom, type: "OBJECTIF ATTEINT", color: C.green, cours, seuil: pos.alerteHaute });
         if (pos.alerteBasse && cours <= pos.alerteBasse) newAlerts.push({ nom: pos.nom, type: "STOP-LOSS ATTEINT", color: C.red, cours, seuil: pos.alerteBasse });
+        if (pos.pru > 0) {
+          const perf = (cours - pos.pru) / pos.pru;
+          if (!pos.alerteHaute && perf >= 0.50) newAlerts.push({ nom: pos.nom, type: "+50% depuis PRU", color: C.green, cours, seuil: null });
+          if (!pos.alerteBasse && perf <= -0.15) newAlerts.push({ nom: pos.nom, type: "-15% depuis PRU", color: C.red, cours, seuil: null });
+        }
         if (newAlerts.length > 0) {
           setAlerts(prev => [...prev, ...newAlerts]);
           // Push notifications via SW (PWA) ou Web Notification classique
@@ -376,6 +381,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         newAlerts.push({ nom: r.nom, type: "OBJECTIF ATTEINT", color: C.green, cours: r.dernierCours, seuil: existing.alerteHaute });
       if (existing?.alerteBasse && r.dernierCours && r.dernierCours <= existing.alerteBasse)
         newAlerts.push({ nom: r.nom, type: "STOP-LOSS ATTEINT", color: C.red, cours: r.dernierCours, seuil: existing.alerteBasse });
+      if (existing?.pru > 0 && r.dernierCours) {
+        const perf = (r.dernierCours - existing.pru) / existing.pru;
+        if (!existing.alerteHaute && perf >= 0.50) newAlerts.push({ nom: r.nom, type: "+50% depuis PRU", color: C.green, cours: r.dernierCours, seuil: null });
+        if (!existing.alerteBasse && perf <= -0.15) newAlerts.push({ nom: r.nom, type: "-15% depuis PRU", color: C.red, cours: r.dernierCours, seuil: null });
+      }
       return {
         id:               existing?.id ?? (Date.now() + i),
         nom:              r.nom,
@@ -457,7 +467,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         <div style={{ marginBottom: "16px" }}>
           {alerts.map((a, i) => (
             <div key={i} style={{ background: a.color === C.green ? C.greenLight : C.redLight, border: `1px solid ${a.color === C.green ? "rgba(5,150,105,0.2)" : "rgba(220,38,38,0.2)"}`, borderRadius: "8px", padding: "12px 16px", marginBottom: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "13px", color: a.color, fontWeight: "700" }}>🔔 {a.nom} · {a.type} ({fmtEur(a.cours)} / seuil {fmtEur(a.seuil)})</span>
+              <span style={{ fontSize: "13px", color: a.color, fontWeight: "700" }}>🔔 {a.nom} · {a.type} · {fmtEur(a.cours)}{a.seuil ? ` (seuil ${fmtEur(a.seuil)})` : ""}</span>
               <button onClick={() => setAlerts(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: C.inkMuted, cursor: "pointer", fontSize: "16px" }}>✕</button>
             </div>
           ))}

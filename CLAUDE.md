@@ -1,4 +1,4 @@
-# Bourse Analyzer — CLAUDE.md
+# BourseNext — CLAUDE.md
 
 Contexte persistant pour les sessions Claude Code. Lire AVANT toute modification.
 
@@ -69,7 +69,7 @@ api/
 - Table `user_data` : `{user_id, key, value, updated_at}` — sync bidirectionnel
 - `pullFromCloud()` au login, `scheduleSync()` (debounce 1.5s) à chaque `save()`
 - Reset password : utilise `redirectTo: window.location.origin + window.location.pathname`
-- Configurer dans Supabase Dashboard → Auth → URL Configuration → Site URL = URL Vercel prod
+- Configurer dans Supabase Dashboard → Auth → URL Configuration → Site URL = `https://boursenext.fr`
 
 ## Patterns importants
 

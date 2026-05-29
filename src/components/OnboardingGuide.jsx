@@ -4,7 +4,7 @@ import { C, shadow } from "../constants/theme";
 export const ONBOARDING_KEY = "bourse_onboarding_v1";
 
 const ONBOARDING_STEPS = [
-  { icon: "📊", title: "Bienvenue dans Orivo", body: "Votre compagnon d'investissement personnel. Suivez votre portefeuille, recevez des signaux IA et analysez vos performances." },
+  { icon: "📊", title: "Bienvenue dans BourseNext", body: "Votre compagnon d'investissement personnel. Suivez votre portefeuille, recevez des signaux IA et analysez vos performances." },
   { icon: "➕", title: "Ajoutez votre première position", body: "Cliquez sur « + Ajouter une position » dans l'onglet Portefeuille. Renseignez le nom, l'ISIN, le PRU et la quantité." },
   { icon: "🤖", title: "Signaux IA marché", body: "Cliquez sur « 🤖 Analyser toutes mes lignes » pour obtenir un avis IA sur chaque valeur : ACHAT, RENFORCER, PRUDENCE ou VENDRE." },
   { icon: "💬", title: "Votre assistant IA", body: "Posez vos questions dans l'onglet Assistant. Il vous explique les concepts financiers, analyse vos valeurs et répond 24h/24." },

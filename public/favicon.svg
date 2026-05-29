@@ -1,0 +1,24 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#040E1C"/>
+      <stop offset="100%" stop-color="#0D2540"/>
+    </linearGradient>
+    <linearGradient id="e1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1A4A8A"/>
+      <stop offset="100%" stop-color="#2D6CB5"/>
+    </linearGradient>
+    <linearGradient id="e2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2E72BE"/>
+      <stop offset="100%" stop-color="#4B9DD8"/>
+    </linearGradient>
+    <linearGradient id="e3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4BA8E0"/>
+      <stop offset="100%" stop-color="#85CFEF"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#bg)"/>
+  <ellipse cx="14" cy="16" rx="5.8" ry="9.5" stroke="url(#e1)" stroke-width="2" fill="none" transform="rotate(-28 14 16)"/>
+  <ellipse cx="16" cy="16" rx="5.8" ry="9.5" stroke="url(#e2)" stroke-width="2" fill="none"/>
+  <ellipse cx="18" cy="16" rx="5.8" ry="9.5" stroke="url(#e3)" stroke-width="2" fill="none" transform="rotate(28 18 16)"/>
+</svg>

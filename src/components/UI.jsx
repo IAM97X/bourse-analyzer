@@ -1,6 +1,57 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
+
+const ORIVO_KEYFRAMES = `
+  @keyframes orivo-e1 { from { transform: rotate(-28deg); } to { transform: rotate(332deg); } }
+  @keyframes orivo-e2 { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
+  @keyframes orivo-e3 { from { transform: rotate(28deg);  } to { transform: rotate(388deg); } }
+  @keyframes orivo-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+`;
+
+export function OrivoSpinner({ size = 52, label, sublabel }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
+      <style>{ORIVO_KEYFRAMES}</style>
+      <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+        <defs>
+          <linearGradient id="ospbg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#040E1C"/>
+            <stop offset="100%" stopColor="#0D2540"/>
+          </linearGradient>
+          <linearGradient id="ospe1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1A4A8A"/>
+            <stop offset="100%" stopColor="#2D6CB5"/>
+          </linearGradient>
+          <linearGradient id="ospe2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#2E72BE"/>
+            <stop offset="100%" stopColor="#4B9DD8"/>
+          </linearGradient>
+          <linearGradient id="ospe3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#4BA8E0"/>
+            <stop offset="100%" stopColor="#85CFEF"/>
+          </linearGradient>
+        </defs>
+        <rect width="32" height="32" rx="8" fill="url(#ospbg)"/>
+        <ellipse cx="14" cy="16" rx="5.8" ry="9.5"
+          stroke="url(#ospe1)" strokeWidth="2.2" fill="none"
+          style={{ transformOrigin: "16px 16px", animation: "orivo-e1 1.8s linear infinite" }}/>
+        <ellipse cx="16" cy="16" rx="5.8" ry="9.5"
+          stroke="url(#ospe2)" strokeWidth="2.2" fill="none"
+          style={{ transformOrigin: "16px 16px", animation: "orivo-e2 2.4s linear infinite" }}/>
+        <ellipse cx="18" cy="16" rx="5.8" ry="9.5"
+          stroke="url(#ospe3)" strokeWidth="2.2" fill="none"
+          style={{ transformOrigin: "16px 16px", animation: "orivo-e3 3.2s linear infinite" }}/>
+      </svg>
+      {(label || sublabel) && (
+        <div style={{ textAlign: "center" }}>
+          {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "Inter,sans-serif", animation: "orivo-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
+          {sublabel && <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "4px" }}>{sublabel}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function StatBox({ label, value, color, sensitive }) {
   const hidden  = sensitive && load("bourse_hidden", false);
@@ -39,13 +90,10 @@ export function ThinkingSpinner({ size = 22, color = "#1A3A5C" }) {
   );
 }
 
-export function LoadingPanel({ label = "Analyse en cours" }) {
+export function LoadingPanel({ label = "Analyse en cours…" }) {
   return (
-    <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "48px", textAlign: "center" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
-        <ThinkingSpinner size={24} color={C.navy} />
-        <span style={{ fontSize: "13px", color: C.inkMuted, fontWeight: "600", fontFamily: "Inter,sans-serif" }}>{label}</span>
-      </div>
+    <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "48px 32px", display: "flex", justifyContent: "center" }}>
+      <OrivoSpinner size={52} label={label} />
     </div>
   );
 }

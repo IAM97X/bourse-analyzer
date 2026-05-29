@@ -146,9 +146,10 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key, autopilot_context, app_context, market_open } = req.body || {};
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key, gemini_key, autopilot_context, app_context, market_open, decision_journal } = req.body || {};
   const anthropicKey = claude_key || process.env.ANTHROPIC_API_KEY;
-  if (!geminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA non configuré" });
+  const effectiveGeminiKey = gemini_key || geminiKey;
+  if (!effectiveGeminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA non configuré. Configure une clé Gemini ou Claude dans Paramètres → Clés API." });
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
 
   const valeurTotale = portfolio.cash + (portfolio.positions || []).reduce((s, p) => {
@@ -164,130 +165,120 @@ module.exports = async function handler(req, res) {
   const isBourso = courtier_info?.toLowerCase().includes("boursobank");
   const activeUniverse = isCTO ? [...PEA_UNIVERSE, ...CTO_EXTRA_UNIVERSE] : PEA_UNIVERSE;
 
-  const univAvecPrix = activeUniverse
+  // ── Calculs clés ──────────────────────────────────────────────────────────────
+  const posMax  = (valeurTotale * 0.20).toFixed(0);
+  const cashMin = (valeurTotale * 0.05).toFixed(0);
+  const cashDeployable = Math.max(0, portfolio.cash - Number(cashMin));
+
+  // Trades des 7 derniers jours
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const tradesThisWeek = (portfolio.trades || []).filter(t =>
+    t.action !== "DEPOT" && t.action !== "DCA" && new Date(t.date).getTime() > sevenDaysAgo
+  ).length;
+
+  // Positions en cours formatées (compactes)
+  const positionsText = portfolio.positions?.length > 0
+    ? portfolio.positions.map(p => {
+        const c   = prices[p.ticker] || p.dernier_cours || p.prix_achat_moyen;
+        const pv  = ((c - p.prix_achat_moyen) / (p.prix_achat_moyen || 1) * 100).toFixed(1);
+        const pct = valeurTotale > 0 ? ((p.quantite * c / valeurTotale) * 100).toFixed(0) : 0;
+        return `• ${p.nom} (${p.ticker}): ${p.quantite}× | PRU ${p.prix_achat_moyen}€ | cours ${c}€ | ${pv >= 0 ? "+" : ""}${pv}% | ${pct}% PF`;
+      }).join('\n')
+    : "AUCUNE POSITION — 1er cycle : déployer 60-70% en 3-5 positions diversifiées";
+
+  // Journal de décisions (compact)
+  const journalText = decision_journal?.length > 0
+    ? decision_journal.map(e => {
+        const pv  = e.pv_pct != null ? ` → ${e.pv_pct >= 0 ? "+" : ""}${e.pv_pct}%` : "";
+        const st  = e.statut === "CLOSED" ? "[CLÔ]" : "[OUV]";
+        return `${st} ${e.date} ${e.session} | ${e.action} ${e.nom} ×${e.quantite} @${e.cours_entree}€${pv} — ${e.raison}`;
+      }).join('\n')
+    : "Aucune décision précédente.";
+
+  // Signaux marché (top 5 seulement)
+  const signaux = (app_context?.scoring_marche || []).slice(0, 5).join('\n') || "Aucun signal.";
+
+  // Actualités (3 max)
+  const actu = (app_context?.actualites_marche || []).slice(0, 3).join('\n') || "Aucune.";
+
+  // Score Autopilot
+  const autopilotScore = autopilot_context
+    ? `Score marché: ${autopilot_context.score_marche || "N/A"}/20 — ${autopilot_context.resume || ""}`
+    : "Non disponible.";
+
+  // Univers filtré : positions actuelles TOUJOURS incluses, ETFs BoursoMarkets, puis actions avec signal autopilot
+  const portfolioTickers = new Set((portfolio.positions || []).map(p => p.ticker));
+  const autopilotTickers = new Set((autopilot_context?.opportunites || []).flatMap(o => {
+    const m = o.match(/\(([^)]+)\)/); return m ? [m[1]] : [];
+  }));
+
+  const univFiltered = activeUniverse
     .filter(s => prices[s.symbol])
+    .filter(s => {
+      if (portfolioTickers.has(s.symbol)) return true;         // toujours : positions actuelles
+      if (BOURSOMARKETS_ETFS[s.symbol]) return true;           // toujours : ETFs BoursoMarkets
+      if (autopilotTickers.has(s.symbol)) return true;         // signal Autopilot détecté
+      return false;
+    })
+    .slice(0, 25)
     .map(s => {
-      const bm = isBourso && !isCTO && BOURSOMARKETS_ETFS[s.symbol];
-      const ter = bm ? ` | TER ${BOURSOMARKETS_ETFS[s.symbol].ter}%/an` : "";
-      const fees = bm ? " | ✅ BoursoMarkets 0€ frais si ≥200€" : "";
-      return `- ${s.nom} (${s.symbol}): ${prices[s.symbol]}€ [${s.secteur}${ter}${fees}]`;
+      const bm   = isBourso && !isCTO && BOURSOMARKETS_ETFS[s.symbol];
+      const ter  = bm ? ` TER${BOURSOMARKETS_ETFS[s.symbol].ter}%` : "";
+      const flag = bm ? " ✅0€" : "";
+      return `• ${s.nom} (${s.symbol}): ${prices[s.symbol]}€ [${s.secteur}${ter}${flag}]`;
     })
     .join('\n');
 
-  const positionsText = portfolio.positions?.length > 0
-    ? portfolio.positions.map(p => {
-        const c = prices[p.ticker] || p.dernier_cours || p.prix_achat_moyen;
-        const pv = ((c - p.prix_achat_moyen) / (p.prix_achat_moyen || 1) * 100).toFixed(1);
-        const val = (p.quantite * c).toFixed(0);
-        return `- ${p.nom} (${p.ticker}): ${p.quantite} titres | PRU ${p.prix_achat_moyen}€ | cours ${c}€ | PV ${pv}% | valeur ${val}€`;
-      }).join('\n')
-    : "AUCUNE POSITION — c'est le 1er cycle, déployer 60-70% du capital en 3-5 positions";
-
-  const lastTradesText = portfolio.trades?.length > 0
-    ? portfolio.trades.slice(0, 5).map(t => `${t.action} ${t.nom}×${t.quantite}@${t.prix}€ — ${t.raison}`).join('\n')
-    : "Aucun trade précédent";
-
-  const posMax = (valeurTotale * 0.20).toFixed(0);
-  const cashMin = (valeurTotale * 0.05).toFixed(0);
-  const minOrdreNum = courtier_min_ordre || 0;
-  const minETFNum   = courtier_min_etf   || 0;
-
-  const marketCtx = market_open === false
-    ? "\n⚠️ MARCHÉ FERMÉ : Les marchés sont actuellement fermés. Tu dois UNIQUEMENT émettre des décisions HOLD pour toutes les positions. Aucun BUY ni SELL ne peut être exécuté maintenant. Tu peux noter des observations stratégiques dans le résumé (opportunités à surveiller, ordres à préparer pour la prochaine ouverture), mais la liste des décisions doit être 100% HOLD."
+  // Profil investisseur (compact)
+  const profilLine = app_context?.profil_investisseur
+    ? `Risque: ${app_context.profil_investisseur.risque} | Horizon: ${app_context.profil_investisseur.horizon} | DCA: ${app_context.profil_investisseur.versements_pea || app_context.profil_investisseur.versements_cto || 0}€/mois`
     : "";
 
-  const sessionCtx = session_type === "OUVERTURE"
-    ? "SESSION OUVERTURE (9h05) : Cherche les opportunités d'achat, déploie le cash disponible sur les meilleures convictions du moment. Achats prioritaires."
-    : session_type === "MIDI"
-    ? "SESSION MIDI (12h30) : Revue intermédiaire. Ajuste les positions si un signal fort est apparu depuis l'ouverture. Ventes partielles si un titre a fortement monté ou si une alerte se confirme. Achats opportunistes uniquement si évident."
-    : session_type === "CLÔTURE"
-    ? "SESSION CLÔTURE (17h15) : Revois les positions en perte, coupe les stops-loss atteints, sécurise les gains excessifs. Ventes prioritaires si nécessaire."
-    : "CYCLE MANUEL : Analyse complète buy/sell/hold.";
+  // Règle fréquence : si ≥2 trades cette semaine, signal fort requis
+  const freqRule = tradesThisWeek >= 2
+    ? `⚠️ FRÉQUENCE : ${tradesThisWeek} trades effectués cette semaine. Ne trade QUE si signal exceptionnel (stop-loss, opportunité de conviction ≥8/10). Sinon HOLD obligatoire.`
+    : `Trades cette semaine: ${tradesThisWeek}/2 max recommandé.`;
 
-  const autopilotCtx = autopilot_context
-    ? `\n=== CONTEXTE MARCHÉ (source : Autopilot, à titre informatif) ===\nNote : ces données sont une lecture externe du marché. Tu restes autonome — tu n'es pas tenu de les suivre. Utilise-les comme signal supplémentaire parmi d'autres.\nScore marché global : ${autopilot_context.score_marche || "N/A"}/20\nLecture marché : ${autopilot_context.resume || "N/A"}\nTitres repérés par l'analyse externe :\n${(autopilot_context.opportunites || []).map(o => `  • ${o}`).join('\n') || "  Aucun"}\n(Analyse datant du : ${autopilot_context.generated_at ? new Date(autopilot_context.generated_at).toLocaleDateString('fr-FR') : "N/A"})`
+  const dcaLine = dca_injected && dca_amount > 0
+    ? `⚡ DCA +${dca_amount}€ injecté ce cycle — déployer en priorité.`
     : "";
 
-  const courtierCtx = courtier_info
-    ? `\n=== CONTRAINTES COURTIER ===\n${courtier_info}`
-    : "";
+  const marketLine = market_open === false
+    ? "⛔ MARCHÉ FERMÉ — HOLD uniquement sur toutes les positions. Pas de BUY ni SELL."
+    : `SESSION: ${session_type || "MANUEL"}`;
 
+  const userMsg = `DATE: ${new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} | ${marketLine}
+${dcaLine}
 
-  const dcaCtx = dca_injected && dca_amount > 0
-    ? `\n⚡ DCA MENSUEL INJECTÉ CE CYCLE: +${dca_amount}€ viennent d'être ajoutés au cash disponible (apport mensuel du 1er du mois). Priorité absolue : déployer une partie de cet apport en positions de conviction, en complément du cash existant.`
-    : "";
+━━━ PORTEFEUILLE IA — ${account || 'PEA'} ━━━
+Valeur: ${valeurTotale.toFixed(0)}€ | Perf: ${perfTotal >= 0 ? "+" : ""}${perfTotal}% | Capital initial: ${portfolio.capital_initial}€
+Cash déployable: ${cashDeployable.toFixed(0)}€${cashDeployable <= 0 ? " — VENDRE d'abord pour libérer du cash" : ""}
+${profilLine}
 
-  const appCtx = app_context ? `
-=== CONTEXTE INVESTISSEUR ===
-Profil : risque=${app_context.profil_investisseur?.risque || "N/A"}, horizon=${app_context.profil_investisseur?.horizon || "N/A"}, versements PEA=${app_context.profil_investisseur?.versements_pea || 0}€, versements CTO=${app_context.profil_investisseur?.versements_cto || 0}€
-${app_context.profil_investisseur?.objectif ? `Objectif déclaré : ${app_context.profil_investisseur.objectif}` : ""}
-
-Portefeuille réel (miroir) :
-${(app_context.portefeuille_reel || []).map(p => `  • ${p.nom} (${p.ticker}) : ${p.quantite}×@${p.pru}€ PRU | cours ${p.cours}€ | perf ${p.perf_pct >= 0 ? "+" : ""}${p.perf_pct}%`).join("\n") || "  Aucune position"}
-
-Scoring IA marché (signaux récents) :
-${(app_context.scoring_marche || []).map(s => `  • ${s}`).join("\n") || "  Aucun signal disponible"}
-
-Historique valeur portefeuille (réel) :
-${(app_context.historique_valeur || []).join(" | ") || "  Aucune donnée"}
-
-Transactions récentes (portefeuille réel) :
-${(app_context.transactions_recentes || []).map(t => `  • ${t}`).join("\n") || "  Aucune"}
-
-Dividendes reçus :
-${(app_context.dividendes_recus || []).map(d => `  • ${d}`).join("\n") || "  Aucun"}
-
-Répartition cible de l'investisseur (à titre informatif — tu n'es pas tenu de la respecter, mais tout écart significatif doit être justifié dans ton raisonnement) :
-${app_context.allocation_cible ? Object.entries(app_context.allocation_cible).filter(([,v]) => Number(v) > 0).map(([k,v]) => `  • ${k}: ${v}%`).join("\n") : "  Non définie"}
-
-Actualités marché (temps réel) :
-${(app_context.actualites_marche || []).join("\n") || "  Aucune actualité disponible"}` : "";
-
-  const userMsg = `DATE DU CYCLE: ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-${marketCtx}
-${sessionCtx}${courtierCtx}${dcaCtx}${autopilotCtx}${appCtx}
-
-=== ÉTAT DU PORTEFEUILLE IA (${account || 'PEA'}) ===
-Capital initial: ${portfolio.capital_initial}€
-Cash total: ${portfolio.cash.toFixed(2)}€
-Cash réellement déployable (cash seul - réserve 5%): ${Math.max(0, portfolio.cash - Number(cashMin)).toFixed(2)}€${portfolio.cash <= Number(cashMin) ? " — cash seul insuffisant, mais tu peux VENDRE une position d'abord pour libérer du cash puis ACHETER dans le même cycle (le cash s'actualise après chaque vente)." : ""}
-Valeur totale: ${valeurTotale.toFixed(2)}€
-Performance depuis création: ${perfTotal}%
-Nombre de positions: ${portfolio.positions?.length || 0}
-
-POSITIONS ACTUELLES:
+POSITIONS (${portfolio.positions?.length || 0}):
 ${positionsText}
 
-DERNIERS TRADES (historique):
-${lastTradesText}
+━━━ MÉMOIRE IA ━━━
+${journalText}
+${freqRule}
 
-=== UNIVERS INVESTISSABLE ${isCTO ? "CTO (PEA + actions mondiales)" : "PEA (valeurs européennes éligibles)"} — cours temps réel ===
-${isCTO ? "⚠️ CTO : fiscalité flat tax 30% sur plus-values et dividendes. Pas de plafond de versement. Actions mondiales accessibles (US, UK, EU…)." : "⚠️ PEA : exonération d'impôt après 5 ans. Plafond versements 150 000€. Uniquement valeurs UE/EEE + ETFs UCITS domiciliés UE."}
-${univAvecPrix}
+━━━ SIGNAUX MARCHÉ ━━━
+${autopilotScore}
+Top signaux: ${signaux}
+Actualités: ${actu}
 
-=== CONTRAINTES STRICTES ===
-- Maximum 5 transactions par cycle (BUY + SELL combinés)
-- Position max par titre: ${posMax}€ (20% du capital)
-- Cash minimum à conserver: ${cashMin}€ (5%)
-- Tu es LIBRE de vendre une position pour financer un achat dans le même cycle : ordonne toujours SELL avant BUY, le cash se met à jour après chaque vente
-- Avant tout BUY: vérifier que quantite × cours ≤ (cash après ventes éventuelles) - ${cashMin}€
-${minOrdreNum > 0 ? `- Ordre minimum courtier: ${minOrdreNum}€ par transaction (actions). NE PAS placer d'ordre < ${minOrdreNum}€.` : ""}
-${minETFNum > 0 ? `- Ordre minimum ETF: ${minETFNum}€ par transaction. NE PAS acheter un ETF pour < ${minETFNum}€.` : ""}
-- Pas d'achat fractionné : arrondir à l'entier inférieur (Math.floor)
-- Si 1er cycle (aucune position): déployer 60-70% en 3-5 positions diversifiées sectoriellement
-- HOLD = décision valide et souvent optimale. Ne trade que si conviction forte (ratio risque/rendement clair)
-- Éviter de vendre une position achetée au cycle précédent sans raison forte
-${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (0€ frais si ≥200€) pour maximiser l'efficacité. Comparer les TERs pour choisir entre ETFs à exposition similaire (ex. EWLD 0.20% < CW8 0.38% = même exposition monde, coût moindre)." : ""}
+━━━ OPPORTUNITÉS (cours temps réel) ━━━
+${isCTO ? "CTO — flat tax 30% sur PV" : "PEA — exonéré après 5 ans, valeurs EU/EEA uniquement"}
+${univFiltered || "Aucun cours disponible."}
 
-=== FORMAT REQUIS (JSON strict, sans markdown) ===
-{
-  "decisions": [
-    {"action": "BUY",  "ticker": "MC.PA",  "nom": "LVMH",    "quantite": 2,  "cours": 650.5,  "raison": "..."},
-    {"action": "SELL", "ticker": "RNO.PA", "nom": "Renault", "quantite": 5,  "cours": 38.2,   "raison": "..."},
-    {"action": "HOLD", "ticker": "AIR.PA", "nom": "Airbus",  "quantite": 0,  "cours": 160.0,  "raison": "..."}
-  ],
-  "strategie": "Description en 1-2 phrases de la stratégie et du raisonnement macro ce cycle"
-}`;
+━━━ CONTRAINTES ━━━
+Position max: ${posMax}€ (20%) | Cash réserve: ${cashMin}€ (5%)
+${(courtier_min_ordre || 0) > 0 ? `Ordre min actions: ${courtier_min_ordre}€` : ""}${(courtier_min_etf || 0) > 0 ? ` | Ordre min ETF: ${courtier_min_etf}€` : ""}
+Pas d'achat fractionné. Max 3 transactions/cycle. HOLD = optimal si pas de signal clair.
+${isBourso ? "PRIORITÉ ETF BoursoMarkets ✅ (0€ frais ≥200€) — comparer TERs pour exposition identique." : ""}
+
+━━━ FORMAT JSON STRICT ━━━
+{"decisions":[{"action":"BUY","ticker":"MC.PA","nom":"LVMH","quantite":2,"cours":650.5,"raison":"..."},{"action":"HOLD","ticker":"AIR.PA","nom":"Airbus","quantite":0,"cours":160.0,"raison":"..."}],"strategie":"1-2 phrases raisonnement macro"}`;
 
   const body = {
     systemInstruction: {
@@ -352,13 +343,13 @@ ${isBourso ? "- PRIORITÉ ETF BoursoMarkets : préférer les ETFs marqués ✅ (
       const result = parseJson(text);
       return res.status(200).json({ ...result, _model: "claude-haiku-4-5" });
     } catch (e) {
-      if (!geminiKey) return res.status(500).json({ error: `Claude : ${friendlyError(e.message)}` });
+      if (!effectiveGeminiKey) return res.status(500).json({ error: `Claude : ${friendlyError(e.message)}` });
       // Fallback Gemini silencieux uniquement pour erreurs non-auth
     }
   }
 
   // ── Gemini fallback ───────────────────────────────────────────────────────────
-  if (!geminiKey) return res.status(503).json({ error: "Service IA non configuré" });
+  if (!effectiveGeminiKey) return res.status(503).json({ error: "Service IA non configuré" });
 
   const MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
 

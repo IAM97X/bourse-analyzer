@@ -3,7 +3,7 @@ import { C, shadow } from "../constants/theme";
 import { COURTIERS_DETAIL, getCourtierForAccount } from "../constants/courtiers";
 import { load, save } from "../lib/storage";
 import { sanitizePositions } from "../lib/finance";
-import { callClaudeConversation, hasClaudeKey, hasAI, CLAUDE_MODELS, ANTHROPIC_API_KEY, CLAUDE_ENDPOINT } from "../lib/api";
+import { callClaudeConversation, hasClaudeKey, hasAI } from "../lib/api";
 import { useIsMobile } from "../context/mobile";
 import { IconChat } from "./Sidebar";
 
@@ -214,19 +214,7 @@ Règles strictes :
           ? { role: m.role, content: `[CONTEXTE DE MON PORTEFEUILLE]\n${context}\n\n[MA QUESTION]\n${m.content}` }
           : { role: m.role, content: m.content }
       );
-      const res = await fetch(CLAUDE_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": String(ANTHROPIC_API_KEY),
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({ model: CLAUDE_MODELS.standard, max_tokens: 1024, system: SYSTEM_PROMPT, messages: apiMsgs }),
-      });
-      const data  = await res.json();
-      if (data?.error) throw new Error(data.error.message || "Erreur API");
-      const reply = data?.content?.[0]?.text || "Désolé, je n'ai pas pu générer une réponse.";
+      const reply = await callClaudeConversation(SYSTEM_PROMPT, apiMsgs) || "Désolé, je n'ai pas pu générer une réponse.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch (e) {
       const m = e.message || "";
@@ -330,13 +318,13 @@ Règles strictes :
                 <div style={{ fontSize: "36px", marginBottom: "12px" }}>🔑</div>
                 <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>IA non disponible</div>
                 <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "20px", lineHeight: "1.6" }}>
-                  Configurez une clé API Claude pour activer l'assistant.<br/>L'inscription est <strong>gratuite</strong> et inclut des crédits offerts.
+                  Ajoutez une clé <strong>Gemini</strong> (gratuite) ou <strong>Claude</strong> dans Paramètres pour activer l'assistant.
                 </div>
-                <a href="https://console.anthropic.com" target="_blank" rel="noreferrer"
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer"
                   style={{ display: "inline-block", background: "linear-gradient(135deg, #1E3A5F, #2D5986)", color: "#fff", borderRadius: "10px", padding: "10px 20px", fontSize: "12px", fontWeight: "700", textDecoration: "none", marginBottom: "12px" }}>
-                  Créer un compte gratuit →
+                  Clé Gemini gratuite →
                 </a>
-                <div style={{ fontSize: "10px", color: C.inkSubtle, lineHeight: "1.6" }}>Puis ajoutez votre clé dans<br/><strong>Profil → Clés API</strong></div>
+                <div style={{ fontSize: "10px", color: C.inkSubtle, lineHeight: "1.6" }}>Ajoutez votre clé dans<br/><strong>Profil → Clés API</strong></div>
               </div>
             )}
             {hasAI() && messages.length === 0 && (

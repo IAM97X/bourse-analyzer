@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { C } from "../constants/theme";
+import { OrivoSpinner } from "./UI";
+import AppLogo from "./AppLogo";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur } from "../lib/finance";
 import { getKey } from "../lib/api";
@@ -127,28 +129,43 @@ function applyDecisions(portfolio, decisions, prices, courtierConstraints = {}) 
 
   positions.forEach(p => { if (prices[p.ticker]) p.dernier_cours = prices[p.ticker]; });
 
+  // Stop-loss automatique : vente forcée si position en perte > 15% depuis PRU
+  const STOP_LOSS_THRESHOLD = 0.15;
+  for (const p of [...positions]) {
+    const cours = prices[p.ticker] || p.dernier_cours || p.prix_achat_moyen;
+    const perte = (cours - p.prix_achat_moyen) / (p.prix_achat_moyen || 1);
+    if (perte < -STOP_LOSS_THRESHOLD) {
+      const montant = p.quantite * cours;
+      const fee = calcFee(p.ticker, montant, courtierConstraints);
+      cash += montant - fee;
+      positions = positions.filter(pos => pos.ticker !== p.ticker);
+      newTrades.push({ date: new Date().toISOString(), action: "STOP_LOSS", ticker: p.ticker, nom: p.nom, quantite: p.quantite, prix: cours, montant, frais: fee, raison: `🛑 Stop-loss : -${Math.abs(perte * 100).toFixed(1)}% depuis PRU ${p.prix_achat_moyen.toFixed(2)}€` });
+    }
+  }
+
   const valeur = cash + positions.reduce((s, p) => s + p.quantite * (p.dernier_cours || p.prix_achat_moyen), 0);
   const today = new Date().toISOString().slice(0, 10);
   const snapshots = [...(portfolio.snapshots || []).filter(s => s.date !== today), { date: today, valeur }].slice(-365);
 
-  return { ...portfolio, cash, positions, trades: [...newTrades, ...(portfolio.trades || [])].slice(0, 100), snapshots, last_cycle: new Date().toISOString() };
+  return { ...portfolio, cash, positions, trades: [...newTrades, ...(portfolio.trades || [])].slice(0, 100), snapshots, last_cycle: new Date().toISOString(), _executed: newTrades };
 }
 
 // ── Performance chart (SVG, 3 séries normalisées) ────────────────────────────
-function PerformanceChart({ aiSnapshots, userSnapshots, inceptionDate, height = 160 }) {
+function PerformanceChart({ aiSnapshots, userSnapshots, benchmarkSnapshots, benchmarkLabel = "MSCI World", inceptionDate, height = 160 }) {
   const W = 600;
 
-  const normalize = (snaps) => {
+  const normalize = (snaps, key = "valeur") => {
     if (!snaps?.length) return [];
     const filtered = snaps.filter(s => s.date >= (inceptionDate || "2000-01-01")).sort((a, b) => a.date.localeCompare(b.date));
     if (filtered.length < 2) return [];
-    const base = filtered[0].valeur;
+    const base = filtered[0][key];
     if (!base) return [];
-    return filtered.map(s => ({ date: s.date, v: (s.valeur / base) * 100 }));
+    return filtered.map(s => ({ date: s.date, v: (s[key] / base) * 100 }));
   };
 
-  const aiData   = normalize(aiSnapshots);
-  const userData = normalize(userSnapshots);
+  const aiData    = normalize(aiSnapshots);
+  const userData  = normalize(userSnapshots);
+  const benchData = normalize(benchmarkSnapshots, "prix");
 
   if (aiData.length < 2) {
     return (
@@ -158,8 +175,9 @@ function PerformanceChart({ aiSnapshots, userSnapshots, inceptionDate, height = 
     );
   }
 
-  const allDates = [...new Set([...aiData, ...userData].map(d => d.date))].sort();
-  const allVals  = [...aiData, ...userData].map(d => d.v);
+  const allSeries = [...aiData, ...userData, ...benchData];
+  const allDates  = [...new Set(allSeries.map(d => d.date))].sort();
+  const allVals   = allSeries.map(d => d.v);
   const minV = Math.min(94, ...allVals), maxV = Math.max(106, ...allVals);
   const range = maxV - minV || 1;
 
@@ -171,8 +189,9 @@ function PerformanceChart({ aiSnapshots, userSnapshots, inceptionDate, height = 
   const pts = (data) => data.map(d => { const x = xOf(d.date); return x === null ? null : `${x.toFixed(1)},${yOf(d.v).toFixed(1)}`; }).filter(Boolean).join(" ");
   const y100 = yOf(100);
 
-  const lastAI   = aiData[aiData.length - 1];
-  const lastUser = userData[userData.length - 1];
+  const lastAI    = aiData[aiData.length - 1];
+  const lastUser  = userData[userData.length - 1];
+  const lastBench = benchData[benchData.length - 1];
 
   return (
     <svg viewBox={`0 0 ${W} ${height}`} style={{ width: "100%", height, display: "block" }} preserveAspectRatio="none">
@@ -186,6 +205,11 @@ function PerformanceChart({ aiSnapshots, userSnapshots, inceptionDate, height = 
       {/* Référence 100% */}
       <line x1="0" y1={y100} x2={W} y2={y100} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 3"/>
       <text x="4" y={y100 - 4} fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">100%</text>
+
+      {/* Benchmark */}
+      {benchData.length > 1 && (
+        <polyline points={pts(benchData)} fill="none" stroke="#F59E0B" strokeWidth="1.5" strokeDasharray="5 3" strokeLinecap="round" strokeLinejoin="round"/>
+      )}
 
       {/* Courbe utilisateur */}
       {userData.length > 1 && (
@@ -216,6 +240,12 @@ function PerformanceChart({ aiSnapshots, userSnapshots, inceptionDate, height = 
         if (x === null) return null;
         const diff = lastUser.v - 100;
         return <text x={Math.min(x + 4, W - 44)} y={yOf(lastUser.v) + 12} fontSize="9" fill="#10B981" fontWeight="700" fontFamily="Inter,sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
+      })()}
+      {lastBench && benchData.length > 1 && (() => {
+        const x = xOf(lastBench.date);
+        if (x === null) return null;
+        const diff = lastBench.v - 100;
+        return <text x={Math.min(x + 4, W - 60)} y={yOf(lastBench.v) + 12} fontSize="9" fill="#F59E0B" fontWeight="700" fontFamily="Inter,sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
       })()}
     </svg>
   );
@@ -498,10 +528,19 @@ export default function AIPortfolioTab({ account, hidden }) {
         actualites_marche: actualites,
       };
 
+      // Journal : mettre à jour les cours des positions OPEN avant l'appel IA
+      const journalKey = `bourse_ai_journal_${account}`;
+      const existingJournal = load(journalKey, []);
+      const journalWithUpdatedPrices = existingJournal.map(e => {
+        if (e.statut !== "OPEN" || !freshPrices[e.ticker]) return e;
+        const pv_pct = +((freshPrices[e.ticker] - e.cours_entree) / e.cours_entree * 100).toFixed(2);
+        return { ...e, cours_actuel: freshPrices[e.ticker], pv_pct };
+      });
+
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, autopilot_context, app_context, market_open: getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).open }),
+        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, gemini_key: getKey("gemini") || undefined, autopilot_context, app_context, market_open: getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).open, decision_journal: journalWithUpdatedPrices.slice(0, 15) }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {
@@ -518,6 +557,43 @@ export default function AIPortfolioTab({ account, hidden }) {
       if (session === "OUVERTURE") updatedPf.last_morning_cycle = now;
       else if (session === "MIDI") updatedPf.last_noon_cycle = now;
       else if (session === "CLÔTURE") updatedPf.last_evening_cycle = now;
+
+      // 4. Mettre à jour le journal de décisions
+      const executed = updatedPf._executed || [];
+      const soldTickers = executed.filter(t => t.action === "SELL").map(t => t.ticker);
+      const nowDate = now.slice(0, 10);
+      const parisHeure = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(now));
+
+      const closedJournal = journalWithUpdatedPrices.map(e =>
+        e.statut === "OPEN" && e.action === "BUY" && soldTickers.includes(e.ticker)
+          ? { ...e, statut: "CLOSED", closed_at: nowDate }
+          : e
+      );
+      const newEntries = executed.map((t, i) => ({
+        id: Date.now() + i,
+        date: nowDate,
+        heure: parisHeure,
+        session,
+        action: t.action,
+        ticker: t.ticker,
+        nom: t.nom,
+        quantite: t.quantite,
+        cours_entree: t.prix,
+        raison: t.raison || "",
+        cours_actuel: t.prix,
+        pv_pct: 0,
+        statut: t.action === "BUY" ? "OPEN" : "CLOSED",
+      }));
+      const newJournal = [...newEntries, ...closedJournal].slice(0, 50);
+      save(journalKey, newJournal);
+
+      // Snapshot benchmark (CW8.PA PEA / IWDA.AS CTO)
+      const benchTicker = account === "CTO" ? "IWDA.AS" : "CW8.PA";
+      const benchPrice  = freshPrices[benchTicker];
+      if (benchPrice) {
+        const bSnaps = [...(updatedPf.benchmark_snapshots || []).filter(s => s.date !== nowDate), { date: nowDate, prix: benchPrice }].slice(-365);
+        updatedPf.benchmark_snapshots = bSnaps;
+      }
 
       setAiPf(updatedPf);
       save(aiPfKey(account), updatedPf);
@@ -612,7 +688,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "20px", lineHeight: 1 }}>{getAiEmoji()}</span>
+            <AppLogo size={28} animated={cycling} />
             <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{getAiName() || "Portefeuille IA"}</span>
             <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg,#080B0F,#2D5986)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
           </div>
@@ -624,7 +700,7 @@ export default function AIPortfolioTab({ account, hidden }) {
           <button onClick={handleRunCycle} disabled={cycling}
             style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg,#080B0F 0%,#1E3A5F 100%)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
             {cycling
-              ? <><span style={{ width: "12px", height: "12px", border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "ba-spin 0.7s linear infinite" }}/> Analyse en cours…</>
+              ? <><OrivoSpinner size={16} /> Analyse en cours…</>
               : "▶ Lancer un cycle"}
           </button>
           <button onClick={handleReset} title="Réinitialiser le portefeuille IA"
@@ -692,9 +768,14 @@ export default function AIPortfolioTab({ account, hidden }) {
             <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#10B981", fontWeight: "600" }}>
               <span style={{ width: "18px", height: "2px", background: "#10B981", borderRadius: "2px", display: "inline-block" }}/>Vous
             </span>
+            {aiPf.benchmark_snapshots?.length >= 2 && (
+              <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#F59E0B", fontWeight: "600" }}>
+                <span style={{ width: "18px", height: "0px", borderTop: "2px dashed #F59E0B", display: "inline-block" }}/>{account === "CTO" ? "MSCI World" : "MSCI World"}
+              </span>
+            )}
             {loadingPrices && <span style={{ fontSize: "11px", color: C.inkSubtle }}>actualisation…</span>}
           </div>
-          <PerformanceChart aiSnapshots={aiPf.snapshots} userSnapshots={userSnaps} inceptionDate={aiPf.inception_date} />
+          <PerformanceChart aiSnapshots={aiPf.snapshots} userSnapshots={userSnaps} benchmarkSnapshots={aiPf.benchmark_snapshots} inceptionDate={aiPf.inception_date} />
         </div>
       )}
 
@@ -761,9 +842,9 @@ export default function AIPortfolioTab({ account, hidden }) {
               {aiPf.trades.slice(0, 20).map((t, i) => (
                 <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start", padding: "7px 9px", borderRadius: "9px", background: "#F8F9FA" }}>
                   <span style={{ flexShrink: 0, fontSize: "9px", fontWeight: "800", padding: "3px 6px", borderRadius: "5px", marginTop: "1px",
-                    background: t.action === "BUY" ? "rgba(5,150,105,0.1)" : t.action === "DCA" || t.action === "DEPOT" ? "rgba(30,58,95,0.1)" : "rgba(220,38,38,0.08)",
-                    color: t.action === "BUY" ? "#059669" : t.action === "DCA" || t.action === "DEPOT" ? "#1E3A5F" : "#DC2626" }}>
-                    {t.action === "BUY" ? "ACHAT" : t.action === "DCA" ? "DCA" : t.action === "DEPOT" ? "DÉPÔT" : "VENTE"}
+                    background: t.action === "BUY" ? "rgba(5,150,105,0.1)" : t.action === "DCA" || t.action === "DEPOT" ? "rgba(30,58,95,0.1)" : t.action === "STOP_LOSS" ? "rgba(234,179,8,0.15)" : "rgba(220,38,38,0.08)",
+                    color: t.action === "BUY" ? "#059669" : t.action === "DCA" || t.action === "DEPOT" ? "#1E3A5F" : t.action === "STOP_LOSS" ? "#92400E" : "#DC2626" }}>
+                    {t.action === "BUY" ? "ACHAT" : t.action === "DCA" ? "DCA" : t.action === "DEPOT" ? "DÉPÔT" : t.action === "STOP_LOSS" ? "STOP" : "VENTE"}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>
@@ -824,6 +905,67 @@ export default function AIPortfolioTab({ account, hidden }) {
           </div>
         </div>
       )}
+
+      {/* ── Journal de décisions ── */}
+      {(() => {
+        const journal = load(`bourse_ai_journal_${account}`, []);
+        if (!journal.length) return null;
+        const open   = journal.filter(e => e.statut === "OPEN");
+        const closed = journal.filter(e => e.statut === "CLOSED");
+        const Entry = ({ e }) => {
+          const pvColor = e.pv_pct > 0 ? "#059669" : e.pv_pct < 0 ? "#DC2626" : C.inkMuted;
+          const isClosed = e.statut === "CLOSED";
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "9px", background: isClosed ? "rgba(100,116,139,0.04)" : "rgba(255,255,255,0.8)", opacity: isClosed ? 0.7 : 1, fontSize: "11px" }}>
+              <span style={{ flexShrink: 0, fontSize: "9px", fontWeight: "800", padding: "2px 6px", borderRadius: "5px",
+                background: e.action === "BUY" ? "rgba(5,150,105,0.1)" : "rgba(220,38,38,0.08)",
+                color: e.action === "BUY" ? "#059669" : "#DC2626" }}>
+                {e.action === "BUY" ? "ACHAT" : "VENTE"}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontWeight: "700", color: C.ink }}>{e.nom}</span>
+                <span style={{ color: C.inkMuted }}> ×{e.quantite} @ {fmtEur(e.cours_entree)}</span>
+              </div>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                {e.pv_pct != null && (
+                  <div style={{ fontSize: "11px", fontWeight: "700", color: pvColor }}>
+                    {e.pv_pct >= 0 ? "+" : ""}{e.pv_pct}%
+                  </div>
+                )}
+                <div style={{ fontSize: "9px", color: C.inkSubtle }}>{e.date} · {e.session}</div>
+              </div>
+              {isClosed && <span style={{ fontSize: "9px", color: C.inkSubtle, flexShrink: 0 }}>Clôturé</span>}
+            </div>
+          );
+        };
+        return (
+          <div style={{ background: "rgba(255,255,255,0.72)", border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", marginBottom: "20px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+              <div>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>Journal de décisions</div>
+                <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px" }}>{open.length} position{open.length > 1 ? "s" : ""} ouverte{open.length > 1 ? "s" : ""} · {closed.length} clôturée{closed.length > 1 ? "s" : ""}</div>
+              </div>
+              <button onClick={() => { save(`bourse_ai_journal_${account}`, []); setAiPf(pf => ({ ...pf })); }}
+                style={{ fontSize: "10px", color: C.inkSubtle, background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 9px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                Effacer
+              </button>
+            </div>
+            {open.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: closed.length ? "10px" : 0 }}>
+                {open.map(e => <Entry key={e.id} e={e} />)}
+              </div>
+            )}
+            {closed.length > 0 && (
+              <>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", margin: "8px 0 6px" }}>Décisions clôturées</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                  {closed.slice(0, 10).map(e => <Entry key={e.id} e={e} />)}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ── Cron info footer ── */}
       <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.5)", border: `1px solid ${C.border}`, borderRadius: "12px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>

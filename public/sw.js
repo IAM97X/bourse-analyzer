@@ -1,7 +1,7 @@
-// Orivo — Service Worker
+// BourseNext — Service Worker
 // Cache-first pour le shell React, network-first pour les APIs externes
 
-const CACHE_NAME = "orivo-v1";
+const CACHE_NAME = "boursenext-v1";
 
 // Ressources du shell à mettre en cache à l'installation
 const SHELL_URLS = ["/", "/index.html", "/manifest.json"];
@@ -67,7 +67,7 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   const data = event.data?.json().catch(() => ({})) ?? {};
-  const title = data.title || "Orivo";
+  const title = data.title || "BourseNext";
   const options = {
     body: data.body || "",
     icon: "/logo192.png",

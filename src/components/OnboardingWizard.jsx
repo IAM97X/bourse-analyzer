@@ -70,7 +70,7 @@ export default function OnboardingWizard({ onComplete }) {
         </div>
         {s.disclaimer ? (
           <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "14px", padding: "16px 18px", marginBottom: "24px", fontSize: "12px", color: "#78350F", lineHeight: "1.75" }}>
-            Orivo est un <strong>outil de suivi et d'aide à la décision</strong> — il ne constitue pas un conseil en investissement financier au sens de la réglementation AMF.<br/><br/>
+            BourseNext est un <strong>outil de suivi et d'aide à la décision</strong> — il ne constitue pas un conseil en investissement financier au sens de la réglementation AMF.<br/><br/>
             Les analyses, scores et recommandations générés par l'IA sont fournis à titre <strong>purement informatif</strong>. Ils ne tiennent pas compte de votre situation patrimoniale complète, de vos objectifs personnels ni de votre tolérance au risque individuelle.<br/><br/>
             <strong>Tout investissement comporte un risque de perte en capital.</strong> Les performances passées ne préjugent pas des performances futures. Consultez un conseiller financier agréé pour toute décision d'investissement importante.
           </div>

@@ -1,10 +1,9 @@
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(503).json({ error: "Service IA non configuré." });
-
-  const { system, messages, max_tokens } = req.body || {};
+  const { system, messages, max_tokens, gemini_key } = req.body || {};
+  const key = gemini_key || process.env.GEMINI_API_KEY;
+  if (!key) return res.status(503).json({ error: "Configure ta clé Gemini dans Paramètres → Clés API." });
   if (!messages?.length) return res.status(400).json({ error: "messages requis." });
 
   // Anthropic format → Gemini format

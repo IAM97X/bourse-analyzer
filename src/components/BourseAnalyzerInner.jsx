@@ -9,7 +9,7 @@ import { fetchYahooAnalysts, fetchGoogleNewsRSS, formatExternalContext } from ".
 import { useIsMobile } from "../context/mobile";
 import { UI, DEFAULT_PROFIL } from "../constants/config";
 import { TABS } from "../constants/tabs";
-import { ThinkingSpinner, Card } from "./UI";
+import { Card } from "./UI";
 import AppLogo from "./AppLogo";
 import AutopilotIA from "./AutopilotIA";
 import ChatTab, { AIAssistant } from "./ChatTab";
@@ -519,17 +519,23 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             </>
           ) : (
             <>
-              {/* ── DESKTOP : titre page | contrôles + compte ── */}
+              {/* ── DESKTOP : titre page | marchés | contrôles + compte ── */}
               {/* LEFT */}
               <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
                 <span style={{ fontSize: "16px", fontWeight: "700", color: C.ink, letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tabLabel}</span>
               </div>
+              {/* CENTER — marchés */}
+              {PORTFOLIO_TABS.includes(activeTab) && (
+                <div style={{ flex: 1, display: "flex", justifyContent: "center", overflow: "hidden" }}>
+                  <MarketStatusBar compact />
+                </div>
+              )}
               {/* RIGHT */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                 {refreshAgo && <span style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "400" }}>{refreshAgo}</span>}
                 <button onClick={refreshAll} disabled={refreshing} title={updateAvailable ? "Nouvelle version disponible — cliquer pour mettre à jour" : "Actualiser"}
                   style={{ position: "relative", width: "34px", height: "34px", background: updateAvailable ? C.green + "18" : "transparent", border: `1px solid ${updateAvailable ? C.green : C.border}`, borderRadius: "10px", cursor: refreshing ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", fontSize: "16px", color: updateAvailable ? C.green : C.inkMuted }}>
-                  {refreshing ? <ThinkingSpinner size={16} color={C.green} /> : "↻"}
+                  <AppLogo size={20} animated={refreshing} />
                   {updateAvailable && !refreshing && <span style={{ position: "absolute", top: "4px", right: "4px", width: "7px", height: "7px", borderRadius: "50%", background: C.green, boxShadow: `0 0 0 2px ${C.bg}` }} />}
                 </button>
                 <button onClick={toggleHidden} title={hiddenValues ? "Afficher les données" : "Masquer les données"}
@@ -703,7 +709,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             )}
 
             {activeTab === TABS.HOME       && <HomeTab account={account} profil={profil} marketScores={marketScores} onTabChange={changeTab} hidden={hiddenValues} />}
-            {PORTFOLIO_TABS.includes(activeTab) && <><MarketStatusBar /><DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} /></>}
+            {PORTFOLIO_TABS.includes(activeTab) && <DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} />}
             {activeTab === TABS.PORTFOLIO  && <PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} />}
             {activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
             {activeTab === TABS.PROJECTION && <ProjectionTab profil={profil} account={account} />}

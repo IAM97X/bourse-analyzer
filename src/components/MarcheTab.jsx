@@ -5,9 +5,9 @@ import { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
 import { load, save } from "../lib/storage";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
-import { callClaude, enqueueApi, getKey, fetchWithProxy } from "../lib/api";
+import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy } from "../lib/api";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
-import { ThinkingSpinner } from "./UI";
+import { ThinkingSpinner, OrivoSpinner } from "./UI";
 import Tooltip from "./Tooltip";
 
 const AI_POTENTIEL_KEY = "bourse_ai_potentiel";
@@ -523,7 +523,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             disabled={marketScoringUi === UI.LOADING}
             style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
             {marketScoringUi === UI.LOADING
-              ? <><span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", border: "2px solid #aaa", borderTopColor: "transparent", animation: "spin 0.9s linear infinite" }} />Analyse en cours…</>
+              ? <><OrivoSpinner size={14} /> Analyse en cours…</>
               : "Lancer le scoring IA"}
           </button>
         </div>
@@ -699,10 +699,10 @@ Retourne ce JSON exact (aucun texte autour) :
                 )}
                 <button
                   onClick={analyzePortfolioPotentiel}
-                  disabled={aiPotLoading || !getKey("anthropic")}
+                  disabled={aiPotLoading || !hasAI()}
                   style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: aiPotLoading ? "not-allowed" : "pointer", background: aiPotLoading ? C.snowDim : "linear-gradient(135deg,#080B0F 0%,#1E3A5F 100%)", color: aiPotLoading ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
                   {aiPotLoading
-                    ? <><ThinkingSpinner size={12} color={C.inkSubtle} /> Analyse en cours…</>
+                    ? <><OrivoSpinner size={14} /> Analyse en cours…</>
                     : ap && !ap.error ? "🔄 Relancer" : "🤖 Analyser le potentiel"}
                 </button>
               </div>
