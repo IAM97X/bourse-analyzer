@@ -574,7 +574,8 @@ export default function AIPortfolioTab({ account, hidden }) {
     }
     // Fallback : perf calculée depuis les positions réelles vs capital initial IA
     if (aiPf.capital_initial > 0) {
-      const currentUserVal = userPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0)
+      const realPositions = sanitizePositions(load("bourse_portfolio", [])).filter(p => (p.compte || "PEA") === account);
+      const currentUserVal = realPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0)
         + (account === "PEA" ? (load("bourse_profil", {}).especesPEA || 0) : (load("bourse_profil", {}).especesCTO || 0));
       return ((currentUserVal - aiPf.capital_initial) / aiPf.capital_initial) * 100;
     }
