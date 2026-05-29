@@ -126,29 +126,15 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
           <AppLogo size={34} />
         </div>
       )}
-      {!mobileCompact && <div className="ba-sidebar-logo" style={{ padding: "18px 14px 16px", borderBottom: `1px solid ${C.sbBorder}`, display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, justifyContent: c ? "center" : "flex-start" }}>
-        {isMobile
-          ? <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-              <AppLogo size={38} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: refreshing ? "linear-gradient(135deg, #1A4A8A, #4B9DD8, #A8DEFF, #2D6CB5, #1A4A8A)" : "linear-gradient(135deg, #2D6CB5, #5B9BD5)", backgroundSize: refreshing ? "300% 300%" : "100%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: refreshing ? "bn-next-wave 2s ease-in-out infinite" : "none" }}>Next</span></div>
-              </div>
-              <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "18px", color: C.inkMuted, cursor: "pointer", padding: "4px 8px", lineHeight: 1 }}>✕</button>
-            </div>
-          : <>
-              {!(hideCollapseButton && c) && (
-                <div onClick={hideCollapseButton ? undefined : toggleCollapse} title={hideCollapseButton ? undefined : (c ? "Déplier" : "Réduire")} style={{ width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: hideCollapseButton ? "default" : "pointer", borderRadius: "10px", transition: "background 0.15s" }}
-                  onMouseEnter={e => { if (!hideCollapseButton) e.currentTarget.style.background = C.sbHover; }}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <AppLogo size={34} />
-                </div>
-              )}
-              {!c && <div>
-                <div style={{ fontSize: "14px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: refreshing ? "linear-gradient(135deg, #1A4A8A, #4B9DD8, #A8DEFF, #2D6CB5, #1A4A8A)" : "linear-gradient(135deg, #2D6CB5, #5B9BD5)", backgroundSize: refreshing ? "300% 300%" : "100%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: refreshing ? "bn-next-wave 2s ease-in-out infinite" : "none" }}>Next</span></div>
-              </div>}
-            </>
-        }
-      </div>}
+      {!mobileCompact && isMobile && (
+        <div className="ba-sidebar-logo" style={{ padding: "18px 14px 16px", borderBottom: `1px solid ${C.sbBorder}`, display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+          <AppLogo size={38} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: refreshing ? "linear-gradient(135deg, #1A4A8A, #4B9DD8, #A8DEFF, #2D6CB5, #1A4A8A)" : "linear-gradient(135deg, #2D6CB5, #5B9BD5)", backgroundSize: refreshing ? "300% 300%" : "100%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: refreshing ? "bn-next-wave 2s ease-in-out infinite" : "none" }}>Next</span></div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "18px", color: C.inkMuted, cursor: "pointer", padding: "4px 8px", lineHeight: 1 }}>✕</button>
+        </div>
+      )}
 
       {onSwitchAccount && (
         <div style={{ padding: (c || mobileCompact) ? "10px 8px" : "10px 12px", borderBottom: `1px solid ${C.sbBorder}`, flexShrink: 0 }}>
