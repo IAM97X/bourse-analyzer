@@ -813,7 +813,7 @@ export default function AIPortfolioTab({ account, hidden }) {
                 <span style={{ flexShrink: 0, fontSize: "9px", fontWeight: "800", padding: "2px 6px", borderRadius: "5px",
                   background: d.action === "BUY" ? "rgba(5,150,105,0.1)" : d.action === "SELL" ? "rgba(220,38,38,0.08)" : "rgba(100,116,139,0.08)",
                   color: d.action === "BUY" ? "#059669" : d.action === "SELL" ? "#DC2626" : C.inkMuted }}>
-                  {d.action === "BUY" ? "ACHAT" : d.action === "SELL" ? "VENTE" : "HOLD"}
+                  {d.action === "BUY" ? "ACHAT" : d.action === "SELL" ? "VENTE" : "CONSERVER"}
                 </span>
                 <span style={{ fontWeight: "600", color: C.ink }}>{d.nom}</span>
                 {d.quantite > 0 && <span style={{ color: C.inkMuted }}>×{d.quantite}{d.cours ? ` @ ${fmtEur(d.cours)}` : ""}</span>}
