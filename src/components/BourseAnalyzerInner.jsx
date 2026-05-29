@@ -136,8 +136,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [avatarEmoji, setAvatarEmoji]           = useState(() => load("bourse_avatar_emoji", ""));
   const [aiName, setAiName]                     = useState(() => load("bourse_ai_name", ""));
   const [emojiPickerOpen, setEmojiPickerOpen]   = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen]   = useState(false);
   const [emojiCat, setEmojiCat]                 = useState(0);
   const emojiTriggerRef                         = useRef(null);
+  const accountTriggerRef                       = useRef(null);
   const AVATAR_EMOJI_CATS = [
     { icon: "😊", label: "Visages", emojis: ["😊","😎","🤩","😏","🥸","🤓","😇","🥳","😈","👻","💀","🤖","👽","🎭"] },
     { icon: "👩", label: "Femmes",  emojis: ["👸","🧙‍♀️","🦸‍♀️","🧝‍♀️","🧜‍♀️","🧚‍♀️","🧛‍♀️","🧟‍♀️","💃","👩‍💻","👩‍🚀","🧑‍🎤","🧑‍🎨","🧕"] },
@@ -150,18 +152,16 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const pickEmoji = (e) => { setAvatarEmoji(e); save("bourse_avatar_emoji", e); setEmojiPickerOpen(false); };
 
 
-  // Ferme les popups emoji/compte au clic hors de la zone
+  // Ferme les popups au clic hors de la zone
   useEffect(() => {
-    if (!emojiPickerOpen && !editingName) return;
+    if (!emojiPickerOpen && !accountMenuOpen && !editingName) return;
     const close = (e) => {
-      if (!e.target.closest("[data-emoji-picker]")) {
-        setEmojiPickerOpen(false);
-        setEditingName(false);
-      }
+      if (!e.target.closest("[data-emoji-picker]")) { setEmojiPickerOpen(false); setEditingName(false); }
+      if (!e.target.closest("[data-account-menu]")) setAccountMenuOpen(false);
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
-  }, [emojiPickerOpen, editingName]);
+  }, [emojiPickerOpen, accountMenuOpen, editingName]);
 
   // Écoute les mises à jour du portefeuille → re-render de tous les onglets
   useEffect(() => {
@@ -546,49 +546,70 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 </span>
                 <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "500", paddingLeft: "6px", borderLeft: `1px solid ${C.border}` }}>{tabLabel}</span>
               </div>
-              {/* RIGHT — avatar */}
-              <div data-emoji-picker style={{ position: "relative", flexShrink: 0 }}>
-                <div ref={emojiTriggerRef} onClick={() => setEmojiPickerOpen(o => !o)} title="Compte"
-                  style={{ width: "34px", height: "34px", borderRadius: "50%", background: C.sb, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", userSelect: "none" }}>
-                  {avatarEmoji
-                    ? <span style={{ fontSize: "16px", lineHeight: 1 }}>{avatarEmoji}</span>
-                    : <span style={{ color: "#C1E8FF", fontWeight: "700", fontSize: "12px" }}>{(localUserName || "P")[0].toUpperCase()}</span>}
+              {/* RIGHT — emoji + compte séparés */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+
+                {/* Bouton emoji avatar */}
+                <div data-emoji-picker style={{ position: "relative" }}>
+                  <div ref={emojiTriggerRef} onClick={() => { setEmojiPickerOpen(o => !o); setAccountMenuOpen(false); }} title="Changer l'avatar"
+                    style={{ width: "34px", height: "34px", borderRadius: "50%", background: C.navyLight, border: `1.5px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", userSelect: "none" }}>
+                    {avatarEmoji
+                      ? <span style={{ fontSize: "17px", lineHeight: 1 }}>{avatarEmoji}</span>
+                      : <span style={{ fontSize: "13px" }}>🙂</span>}
+                  </div>
+                  {emojiPickerOpen && createPortal(
+                    <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, right: 60, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 99999, width: "236px" }}>
+                      <div style={{ display: "flex", height: "200px", overflow: "hidden", borderRadius: "14px" }}>
+                        <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
+                          {AVATAR_EMOJI_CATS.map((cat, i) => (
+                            <button key={i} onClick={() => setEmojiCat(i)} title={cat.label}
+                              style={{ width: "26px", height: "26px", borderRadius: "7px", border: "none", background: emojiCat === i ? C.navyLight : "transparent", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              {cat.icon}
+                            </button>
+                          ))}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
+                          {AVATAR_EMOJI_CATS[emojiCat].emojis.map(e => (
+                            <button key={e} onClick={() => { pickEmoji(e); setEmojiPickerOpen(false); }}
+                              style={{ width: "28px", height: "28px", borderRadius: "7px", border: avatarEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: avatarEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              {e}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {avatarEmoji && (
+                        <div style={{ borderTop: `1px solid ${C.border}`, padding: "6px 10px" }}>
+                          <button onClick={() => { pickEmoji(""); setEmojiPickerOpen(false); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 8px", color: C.inkSubtle, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>✕ Retirer l'emoji</button>
+                        </div>
+                      )}
+                    </div>
+                  , document.body)}
                 </div>
-                {emojiPickerOpen && createPortal(
-                  <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, right: 16, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 99999, width: "240px" }}>
-                    <div style={{ padding: "10px 12px 6px", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: "6px" }}>
+
+                {/* Bouton compte */}
+                <div data-account-menu style={{ position: "relative" }}>
+                  <div ref={accountTriggerRef} onClick={() => { setAccountMenuOpen(o => !o); setEmojiPickerOpen(false); }} title="Compte"
+                    style={{ display: "flex", alignItems: "center", gap: "5px", padding: "5px 10px", borderRadius: "10px", background: C.navyLight, border: `1px solid ${C.border}`, cursor: "pointer", userSelect: "none" }}>
+                    <span style={{ fontSize: "11px", fontWeight: "700", color: C.inkSoft, fontFamily: "Inter,sans-serif", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{localUserName || "Compte"}</span>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke={C.inkSubtle} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  {accountMenuOpen && createPortal(
+                    <div data-account-menu style={{ position: "fixed", top: (accountTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, right: 16, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 99999, width: "220px", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
                       <input autoFocus value={localUserName} onChange={e => setLocalUserName(e.target.value)}
                         onBlur={() => { const name = localUserName.trim() || "Utilisateur"; setLocalUserName(name); try { const s = JSON.parse(localStorage.getItem("bourse_session") || "{}"); localStorage.setItem("bourse_session", JSON.stringify({ ...s, name })); } catch {} }}
-                        onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setEmojiPickerOpen(false); }}
+                        onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setAccountMenuOpen(false); }}
                         placeholder="Votre prénom ou pseudo"
-                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
-                      <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px", color: C.red, fontSize: "11px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>🚪 Se déconnecter</button>
+                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
+                      <input value={aiName} onChange={e => setAiName(e.target.value)}
+                        onBlur={() => { save("bourse_ai_name", aiName.trim()); }}
+                        onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
+                        placeholder="Nom de votre IA (ex : Atlas)"
+                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
+                      <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "8px", color: C.red, fontSize: "11px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>🚪 Se déconnecter</button>
                     </div>
-                    <div style={{ display: "flex", height: "180px", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
-                      <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
-                        {AVATAR_EMOJI_CATS.map((cat, i) => (
-                          <button key={i} onClick={() => setEmojiCat(i)} title={cat.label}
-                            style={{ width: "26px", height: "26px", borderRadius: "7px", border: "none", background: emojiCat === i ? C.navyLight : "transparent", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            {cat.icon}
-                          </button>
-                        ))}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
-                        {AVATAR_EMOJI_CATS[emojiCat].emojis.map(e => (
-                          <button key={e} onClick={() => { pickEmoji(e); setEmojiPickerOpen(false); }}
-                            style={{ width: "28px", height: "28px", borderRadius: "7px", border: avatarEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: avatarEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            {e}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    {avatarEmoji && (
-                      <div style={{ borderTop: `1px solid ${C.border}`, padding: "6px 10px" }}>
-                        <button onClick={() => { pickEmoji(""); setEmojiPickerOpen(false); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 8px", color: C.inkSubtle, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>✕ Retirer l'emoji</button>
-                      </div>
-                    )}
-                  </div>
-                , document.body)}
+                  , document.body)}
+                </div>
+
               </div>
             </>
           )}
