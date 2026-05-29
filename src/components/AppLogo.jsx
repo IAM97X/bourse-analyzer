@@ -1,9 +1,13 @@
-// Ellipse circumference ≈ 2π√((rx²+ry²)/2) → rx=5.8 ry=9.5 → C≈49.4
 export default function AppLogo({ size = 28, animated = false }) {
   const id = `bn${size}`;
 
   const kf = animated ? `
-    @keyframes bn-rot-${id} { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes bn-col-${id} {
+      0%   { stroke: #1A4A8A; }
+      33%  { stroke: #4B9DD8; }
+      66%  { stroke: #85CFEF; }
+      100% { stroke: #1A4A8A; }
+    }
   ` : "";
 
   return (
@@ -26,18 +30,18 @@ export default function AppLogo({ size = 28, animated = false }) {
         </defs>
 
         <ellipse cx="14" cy="16" rx="6.8" ry="10.5"
-          stroke={`url(#${id}e1)`} strokeWidth="3.2" fill="none"
-          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot-${id} 7s linear infinite` } : undefined}
-          transform={animated ? undefined : "rotate(-28 14 16)"}/>
+          stroke={animated ? undefined : `url(#${id}e1)`} strokeWidth="3.2" fill="none"
+          transform="rotate(-28 14 16)"
+          style={animated ? { animation:`bn-col-${id} 3s ease-in-out infinite`, animationDelay:"0s" } : undefined}/>
 
         <ellipse cx="16" cy="16" rx="6.8" ry="10.5"
-          stroke={`url(#${id}e2)`} strokeWidth="3.2" fill="none"
-          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot-${id} 7s linear infinite` } : undefined}/>
+          stroke={animated ? undefined : `url(#${id}e2)`} strokeWidth="3.2" fill="none"
+          style={animated ? { animation:`bn-col-${id} 3s ease-in-out infinite`, animationDelay:"-1s" } : undefined}/>
 
         <ellipse cx="18" cy="16" rx="6.8" ry="10.5"
-          stroke={`url(#${id}e3)`} strokeWidth="3.2" fill="none"
-          style={animated ? { transformOrigin:"16px 16px", animation:`bn-rot-${id} 7s linear infinite` } : undefined}
-          transform={animated ? undefined : "rotate(28 18 16)"}/>
+          stroke={animated ? undefined : `url(#${id}e3)`} strokeWidth="3.2" fill="none"
+          transform="rotate(28 18 16)"
+          style={animated ? { animation:`bn-col-${id} 3s ease-in-out infinite`, animationDelay:"-2s" } : undefined}/>
       </svg>
     </>
   );
