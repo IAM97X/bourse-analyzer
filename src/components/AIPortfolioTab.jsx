@@ -3,6 +3,7 @@ import { C } from "../constants/theme";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur } from "../lib/finance";
 import { getKey } from "../lib/api";
+import { fetchGoogleNewsRSS } from "../lib/market";
 import { COURTIERS, COURTIERS_DETAIL, BOURSOMARKETS_ETFS, getCourtierForAccount } from "../constants/courtiers";
 import { DEFAULT_PROFIL } from "../constants/config";
 import { MARKETS_CFG, getMarketStatus } from "../constants/markets";
@@ -463,6 +464,17 @@ export default function AIPortfolioTab({ account, hidden }) {
       const snapshots = load("bourse_snapshots", []).slice(-20);
       const recentTrades = load("bourse_avis_operes", []).filter(o => (o.compte || "PEA") === account).slice(-15);
       const dividendes = load("bourse_dividendes", []).filter(d => (d.compte || "PEA") === account).slice(-10);
+      const allocCible = load(`bourse_autopilot_alloc_${account}_${profil.risque || "equilibre"}`, null);
+
+      // Actualités marché (Google News — 5 headlines max, silencieux si échec)
+      let actualites = [];
+      try {
+        const newsRaw = await Promise.race([
+          fetchGoogleNewsRSS("bourse CAC40 marchés financiers"),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 5000))
+        ]);
+        actualites = (newsRaw || []).slice(0, 5).map(n => `• ${n.title}`);
+      } catch {}
 
       const app_context = {
         profil_investisseur: {
@@ -472,6 +484,7 @@ export default function AIPortfolioTab({ account, hidden }) {
           versements_cto: profil.versementsCTO || 0,
           objectif: profil.objectif || null,
         },
+        allocation_cible: allocCible || null,
         portefeuille_reel: userPositions.map(p => ({
           nom: p.nom, ticker: resolveTickerFromCache(p),
           quantite: p.quantite, pru: p.pru,
@@ -482,6 +495,7 @@ export default function AIPortfolioTab({ account, hidden }) {
         historique_valeur: snapshots.map(s => `${s.date}: ${s.valeur?.toFixed(0)}€`),
         transactions_recentes: recentTrades.map(o => `${o.date} ${o.type} ${o.quantite}×${o.titre} à ${o.prixUnitaire}€`),
         dividendes_recus: dividendes.map(d => `${d.date} ${d.titre}: +${d.montant}€`),
+        actualites_marche: actualites,
       };
 
       const res = await fetch("/api/ai-portfolio-decide", {
