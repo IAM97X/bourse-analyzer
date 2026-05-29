@@ -541,9 +541,18 @@ export default function AIPortfolioTab({ account, hidden }) {
   })();
 
   const userPerf = (() => {
-    if (userSnaps.length < 2) return null;
-    const base = userSnaps[0].valeur, last = userSnaps[userSnaps.length - 1].valeur;
-    return base > 0 ? ((last - base) / base) * 100 : null;
+    // Snapshots disponibles : perf depuis inception IA
+    if (userSnaps.length >= 2) {
+      const base = userSnaps[0].valeur, last = userSnaps[userSnaps.length - 1].valeur;
+      return base > 0 ? ((last - base) / base) * 100 : null;
+    }
+    // Fallback : perf calculée depuis les positions réelles vs capital initial IA
+    if (aiPf.capital_initial > 0) {
+      const currentUserVal = userPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0)
+        + (account === "PEA" ? (load("bourse_profil", {}).especesPEA || 0) : (load("bourse_profil", {}).especesCTO || 0));
+      return ((currentUserVal - aiPf.capital_initial) / aiPf.capital_initial) * 100;
+    }
+    return null;
   })();
 
   const fp = (p, fallback = "—") => p === null || p === undefined ? fallback : (p >= 0 ? "+" : "") + p.toFixed(2) + "%";
