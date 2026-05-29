@@ -244,7 +244,7 @@ ${sessionCtx}${courtierCtx}${dcaCtx}${autopilotCtx}${appCtx}
 === ÉTAT DU PORTEFEUILLE IA (${account || 'PEA'}) ===
 Capital initial: ${portfolio.capital_initial}€
 Cash total: ${portfolio.cash.toFixed(2)}€
-Cash réellement déployable (cash - réserve 5%): ${Math.max(0, portfolio.cash - Number(cashMin)).toFixed(2)}€${portfolio.cash <= Number(cashMin) ? " ⚠️ CASH INSUFFISANT — aucun BUY possible ce cycle. Émettre uniquement des HOLD." : ""}
+Cash réellement déployable (cash seul - réserve 5%): ${Math.max(0, portfolio.cash - Number(cashMin)).toFixed(2)}€${portfolio.cash <= Number(cashMin) ? " — cash seul insuffisant, mais tu peux VENDRE une position d'abord pour libérer du cash puis ACHETER dans le même cycle (le cash s'actualise après chaque vente)." : ""}
 Valeur totale: ${valeurTotale.toFixed(2)}€
 Performance depuis création: ${perfTotal}%
 Nombre de positions: ${portfolio.positions?.length || 0}
@@ -263,7 +263,8 @@ ${univAvecPrix}
 - Maximum 5 transactions par cycle (BUY + SELL combinés)
 - Position max par titre: ${posMax}€ (20% du capital)
 - Cash minimum à conserver: ${cashMin}€ (5%)
-- Avant tout BUY: vérifier que quantite × cours ≤ cash_disponible - ${cashMin}€
+- Tu es LIBRE de vendre une position pour financer un achat dans le même cycle : ordonne toujours SELL avant BUY, le cash se met à jour après chaque vente
+- Avant tout BUY: vérifier que quantite × cours ≤ (cash après ventes éventuelles) - ${cashMin}€
 ${minOrdreNum > 0 ? `- Ordre minimum courtier: ${minOrdreNum}€ par transaction (actions). NE PAS placer d'ordre < ${minOrdreNum}€.` : ""}
 ${minETFNum > 0 ? `- Ordre minimum ETF: ${minETFNum}€ par transaction. NE PAS acheter un ETF pour < ${minETFNum}€.` : ""}
 - Pas d'achat fractionné : arrondir à l'entier inférieur (Math.floor)
