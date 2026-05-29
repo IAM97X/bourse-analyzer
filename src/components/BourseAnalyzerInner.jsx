@@ -542,7 +542,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                 <AppLogo size={24} animated={refreshing} />
                 <span style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
-                  Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
+                  Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", ...(refreshing ? { backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", animation: "bn-next-wave 2s ease-in-out infinite" } : {}) }}>Next</span>
                 </span>
                 <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "500", paddingLeft: "6px", borderLeft: `1px solid ${C.border}` }}>{tabLabel}</span>
               </div>
