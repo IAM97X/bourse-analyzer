@@ -229,7 +229,13 @@ Règles strictes :
       const reply = data?.content?.[0]?.text || "Désolé, je n'ai pas pu générer une réponse.";
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch (e) {
-      setMessages(prev => [...prev, { role: "assistant", content: `Erreur : ${e.message || "Vérifiez votre clé API Claude."}` }]);
+      const m = e.message || "";
+      const errMsg = (m.includes("quota") || m.includes("limit: 0") || m.includes("429"))
+        ? "Quota IA atteint. Configure ta clé Claude ou Gemini dans Paramètres → Clés API."
+        : (m.includes("401") || m.includes("invalid") || m.includes("auth"))
+        ? "Clé API invalide. Vérifie dans Paramètres → Clés API."
+        : m || "Vérifiez votre clé API.";
+      setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
     }
     setLoading(false);
   };
@@ -587,7 +593,15 @@ Réponds en français, direct, sans introduction générique.`;
       setBriefing(data);
       save("bourse_last_briefing", data);
     } catch (e) {
-      setBriefing({ date: todayKey, content: `Erreur : ${e.message}`, error: true });
+      const msg = e.message || "";
+      let friendly = "Une erreur est survenue. Réessaie dans quelques instants.";
+      if (msg.includes("quota") || msg.includes("rate") || msg.includes("429") || msg.includes("limit: 0"))
+        friendly = "Quota IA atteint. Configure ta propre clé Claude ou Gemini dans Paramètres → Clés API pour continuer.";
+      else if (msg.includes("401") || msg.includes("invalid") || msg.includes("auth"))
+        friendly = "Clé API invalide ou expirée. Vérifie ta clé dans Paramètres → Clés API.";
+      else if (msg.includes("timeout") || msg.includes("timed out"))
+        friendly = "L'IA a mis trop de temps à répondre. Réessaie dans un instant.";
+      setBriefing({ date: todayKey, content: friendly, error: true });
     } finally {
       setBriefingLoading(false);
     }
