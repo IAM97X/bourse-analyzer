@@ -292,8 +292,8 @@ Règles strictes :
         <div style={{
           position: "fixed",
           bottom: isMobile ? 0 : "88px", right: isMobile ? 0 : "20px",
-          width: isMobile ? "100vw" : "420px",
-          height: isMobile ? "82vh" : "580px",
+          width: isMobile ? "100vw" : "340px",
+          height: isMobile ? "82vh" : "480px",
           background: C.snow, borderRadius: isMobile ? "20px 20px 0 0" : "20px",
           boxShadow: "0 16px 56px rgba(17,18,20,0.22)", zIndex: 998,
           display: "flex", flexDirection: "column", overflow: "hidden",
