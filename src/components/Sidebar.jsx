@@ -101,7 +101,7 @@ export const NAV_GROUPS = [
   ]},
 ];
 
-function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi }) {
+function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi, hideCollapseButton = false }) {
   const isMobile = useIsMobile();
   const allPositions = sanitizePositions(load("bourse_portfolio", []));
   const positions    = allPositions.filter(p => (p.compte || "PEA") === (account || "PEA"));
@@ -136,18 +136,13 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
               <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "18px", color: C.inkMuted, cursor: "pointer", padding: "4px 8px", lineHeight: 1 }}>✕</button>
             </div>
           : <>
-              <div onClick={toggleCollapse} title={c ? "Déplier" : "Réduire"} style={{ width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer", borderRadius: "10px", transition: "background 0.15s" }}
-                onMouseEnter={e => e.currentTarget.style.background = C.sbHover}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                {c
-                  ? <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <rect x="2" y="4"  width="14" height="1.8" rx="0.9" fill={C.inkMuted}/>
-                      <rect x="2" y="8.1" width="14" height="1.8" rx="0.9" fill={C.inkMuted}/>
-                      <rect x="2" y="12.2" width="14" height="1.8" rx="0.9" fill={C.inkMuted}/>
-                    </svg>
-                  : <AppLogo size={34} />
-                }
-              </div>
+              {!(hideCollapseButton && c) && (
+                <div onClick={hideCollapseButton ? undefined : toggleCollapse} title={hideCollapseButton ? undefined : (c ? "Déplier" : "Réduire")} style={{ width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: hideCollapseButton ? "default" : "pointer", borderRadius: "10px", transition: "background 0.15s" }}
+                  onMouseEnter={e => { if (!hideCollapseButton) e.currentTarget.style.background = C.sbHover; }}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <AppLogo size={34} />
+                </div>
+              )}
               {!c && <div>
                 <div style={{ fontSize: "14px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span></div>
               </div>}
@@ -297,7 +292,7 @@ export default function Sidebar({ active, onChange, portfolioVersion, refreshAll
   const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
   const toggleCollapse = onExternalToggle || (() => { const v = !internalCollapsed; setInternalCollapsed(v); save("bourse_sidebar_collapsed", v); });
 
-  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi };
+  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi, hideCollapseButton: externalCollapsed !== undefined };
 
   if (isMobile) {
     if (!mobileOpen) return null;
