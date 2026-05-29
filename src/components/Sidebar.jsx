@@ -125,7 +125,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
           ? <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
               <AppLogo size={30} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "14px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>BourseNext</div>
+                <div style={{ fontSize: "14px", fontWeight: "700", color: C.ink, letterSpacing: "-0.04em" }}>Bourse<span style={{ fontWeight: "800", color: "#2563EB" }}>Next</span></div>
               </div>
               <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "18px", color: C.inkMuted, cursor: "pointer", padding: "4px 8px", lineHeight: 1 }}>✕</button>
             </div>

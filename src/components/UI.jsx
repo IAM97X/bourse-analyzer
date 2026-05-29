@@ -2,49 +2,43 @@ import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
 
-const ORIVO_KEYFRAMES = `
-  @keyframes orivo-e1 { from { transform: rotate(-28deg); } to { transform: rotate(332deg); } }
-  @keyframes orivo-e2 { from { transform: rotate(0deg);   } to { transform: rotate(360deg); } }
-  @keyframes orivo-e3 { from { transform: rotate(28deg);  } to { transform: rotate(388deg); } }
-  @keyframes orivo-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+const BN_KEYFRAMES = `
+  @keyframes bn-rot1 { from{transform:rotate(-120deg)} to{transform:rotate(240deg)} }
+  @keyframes bn-rot2 { from{transform:rotate(30deg)}   to{transform:rotate(390deg)} }
+  @keyframes bn-rot3 { from{transform:rotate(150deg)}  to{transform:rotate(-210deg)} }
+  @keyframes bn-arc1 { 0%,100%{stroke-dasharray:8,74;stroke-dashoffset:0} 50%{stroke-dasharray:65,17;stroke-dashoffset:-28} }
+  @keyframes bn-arc2 { 0%,100%{stroke-dasharray:6,51;stroke-dashoffset:0} 50%{stroke-dasharray:44,13;stroke-dashoffset:-18} }
+  @keyframes bn-arc3 { 0%,100%{stroke-dasharray:4,31;stroke-dashoffset:0} 50%{stroke-dasharray:27,8;stroke-dashoffset:-11} }
+  @keyframes bn-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 `;
 
 export function OrivoSpinner({ size = 52, label, sublabel }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
-      <style>{ORIVO_KEYFRAMES}</style>
+      <style>{BN_KEYFRAMES}</style>
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
         <defs>
-          <linearGradient id="ospbg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#040E1C"/>
-            <stop offset="100%" stopColor="#0D2540"/>
+          <linearGradient id="bng1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1A3A6B"/><stop offset="100%" stopColor="#2563EB"/>
           </linearGradient>
-          <linearGradient id="ospe1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#1A4A8A"/>
-            <stop offset="100%" stopColor="#2D6CB5"/>
+          <linearGradient id="bng2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#2563EB"/><stop offset="100%" stopColor="#38BDF8"/>
           </linearGradient>
-          <linearGradient id="ospe2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#2E72BE"/>
-            <stop offset="100%" stopColor="#4B9DD8"/>
-          </linearGradient>
-          <linearGradient id="ospe3" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#4BA8E0"/>
-            <stop offset="100%" stopColor="#85CFEF"/>
+          <linearGradient id="bng3" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#38BDF8"/><stop offset="100%" stopColor="#7DD3FC"/>
           </linearGradient>
         </defs>
-        <ellipse cx="14" cy="16" rx="5.8" ry="9.5"
-          stroke="url(#ospe1)" strokeWidth="2.2" fill="none"
-          style={{ transformOrigin: "16px 16px", animation: "orivo-e1 1.8s linear infinite" }}/>
-        <ellipse cx="16" cy="16" rx="5.8" ry="9.5"
-          stroke="url(#ospe2)" strokeWidth="2.2" fill="none"
-          style={{ transformOrigin: "16px 16px", animation: "orivo-e2 2.4s linear infinite" }}/>
-        <ellipse cx="18" cy="16" rx="5.8" ry="9.5"
-          stroke="url(#ospe3)" strokeWidth="2.2" fill="none"
-          style={{ transformOrigin: "16px 16px", animation: "orivo-e3 3.2s linear infinite" }}/>
+        <circle cx="16" cy="16" r="13" stroke="url(#bng1)" strokeWidth="2.4" strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-rot1 2.8s linear infinite, bn-arc1 1.4s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="9" stroke="url(#bng2)" strokeWidth="2" strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-rot2 2.1s linear infinite, bn-arc2 1.05s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="5.5" stroke="url(#bng3)" strokeWidth="1.6" strokeLinecap="round" fill="none"
+          style={{ transformOrigin:"16px 16px", animation:"bn-rot3 1.6s linear infinite, bn-arc3 0.8s ease-in-out infinite" }}/>
+        <circle cx="16" cy="16" r="2" fill="#38BDF8" opacity="0.9"/>
       </svg>
       {(label || sublabel) && (
         <div style={{ textAlign: "center" }}>
-          {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "Inter,sans-serif", animation: "orivo-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
+          {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "Inter,sans-serif", animation: "bn-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
           {sublabel && <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "4px" }}>{sublabel}</div>}
         </div>
       )}

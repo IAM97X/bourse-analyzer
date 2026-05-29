@@ -196,7 +196,7 @@ function AuthPage({ onSession }) {
           <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "72px", height: "72px", borderRadius: "22px", background: "linear-gradient(145deg, #0d2d5e, #1a4a8a)", marginBottom: "16px", boxShadow: "0 12px 40px rgba(5,38,89,0.7), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
             <AppLogo size={44} animated={loading} />
           </div>
-          <div style={{ fontSize: "28px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>BourseNext</div>
+          <div style={{ fontSize: "28px", fontWeight: "700", color: "#fff", letterSpacing: "-0.05em", lineHeight: 1.1 }}>Bourse<span style={{ fontWeight: "800", color: "#60A5FA" }}>Next</span></div>
           <div style={{ fontSize: "13px", color: "rgba(193,232,255,0.5)", marginTop: "8px", fontWeight: "400" }}>Mon assistant bourse personnel</div>
         </div>
 
