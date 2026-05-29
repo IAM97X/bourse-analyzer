@@ -3,21 +3,38 @@ import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
 
 const BN_KEYFRAMES = `
-  @keyframes sonic-sp { 0%,100%{transform:scaleY(0.12);opacity:0.45} 48%,52%{transform:scaleY(1);opacity:1} }
+  @keyframes sonic3d-sp { 0%,100%{transform:scaleY(0.08);opacity:0.5} 45%,55%{transform:scaleY(1);opacity:1} }
   @keyframes bn-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 `;
+
+const SP_RINGS = [
+  { rx: 11,  ry: 4.2,  sw: 4.8, back: "#071828", front: "#1D4ED8", hl: "#60A5FA", delay: "0s"   },
+  { rx: 7.5, ry: 2.85, sw: 4.2, back: "#0D2240", front: "#2563EB", hl: "#93C5FD", delay: "0.2s" },
+  { rx: 4,   ry: 1.52, sw: 3.6, back: "#132E56", front: "#3B82F6", hl: "#BAE6FD", delay: "0.4s" },
+];
 
 export function OrivoSpinner({ size = 52, label, sublabel }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
       <style>{BN_KEYFRAMES}</style>
       <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-        <ellipse cx="16" cy="16" rx="4.4"  ry="2.75" stroke="#1E4D8C" strokeWidth="1.4" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"sonic-sp 1.6s ease-in-out infinite", animationDelay:"0s" }}/>
-        <ellipse cx="16" cy="16" rx="7.4"  ry="4.60" stroke="#2563EB" strokeWidth="1.3" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"sonic-sp 1.6s ease-in-out infinite", animationDelay:"0.18s" }}/>
-        <ellipse cx="16" cy="16" rx="10.8" ry="6.70" stroke="#60A5FA" strokeWidth="1.2" fill="none"
-          style={{ transformOrigin:"16px 16px", animation:"sonic-sp 1.6s ease-in-out infinite", animationDelay:"0.36s" }}/>
+        {SP_RINGS.map(({ rx, ry, sw, back, front, hl, delay }, i) => {
+          const lx = 16 - rx, rx_ = 16 + rx;
+          const hlx1 = 16 - rx * 0.5, hlx2 = 16 + rx * 0.5;
+          const hly = 16 - ry * 0.87;
+          return (
+            <g key={i} vectorEffect="non-scaling-stroke"
+              style={{ transformOrigin: "16px 16px", animation: `sonic3d-sp 1.8s ease-in-out infinite`, animationDelay: delay }}>
+              <path d={`M ${rx_} 16 A ${rx} ${ry} 0 0 1 ${lx} 16`}
+                stroke={back} strokeWidth={sw} strokeLinecap="round" fill="none" vectorEffect="non-scaling-stroke"/>
+              <path d={`M ${lx} 16 A ${rx} ${ry} 0 0 1 ${rx_} 16`}
+                stroke={front} strokeWidth={sw} strokeLinecap="round" fill="none" vectorEffect="non-scaling-stroke"/>
+              <path d={`M ${hlx1} ${hly} A ${rx} ${ry} 0 0 1 ${hlx2} ${hly}`}
+                stroke={hl} strokeWidth={sw * 0.38} strokeLinecap="round" fill="none"
+                opacity="0.85" vectorEffect="non-scaling-stroke"/>
+            </g>
+          );
+        })}
       </svg>
       {(label || sublabel) && (
         <div style={{ textAlign: "center" }}>
