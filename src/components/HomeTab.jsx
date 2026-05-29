@@ -88,13 +88,13 @@ function Row({ label, value, color, last, debug }) {
       display: "flex", justifyContent: "space-between", alignItems: "flex-start",
       gap: "12px",
       padding: "10px 0",
-      borderBottom: last ? "none" : "1px solid rgba(26,45,74,0.07)",
+      borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.08)",
       cursor: debug ? "help" : undefined,
     }}>
-      <span style={{ fontSize: "13px", color: "#64748B", fontWeight: "400", lineHeight: "1.4", flex: "1" }}>
+      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.65)", fontWeight: "400", lineHeight: "1.4", flex: "1" }}>
         {label}
       </span>
-      <span style={{ fontSize: "13px", fontWeight: "700", color: color || "#0F172A", whiteSpace: "nowrap", textAlign: "right" }}>
+      <span style={{ fontSize: "13px", fontWeight: "700", color: color || "#fff", whiteSpace: "nowrap", textAlign: "right" }}>
         {value}
       </span>
     </div>
@@ -105,11 +105,10 @@ function Row({ label, value, color, last, debug }) {
 function Card({ children }) {
   return (
     <div style={{
-      background: "#fff",
+      background: "linear-gradient(160deg, #112240 0%, #1a3a5c 100%)",
       borderRadius: "16px",
       padding: "18px 20px",
-      boxShadow: "0 2px 12px rgba(26,45,74,0.08)",
-      border: "1px solid rgba(26,45,74,0.09)",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
       minWidth: 0,
     }}>
       {children}
@@ -126,7 +125,7 @@ function ColValeur({ positions, especes, cumul, hidden }) {
   const total        = titres + especes;
   const pv           = titres - totalInvesti;
   const pvPct        = totalInvesti > 0 ? (pv / totalInvesti) * 100 : 0;
-  const pvColor      = pv >= 0 ? "#16a34a" : "#dc2626";
+  const pvColor      = pv >= 0 ? "#4ade80" : "#f87171";
   const versements   = cumul || totalInvesti;
   const today        = new Date().toLocaleDateString("fr-FR");
 
@@ -386,7 +385,7 @@ function ColPerfs({ positions, account, profil }) {
     return (currentValue - v0 - cf) / v0 * 100;
   })();
 
-  const pctColor = v => v === null || v === undefined ? "#0F172A" : v >= 0 ? "#16a34a" : "#dc2626";
+  const pctColor = v => v === null || v === undefined ? "#fff" : v >= 0 ? "#4ade80" : "#f87171";
 
   return (
     <Card>

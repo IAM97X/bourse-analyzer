@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
+import AppLogo from "./AppLogo";
 
 const BN_KEYFRAMES = `
   @keyframes bn-sp-rot1 { from{transform:rotate(-120deg)} to{transform:rotate(240deg)} }
@@ -86,7 +87,10 @@ export function ThinkingSpinner({ size = 22, color = "#1A3A5C" }) {
 export function LoadingPanel({ label = "Analyse en cours…" }) {
   return (
     <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "48px 32px", display: "flex", justifyContent: "center" }}>
-      <OrivoSpinner size={52} label={label} />
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
+        <AppLogo size={52} animated={true} />
+        {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "Inter,sans-serif", animation: "bn-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { C } from "../constants/theme";
-import { OrivoSpinner } from "./UI";
+import { LoadingPanel } from "./UI";
 import AppLogo from "./AppLogo";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur } from "../lib/finance";
@@ -700,7 +700,7 @@ export default function AIPortfolioTab({ account, hidden }) {
           <button onClick={handleRunCycle} disabled={cycling}
             style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg,#080B0F 0%,#1E3A5F 100%)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
             {cycling
-              ? <><OrivoSpinner size={16} /> Analyse en cours…</>
+              ? <><AppLogo size={16} animated={true} /> Analyse en cours…</>
               : "▶ Lancer un cycle"}
           </button>
           <button onClick={handleReset} title="Réinitialiser le portefeuille IA"
