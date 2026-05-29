@@ -421,7 +421,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
   return (
     <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%)", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif", filter: darkMode ? "invert(1) hue-rotate(200deg) saturate(0.9)" : "none" }}>
-      <style>{`@keyframes bn-next-wave { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }`}</style>
+      <style>{`@keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }`}</style>
 
       {/* Sidebar */}
       <Sidebar

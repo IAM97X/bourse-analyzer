@@ -3,15 +3,15 @@ export default function AppLogo({ size = 28, animated = false }) {
 
   const kf = animated ? `
     @keyframes bn-seq-${id} {
-      0%             { stroke: #1A4A8A; }
-      15%            { stroke: #A8DEFF; }
-      35%, 100%      { stroke: #1A4A8A; }
+      0%              { stroke: #1A4A8A; animation-timing-function: ease-out; }
+      22%             { stroke: #A8DEFF; animation-timing-function: ease-in; }
+      44%, 100%       { stroke: #1A4A8A; }
     }
   ` : "";
 
   const seqStyle = (delay) => animated ? {
     stroke: "#1A4A8A",
-    animation: `bn-seq-${id} 2.4s cubic-bezier(0.45,0,0.55,1) infinite`,
+    animation: `bn-seq-${id} 2.7s linear infinite`,
     animationDelay: `${delay}s`,
   } : undefined;
 
@@ -45,13 +45,13 @@ export default function AppLogo({ size = 28, animated = false }) {
         <ellipse cx="16" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#1A4A8A" : `url(#${id}e2)`}
           strokeWidth="4.5" fill="none"
-          style={seqStyle(0.8)}/>
+          style={seqStyle(0.9)}/>
 
         <ellipse cx="18" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#1A4A8A" : `url(#${id}e3)`}
           strokeWidth="4.5" fill="none"
           transform="rotate(28 18 16)"
-          style={seqStyle(1.6)}/>
+          style={seqStyle(1.8)}/>
       </svg>
     </>
   );
