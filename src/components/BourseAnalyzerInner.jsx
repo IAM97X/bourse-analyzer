@@ -421,6 +421,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
   return (
     <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%)", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif", filter: darkMode ? "invert(1) hue-rotate(200deg) saturate(0.9)" : "none" }}>
+      <style>{`@keyframes bn-next-wave { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }`}</style>
 
       {/* Sidebar */}
       <Sidebar
@@ -537,10 +538,13 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
                 <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
               </button>
-              {/* CENTER — logo + titre */}
+              {/* CENTER — logo + nom app + titre onglet */}
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                 <AppLogo size={24} animated />
-                <span style={{ fontSize: "15px", fontWeight: "700", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
+                <span style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
+                  Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
+                </span>
+                <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "500", paddingLeft: "6px", borderLeft: `1px solid ${C.border}` }}>{tabLabel}</span>
               </div>
               {/* RIGHT — avatar */}
               <div data-emoji-picker style={{ position: "relative", flexShrink: 0 }}>
