@@ -85,6 +85,8 @@ class AppErrorBoundary extends Component {
 }
 
 const MIN_WIDTH = 768;
+// Détecte un téléphone quelle que soit l'orientation
+const isPhone = () => Math.min(window.screen.width, window.screen.height) < MIN_WIDTH;
 
 function MobileBlock() {
   return (
@@ -115,12 +117,13 @@ function MobileBlock() {
 export default function BourseAnalyzer() {
   const [state, setState] = useState("loading"); // "loading" | "auth" | "app"
   const [userName, setUserName] = useState("");
-  const [isMobileScreen, setIsMobileScreen] = useState(() => window.innerWidth < MIN_WIDTH);
+  const [isMobileScreen, setIsMobileScreen] = useState(() => isPhone());
 
   useEffect(() => {
-    const check = () => setIsMobileScreen(window.innerWidth < MIN_WIDTH);
+    const check = () => setIsMobileScreen(isPhone());
     window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    window.addEventListener("orientationchange", check);
+    return () => { window.removeEventListener("resize", check); window.removeEventListener("orientationchange", check); };
   }, []);
 
   useEffect(() => {
