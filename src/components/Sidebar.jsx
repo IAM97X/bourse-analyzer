@@ -8,15 +8,18 @@ import AppLogo from "./AppLogo";
 
 const IconHome = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 1.5L1.5 7v7.5h4.5V10h4v4.5H14.5V7L8 1.5z" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-    <path d="M6 14.5v-4.5h4v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+    <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" fill="currentColor" fillOpacity="0.22" stroke="currentColor" strokeWidth="1.3"/>
+    <rect x="9"   y="1.5" width="5.5" height="5.5" rx="1.5" fill="currentColor" fillOpacity="0.1"  stroke="currentColor" strokeWidth="1.3"/>
+    <rect x="1.5" y="9"   width="5.5" height="5.5" rx="1.5" fill="currentColor" fillOpacity="0.1"  stroke="currentColor" strokeWidth="1.3"/>
+    <rect x="9"   y="9"   width="5.5" height="5.5" rx="1.5" fill="currentColor" fillOpacity="0.16" stroke="currentColor" strokeWidth="1.3"/>
   </svg>
 );
 const IconPositions = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <rect x="1.5" y="9" width="3" height="5.5" rx="1" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.3"/>
-    <rect x="6.5" y="5.5" width="3" height="9" rx="1" fill="currentColor" fillOpacity="0.3" stroke="currentColor" strokeWidth="1.3"/>
-    <rect x="11.5" y="1.5" width="3" height="13" rx="1" fill="currentColor" fillOpacity="0.5" stroke="currentColor" strokeWidth="1.3"/>
+    <rect x="1.5" y="5.5" width="13" height="9" rx="1.5" fill="currentColor" fillOpacity="0.12" stroke="currentColor" strokeWidth="1.3"/>
+    <path d="M5.5 5.5V4A1.5 1.5 0 0 1 7 2.5h2A1.5 1.5 0 0 1 10.5 4v1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    <line x1="1.5" y1="9.5" x2="14.5" y2="9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeOpacity="0.3"/>
+    <line x1="8" y1="8.2" x2="8" y2="10.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
   </svg>
 );
 const IconPie = () => (
@@ -40,9 +43,11 @@ const IconTrending = () => (
 );
 const IconTarget = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" fillOpacity="0"/>
-    <circle cx="8" cy="8" r="3.5" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.3"/>
-    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+    <rect x="1.5" y="2.5" width="13" height="11.5" rx="1.5" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="1.3"/>
+    <line x1="1.5" y1="6" x2="14.5" y2="6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeOpacity="0.4"/>
+    <line x1="5" y1="1" x2="5" y2="4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+    <line x1="11" y1="1" x2="11" y2="4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+    <path d="M5 10.5l2 2 4-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 const IconWave = () => (
@@ -85,9 +90,8 @@ const IconBrain = () => (
 );
 const IconMore = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <circle cx="3.5" cy="8" r="1.5" fill="currentColor"/>
-    <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-    <circle cx="12.5" cy="8" r="1.5" fill="currentColor"/>
+    <circle cx="8" cy="5.8" r="2.8" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="1.3"/>
+    <path d="M2.5 14.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
   </svg>
 );
 
