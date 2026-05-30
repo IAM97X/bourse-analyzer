@@ -204,12 +204,13 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
   const horizons = [6, 12, Math.min(36, maxMois), Math.min(60, maxMois), Math.min(120, maxMois)].filter((v, i, a) => a.indexOf(v) === i && v <= maxMois);
 
   const moisLabel = MOIS_FR[new Date().getMonth()] + " " + new Date().getFullYear();
+  const dcaJour   = Number(profil?.dcaJour) || 5;
   const etfPrioritaire = isETFName(prioritaire.nom);
   const signalAnalyse  = priorityAnalysis ? Object.keys(SIGNAL_CONFIG).find(k => (priorityAnalysis.verdict?.signal || "").toUpperCase().includes(k)) || "ATTENDRE" : null;
   const cfgAnalyse     = signalAnalyse ? SIGNAL_CONFIG[signalAnalyse] : null;
 
   return (
-    <Card title={`Stratégie DCA — ${moisLabel}`} icon="📅" accentColor={C.navy}>
+    <Card title={`Stratégie DCA — ${moisLabel} · le ${dcaJour < 10 ? `0${dcaJour}` : dcaJour}`} icon="📅" accentColor={C.navy}>
       {/* Résumé budget */}
       <div className="ba-g4" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: "8px", marginBottom: "10px" }}>
         <StatBox label="DCA mensuel"     value={fmtEur(dcaMensuel)} color={C.navy} sensitive />
@@ -282,7 +283,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
         <div style={{ background: C.navy, padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.6)", letterSpacing: "2px", fontWeight: "700", textTransform: "uppercase", marginBottom: "4px" }}>
-              Action prioritaire — {moisLabel}
+              Action prioritaire — {moisLabel} · le {dcaJour < 10 ? `0${dcaJour}` : dcaJour}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
               <span style={{ fontSize: "20px", fontWeight: "800", color: C.snow }}>{prioritaire.nom}</span>
@@ -838,7 +839,7 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
       {/* Paramètres DCA */}
       <div style={{ marginTop: "20px", borderTop: `1px solid ${C.border}`, paddingTop: "16px" }}>
         <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "12px" }}>Paramètres DCA</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "14px" }}>
           <div>
             <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Durée (mois)</div>
             <input
@@ -856,6 +857,20 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
             <div style={{ fontSize: "9px", color: C.navy, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Durée restante</div>
             <div style={{ fontSize: "16px", fontWeight: "800", color: C.navy }}>
               {(() => { const m = profil?.dcaDuree || 0; return m >= 24 ? `${Math.round(m/12)} ans` : m ? `${m} mois` : "—"; })()}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Jour du mois</div>
+            <select
+              value={profil?.dcaJour || 5}
+              onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaJour: parseInt(e.target.value) })}
+              style={{ width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box", cursor: "pointer" }}>
+              {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
+                <option key={d} value={d}>{d < 10 ? `0${d}` : d} du mois</option>
+              ))}
+            </select>
+            <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px" }}>
+              L'IA utilisera ce jour pour planifier votre DCA
             </div>
           </div>
         </div>
