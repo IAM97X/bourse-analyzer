@@ -192,7 +192,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                   style={{
                     width: "100%", display: "flex", alignItems: "center",
                     gap: 0,
-                    padding: c ? "7px 0" : "7px 14px",
+                    padding: c ? "11px 0" : "7px 14px",
                     justifyContent: c ? "center" : "flex-start",
                     borderRadius: "10px",
                     background: isActive
