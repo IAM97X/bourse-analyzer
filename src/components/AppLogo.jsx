@@ -3,15 +3,15 @@ export default function AppLogo({ size = 28, animated = false }) {
 
   const kf = animated ? `
     @keyframes bn-logo-wave-${id} {
-      0%, 100% { stroke: #111214; }
+      0%, 100% { stroke: #080B0F; }
       25%      { stroke: #1E3A5F; }
-      50%      { stroke: #2D5986; }
+      50%      { stroke: #5B8FC4; }
       75%      { stroke: #1E3A5F; }
     }
   ` : "";
 
   const waveStyle = animated ? {
-    stroke: "#111214",
+    stroke: "#080B0F",
     animation: `bn-logo-wave-${id} 2s ease-in-out infinite`,
   } : undefined;
 
@@ -23,15 +23,15 @@ export default function AppLogo({ size = 28, animated = false }) {
           <defs>
             <linearGradient id={`${id}e1`} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#080B0F"/>
-              <stop offset="100%" stopColor="#142641"/>
-            </linearGradient>
-            <linearGradient id={`${id}e2`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#142641"/>
               <stop offset="100%" stopColor="#1E3A5F"/>
             </linearGradient>
-            <linearGradient id={`${id}e3`} x1="0" y1="0" x2="1" y2="1">
+            <linearGradient id={`${id}e2`} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#1E3A5F"/>
               <stop offset="100%" stopColor="#2D5986"/>
+            </linearGradient>
+            <linearGradient id={`${id}e3`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#3A6B9F"/>
+              <stop offset="100%" stopColor="#5B8FC4"/>
             </linearGradient>
           </defs>
         )}
