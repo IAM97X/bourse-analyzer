@@ -53,19 +53,19 @@ const TAB_LABELS = {
 
 function PillBar({ pills, active, onChange }) {
   return (
-    <div style={{ display: "flex", gap: "6px", marginBottom: "28px", flexWrap: "wrap", background: "#EBEBF0", borderRadius: "14px", padding: "4px" }}>
+    <div style={{ display: "flex", gap: "6px", marginBottom: "28px", flexWrap: "wrap" }}>
       {pills.map(({ key, label }) => {
         const isActive = active === key;
         return (
           <button key={key} onClick={() => onChange(key)}
             style={{
-              padding: "8px 18px", borderRadius: "10px", cursor: "pointer",
+              padding: "8px 18px", borderRadius: "50px", cursor: "pointer",
               fontSize: "13px", fontWeight: isActive ? "600" : "400",
               fontFamily: "'Inter', sans-serif",
-              background: isActive ? "#FFFFFF" : "transparent",
-              color: isActive ? "#1C1C1E" : "#6C6C70",
-              boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
-              border: "none",
+              background: isActive ? "#1C1C1E" : "transparent",
+              color: isActive ? "#FFFFFF" : "#6C6C70",
+              border: isActive ? "none" : "1px solid rgba(0,0,0,0.1)",
+              boxShadow: "none",
               transition: "all 0.15s",
               whiteSpace: "nowrap",
             }}>

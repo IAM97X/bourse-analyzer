@@ -688,8 +688,8 @@ export default function AIPortfolioTab({ account, hidden }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <AppLogo size={28} animated={cycling} />
-            <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{getAiName() || "Portefeuille IA"}</span>
+            <span style={{ fontSize: "24px", lineHeight: 1 }}>{getAiEmoji()}</span>
+            <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{getAiName() || "NextGen IA"}</span>
             <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg,#080B0F,#2D5986)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
           </div>
           <div style={{ fontSize: "12px", color: C.inkMuted, marginTop: "3px" }}>
