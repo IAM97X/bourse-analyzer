@@ -355,7 +355,7 @@ export function ParametresTab({ profil, onChange }) {
     setAiCfg(next);
     localStorage.setItem(AI_CONFIG_KEY, JSON.stringify(next));
   };
-  const pickAiEmoji = (e) => { setAiEmoji(e); localStorage.setItem(AI_EMOJI_KEY, e); };
+  const pickAiEmoji = (e) => { setAiEmoji(e); localStorage.setItem(AI_EMOJI_KEY, e); window.dispatchEvent(new CustomEvent("aiEmojiChanged")); };
 
   return (
     <div style={{ maxWidth: "560px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "14px" }}>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { C } from "../constants/theme";
 import { TABS } from "../constants/tabs";
 import { load, save } from "../lib/storage";
@@ -113,7 +113,12 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
   const pv    = totalActuel - totalInvesti;
   const pvPct = totalInvesti > 0 ? (pv / totalInvesti) * 100 : 0;
   const c = mobileCompact ? true : (isMobile ? false : collapsed);
-  const aiEmoji = load("bourse_ai_emoji", "🤖");
+  const [aiEmoji, setAiEmoji] = useState(() => load("bourse_ai_emoji", "🤖"));
+  useEffect(() => {
+    const handler = () => setAiEmoji(load("bourse_ai_emoji", "🤖"));
+    window.addEventListener("aiEmojiChanged", handler);
+    return () => window.removeEventListener("aiEmojiChanged", handler);
+  }, []);
 
   const handleNav = (key) => { onChange(key); if (onClose) onClose(); };
 
@@ -218,9 +223,12 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                           ? <span style={{ fontSize: "16px", lineHeight: 1, flexShrink: 0 }}>{aiEmoji}</span>
                           : <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93", display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</span>
                         }
-                        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          {label}
-                          {isScoringLoading && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#8E8E93", animation: "pulse 1.2s ease-in-out infinite", flexShrink: 0 }} />}
+                        <span style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                          {isFeatured
+                            ? <span style={{ fontSize: "10px", background: isActive ? "rgba(184,146,10,0.18)" : "#B07D2E", color: isActive ? "#B07D2E" : "#FFF8E7", borderRadius: "6px", padding: "2px 7px", fontWeight: "700", letterSpacing: "0.4px" }}>IA</span>
+                            : label
+                          }
+                          {isScoringLoading && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", animation: "pulse 1.2s ease-in-out infinite", flexShrink: 0 }} />}
                         </span>
                       </span>
                   }
