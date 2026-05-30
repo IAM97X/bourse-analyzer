@@ -118,7 +118,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [activeTab, setActiveTab]               = useState(() => load("bourse_active_tab", TABS.HOME));
   const changeTab = (tab) => { setActiveTab(tab); save("bourse_active_tab", tab); };
   const [profil, setProfil]                     = useState(() => load("bourse_profil", DEFAULT_PROFIL));
-  const [darkMode, setDarkMode]                 = useState(() => load("bourse_dark", false));
   const [compact, setCompact]                   = useState(() => load("bourse_compact", false));
   const [portfolioVersion, setPortfolioVersion] = useState(0);
   const [refreshing, setRefreshing]             = useState(false);
@@ -130,7 +129,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [marketScores, setMarketScores]         = useState(() => load("bourse_market_scores", null));
   const [marketScoringUi, setMarketScoringUi]   = useState(() => load("bourse_market_scores", null)?.length > 0 ? UI.RESULT : UI.IDLE);
   const [hiddenValues, setHiddenValues]         = useState(() => load("bourse_hidden", false));
-  const toggleDark    = () => setDarkMode(d => { save("bourse_dark", !d); return !d; });
   const toggleCompact = () => setCompact(c => { save("bourse_compact", !c); return !c; });
   const toggleHidden  = () => setHiddenValues(h => { save("bourse_hidden", !h); return !h; });
   const [localUserName, setLocalUserName]       = useState(userName || "");
@@ -438,7 +436,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const tabLabel = activeTab === TABS.AI_PORTFOLIO ? aiPortfolioLabel : (TAB_LABELS[activeTab] || "");
 
   return (
-    <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%)", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif", filter: darkMode ? "invert(1) hue-rotate(200deg) saturate(0.9)" : "none" }}>
+    <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%)", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif" }}>
       <style>{`
         @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes bn-brand-in  { from{opacity:0;transform:translateY(-6px) scale(0.92)} to{opacity:1;transform:none} }
@@ -450,8 +448,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         active={activeTab} onChange={changeTab}
         portfolioVersion={portfolioVersion}
         refreshAll={refreshAll} refreshing={refreshing} refreshAgo={refreshAgo}
-        toggleDark={toggleDark} toggleCompact={toggleCompact}
-        darkMode={darkMode} compact={compact}
+        toggleCompact={toggleCompact}
+        compact={compact}
         hidden={hiddenValues}
         mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)}
         account={account} onSwitchAccount={switchAccount}
@@ -780,7 +778,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         html, body { margin: 0; background: linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%); background-attachment: fixed; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
         /* ── Animations ── */
-        [style*="invert(1)"] svg, [style*="invert(1)"] canvas { filter: invert(1) hue-rotate(200deg) saturate(0.9); }
         @keyframes fadeIn    { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes tabFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pulse     { 0%,100% { opacity: 0.3; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); } }
