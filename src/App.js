@@ -84,9 +84,11 @@ class AppErrorBoundary extends Component {
   }
 }
 
-const MIN_WIDTH = 768;
-// Détecte un téléphone quelle que soit l'orientation
-const isPhone = () => Math.min(window.screen.width, window.screen.height) < MIN_WIDTH;
+// Détecte un vrai téléphone : appareil tactile + petite largeur d'écran
+const isPhone = () => {
+  const touch = window.matchMedia("(pointer: coarse)").matches || window.matchMedia("(hover: none)").matches;
+  return touch && window.screen.width < 768;
+};
 
 function MobileBlock() {
   return (
