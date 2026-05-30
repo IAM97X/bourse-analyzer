@@ -32,7 +32,7 @@ export function TabNav({ active, onChange, portfolioVersion }) {
         return (
           <button key={key} onClick={() => onChange(key)}
             title={`Raccourci : ${idx + 1}`}
-            style={{ flex: 1, padding: "11px 10px", background: isActive ? C.snow : "transparent", border: isActive ? `1px solid ${C.border}` : "1px solid transparent", borderRadius: "16px", color: isActive ? C.navy : C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: isActive ? "700" : "400", boxShadow: isActive ? shadow.card : "none", transition: "all 0.2s ease", position: "relative", whiteSpace: "nowrap" }}>
+            style={{ flex: 1, padding: "11px 10px", background: isActive ? "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5)" : "transparent", border: isActive ? "none" : "1px solid transparent", borderRadius: "16px", color: isActive ? "#fff" : C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: isActive ? "700" : "400", boxShadow: isActive ? "0 2px 10px rgba(45,91,134,0.35)" : "none", transition: "all 0.2s ease", position: "relative", whiteSpace: "nowrap" }}>
             {label}
             {badge > 0 && (
               <span style={{ position: "absolute", top: "4px", right: "4px", background: C.red, color: "#fff", borderRadius: "50%", minWidth: "15px", height: "15px", fontSize: "8px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
