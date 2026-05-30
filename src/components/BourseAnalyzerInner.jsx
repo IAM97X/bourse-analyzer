@@ -122,6 +122,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [compact, setCompact]                   = useState(() => load("bourse_compact", false));
   const [portfolioVersion, setPortfolioVersion] = useState(0);
   const [refreshing, setRefreshing]             = useState(false);
+  const [showBrand, setShowBrand]               = useState(false);
+  const brandTimerRef                           = useRef(null);
   const [lastRefresh, setLastRefresh]           = useState(null); // timestamp ms
   const [refreshAgo, setRefreshAgo]             = useState("");
   const [updateAvailable, setUpdateAvailable]   = useState(false);
@@ -162,6 +164,17 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [emojiPickerOpen, accountMenuOpen, editingName]);
+
+  // Affiche "BourseNext" pendant le refresh + 800ms après pour l'animation de sortie
+  useEffect(() => {
+    if (refreshing) {
+      clearTimeout(brandTimerRef.current);
+      setShowBrand(true);
+    } else {
+      brandTimerRef.current = setTimeout(() => setShowBrand(false), 800);
+    }
+    return () => clearTimeout(brandTimerRef.current);
+  }, [refreshing]);
 
   // Écoute les mises à jour du portefeuille → re-render de tous les onglets
   useEffect(() => {
@@ -421,7 +434,11 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
   return (
     <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%)", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif", filter: darkMode ? "invert(1) hue-rotate(200deg) saturate(0.9)" : "none" }}>
-      <style>{`@keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }`}</style>
+      <style>{`
+        @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes bn-brand-in  { from{opacity:0;transform:translateY(-6px) scale(0.92)} to{opacity:1;transform:none} }
+        @keyframes bn-brand-out { from{opacity:1;transform:none} to{opacity:0;transform:translateY(-6px) scale(0.92)} }
+      `}</style>
 
       {/* Sidebar */}
       <Sidebar
@@ -546,7 +563,12 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <AppLogo size={28} animated={refreshing} />
                 </div>
-                <span style={{ fontSize: "15px", fontWeight: "600", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
+                {showBrand
+                  ? <span key="brand" style={{ fontSize: "17px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif", animation: refreshing ? "bn-brand-in 0.4s ease-out forwards" : "bn-brand-out 0.6s ease-in forwards" }}>
+                      Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
+                    </span>
+                  : <span style={{ fontSize: "15px", fontWeight: "600", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
+                }
               </div>
               {/* RIGHT — emoji + compte séparés */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
