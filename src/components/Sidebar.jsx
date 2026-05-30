@@ -113,6 +113,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
   const pv    = totalActuel - totalInvesti;
   const pvPct = totalInvesti > 0 ? (pv / totalInvesti) * 100 : 0;
   const c = mobileCompact ? true : (isMobile ? false : collapsed);
+  const aiEmoji = load("bourse_ai_emoji", "🤖");
 
   const handleNav = (key) => { onChange(key); if (onClose) onClose(); };
 
@@ -207,17 +208,19 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                   {c
                     ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                         {isFeatured
-                          ? <span style={{ fontSize: "11px", fontWeight: "700", fontFamily: "Inter,sans-serif", color: isActive ? "#1C1C1E" : "#6C6C70", letterSpacing: "0.3px" }}>IA</span>
+                          ? <span style={{ fontSize: "16px", lineHeight: 1 }}>{aiEmoji}</span>
                           : <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93" }}>{icon}</span>
                         }
-                        {isScoringLoading && <span style={{ position: "absolute", top: "-3px", right: "-3px", width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", animation: "pulse 1.2s ease-in-out infinite" }} />}
+                        {isScoringLoading && <span style={{ position: "absolute", top: "-3px", right: "-3px", width: "7px", height: "7px", borderRadius: "50%", background: "#8E8E93", animation: "pulse 1.2s ease-in-out infinite" }} />}
                       </span>
                     : <span style={{ flex: 1, display: "flex", alignItems: "center", gap: "12px" }}>
-                        <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93", display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</span>
+                        {isFeatured
+                          ? <span style={{ fontSize: "16px", lineHeight: 1, flexShrink: 0 }}>{aiEmoji}</span>
+                          : <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93", display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</span>
+                        }
                         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           {label}
-                          {isFeatured && !isActive && <span style={{ fontSize: "10px", background: "#F2F2F7", color: "#8E8E93", borderRadius: "5px", padding: "1px 6px", fontWeight: "600", letterSpacing: "0.3px", flexShrink: 0 }}>IA</span>}
-                          {isScoringLoading && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", animation: "pulse 1.2s ease-in-out infinite", flexShrink: 0 }} />}
+                          {isScoringLoading && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#8E8E93", animation: "pulse 1.2s ease-in-out infinite", flexShrink: 0 }} />}
                         </span>
                       </span>
                   }
