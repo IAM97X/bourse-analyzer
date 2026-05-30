@@ -53,22 +53,21 @@ const TAB_LABELS = {
 
 function PillBar({ pills, active, onChange }) {
   return (
-    <div style={{ display: "flex", gap: "8px", marginBottom: "28px", flexWrap: "wrap" }}>
+    <div style={{ display: "flex", gap: "6px", marginBottom: "28px", flexWrap: "wrap", background: "#EBEBF0", borderRadius: "14px", padding: "4px" }}>
       {pills.map(({ key, label }) => {
         const isActive = active === key;
         return (
           <button key={key} onClick={() => onChange(key)}
             style={{
-              padding: "8px 20px", borderRadius: "50px", cursor: "pointer",
-              fontSize: "13px", fontWeight: isActive ? "700" : "500",
+              padding: "8px 18px", borderRadius: "10px", cursor: "pointer",
+              fontSize: "13px", fontWeight: isActive ? "600" : "400",
               fontFamily: "'Inter', sans-serif",
-              background: isActive
-                ? "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)"
-                : "rgba(255,255,255,0.75)",
-              color: isActive ? "#fff" : "#0F172A",
-              boxShadow: isActive ? "0 4px 16px rgba(30,58,95,0.3)" : "0 1px 4px rgba(0,0,0,0.06)",
-              border: isActive ? "none" : "1px solid rgba(15,23,42,0.1)",
-              transition: "all 0.18s",
+              background: isActive ? "#FFFFFF" : "transparent",
+              color: isActive ? "#1C1C1E" : "#6C6C70",
+              boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+              border: "none",
+              transition: "all 0.15s",
+              whiteSpace: "nowrap",
             }}>
             {label}
           </button>
