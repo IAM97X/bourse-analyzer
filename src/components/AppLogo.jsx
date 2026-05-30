@@ -43,25 +43,25 @@ export default function AppLogo({ size = 28, animated = false }) {
 
         <ellipse cx="11" cy="16" rx="6.5" ry="10"
           stroke={animated ? "#1E3A5F" : `url(#${id}e1)`}
-          strokeWidth={animated ? "1.6" : "4"} fill="none"
+          strokeWidth={animated ? "3" : "4"} fill="none"
           transform="rotate(-30 11 16)"
           style={dashStyle(-1.5)}/>
 
         <ellipse cx="14.3" cy="16" rx="6.5" ry="10"
           stroke={animated ? "#2D5986" : `url(#${id}e2)`}
-          strokeWidth={animated ? "1.6" : "4"} fill="none"
+          strokeWidth={animated ? "3" : "4"} fill="none"
           transform="rotate(-10 14.3 16)"
           style={dashStyle(-1.0)}/>
 
         <ellipse cx="17.7" cy="16" rx="6.5" ry="10"
           stroke={animated ? "#4A7FB5" : `url(#${id}e3)`}
-          strokeWidth={animated ? "1.6" : "4"} fill="none"
+          strokeWidth={animated ? "3" : "4"} fill="none"
           transform="rotate(10 17.7 16)"
           style={dashStyle(-0.5)}/>
 
         <ellipse cx="21" cy="16" rx="6.5" ry="10"
           stroke={animated ? "#8EC5F0" : `url(#${id}e4)`}
-          strokeWidth={animated ? "1.6" : "4"} fill="none"
+          strokeWidth={animated ? "3" : "4"} fill="none"
           transform="rotate(30 21 16)"
           style={dashStyle(0)}/>
       </svg>
