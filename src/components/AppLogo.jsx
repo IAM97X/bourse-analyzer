@@ -1,20 +1,14 @@
 export default function AppLogo({ size = 28, animated = false }) {
   const id = `bn${size}`;
-  const circ = 58;
 
   const kf = animated ? `
-    @keyframes bn-dash-${id} {
-      from { stroke-dashoffset: ${circ}; }
-      to   { stroke-dashoffset: 0; }
+    @keyframes bn-spread-${id} {
+      0%   { transform: translateX(0px); }
+      35%  { transform: translateX(var(--spread)); }
+      65%  { transform: translateX(var(--spread)); }
+      100% { transform: translateX(0px); }
     }
   ` : "";
-
-  const dashStyle = (delay) => animated ? {
-    strokeDasharray: "0.01 11",
-    strokeLinecap: "round",
-    strokeDashoffset: circ,
-    animation: `bn-dash-${id} 2s linear infinite ${delay}s`,
-  } : undefined;
 
   return (
     <>
@@ -45,25 +39,25 @@ export default function AppLogo({ size = 28, animated = false }) {
           stroke={animated ? "#1E3A5F" : `url(#${id}e1)`}
           strokeWidth={animated ? "3" : "4.5"} fill="none"
           transform="rotate(-28 13 16)"
-          style={dashStyle(-1.5)}/>
+          style={animated ? { "--spread": "-4px", animation: `bn-spread-${id} 1.6s ease-in-out infinite 0s` } : undefined}/>
 
         <ellipse cx="15.3" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#2D5986" : `url(#${id}e2)`}
           strokeWidth={animated ? "3" : "4.5"} fill="none"
           transform="rotate(-9 15.3 16)"
-          style={dashStyle(-1.0)}/>
+          style={animated ? { "--spread": "-1.4px", animation: `bn-spread-${id} 1.6s ease-in-out infinite 0.08s` } : undefined}/>
 
         <ellipse cx="17.7" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#4A7FB5" : `url(#${id}e3)`}
           strokeWidth={animated ? "3" : "4.5"} fill="none"
           transform="rotate(9 17.7 16)"
-          style={dashStyle(-0.5)}/>
+          style={animated ? { "--spread": "1.4px", animation: `bn-spread-${id} 1.6s ease-in-out infinite 0.16s` } : undefined}/>
 
         <ellipse cx="20" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#8EC5F0" : `url(#${id}e4)`}
           strokeWidth={animated ? "3" : "4.5"} fill="none"
           transform="rotate(28 20 16)"
-          style={dashStyle(0)}/>
+          style={animated ? { "--spread": "4px", animation: `bn-spread-${id} 1.6s ease-in-out infinite 0.24s` } : undefined}/>
       </svg>
     </>
   );
