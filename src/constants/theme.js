@@ -1,9 +1,9 @@
 export const C = {
   // Text
-  ink:        "#111214",
-  inkSoft:    "#1E2A38",
-  inkMuted:   "#4A5568",
-  inkSubtle:  "#8896A8",
+  ink:        "#1C1C1E",
+  inkSoft:    "#3C3C43",
+  inkMuted:   "#6C6C70",
+  inkSubtle:  "#8E8E93",
 
   // Backgrounds
   snow:       "#FFFFFF",
@@ -19,10 +19,10 @@ export const C = {
   goldLight:  "rgba(255,215,0,0.10)",
 
   // Primary
-  navy:       "#111214",
-  navyLight:  "rgba(17,18,20,0.05)",
+  navy:       "#1C1C1E",
+  navyLight:  "rgba(28,28,30,0.06)",
   paleBlue:   "rgba(30,58,95,0.08)",
-  navyPill:   "#1E3A5F",
+  navyPill:   "#2D5986",
 
   // Green
   green:      "#27AE60",

@@ -436,7 +436,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const tabLabel = activeTab === TABS.AI_PORTFOLIO ? aiPortfolioLabel : (TAB_LABELS[activeTab] || "");
 
   return (
-    <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%)", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif" }}>
+    <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif" }}>
       <style>{`
         @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes bn-brand-in  { from{opacity:0;transform:translateY(-6px) scale(0.92)} to{opacity:1;transform:none} }
@@ -764,7 +764,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
           return (
             <button key={key} onClick={() => changeTab(key)}
               style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", background: "none", border: "none", cursor: "pointer", padding: "6px 2px", position: "relative" }}>
-              <span style={{ width: "40px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "10px", background: isActive ? "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)" : "transparent", color: isActive ? "#fff" : C.inkSubtle, fontSize: "14px", transition: "all 0.18s", boxShadow: isActive ? "0 3px 12px rgba(30,58,95,0.45)" : "none" }}>{icon}</span>
+              <span style={{ width: "40px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "10px", background: isActive ? "#F2F2F7" : "transparent", color: isActive ? "#1C1C1E" : C.inkSubtle, fontSize: "14px", transition: "all 0.18s" }}>{icon}</span>
               <span style={{ fontSize: "9px", fontWeight: isActive ? "500" : "400", color: isActive ? C.accent : C.inkSubtle, fontFamily: "'Roboto', sans-serif" }}>{SHORT[key] || key}</span>
             </button>
           );
@@ -775,7 +775,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
         * { box-sizing: border-box; }
-        html, body { margin: 0; background: linear-gradient(160deg, #E6EFF8 0%, #E2EBF6 35%, #E5F1EC 65%, #EAE5F6 100%); background-attachment: fixed; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        html, body { margin: 0; background: #F5F5F7; background-attachment: fixed; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
         /* ── Animations ── */
         @keyframes fadeIn    { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
