@@ -538,20 +538,15 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
                 <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
               </button>
-              {/* CENTER — logo + nom app (cliquable) + titre onglet */}
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+              {/* CENTER — logo + onglet actif */}
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
                 <div onClick={() => { changeTab(TABS.HOME); refreshAll(); }} title="Accueil · Actualiser"
-                  style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", padding: "4px 8px", borderRadius: "10px", transition: "background 0.15s" }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: "4px 6px", borderRadius: "10px", transition: "background 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.navyLight}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <AppLogo size={30} animated={refreshing} />
-                  <span style={{ fontSize: "18px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
-                    Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", background: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", ...(refreshing ? { backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", animation: "bn-next-wave 2s ease-in-out infinite" } : {}) }}>Next</span>
-                  </span>
+                  <AppLogo size={28} animated={refreshing} />
                 </div>
-                {tabLabel && activeTab !== TABS.HOME && (
-                  <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "500", paddingLeft: "6px", borderLeft: `1px solid ${C.border}` }}>{tabLabel}</span>
-                )}
+                <span style={{ fontSize: "15px", fontWeight: "600", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
               </div>
               {/* RIGHT — emoji + compte séparés */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
