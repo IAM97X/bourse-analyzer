@@ -113,12 +113,6 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
   const pv    = totalActuel - totalInvesti;
   const pvPct = totalInvesti > 0 ? (pv / totalInvesti) * 100 : 0;
   const c = mobileCompact ? true : (isMobile ? false : collapsed);
-  const [aiEmoji, setAiEmoji] = useState(() => load("bourse_ai_emoji", "🤖"));
-  useEffect(() => {
-    const handler = () => setAiEmoji(load("bourse_ai_emoji", "🤖"));
-    window.addEventListener("aiEmojiChanged", handler);
-    return () => window.removeEventListener("aiEmojiChanged", handler);
-  }, []);
 
   const handleNav = (key) => { onChange(key); if (onClose) onClose(); };
 
@@ -212,17 +206,11 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                   }}>
                   {c
                     ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                        {isFeatured
-                          ? <span style={{ fontSize: "16px", lineHeight: 1 }}>{aiEmoji}</span>
-                          : <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93" }}>{icon}</span>
-                        }
+                        <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93" }}>{icon}</span>
                         {isScoringLoading && <span style={{ position: "absolute", top: "-3px", right: "-3px", width: "7px", height: "7px", borderRadius: "50%", background: "#8E8E93", animation: "pulse 1.2s ease-in-out infinite" }} />}
                       </span>
                     : <span style={{ flex: 1, display: "flex", alignItems: "center", gap: "12px" }}>
-                        {isFeatured
-                          ? <span style={{ fontSize: "16px", lineHeight: 1, flexShrink: 0 }}>{aiEmoji}</span>
-                          : <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93", display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</span>
-                        }
+                        <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93", display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</span>
                         <span style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                           {isFeatured
                             ? <span style={{ fontSize: "10px", background: isActive ? "rgba(184,146,10,0.18)" : "#B07D2E", color: isActive ? "#B07D2E" : "#FFF8E7", borderRadius: "6px", padding: "2px 7px", fontWeight: "700", letterSpacing: "0.4px" }}>IA</span>
