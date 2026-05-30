@@ -10,7 +10,7 @@ export default function AppLogo({ size = 28, animated = false }) {
   ` : "";
 
   const dashStyle = (delay) => animated ? {
-    strokeDasharray: "0.01 5",
+    strokeDasharray: "0.01 8",
     strokeLinecap: "round",
     strokeDashoffset: circ,
     animation: `bn-dash-${id} 2s linear infinite ${delay}s`,
@@ -43,25 +43,25 @@ export default function AppLogo({ size = 28, animated = false }) {
 
         <ellipse cx="13" cy="16" rx="6.8" ry="10.5"
           stroke={animated ? "#1E3A5F" : `url(#${id}e1)`}
-          strokeWidth={animated ? "2.5" : "4"} fill="none"
+          strokeWidth={animated ? "1.6" : "4"} fill="none"
           transform="rotate(-28 13 16)"
           style={dashStyle(-1.5)}/>
 
         <ellipse cx="15" cy="16" rx="6.8" ry="10.5"
           stroke={animated ? "#2D5986" : `url(#${id}e2)`}
-          strokeWidth={animated ? "2.5" : "4"} fill="none"
+          strokeWidth={animated ? "1.6" : "4"} fill="none"
           transform="rotate(-9 15 16)"
           style={dashStyle(-1.0)}/>
 
         <ellipse cx="17" cy="16" rx="6.8" ry="10.5"
           stroke={animated ? "#4A7FB5" : `url(#${id}e3)`}
-          strokeWidth={animated ? "2.5" : "4"} fill="none"
+          strokeWidth={animated ? "1.6" : "4"} fill="none"
           transform="rotate(9 17 16)"
           style={dashStyle(-0.5)}/>
 
         <ellipse cx="19" cy="16" rx="6.8" ry="10.5"
           stroke={animated ? "#8EC5F0" : `url(#${id}e4)`}
-          strokeWidth={animated ? "2.5" : "4"} fill="none"
+          strokeWidth={animated ? "1.6" : "4"} fill="none"
           transform="rotate(28 19 16)"
           style={dashStyle(0)}/>
       </svg>

@@ -561,7 +561,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               {/* CENTER — logo + onglet actif */}
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
                 <div onClick={() => { changeTab(TABS.HOME); softRefresh(); }} title="Accueil · Actualiser"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: "4px 6px", borderRadius: "10px", transition: "background 0.15s" }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: "4px 6px", borderRadius: "10px", transition: "background 0.15s", animation: refreshing ? "bn-brand-in 0.4s ease-out" : undefined }}
                   onMouseEnter={e => e.currentTarget.style.background = C.navyLight}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <AppLogo size={28} animated={refreshing} />
