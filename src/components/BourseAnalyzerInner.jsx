@@ -263,14 +263,19 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     return () => clearInterval(t);
   }, []);
 
-  // Actualisation générale : rafraîchit les cours + resync tous les onglets
-  const refreshAll = useCallback(() => {
-    if (updateAvailable) { window.location.reload(); return; }
+  // Actualisation douce : rafraîchit les cours + resync tous les onglets (sans recharger la page)
+  const softRefresh = useCallback(() => {
     setRefreshing(true);
     setLastRefresh(Date.now());
     window.dispatchEvent(new CustomEvent("portfolioUpdated"));
     setTimeout(() => setRefreshing(false), 3000);
-  }, [updateAvailable]);
+  }, []);
+
+  // Actualisation générale : recharge la page si une mise à jour est disponible, sinon softRefresh
+  const refreshAll = useCallback(() => {
+    if (updateAvailable) { window.location.reload(); return; }
+    softRefresh();
+  }, [updateAvailable, softRefresh]);
 
   // ── Analyse IA de toutes les positions (scoring marché) ──────────────────────
   const runMarketScoring = useCallback(async (positions) => {
@@ -557,7 +562,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </button>
               {/* CENTER — logo + onglet actif */}
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
-                <div onClick={() => { changeTab(TABS.HOME); refreshAll(); }} title="Accueil · Actualiser"
+                <div onClick={() => { changeTab(TABS.HOME); softRefresh(); }} title="Accueil · Actualiser"
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: "4px 6px", borderRadius: "10px", transition: "background 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.navyLight}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
