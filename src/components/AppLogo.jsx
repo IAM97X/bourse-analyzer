@@ -3,17 +3,16 @@ export default function AppLogo({ size = 28, animated = false }) {
 
   const kf = animated ? `
     @keyframes bn-logo-wave-${id} {
-      0%, 100% { stroke: #1A4A8A; }
-      25%      { stroke: #4B9DD8; }
-      50%      { stroke: #85CFEF; }
-      75%      { stroke: #4B9DD8; }
+      0%, 100% { stroke: #111214; }
+      25%      { stroke: #1E3A5F; }
+      50%      { stroke: #2D5986; }
+      75%      { stroke: #1E3A5F; }
     }
   ` : "";
 
-  const seqStyle = (delay) => animated ? {
-    stroke: "#1A4A8A",
+  const waveStyle = animated ? {
+    stroke: "#111214",
     animation: `bn-logo-wave-${id} 2s ease-in-out infinite`,
-    animationDelay: `${delay}s`,
   } : undefined;
 
   return (
@@ -23,16 +22,16 @@ export default function AppLogo({ size = 28, animated = false }) {
         {!animated && (
           <defs>
             <linearGradient id={`${id}e1`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#1A3A6B"/>
-              <stop offset="100%" stopColor="#1E5299"/>
+              <stop offset="0%" stopColor="#080B0F"/>
+              <stop offset="100%" stopColor="#142641"/>
             </linearGradient>
             <linearGradient id={`${id}e2`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#2563EB"/>
-              <stop offset="100%" stopColor="#3B82F6"/>
+              <stop offset="0%" stopColor="#142641"/>
+              <stop offset="100%" stopColor="#1E3A5F"/>
             </linearGradient>
             <linearGradient id={`${id}e3`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#60A5FA"/>
-              <stop offset="100%" stopColor="#93C5FD"/>
+              <stop offset="0%" stopColor="#1E3A5F"/>
+              <stop offset="100%" stopColor="#2D5986"/>
             </linearGradient>
           </defs>
         )}
@@ -41,18 +40,18 @@ export default function AppLogo({ size = 28, animated = false }) {
           stroke={animated ? "#1A4A8A" : `url(#${id}e1)`}
           strokeWidth="4.5" fill="none"
           transform="rotate(-28 14 16)"
-          style={seqStyle(0)}/>
+          style={waveStyle}/>
 
         <ellipse cx="16" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#1A4A8A" : `url(#${id}e2)`}
           strokeWidth="4.5" fill="none"
-          style={seqStyle(0.67)}/>
+          style={waveStyle}/>
 
         <ellipse cx="18" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#1A4A8A" : `url(#${id}e3)`}
           strokeWidth="4.5" fill="none"
           transform="rotate(28 18 16)"
-          style={seqStyle(1.33)}/>
+          style={waveStyle}/>
       </svg>
     </>
   );
