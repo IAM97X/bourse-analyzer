@@ -1,8 +1,10 @@
+// cx symétriques autour de 16 : (10.5+21.5)/2 = 16, (13.8+18.2)/2 = 16
+// Chaque anneau tourne autour de son propre centre → effet éventail orbital
 const RINGS = [
-  { rot: -35, spread: -4,   delay: "0s",    strokeAnim: "#1E3A5F", gId: "e1", g0: "#0F1C2E", g1: "#1E3A5F" },
-  { rot: -12, spread: -1.4, delay: "0.08s", strokeAnim: "#2D5986", gId: "e2", g0: "#1E3A5F", g1: "#2D5986" },
-  { rot:  12, spread:  1.4, delay: "0.16s", strokeAnim: "#4A7FB5", gId: "e3", g0: "#2D5986", g1: "#4A7FB5" },
-  { rot:  35, spread:  4,   delay: "0.24s", strokeAnim: "#8EC5F0", gId: "e4", g0: "#5B9BD5", g1: "#8EC5F0" },
+  { cx: 10.5, rot: -22, spread: -4,   delay: "0s",    strokeAnim: "#1E3A5F", gId: "e1", g0: "#0F1C2E", g1: "#1E3A5F" },
+  { cx: 13.8, rot:  -7, spread: -1.4, delay: "0.08s", strokeAnim: "#2D5986", gId: "e2", g0: "#1E3A5F", g1: "#2D5986" },
+  { cx: 18.2, rot:   7, spread:  1.4, delay: "0.16s", strokeAnim: "#4A7FB5", gId: "e3", g0: "#2D5986", g1: "#4A7FB5" },
+  { cx: 21.5, rot:  22, spread:  4,   delay: "0.24s", strokeAnim: "#8EC5F0", gId: "e4", g0: "#5B9BD5", g1: "#8EC5F0" },
 ];
 
 export default function AppLogo({ size = 28, animated = false }) {
@@ -10,8 +12,8 @@ export default function AppLogo({ size = 28, animated = false }) {
 
   const kf = animated ? RINGS.map((r, i) => `
     @keyframes bn-ring-${id}-${i} {
-      0%,100% { transform: rotate(${r.rot}deg) translateX(0px); }
-      35%,65% { transform: rotate(${r.rot}deg) translateX(${r.spread}px); }
+      0%,100% { transform: translateX(0px); }
+      35%,65% { transform: translateX(${r.spread}px); }
     }
   `).join("") : "";
 
@@ -31,13 +33,12 @@ export default function AppLogo({ size = 28, animated = false }) {
         )}
         {RINGS.map((r, i) => (
           <ellipse key={i}
-            cx="16" cy="16" rx="6" ry="11.5"
+            cx={r.cx} cy="16" rx="7" ry="11"
             stroke={animated ? r.strokeAnim : `url(#${id}${r.gId})`}
             strokeWidth={animated ? "3" : "4.5"}
             fill="none"
-            transform={!animated ? `rotate(${r.rot} 16 16)` : undefined}
+            transform={`rotate(${r.rot} ${r.cx} 16)`}
             style={animated ? {
-              transformOrigin: "16px 16px",
               animation: `bn-ring-${id}-${i} 1.6s ease-in-out infinite ${r.delay}`,
             } : undefined}
           />
