@@ -4,17 +4,18 @@ export default function AppLogo({ size = 28, animated = false }) {
   // 3 atomes décalés qui font l'aller-retour B → N
   const atoms = [
     { delay: "0s" },
-    { delay: "0.38s" },
-    { delay: "0.76s" },
+    { delay: "0.65s" },
+    { delay: "1.3s" },
   ];
 
   const kf = animated ? `
     @keyframes bn-atom-${id} {
       0%,100% { transform: translateX(0px) translateY(0px); opacity: 0; }
-      8%      { opacity: 1; }
-      50%     { transform: translateX(13px) translateY(2px); opacity: 1; }
-      92%     { transform: translateX(0px) translateY(0px); opacity: 1; }
-      98%     { opacity: 0; }
+      6%      { opacity: 1; }
+      42%     { transform: translateX(13px) translateY(2px); opacity: 1; }
+      58%     { transform: translateX(13px) translateY(2px); opacity: 1; }
+      94%     { transform: translateX(0px) translateY(0px); opacity: 1; }
+      99%     { opacity: 0; }
     }
   ` : "";
 
@@ -53,7 +54,7 @@ export default function AppLogo({ size = 28, animated = false }) {
             cx="9" cy="17" r="1.4"
             fill="#3D7CC4"
             style={{
-              animation: `bn-atom-${id} 1.4s ease-in-out infinite ${a.delay}`,
+              animation: `bn-atom-${id} 2.4s ease-in-out infinite ${a.delay}`,
             }}
           />
         ))}
