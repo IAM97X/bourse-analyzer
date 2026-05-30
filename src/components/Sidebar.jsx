@@ -130,7 +130,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         <div style={{ padding: "16px 14px 14px", borderBottom: `1px solid ${C.sbBorder}`, display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
           <AppLogo size={28} />
           <div style={{ fontSize: "15px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
-            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A3A6B, #2563EB, #93C5FD)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
           </div>
         </div>
       )}
@@ -138,7 +138,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         <div className="ba-sidebar-logo" style={{ padding: "18px 14px 16px", borderBottom: `1px solid ${C.sbBorder}`, display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
           <AppLogo size={38} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "19px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span></div>
+            <div style={{ fontSize: "19px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A3A6B, #2563EB, #93C5FD)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span></div>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "18px", color: C.inkMuted, cursor: "pointer", padding: "4px 8px", lineHeight: 1 }}>✕</button>
         </div>
