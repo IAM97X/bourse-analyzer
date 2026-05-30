@@ -1,6 +1,6 @@
 export default function AppLogo({ size = 28, animated = false }) {
   const id = `bn${size}`;
-  const circ = 64;
+  const circ = 58;
 
   const kf = animated ? `
     @keyframes bn-dash-${id} {
@@ -16,8 +16,6 @@ export default function AppLogo({ size = 28, animated = false }) {
     animation: `bn-dash-${id} 2s linear infinite ${delay}s`,
   } : undefined;
 
-  // Toutes les ellipses partagent le même centre (16,16)
-  // → les pôles haut/bas s'alignent parfaitement
   return (
     <>
       {animated && <style>{kf}</style>}
@@ -43,28 +41,28 @@ export default function AppLogo({ size = 28, animated = false }) {
           </defs>
         )}
 
-        <ellipse cx="16" cy="16" rx="6.5" ry="11"
+        <ellipse cx="13" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#1E3A5F" : `url(#${id}e1)`}
-          strokeWidth={animated ? "3" : "4"} fill="none"
-          transform="rotate(-40 16 16)"
+          strokeWidth={animated ? "3" : "4.5"} fill="none"
+          transform="rotate(-28 13 16)"
           style={dashStyle(-1.5)}/>
 
-        <ellipse cx="16" cy="16" rx="6.5" ry="11"
+        <ellipse cx="15.3" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#2D5986" : `url(#${id}e2)`}
-          strokeWidth={animated ? "3" : "4"} fill="none"
-          transform="rotate(-13 16 16)"
+          strokeWidth={animated ? "3" : "4.5"} fill="none"
+          transform="rotate(-9 15.3 16)"
           style={dashStyle(-1.0)}/>
 
-        <ellipse cx="16" cy="16" rx="6.5" ry="11"
+        <ellipse cx="17.7" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#4A7FB5" : `url(#${id}e3)`}
-          strokeWidth={animated ? "3" : "4"} fill="none"
-          transform="rotate(13 16 16)"
+          strokeWidth={animated ? "3" : "4.5"} fill="none"
+          transform="rotate(9 17.7 16)"
           style={dashStyle(-0.5)}/>
 
-        <ellipse cx="16" cy="16" rx="6.5" ry="11"
+        <ellipse cx="20" cy="16" rx="7.2" ry="11"
           stroke={animated ? "#8EC5F0" : `url(#${id}e4)`}
-          strokeWidth={animated ? "3" : "4"} fill="none"
-          transform="rotate(40 16 16)"
+          strokeWidth={animated ? "3" : "4.5"} fill="none"
+          transform="rotate(28 20 16)"
           style={dashStyle(0)}/>
       </svg>
     </>
