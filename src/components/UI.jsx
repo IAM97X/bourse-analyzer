@@ -52,9 +52,9 @@ export function StatBox({ label, value, color, sensitive }) {
   const mobile  = window.innerWidth < 768;
   const blurStyle = hidden ? { filter: "blur(7px)", userSelect: "none", pointerEvents: "none" } : {};
   return (
-    <div style={{ background: C.cardGrad, border: `1px solid ${C.border}`, borderRadius: "20px", padding: mobile ? "22px 14px" : "20px 16px", textAlign: "center", boxShadow: shadow.card }}>
-      <div style={{ fontSize: mobile ? "10px" : "9px", color: C.inkSubtle, letterSpacing: "1px", fontWeight: "600", marginBottom: "6px", textTransform: "uppercase" }}>{label}</div>
-      <div style={{ fontSize: mobile ? "16px" : "13px", fontWeight: "700", color: color || C.ink, wordBreak: "break-word", lineHeight: "1.3", ...blurStyle }}>{value || "—"}</div>
+    <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "14px", padding: mobile ? "18px 12px" : "16px 14px", textAlign: "center", boxShadow: shadow.card }}>
+      <div style={{ fontSize: "9px", color: C.inkSubtle, letterSpacing: "0.08em", fontWeight: "500", marginBottom: "5px", textTransform: "uppercase", fontFamily: "Inter,sans-serif" }}>{label}</div>
+      <div style={{ fontSize: mobile ? "15px" : "13px", fontWeight: "600", color: color || C.ink, wordBreak: "break-word", lineHeight: "1.3", ...blurStyle }}>{value || "—"}</div>
     </div>
   );
 }
@@ -62,12 +62,12 @@ export function StatBox({ label, value, color, sensitive }) {
 export function Card({ title, icon, accentColor, children }) {
   const mobile = window.innerWidth < 768;
   return (
-    <div style={{ background: C.cardGrad, borderRadius: "22px", overflow: "hidden", marginBottom: "20px", boxShadow: shadow.card }}>
-      <div style={{ padding: mobile ? "18px 22px 12px" : "22px 28px 12px", display: "flex", alignItems: "center", gap: "8px" }}>
-        {icon && <span style={{ fontSize: "14px", opacity: 0.6 }}>{icon}</span>}
-        <span style={{ fontSize: "11px", fontWeight: "600", color: C.inkSubtle, letterSpacing: "0.06em", textTransform: "uppercase" }}>{title}</span>
+    <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "16px", overflow: "hidden", marginBottom: "16px", boxShadow: shadow.card }}>
+      <div style={{ padding: mobile ? "16px 20px 10px" : "18px 24px 10px", display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${C.border}` }}>
+        {icon && <span style={{ fontSize: "13px", opacity: 0.5 }}>{icon}</span>}
+        <span style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "Inter,sans-serif" }}>{title}</span>
       </div>
-      <div className="ba-card-body" style={{ padding: mobile ? "0 22px 20px" : "0 28px 26px" }}>{children}</div>
+      <div className="ba-card-body" style={{ padding: mobile ? "0 20px 18px" : "0 24px 22px" }}>{children}</div>
     </div>
   );
 }

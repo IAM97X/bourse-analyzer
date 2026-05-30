@@ -813,12 +813,12 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         .ba-sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(30,58,95,0.25); }
 
         /* ── Pill buttons ── */
-        .ba-btn-pill { background: ${C.accent}; color: #fff; border: none; border-radius: 50px; padding: 9px 22px; font-size: 12px; font-family: 'Roboto', inherit; font-weight: 600; cursor: pointer; box-shadow: ${shadow.pill}; transition: all 0.2s ease; white-space: nowrap; letter-spacing: 0.03em; }
-        .ba-btn-pill:hover { background: #2D5986; box-shadow: 0 6px 20px rgba(30,58,95,0.40); transform: translateY(-2px); }
+        .ba-btn-pill { background: ${C.accent}; color: #fff; border: none; border-radius: 50px; padding: 8px 20px; font-size: 12px; font-family: 'Inter', inherit; font-weight: 500; cursor: pointer; box-shadow: ${shadow.pill}; transition: all 0.18s ease; white-space: nowrap; letter-spacing: 0.02em; }
+        .ba-btn-pill:hover { background: #2D5986; box-shadow: ${shadow.hover}; transform: translateY(-1px); }
 
         /* ── Card hover ── */
-        .ba-card-hover { transition: box-shadow 0.22s ease, transform 0.22s ease; }
-        .ba-card-hover:hover { box-shadow: ${shadow.hover}; transform: translateY(-3px); }
+        .ba-card-hover { transition: box-shadow 0.18s ease, transform 0.18s ease; }
+        .ba-card-hover:hover { box-shadow: ${shadow.hover}; transform: translateY(-2px); }
 
         /* ── Densité globale ── */
         .ba-content-inner { zoom: 0.94; }

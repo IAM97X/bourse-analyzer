@@ -54,9 +54,9 @@ export const C = {
 };
 
 export const shadow = {
-  card:  "0 4px 20px rgba(17,18,20,0.08), 0 1px 4px rgba(17,18,20,0.05)",
-  float: "0 8px 36px rgba(17,18,20,0.11), 0 2px 8px rgba(17,18,20,0.06)",
-  hover: "0 14px 44px rgba(30,58,95,0.22), 0 4px 14px rgba(17,18,20,0.08)",
-  gold:  "0 4px 20px rgba(255,215,0,0.28)",
-  pill:  "0 4px 16px rgba(30,58,95,0.38)",
+  card:  "0 1px 3px rgba(17,18,20,0.06)",
+  float: "0 4px 16px rgba(17,18,20,0.07)",
+  hover: "0 6px 20px rgba(30,58,95,0.10)",
+  gold:  "0 2px 8px rgba(255,215,0,0.14)",
+  pill:  "0 2px 8px rgba(30,58,95,0.18)",
 };
