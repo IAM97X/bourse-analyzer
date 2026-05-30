@@ -7,17 +7,17 @@ import { useIsMobile } from "../context/mobile";
 import AppLogo from "./AppLogo";
 
 const IconHome = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.2"/>
-    <rect x="9"   y="1.5" width="5.5" height="5.5" rx="1.2"/>
-    <rect x="1.5" y="9"   width="5.5" height="5.5" rx="1.2"/>
-    <rect x="9"   y="9"   width="5.5" height="5.5" rx="1.2"/>
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" strokeLinejoin="miter">
+    <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="0.5"/>
+    <rect x="9"   y="1.5" width="5.5" height="5.5" rx="0.5"/>
+    <rect x="1.5" y="9"   width="5.5" height="5.5" rx="0.5"/>
+    <rect x="9"   y="9"   width="5.5" height="5.5" rx="0.5"/>
   </svg>
 );
 const IconPositions = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1.5" y="5.5" width="13" height="9" rx="1.5"/>
-    <path d="M5.5 5.5V4A1.5 1.5 0 0 1 7 2.5h2A1.5 1.5 0 0 1 10.5 4v1.5"/>
+    <rect x="1.5" y="5.5" width="13" height="9" rx="0.5"/>
+    <path d="M5.5 5.5V4a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 10.5 4v1.5"/>
     <line x1="1.5" y1="9.5" x2="14.5" y2="9.5" strokeOpacity="0.35"/>
   </svg>
 );
@@ -42,7 +42,7 @@ const IconTrending = () => (
 );
 const IconTarget = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1.5" y="2.5" width="13" height="11.5" rx="1.5"/>
+    <rect x="1.5" y="2.5" width="13" height="11.5" rx="0.5"/>
     <line x1="1.5" y1="6.5" x2="14.5" y2="6.5" strokeOpacity="0.35"/>
     <line x1="5"  y1="1"   x2="5"    y2="4"/>
     <line x1="11" y1="1"   x2="11"   y2="4"/>

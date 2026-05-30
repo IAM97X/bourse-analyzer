@@ -3,8 +3,10 @@ export default function AppLogo({ size = 28, animated = false }) {
 
   const kf = animated ? `
     @keyframes bn-logo-wave-${id} {
-      0%, 100% { stroke: #1E3A5F; }
-      50%      { stroke: #7AB3E0; }
+      0%   { stroke: #1E3A5F; }
+      33%  { stroke: #4A7FB5; }
+      66%  { stroke: #8EC5F0; }
+      100% { stroke: #1E3A5F; }
     }
   ` : "";
 
