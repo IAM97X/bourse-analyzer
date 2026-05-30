@@ -562,7 +562,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </button>
               {/* CENTER — logo + onglet actif */}
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
-                <div onClick={() => { changeTab(TABS.HOME); softRefresh(); }} title="Accueil · Actualiser"
+                <div onClick={() => window.location.reload()} title="Actualiser la page"
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: "4px 6px", borderRadius: "10px", transition: "background 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.navyLight}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
