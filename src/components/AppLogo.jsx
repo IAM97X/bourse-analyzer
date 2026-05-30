@@ -10,7 +10,8 @@ export default function AppLogo({ size = 28, animated = false }) {
   ` : "";
 
   const dashStyle = (delay) => animated ? {
-    strokeDasharray: "3 3",
+    strokeDasharray: "0.01 5",
+    strokeLinecap: "round",
     strokeDashoffset: circ,
     animation: `bn-dash-${id} 2s linear infinite ${delay}s`,
   } : undefined;
