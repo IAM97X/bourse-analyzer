@@ -89,13 +89,13 @@ function Row({ label, value, color, last, debug }) {
       display: "flex", justifyContent: "space-between", alignItems: "flex-start",
       gap: "12px",
       padding: "10px 0",
-      borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.08)",
+      borderBottom: last ? "none" : "1px solid rgba(0,0,0,0.06)",
       cursor: debug ? "help" : undefined,
     }}>
-      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", fontWeight: "400", lineHeight: "1.4", flex: "1" }}>
+      <span style={{ fontSize: "12px", color: "#6C6C70", fontWeight: "400", lineHeight: "1.4", flex: "1" }}>
         {label}
       </span>
-      <span style={{ fontSize: "12px", fontWeight: "700", color: color || "#fff", whiteSpace: "nowrap", textAlign: "right" }}>
+      <span style={{ fontSize: "12px", fontWeight: "600", color: color || "#1C1C1E", whiteSpace: "nowrap", textAlign: "right" }}>
         {value}
       </span>
     </div>
@@ -106,10 +106,11 @@ function Row({ label, value, color, last, debug }) {
 function Card({ children }) {
   return (
     <div style={{
-      background: "linear-gradient(160deg, #112240 0%, #1a3a5c 100%)",
-      borderRadius: "14px",
-      padding: "14px 16px",
-      boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+      background: "#FFFFFF",
+      borderRadius: "16px",
+      padding: "14px 18px",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.07)",
+      border: "1px solid rgba(0,0,0,0.07)",
       minWidth: 0,
     }}>
       {children}
@@ -126,7 +127,7 @@ function ColValeur({ positions, especes, cumul, hidden }) {
   const total        = titres + especes;
   const pv           = titres - totalInvesti;
   const pvPct        = totalInvesti > 0 ? (pv / totalInvesti) * 100 : 0;
-  const pvColor      = pv >= 0 ? "#4ade80" : "#f87171";
+  const pvColor      = pv >= 0 ? "#16a34a" : "#dc2626";
   const versements   = cumul || totalInvesti;
   const today        = new Date().toLocaleDateString("fr-FR");
 
@@ -758,20 +759,20 @@ function CourbeEvolution({ hidden, positions, account }) {
   }, [rawPoints, dataSource]);
 
   if (yahooLoading && !snapPoints) return (
-    <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.45)", fontSize: "12px" }}>
+    <div style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.07)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "#8E8E93", fontSize: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
       Reconstruction depuis l'historique des transactions…
     </div>
   );
 
   if (!points) return (
-    <div style={{ background: "linear-gradient(145deg,#0d1f33 0%,#1a3a5c 100%)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "12px" }}>
+    <div style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.07)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "#8E8E93", fontSize: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
       <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
       <div style={{ marginBottom: "12px" }}>Aucune donnée disponible</div>
       <button onClick={() => fileInputRef.current?.click()}
-        style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+        style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.1)", background: "#F2F2F7", color: "#1C1C1E", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
         + Importer CSV Boursobank
       </button>
-      <div style={{ marginTop: "8px", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>Boursobank · Fortuneo · DEGIRO</div>
+      <div style={{ marginTop: "8px", fontSize: "10px", color: "#C7C7CC" }}>Boursobank · Fortuneo · DEGIRO</div>
     </div>
   );
 

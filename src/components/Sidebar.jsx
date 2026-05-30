@@ -254,12 +254,12 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
       </div>}
 
       {!c && !mobileCompact && positions.length > 0 && <div className="ba-sidebar-pfcard" style={{ padding: "12px 12px 14px", flexShrink: 0 }}>
-        <div style={{ background: "linear-gradient(135deg, #1E3A5F 0%, #2D5986 60%, #4A7FB5 100%)", borderRadius: "16px", padding: "16px 18px", boxShadow: "0 4px 16px rgba(30,58,95,0.18)" }}>
-          <div style={{ fontSize: "9px", fontWeight: "700", color: "rgba(193,232,255,0.75)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "6px" }}>Portefeuille {account || "PEA"}</div>
-          <div style={{ fontSize: "20px", fontWeight: "900", color: "#fff", letterSpacing: "-0.5px", marginBottom: "4px", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{fmtEur(totalActuel)}</div>
+        <div style={{ background: "#F2F2F7", borderRadius: "16px", padding: "16px 18px" }}>
+          <div style={{ fontSize: "9px", fontWeight: "600", color: "#8E8E93", letterSpacing: "1.2px", textTransform: "uppercase", marginBottom: "6px" }}>Portefeuille {account || "PEA"}</div>
+          <div style={{ fontSize: "20px", fontWeight: "700", color: "#1C1C1E", letterSpacing: "-0.5px", marginBottom: "4px", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{fmtEur(totalActuel)}</div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.9)", fontWeight: "600", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{(pv >= 0 ? "+" : "") + fmtEur(pv)}</span>
-            <span style={{ fontSize: "11px", background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "2px 8px", color: "#fff", fontWeight: "700", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{(pv >= 0 ? "+" : "") + pvPct.toFixed(1) + "%"}</span>
+            <span style={{ fontSize: "11px", color: pv >= 0 ? "#16a34a" : "#dc2626", fontWeight: "600", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{(pv >= 0 ? "+" : "") + fmtEur(pv)}</span>
+            <span style={{ fontSize: "11px", background: pv >= 0 ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)", borderRadius: "20px", padding: "2px 8px", color: pv >= 0 ? "#16a34a" : "#dc2626", fontWeight: "700", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{(pv >= 0 ? "+" : "") + pvPct.toFixed(1) + "%"}</span>
           </div>
         </div>
       </div>}
