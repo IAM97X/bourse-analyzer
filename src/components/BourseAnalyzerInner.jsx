@@ -119,8 +119,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [profil, setProfil]                     = useState(() => load("bourse_profil", DEFAULT_PROFIL));
   const [compact, setCompact]                   = useState(() => load("bourse_compact", false));
   const [portfolioVersion, setPortfolioVersion] = useState(0);
-  const [refreshing, setRefreshing]             = useState(false);
-  const [showBrand, setShowBrand]               = useState(false);
+  const [refreshing, setRefreshing]             = useState(true);
+  const [showBrand, setShowBrand]               = useState(true);
   const brandTimerRef                           = useRef(null);
   const [lastRefresh, setLastRefresh]           = useState(null); // timestamp ms
   const [refreshAgo, setRefreshAgo]             = useState("");
@@ -161,6 +161,12 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [emojiPickerOpen, accountMenuOpen, editingName]);
+
+  // Animation au chargement initial de la page (1.6s puis disparition)
+  useEffect(() => {
+    const t = setTimeout(() => setRefreshing(false), 1600);
+    return () => clearTimeout(t);
+  }, []);
 
   // Affiche "BourseNext" pendant le refresh + 800ms après pour l'animation de sortie
   useEffect(() => {
