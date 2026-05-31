@@ -28,8 +28,11 @@ import TourGuide, { shouldShowTour, markTourDone } from "./TourGuide";
 import PWAInstallBanner from "./PWAInstallBanner";
 import HomeTab from "./HomeTab";
 import OverviewTab from "./OverviewTab";
+import { isDemoMode, clearDemoData } from "../constants/demoData";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
+
+const DEMO_FREE_TABS = new Set([TABS.OVERVIEW, TABS.HOME, TABS.PORTFOLIO, TABS.MARCHE]);
 
 const PORTFOLIO_TABS = [TABS.PORTFOLIO, TABS.HISTORIQUE, TABS.OPERATIONS];
 const DCA_TABS  = [TABS.DCA, TABS.PROJECTION];
@@ -120,7 +123,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     const acc = load("bourse_account", "PEA");
     return load(`bourse_active_tab_${acc}`, TABS.OVERVIEW);
   });
-  const changeTab = (tab) => { setActiveTab(tab); save(`bourse_active_tab_${account}`, tab); };
+  const _changeTab = (tab) => { setActiveTab(tab); save(`bourse_active_tab_${account}`, tab); };
   const switchAccount = (acc) => {
     prevAccountRef.current = account;
     save(`bourse_active_tab_${account}`, activeTab);
@@ -200,6 +203,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   // Auto-snapshot journalier — sauvegarde la valeur du PF à chaque visite de l'app
   useEffect(() => {
     try {
+      if (isDemoMode()) return;
       const today = new Date().toISOString().slice(0, 10);
       const positions = load("bourse_portfolio", []);
       const valeur = positions.reduce((s, p) => s + (p.dernierCours || p.pru || 0) * (p.quantite || 0), 0);
@@ -294,6 +298,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   // ── Analyse IA de toutes les positions (scoring marché) ──────────────────────
   const runMarketScoring = useCallback(async (positions) => {
     if (!positions || positions.length === 0) return;
+    if (isDemoMode()) return; // scores pré-chargés en mode démo
     setMarketScoringUi(UI.LOADING);
     try {
       // Résoudre les tickers : cache existant + résolution Yahoo Search pour les manquants
@@ -458,6 +463,14 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   })();
   const tabLabel = activeTab === TABS.AI_PORTFOLIO ? aiPortfolioLabel : (TAB_LABELS[activeTab] || "");
 
+  const isDemo = isDemoMode();
+  const [demoGate, setDemoGate] = useState(false);
+
+  const changeTab = (tab) => {
+    if (isDemo && !DEMO_FREE_TABS.has(tab)) { setDemoGate(true); return; }
+    _changeTab(tab);
+  };
+
   const isOverview = activeTab === TABS.OVERVIEW;
 
   if (isOverview) {
@@ -495,7 +508,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "'DM Sans', sans-serif", paddingTop: isDemo ? "34px" : 0 }}>
       <style>{`
         @keyframes bn-next-wave   { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes bn-brand-in    { from{opacity:0;transform:translateY(-6px) scale(0.92)} to{opacity:1;transform:none} }
@@ -503,6 +516,45 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         @keyframes bn-account-in-right { from{opacity:0;transform:translateX(32px)}  to{opacity:1;transform:translateX(0)} }
         @keyframes bn-account-in-left  { from{opacity:0;transform:translateX(-32px)} to{opacity:1;transform:translateX(0)} }
       `}</style>
+
+      {/* Modal gate démo */}
+      {demoGate && (
+        <div onClick={() => setDemoGate(false)} style={{ position: "fixed", inset: 0, zIndex: 99998, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: "20px", padding: "32px 28px", maxWidth: "360px", width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", fontFamily: "'DM Sans', sans-serif" }}>
+            <div style={{ fontSize: "32px", marginBottom: "12px" }}>🔒</div>
+            <div style={{ fontSize: "18px", fontWeight: "800", color: "#0F172A", letterSpacing: "-0.03em", marginBottom: "10px" }}>Fonctionnalité réservée</div>
+            <div style={{ fontSize: "13px", color: "#64748B", lineHeight: 1.65, marginBottom: "24px" }}>
+              Cette section n'est pas disponible en mode démo.<br/>Créez un compte gratuit pour tout débloquer.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <button
+                onClick={() => { clearDemoData(); window.location.reload(); }}
+                style={{ padding: "12px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#fff", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                Créer un compte gratuit
+              </button>
+              <button
+                onClick={() => setDemoGate(false)}
+                style={{ padding: "10px", borderRadius: "12px", border: "1px solid #E2E8F0", background: "transparent", color: "#64748B", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                Continuer la démo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bannière mode démo */}
+      {isDemo && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: "linear-gradient(90deg, #1E3A5F, #2D6CB5)", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "'DM Sans', sans-serif" }}>
+          <span style={{ fontSize: "12px", fontWeight: "700", color: "#fff", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            Mode démo — données fictives
+          </span>
+          <button
+            onClick={() => { clearDemoData(); window.location.reload(); }}
+            style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", padding: "4px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+            Se connecter →
+          </button>
+        </div>
+      )}
 
       {/* Sidebar */}
       <Sidebar
@@ -515,6 +567,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         marketScoringUi={marketScoringUi}
         onShowGuide={showGuide}
         externalCollapsed={sidebarCollapsed} onExternalToggle={toggleSidebarCollapse}
+        isDemo={isDemo} demoFreeTabs={DEMO_FREE_TABS}
       />
 
       {/* Main */}
