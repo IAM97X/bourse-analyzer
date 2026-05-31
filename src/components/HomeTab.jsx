@@ -745,17 +745,25 @@ function CourbeEvolution({ hidden, positions, account }) {
   const dataSource = (period <= 7 && yahooPoints) ? "yahoo" : csvFiltered ? "boursobank" : yahooPoints ? "yahoo" : "snapshots";
   const rawPoints  = (period <= 7 && yahooPoints) ? yahooPoints : (csvFiltered ?? yahooPoints ?? snapPoints ?? syntheticPoints);
 
+  const currentFromPositions = useMemo(
+    () => positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0),
+    [positions]
+  );
+
   const { points, current, first, investi, perfCumFromCSV } = useMemo(() => {
     if (!rawPoints || rawPoints.length < 2) return { points: null };
     const last = rawPoints[rawPoints.length - 1];
+    // Les snapshots stockent la valeur totale PEA+CTO — on force la valeur actuelle
+    // depuis les positions filtrées pour que l'affichage soit correct par compte
+    const currentVal = dataSource === "snapshots" ? currentFromPositions : last.valeur;
     return {
       points:         rawPoints,
-      current:        last.valeur,
+      current:        currentVal,
       first:          rawPoints[0].valeur,
       investi:        last.capitalVerse || last.investi || 0,
       perfCumFromCSV: dataSource === "boursobank" ? (last.perfCumulee ?? null) : null,
     };
-  }, [rawPoints, dataSource]);
+  }, [rawPoints, dataSource, currentFromPositions]);
 
   if (yahooLoading && !snapPoints) return (
     <div style={{ background: "linear-gradient(160deg, #1A3A5C 0%, #2D5986 100%)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: "12px", boxShadow: "0 4px 16px rgba(30,58,95,0.22)" }}>

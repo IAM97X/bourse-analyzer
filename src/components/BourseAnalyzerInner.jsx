@@ -27,6 +27,7 @@ import OnboardingWizard, { ONBOARDING_KEY } from "./OnboardingWizard";
 import TourGuide, { shouldShowTour, markTourDone } from "./TourGuide";
 import PWAInstallBanner from "./PWAInstallBanner";
 import HomeTab from "./HomeTab";
+import OverviewTab from "./OverviewTab";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 
@@ -36,6 +37,7 @@ const IA_TABS   = [TABS.MARCHE, TABS.CHAT, TABS.AUTOPILOT, TABS.AI_PORTFOLIO];
 const PLUS_TABS = [TABS.PLUS, TABS.PROFIL, TABS.SETTINGS];
 
 const TAB_LABELS = {
+  [TABS.OVERVIEW]:   "Vue d'ensemble",
   [TABS.HOME]:       "Accueil",
   [TABS.PORTFOLIO]:  "Positions",
   [TABS.DCA]:        "Plan DCA",
@@ -48,7 +50,7 @@ const TAB_LABELS = {
   [TABS.OPERATIONS]: "Transactions",
   [TABS.PROFIL]:     "Profil investisseur",
   [TABS.SETTINGS]:   "Paramètres",
-  [TABS.PLUS]:       "Plus",
+  [TABS.PLUS]:       "Compte",
 };
 
 function PillBar({ pills, active, onChange }) {
@@ -113,8 +115,9 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => load("bourse_sidebar_collapsed", true));
   const toggleSidebarCollapse = useCallback(() => setSidebarCollapsed(v => { const next = !v; save("bourse_sidebar_collapsed", next); return next; }), []);
   const [account, setAccount]                   = useState(() => load("bourse_account", "PEA"));
-  const switchAccount = (acc) => { setAccount(acc); save("bourse_account", acc); setActiveTab(TABS.PORTFOLIO); };
-  const [activeTab, setActiveTab]               = useState(() => load("bourse_active_tab", TABS.HOME));
+  const prevAccountRef                          = useRef(null);
+  const switchAccount = (acc) => { prevAccountRef.current = account; setAccount(acc); save("bourse_account", acc); };
+  const [activeTab, setActiveTab]               = useState(() => load("bourse_active_tab", TABS.OVERVIEW));
   const changeTab = (tab) => { setActiveTab(tab); save("bourse_active_tab", tab); };
   const [profil, setProfil]                     = useState(() => load("bourse_profil", DEFAULT_PROFIL));
   const [compact, setCompact]                   = useState(() => load("bourse_compact", false));
@@ -440,12 +443,49 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   })();
   const tabLabel = activeTab === TABS.AI_PORTFOLIO ? aiPortfolioLabel : (TAB_LABELS[activeTab] || "");
 
+  const isOverview = activeTab === TABS.OVERVIEW;
+
+  if (isOverview) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "Inter, sans-serif" }}>
+        <style>{`
+          @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        `}</style>
+        {/* Logo en haut */}
+        <div style={{ padding: "24px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ fontSize: "20px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
+            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(270deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 4s ease infinite" }}>Next</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* Bouton masquer/afficher valeurs */}
+            <button onClick={toggleHidden} title={hiddenValues ? "Afficher les valeurs" : "Masquer les valeurs"}
+              style={{ width: "36px", height: "36px", borderRadius: "50%", border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.7)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: hiddenValues ? C.accent : C.inkSubtle }}>
+              {hiddenValues
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              }
+            </button>
+            {/* Déconnexion */}
+            <button onClick={onLogout} title="Se déconnecter"
+              style={{ height: "36px", padding: "0 14px", borderRadius: "20px", border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.7)", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: C.inkMuted, fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "6px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+        <OverviewTab onNavigate={changeTab} onSwitchAccount={switchAccount} hidden={hiddenValues} portfolioVersion={portfolioVersion} />
+      </div>
+    );
+  }
+
   return (
-    <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "'Roboto', 'Inter', system-ui, sans-serif" }}>
+    <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "Inter, sans-serif" }}>
       <style>{`
-        @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-        @keyframes bn-brand-in  { from{opacity:0;transform:translateY(-6px) scale(0.92)} to{opacity:1;transform:none} }
-        @keyframes bn-brand-out { from{opacity:1;transform:none} to{opacity:0;transform:translateY(-6px) scale(0.92)} }
+        @keyframes bn-next-wave   { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes bn-brand-in    { from{opacity:0;transform:translateY(-6px) scale(0.92)} to{opacity:1;transform:none} }
+        @keyframes bn-brand-out   { from{opacity:1;transform:none} to{opacity:0;transform:translateY(-6px) scale(0.92)} }
+        @keyframes bn-account-in-right { from{opacity:0;transform:translateX(32px)}  to{opacity:1;transform:translateX(0)} }
+        @keyframes bn-account-in-left  { from{opacity:0;transform:translateX(-32px)} to{opacity:1;transform:translateX(0)} }
       `}</style>
 
       {/* Sidebar */}
@@ -662,7 +702,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
         {/* Content */}
         <div className="ba-content" style={{ flex: 1, overflowY: "auto", padding: "32px 36px", position: "relative" }}>
-          <div className="ba-content-inner" style={{ position: "relative", maxWidth: "1200px", margin: "0 auto" }}>
+          <div key={account} className="ba-content-inner" style={{ position: "relative", maxWidth: "1200px", margin: "0 auto", animation: `${prevAccountRef.current === "PEA" ? "bn-account-in-right" : prevAccountRef.current === "CTO" ? "bn-account-in-left" : "bn-account-in-right"} 0.75s cubic-bezier(0.16,1,0.3,1)` }}>
           {/* Bannière Gemini actif / Claude recommandé */}
           {!hasClaudeKey() && hasAI() && !load("bourse_gemini_banner_dismissed", false) && (
             <GeminiBanner onDismiss={() => { save("bourse_gemini_banner_dismissed", true); setPortfolioVersion(v => v + 1); }} onSettings={() => changeTab(TABS.SETTINGS)} />
@@ -783,14 +823,13 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             <button key={key} onClick={() => changeTab(key)}
               style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", background: "none", border: "none", cursor: "pointer", padding: "6px 2px", position: "relative" }}>
               <span style={{ width: "40px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "10px", background: isActive ? "#F2F2F7" : "transparent", color: isActive ? "#1C1C1E" : C.inkSubtle, fontSize: "14px", transition: "all 0.18s" }}>{icon}</span>
-              <span style={{ fontSize: "9px", fontWeight: isActive ? "500" : "400", color: isActive ? C.accent : C.inkSubtle, fontFamily: "'Roboto', sans-serif" }}>{SHORT[key] || key}</span>
+              <span style={{ fontSize: "9px", fontWeight: isActive ? "500" : "400", color: isActive ? C.accent : C.inkSubtle, fontFamily: "Inter, sans-serif" }}>{SHORT[key] || key}</span>
             </button>
           );
         })}
       </nav>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
         * { box-sizing: border-box; }
         html, body { margin: 0; background: #F5F5F7; background-attachment: fixed; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }

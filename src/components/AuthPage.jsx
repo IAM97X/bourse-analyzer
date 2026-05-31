@@ -172,7 +172,7 @@ function AuthPage({ onSession }) {
   const btnGhost = { background: "none", border: "none", color: "#8E8E93", fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer", padding: "10px", width: "100%" };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F5F5F7", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "Inter, -apple-system, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#F5F5F7", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "Inter, sans-serif" }}>
 
       <div style={{ width: "100%", maxWidth: "380px" }}>
         {/* Logo + titre */}

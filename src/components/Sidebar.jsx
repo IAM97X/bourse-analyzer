@@ -125,16 +125,18 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
       )}
       {!mobileCompact && !isMobile && !c && (
         <div style={{ padding: "18px 20px 10px", display: "flex", alignItems: "center", flexShrink: 0 }}>
-          <div style={{ fontSize: "18px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif", lineHeight: 1 }}>
+          <button onClick={() => handleNav(TABS.OVERVIEW)}
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: "18px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif", lineHeight: 1 }}>
             Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
-          </div>
+          </button>
         </div>
       )}
       {!mobileCompact && isMobile && (
         <div className="ba-sidebar-logo" style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "19px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span></div>
-          </div>
+          <button onClick={() => { handleNav(TABS.OVERVIEW); }}
+            style={{ flex: 1, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontSize: "19px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
+            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+          </button>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "18px", color: "#6C6C70", cursor: "pointer", padding: "4px 8px", lineHeight: 1 }}>✕</button>
         </div>
       )}
@@ -196,7 +198,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                     color: isActive ? "#1C1C1E" : "#6C6C70",
                     fontSize: "15px",
                     fontWeight: isActive ? "600" : "400",
-                    fontFamily: "'Inter', 'Roboto', sans-serif",
+                    fontFamily: "Inter, sans-serif",
                     textAlign: "left",
                     transition: "background 0.12s",
                     letterSpacing: "-0.01em",
