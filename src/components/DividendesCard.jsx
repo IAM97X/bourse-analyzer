@@ -108,7 +108,7 @@ function DividendesCard({ positions }) {
             const totalAn   = (p.dividendeAnnuel || 0) * p.quantite;
             return (
               <div key={p.id} style={{ display: "grid", gridTemplateColumns: "36px 2fr 1fr 1fr 1fr 1fr", padding: "10px 20px", borderBottom: `1px solid ${C.border}`, alignItems: "center" }}>
-                <CompanyAvatar nom={p.nom} isin={p.isin} size={26} />
+                <CompanyAvatar nom={p.nom} isin={p.isin} size={34} />
                 <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>{p.nom}</div>
                 <div style={{ fontSize: "12px", color: C.ink, fontWeight: "600" }}>{p.dividendeAnnuel ? fmtEur(p.dividendeAnnuel) : "—"}</div>
                 <div style={{ fontSize: "12px", fontWeight: "700", color: rdtPru != null ? C.green : C.inkSubtle }}>{rdtPru != null ? rdtPru.toFixed(2) + " %" : "—"}</div>

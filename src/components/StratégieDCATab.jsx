@@ -256,7 +256,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
               const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? "#7B1111" : sig === "PRUDENCE" ? C.red : C.goldDark;
               return (
                 <div key={pos.id} style={{ display: "flex", alignItems: "center", gap: "7px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "6px 10px" }}>
-                  <CompanyAvatar nom={pos.nom} isin={pos.isin} size={22} />
+                  <CompanyAvatar nom={pos.nom} isin={pos.isin} size={30} />
                   <span style={{ fontSize: "11px", fontWeight: "700", color: C.ink }}>{pos.nom.split(" ")[0]}</span>
                   <span style={{ fontSize: "10px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "99px", padding: "2px 7px" }}>{sig}</span>
                   {pos.iaEntry
@@ -507,7 +507,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
           )}
           {analysisUi === UI.LOADING && (
             <div style={{ fontSize: "12px", color: C.inkSubtle, textAlign: "center", padding: "6px 0", fontStyle: "italic" }}>
-              <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color={C.inkMuted} /> Enrichissement en cours — contexte marché &amp; risques via IA…</span>
+              <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={22} color={C.inkMuted} /> Enrichissement en cours — contexte marché &amp; risques via IA…</span>
             </div>
           )}
 

@@ -347,7 +347,7 @@ function PEAAvisOperes({ account = "PEA" }) {
         <input ref={pdfRef} type="file" accept=".pdf" multiple style={{ display: "none" }} onChange={handlePdf} />
         <button onClick={() => pdfRef.current?.click()} disabled={ui === UI.LOADING}
           style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: ui === UI.LOADING ? "not-allowed" : "pointer" }}>
-          {ui === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={13} color={C.goldDark} /> {progress.done}/{progress.total} analysé{progress.done > 1 ? "s" : ""}…</span> : "↑ Importer des avis PDF"}
+          {ui === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={21} color={C.goldDark} /> {progress.done}/{progress.total} analysé{progress.done > 1 ? "s" : ""}…</span> : "↑ Importer des avis PDF"}
         </button>
         {ui === UI.RESULT && <span style={{ fontSize: "11px", color: C.green, fontWeight: "600" }}>✓ {progress.total} fichier{progress.total > 1 ? "s" : ""} — {filteredOps.length} opération{filteredOps.length > 1 ? "s" : ""} au total</span>}
         {errors.length > 0 && errors.map((e, i) => <span key={i} style={{ fontSize: "11px", color: C.red, fontWeight: "600" }}>⚠ {e}</span>)}
@@ -379,7 +379,7 @@ function PEAAvisOperes({ account = "PEA" }) {
                   <div style={{ fontSize: "11px", color: C.inkSubtle, fontFamily: "monospace" }}>{op.heure || "—"}</div>
                   <div><span style={{ fontSize: "10px", fontWeight: "700", color: typeColor(op.type), background: typeColor(op.type) + "18", borderRadius: "4px", padding: "2px 6px" }}>{op.type}</span></div>
                   <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-                    <CompanyAvatar nom={op.titre} isin={op.isin} size={24} />
+                    <CompanyAvatar nom={op.titre} isin={op.isin} size={32} />
                     <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink, lineHeight: "1.3", fontFamily: "'DM Sans', sans-serif" }}>{op.titre}</span>
                   </div>
                   <div style={{ fontSize: "10px", color: C.inkSubtle, fontFamily: "monospace" }}>{op.isin || "—"}</div>
@@ -712,7 +712,7 @@ function BenchmarkComparaison() {
         <button onClick={fetchAll} disabled={loading}
           style={{ fontSize: "11px", fontWeight: "700", padding: "5px 12px", borderRadius: "7px", cursor: loading ? "not-allowed" : "pointer",
             fontFamily: "'DM Sans', sans-serif", background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, color: C.navy }}>
-          {loading ? <ThinkingSpinner size={13} color={C.inkSubtle} /> : "↻ Actualiser"}
+          {loading ? <ThinkingSpinner size={21} color={C.inkSubtle} /> : "↻ Actualiser"}
         </button>
       </div>
 
@@ -1377,7 +1377,7 @@ function PerformanceGlobale({ positions, account = "PEA" }) {
         </div>
         {posPerf.map(p => (
           <div key={p.id} style={{ display: "grid", gridTemplateColumns: "36px 2fr 90px 80px 80px 90px 80px", padding: "10px 20px", borderBottom: `1px solid ${C.border}`, alignItems: "center", minWidth: "560px" }}>
-            <CompanyAvatar nom={p.nom} isin={p.isin} size={26} />
+            <CompanyAvatar nom={p.nom} isin={p.isin} size={34} />
             <div>
               <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>{p.nom}</div>
               {p.posYears && <div style={{ fontSize: "9px", color: C.inkSubtle }}>{durLabel(p.posYears * 365.25)}</div>}

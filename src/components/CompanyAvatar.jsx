@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { avatarColor, buildLogoSources } from "../constants/logos";
 
-export default function CompanyAvatar({ nom, isin, size = 36 }) {
+export default function CompanyAvatar({ nom, isin, size = 44 }) {
   const [tier, setTier] = useState(0);
 
   const keyRef = useRef(`${nom}:${isin}`);
@@ -22,7 +22,7 @@ export default function CompanyAvatar({ nom, isin, size = 36 }) {
 
   const { url, cover } = sources[tier];
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "#FFFFFF", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+    <div style={{ width: size, height: size, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
       <img src={url} alt="" style={{ width: cover, height: cover, objectFit: "contain" }} onError={() => setTier(t => t + 1)} />
     </div>
   );

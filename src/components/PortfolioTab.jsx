@@ -489,7 +489,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           onClick={() => onRunScoring && onRunScoring(positions)}
           disabled={marketScoringUi === UI.LOADING || positions.length === 0}
           style={{ background: marketScoringUi === UI.LOADING ? C.snowOff : C.navyLight, border: `1px solid ${marketScoringUi === UI.LOADING ? C.border : "rgba(30,58,95,0.12)"}`, borderRadius: "8px", padding: "9px 16px", color: marketScoringUi === UI.LOADING ? C.inkSubtle : C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: marketScoringUi === UI.LOADING || positions.length === 0 ? "not-allowed" : "pointer" }}>
-          {marketScoringUi === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={13} color={C.inkSubtle} /> Analyse…</span> : isMobile ? "🤖" : "🤖 Analyser toutes mes lignes"}
+          {marketScoringUi === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={21} color={C.inkSubtle} /> Analyse…</span> : isMobile ? "🤖" : "🤖 Analyser toutes mes lignes"}
         </button>
 
         {/* Bouton Capturer */}
@@ -746,7 +746,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
                       {/* Nom + avatar + signal + 📰 */}
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, overflow: "hidden" }}>
-                        <div style={{ flexShrink: 0 }}><CompanyAvatar nom={pos.nom} isin={pos.isin} size={26} /></div>
+                        <div style={{ flexShrink: 0 }}><CompanyAvatar nom={pos.nom} isin={pos.isin} size={34} /></div>
                         <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
                           <div style={{ fontSize: pos.nom.length > 35 ? "9px" : pos.nom.length > 22 ? "10px" : "11px", fontWeight: "700", color: C.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {pos.nom}{concentration && <span style={{ fontSize: "8px", color: C.red, marginLeft: "3px" }}>⚠</span>}
@@ -842,7 +842,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
               <>
                 {/* En-tête sticky */}
                 <div style={{ padding: "16px 20px", background: "rgba(255,255,255,0.90)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "14px", flexShrink: 0, position: "sticky", top: 0, zIndex: 10 }}>
-                  <CompanyAvatar nom={pos.nom} isin={pos.isin} size={44} />
+                  <CompanyAvatar nom={pos.nom} isin={pos.isin} size={52} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: "15px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pos.nom.toUpperCase()}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "5px", flexWrap: "wrap" }}>
@@ -899,7 +899,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                   {(() => {
                     if (!ia?.signal) {
                       if (marketScoringUi === UI.ERROR) return <span style={{ fontSize: "10px", color: C.red, fontStyle: "italic" }}>⚠ signal indisponible</span>;
-                      if (marketScoringUi === UI.LOADING) return <span style={{ display:"inline-flex", alignItems:"center", gap:"4px", fontSize: "10px", color: C.inkSubtle }}><ThinkingSpinner size={11} color={C.inkSubtle} /> analyse…</span>;
+                      if (marketScoringUi === UI.LOADING) return <span style={{ display:"inline-flex", alignItems:"center", gap:"4px", fontSize: "10px", color: C.inkSubtle }}><ThinkingSpinner size={19} color={C.inkSubtle} /> analyse…</span>;
                       return null;
                     }
                     if (ia.signal === "VENDRE") return (
@@ -983,7 +983,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
               {/* Statut fetch / timestamp */}
               {(isFetching || fetchError || pos.lastFetch) && (
                 <div style={{ padding: "0 16px 8px", display: "flex", alignItems: "center", gap: "8px" }}>
-                  {isFetching && <span style={{ display:"inline-flex", alignItems:"center", gap:"4px", fontSize: "10px", color: C.navy }}><ThinkingSpinner size={11} color={C.navy} /> actualisation cours…</span>}
+                  {isFetching && <span style={{ display:"inline-flex", alignItems:"center", gap:"4px", fontSize: "10px", color: C.navy }}><ThinkingSpinner size={19} color={C.navy} /> actualisation cours…</span>}
                   {fetchError && !isFetching && <span style={{ fontSize: "10px", color: C.red }}>⚠ {fetchError}</span>}
                   {!isFetching && !fetchError && pos.lastFetch && <span style={{ fontSize: "10px", color: C.inkSubtle }}>↻ {new Date(pos.lastFetch).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>}
                 </div>
