@@ -204,7 +204,7 @@ function PerformanceChart({ aiSnapshots, userSnapshots, benchmarkSnapshots, benc
 
       {/* Référence 100% */}
       <line x1="0" y1={y100} x2={W} y2={y100} stroke="#CBD5E1" strokeWidth="1" strokeDasharray="4 3"/>
-      <text x="4" y={y100 - 4} fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">100%</text>
+      <text x="4" y={y100 - 4} fontSize="9" fill="#94A3B8" fontFamily="'DM Sans', sans-serif">100%</text>
 
       {/* Benchmark */}
       {benchData.length > 1 && (
@@ -233,19 +233,19 @@ function PerformanceChart({ aiSnapshots, userSnapshots, benchmarkSnapshots, benc
         const x = xOf(lastAI.date);
         if (x === null) return null;
         const diff = lastAI.v - 100;
-        return <text x={Math.min(x + 4, W - 44)} y={yOf(lastAI.v) - 4} fontSize="9" fill="#1E3A5F" fontWeight="700" fontFamily="Inter,sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
+        return <text x={Math.min(x + 4, W - 44)} y={yOf(lastAI.v) - 4} fontSize="9" fill="#1E3A5F" fontWeight="700" fontFamily="'DM Sans', sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
       })()}
       {lastUser && userData.length > 1 && (() => {
         const x = xOf(lastUser.date);
         if (x === null) return null;
         const diff = lastUser.v - 100;
-        return <text x={Math.min(x + 4, W - 44)} y={yOf(lastUser.v) + 12} fontSize="9" fill="#10B981" fontWeight="700" fontFamily="Inter,sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
+        return <text x={Math.min(x + 4, W - 44)} y={yOf(lastUser.v) + 12} fontSize="9" fill="#10B981" fontWeight="700" fontFamily="'DM Sans', sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
       })()}
       {lastBench && benchData.length > 1 && (() => {
         const x = xOf(lastBench.date);
         if (x === null) return null;
         const diff = lastBench.v - 100;
-        return <text x={Math.min(x + 4, W - 60)} y={yOf(lastBench.v) + 12} fontSize="9" fill="#F59E0B" fontWeight="700" fontFamily="Inter,sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
+        return <text x={Math.min(x + 4, W - 60)} y={yOf(lastBench.v) + 12} fontSize="9" fill="#F59E0B" fontWeight="700" fontFamily="'DM Sans', sans-serif">{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</text>;
       })()}
     </svg>
   );
@@ -285,7 +285,7 @@ function EmptyState({ onInit, account, error }) {
         </div>
       )}
 
-      <button onClick={onInit} style={{ padding: "14px 36px", borderRadius: "14px", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#fff", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", fontFamily: "Inter,sans-serif", boxShadow: "0 6px 24px rgba(30,58,95,0.35)", transition: "transform 0.18s" }}
+      <button onClick={onInit} style={{ padding: "14px 36px", borderRadius: "14px", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#fff", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 6px 24px rgba(30,58,95,0.35)", transition: "transform 0.18s" }}
         onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
         onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
         Activer le Portefeuille IA →
@@ -698,7 +698,7 @@ export default function AIPortfolioTab({ account, hidden }) {
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <button onClick={handleRunCycle} disabled={cycling}
-            style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
+            style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
             {cycling
               ? <><AppLogo size={16} animated={true} /> Analyse en cours…</>
               : "▶ Lancer un cycle"}
@@ -946,7 +946,7 @@ export default function AIPortfolioTab({ account, hidden }) {
                 <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px" }}>{open.length} position{open.length > 1 ? "s" : ""} ouverte{open.length > 1 ? "s" : ""} · {closed.length} clôturée{closed.length > 1 ? "s" : ""}</div>
               </div>
               <button onClick={() => { save(`bourse_ai_journal_${account}`, []); setAiPf(pf => ({ ...pf })); }}
-                style={{ fontSize: "10px", color: C.inkSubtle, background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 9px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                style={{ fontSize: "10px", color: C.inkSubtle, background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 9px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                 Effacer
               </button>
             </div>

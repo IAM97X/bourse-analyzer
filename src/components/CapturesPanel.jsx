@@ -88,7 +88,7 @@ function CapturesPanel({ account }) {
           📂 Captures — {account}
           <span style={{ marginLeft: "8px", fontSize: "10px", fontWeight: "600", color: C.inkSubtle, background: C.snowOff, borderRadius: "5px", padding: "1px 7px" }}>{accountCaptures.length}</span>
         </div>
-        <button onClick={clearAll} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "4px 10px", fontSize: "10px", color: C.inkSubtle, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+        <button onClick={clearAll} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "4px 10px", fontSize: "10px", color: C.inkSubtle, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           Tout supprimer
         </button>
       </div>
@@ -122,15 +122,15 @@ function CapturesPanel({ account }) {
                   {/* Actions */}
                   <div style={{ display: "flex", gap: "6px", padding: "10px 14px", background: C.snowOff, flexWrap: "wrap" }}>
                     <button onClick={() => downloadCapture(cap, "json")}
-                      style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "7px", padding: "6px 12px", fontSize: "11px", fontWeight: "700", color: C.navy, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                      style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "7px", padding: "6px 12px", fontSize: "11px", fontWeight: "700", color: C.navy, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                       ↓ JSON
                     </button>
                     <button onClick={() => downloadCapture(cap, "csv")}
-                      style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.15)`, borderRadius: "7px", padding: "6px 12px", fontSize: "11px", fontWeight: "700", color: C.green, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                      style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.15)`, borderRadius: "7px", padding: "6px 12px", fontSize: "11px", fontWeight: "700", color: C.green, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                       ↓ CSV
                     </button>
                     <button onClick={() => deleteCapture(cap.id)}
-                      style={{ marginLeft: "auto", background: "none", border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "7px", padding: "6px 12px", fontSize: "11px", fontWeight: "700", color: C.red, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                      style={{ marginLeft: "auto", background: "none", border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "7px", padding: "6px 12px", fontSize: "11px", fontWeight: "700", color: C.red, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                       Supprimer
                     </button>
                   </div>

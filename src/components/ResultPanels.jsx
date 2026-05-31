@@ -78,7 +78,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
           <span>Analyse ETF · DCA · {time}</span>
           <span style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "5px", padding: "2px 8px", color: C.navy, fontWeight: "700" }}>ETF</span>
           {data.eligible_pea && <span style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "5px", padding: "2px 8px", color: C.green, fontWeight: "700" }}>🇫🇷 PEA</span>}
-          <button onClick={onRefresh} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", color: C.inkMuted, fontSize: "10px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: "500" }}>↻ Actualiser</button>
+          <button onClick={onRefresh} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", color: C.inkMuted, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "500" }}>↻ Actualiser</button>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
           <div>
@@ -347,7 +347,7 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
         <div>
           <div style={{ fontSize: "10px", color: C.inkSubtle, letterSpacing: "1px", fontWeight: "600", marginBottom: "6px", display: "flex", alignItems: "center", gap: "12px" }}>
             <span>Rapport d'analyse · {time}</span>
-            <button onClick={onRefresh} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", color: C.inkMuted, fontSize: "10px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: "500" }}>↻ Actualiser</button>
+            <button onClick={onRefresh} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", color: C.inkMuted, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "500" }}>↻ Actualiser</button>
           </div>
           <div style={{ fontSize: "26px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{data.nom || query.toUpperCase()}</div>
           <div style={{ fontSize: "13px", color: C.inkMuted, marginTop: "3px", fontWeight: "500" }}>{data.secteur}</div>

@@ -346,13 +346,13 @@ function PEAAvisOperes({ account = "PEA" }) {
       <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "14px", flexWrap: "wrap" }}>
         <input ref={pdfRef} type="file" accept=".pdf" multiple style={{ display: "none" }} onChange={handlePdf} />
         <button onClick={() => pdfRef.current?.click()} disabled={ui === UI.LOADING}
-          style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: ui === UI.LOADING ? "not-allowed" : "pointer" }}>
+          style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: ui === UI.LOADING ? "not-allowed" : "pointer" }}>
           {ui === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={13} color={C.goldDark} /> {progress.done}/{progress.total} analysé{progress.done > 1 ? "s" : ""}…</span> : "↑ Importer des avis PDF"}
         </button>
         {ui === UI.RESULT && <span style={{ fontSize: "11px", color: C.green, fontWeight: "600" }}>✓ {progress.total} fichier{progress.total > 1 ? "s" : ""} — {filteredOps.length} opération{filteredOps.length > 1 ? "s" : ""} au total</span>}
         {errors.length > 0 && errors.map((e, i) => <span key={i} style={{ fontSize: "11px", color: C.red, fontWeight: "600" }}>⚠ {e}</span>)}
         {filteredOps.length > 0 && (
-          <button onClick={clearAll} style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "6px 12px", color: C.inkMuted, fontSize: "11px", fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+          <button onClick={clearAll} style={{ marginLeft: "auto", background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "6px 12px", color: C.inkMuted, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
             Tout effacer
           </button>
         )}
@@ -380,7 +380,7 @@ function PEAAvisOperes({ account = "PEA" }) {
                   <div><span style={{ fontSize: "10px", fontWeight: "700", color: typeColor(op.type), background: typeColor(op.type) + "18", borderRadius: "4px", padding: "2px 6px" }}>{op.type}</span></div>
                   <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                     <CompanyAvatar nom={op.titre} isin={op.isin} size={24} />
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink, lineHeight: "1.3", fontFamily: "Inter, sans-serif" }}>{op.titre}</span>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink, lineHeight: "1.3", fontFamily: "'DM Sans', sans-serif" }}>{op.titre}</span>
                   </div>
                   <div style={{ fontSize: "10px", color: C.inkSubtle, fontFamily: "monospace" }}>{op.isin || "—"}</div>
                   <div style={{ fontSize: "12px", color: C.ink }}>{op.quantite}</div>
@@ -415,7 +415,7 @@ function PEAAvisOperes({ account = "PEA" }) {
               <span key={type} style={{ fontSize: "10px", fontWeight: "700", color, background: color + "18", border: `1px solid ${color}30`, borderRadius: "6px", padding: "4px 10px" }}>{type}</span>
             ))}
           </div>
-          <button onClick={() => pdfRef.current?.click()} style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "10px 22px", color: C.goldDark, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer" }}>
+          <button onClick={() => pdfRef.current?.click()} style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "10px 22px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
             ↑ Importer mes avis PDF
           </button>
           <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "14px" }}>Plusieurs fichiers acceptés en une fois · Données stockées localement</div>
@@ -711,7 +711,7 @@ function BenchmarkComparaison() {
         </div>
         <button onClick={fetchAll} disabled={loading}
           style={{ fontSize: "11px", fontWeight: "700", padding: "5px 12px", borderRadius: "7px", cursor: loading ? "not-allowed" : "pointer",
-            fontFamily: "Inter, sans-serif", background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, color: C.navy }}>
+            fontFamily: "'DM Sans', sans-serif", background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, color: C.navy }}>
           {loading ? <ThinkingSpinner size={13} color={C.inkSubtle} /> : "↻ Actualiser"}
         </button>
       </div>
@@ -897,7 +897,7 @@ function StatistiquesHistorique() {
             <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
               {["pru","fifo"].map(m => (
                 <button key={m} onClick={() => setMethode(m)}
-                  style={{ fontSize: "10px", fontWeight: "700", padding: "3px 10px", borderRadius: "6px", cursor: "pointer", fontFamily: "Inter, sans-serif", background: methode === m ? C.navyLight : C.snowOff, border: `1px solid ${methode === m ? "rgba(30,58,95,0.12)" : C.border}`, color: methode === m ? C.navy : C.inkSubtle }}>
+                  style={{ fontSize: "10px", fontWeight: "700", padding: "3px 10px", borderRadius: "6px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", background: methode === m ? C.navyLight : C.snowOff, border: `1px solid ${methode === m ? "rgba(30,58,95,0.12)" : C.border}`, color: methode === m ? C.navy : C.inkSubtle }}>
                   {m === "pru" ? "PRU moyen" : "FIFO"}
                 </button>
               ))}
@@ -907,7 +907,7 @@ function StatistiquesHistorique() {
                 const csv = [hdr, ...rows].join("\n");
                 const blob = new Blob(["\uFEFF"+csv], { type: "text/csv;charset=utf-8" });
                 const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `rendements-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-              }} style={{ fontSize: "10px", fontWeight: "700", padding: "3px 10px", borderRadius: "6px", cursor: "pointer", fontFamily: "Inter, sans-serif", background: C.snowOff, border: `1px solid ${C.border}`, color: C.inkMuted }}>
+              }} style={{ fontSize: "10px", fontWeight: "700", padding: "3px 10px", borderRadius: "6px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", background: C.snowOff, border: `1px solid ${C.border}`, color: C.inkMuted }}>
                 ↓ CSV
               </button>
             </div>
@@ -1133,7 +1133,7 @@ function VersementsChart({ points }) {
         {yTicks.map(v => (
           <g key={v}>
             <line x1={ML} x2={ML+CW} y1={yS(v)} y2={yS(v)} stroke={C.border} strokeWidth="1" strokeDasharray="4,4" />
-            <text x={ML-5} y={yS(v)+4} textAnchor="end" fontSize="9" fill={C.inkSubtle} fontFamily="Inter,sans-serif">
+            <text x={ML-5} y={yS(v)+4} textAnchor="end" fontSize="9" fill={C.inkSubtle} fontFamily="'DM Sans', sans-serif">
               {v>=1000?`${Math.round(v/1000)}k`:v}€
             </text>
           </g>
@@ -1142,7 +1142,7 @@ function VersementsChart({ points }) {
         {points.filter((_, i) => i % Math.max(1, Math.floor(points.length / 6)) === 0).map((p, k) => {
           const idx = points.indexOf(p);
           return (
-            <text key={k} x={xS(idx)} y={MT+CH+18} textAnchor="middle" fontSize="8.5" fill={C.inkSubtle} fontFamily="Inter,sans-serif">
+            <text key={k} x={xS(idx)} y={MT+CH+18} textAnchor="middle" fontSize="8.5" fill={C.inkSubtle} fontFamily="'DM Sans', sans-serif">
               {new Date(p.date).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}
             </text>
           );
@@ -1334,7 +1334,7 @@ function PerformanceGlobale({ positions, account = "PEA" }) {
             tip: "Rendement annualisé pondéré par le temps (méthode Modified Dietz). Neutralise l'effet des apports/retraits — mesure la vraie performance du gérant." },
         ].map(({ label, value, color, tip }, i) => (
           <div key={i} style={{ padding: "14px 16px", borderRight: i < 3 ? `1px solid ${C.border}` : "none", textAlign: "center" }}>
-            <div style={{ fontSize: "17px", fontWeight: "800", color, fontFamily: "Inter,sans-serif", letterSpacing: "-0.5px" }}>{value}</div>
+            <div style={{ fontSize: "17px", fontWeight: "800", color, fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.5px" }}>{value}</div>
             <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: "600" }}>
               <Tooltip text={tip} term={label}><span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{label}</span></Tooltip>
             </div>
@@ -1353,7 +1353,7 @@ function PerformanceGlobale({ positions, account = "PEA" }) {
         ].map(({ label, value, badge, color, sign }, i) => (
           <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 14px", boxShadow: shadow.card }}>
             <div style={{ fontSize: "9px", color: C.inkSubtle, letterSpacing: "1px", fontWeight: "600", textTransform: "uppercase", marginBottom: "6px" }}>{label}</div>
-            <div style={{ fontSize: "20px", fontWeight: "700", color, fontFamily: "Inter,sans-serif", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
+            <div style={{ fontSize: "20px", fontWeight: "700", color, fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
               {value == null ? "—" : `${sign}${fmtEur(Math.abs(value))}`}
             </div>
             {badge !== null && badge !== undefined && (
@@ -1379,7 +1379,7 @@ function PerformanceGlobale({ positions, account = "PEA" }) {
           <div key={p.id} style={{ display: "grid", gridTemplateColumns: "36px 2fr 90px 80px 80px 90px 80px", padding: "10px 20px", borderBottom: `1px solid ${C.border}`, alignItems: "center", minWidth: "560px" }}>
             <CompanyAvatar nom={p.nom} isin={p.isin} size={26} />
             <div>
-              <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink, fontFamily: "Inter,sans-serif" }}>{p.nom}</div>
+              <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>{p.nom}</div>
               {p.posYears && <div style={{ fontSize: "9px", color: C.inkSubtle }}>{durLabel(p.posYears * 365.25)}</div>}
             </div>
             <div style={{ fontSize: "12px", color: C.inkMuted }}>{fmtEur(p.investi)}</div>
@@ -1716,7 +1716,7 @@ function DividendTracker({ account = "PEA", positions = [] }) {
     setShowForm(false);
   };
 
-  const inp = { padding: "8px 12px", borderRadius: "10px", border: `1px solid ${C.border}`, fontSize: "12px", fontFamily: "Inter,sans-serif", background: C.snowOff, color: C.ink, outline: "none", width: "100%", boxSizing: "border-box" };
+  const inp = { padding: "8px 12px", borderRadius: "10px", border: `1px solid ${C.border}`, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", background: C.snowOff, color: C.ink, outline: "none", width: "100%", boxSizing: "border-box" };
 
   return (
     <div style={{ background: C.cardGradGreen, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: shadow.card }}>
@@ -1729,7 +1729,7 @@ function DividendTracker({ account = "PEA", positions = [] }) {
           <span style={{ fontSize: "10px", color: C.inkSubtle }}>· {account}</span>
         </div>
         <button onClick={() => setShowForm(v => !v)}
-          style={{ background: C.green, color: "#fff", border: "none", borderRadius: "16px", padding: "5px 14px", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          style={{ background: C.green, color: "#fff", border: "none", borderRadius: "16px", padding: "5px 14px", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           {showForm ? "Annuler" : "+ Ajouter"}
         </button>
       </div>
@@ -1775,7 +1775,7 @@ function DividendTracker({ account = "PEA", positions = [] }) {
               <input type="number" style={inp} placeholder={positions.find(p=>p.nom===form.titre)?.quantite || ""} value={form.nb} onChange={e => setForm(f => ({ ...f, nb: e.target.value }))} />
             </div>
           </div>
-          <button onClick={add} style={{ width: "100%", background: C.green, color: "#fff", border: "none", borderRadius: "10px", padding: "9px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          <button onClick={add} style={{ width: "100%", background: C.green, color: "#fff", border: "none", borderRadius: "10px", padding: "9px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
             Enregistrer le dividende
           </button>
         </div>

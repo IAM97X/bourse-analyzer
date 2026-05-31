@@ -176,7 +176,7 @@ export default function PerformanceCard({ account = "PEA" }) {
               window.location.reload();
             } catch {}
           }}
-          style={{ marginTop: "8px", alignSelf: "flex-start", fontSize: "9px", color: "rgba(255,100,100,0.6)", background: "none", border: "1px solid rgba(255,100,100,0.2)", borderRadius: "5px", padding: "3px 8px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          style={{ marginTop: "8px", alignSelf: "flex-start", fontSize: "9px", color: "rgba(255,100,100,0.6)", background: "none", border: "1px solid rgba(255,100,100,0.2)", borderRadius: "5px", padding: "3px 8px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           Supprimer snapshots synthétiques
         </button>
       </div>

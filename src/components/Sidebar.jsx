@@ -106,7 +106,7 @@ export const NAV_GROUPS = [
   ]},
 ];
 
-function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi, hideCollapseButton = false, onShowGuide }) {
+function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi, onShowGuide }) {
   const isMobile = useIsMobile();
   const allPositions = sanitizePositions(load("bourse_portfolio", []));
   const positions    = allPositions.filter(p => (p.compte || "PEA") === (account || "PEA"));
@@ -126,16 +126,16 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
       {!mobileCompact && !isMobile && !c && (
         <div style={{ padding: "18px 20px 10px", display: "flex", alignItems: "center", flexShrink: 0 }}>
           <button onClick={() => handleNav(TABS.OVERVIEW)}
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: "18px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif", lineHeight: 1 }}>
-            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: "18px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif", lineHeight: 1 }}>
+            Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(135deg, #0F2D5E 0%, #2D6CB5 50%, #7BBFE8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
           </button>
         </div>
       )}
       {!mobileCompact && isMobile && (
         <div className="ba-sidebar-logo" style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
           <button onClick={() => { handleNav(TABS.OVERVIEW); }}
-            style={{ flex: 1, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontSize: "19px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
-            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+            style={{ flex: 1, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontSize: "19px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif" }}>
+            Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(135deg, #0F2D5E 0%, #2D6CB5 50%, #7BBFE8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
           </button>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "18px", color: "#6C6C70", cursor: "pointer", padding: "4px 8px", lineHeight: 1 }}>✕</button>
         </div>
@@ -147,7 +147,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
             <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
               {["PEA","CTO"].map(acc => (
                 <button key={acc} onClick={() => onSwitchAccount(acc)} title={acc}
-                  style={{ width: "36px", height: "26px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "9px", fontWeight: "700", fontFamily: "Inter,sans-serif", background: account === acc ? "#F2F2F7" : "transparent", color: account === acc ? "#1C1C1E" : "#6C6C70" }}>
+                  style={{ width: "36px", height: "26px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "9px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", background: account === acc ? "#F2F2F7" : "transparent", color: account === acc ? "#1C1C1E" : "#6C6C70" }}>
                   {acc}
                 </button>
               ))}
@@ -156,7 +156,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
             <div style={{ display: "flex", background: "#F2F2F7", borderRadius: "10px", padding: "3px", gap: "2px" }}>
               {["PEA","CTO"].map(acc => (
                 <button key={acc} onClick={() => onSwitchAccount(acc)}
-                  style={{ flex: 1, height: "28px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: "600", fontFamily: "Inter,sans-serif", transition: "all 0.18s", background: account === acc ? "#FFFFFF" : "transparent", color: account === acc ? "#1C1C1E" : "#6C6C70", boxShadow: account === acc ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}>
+                  style={{ flex: 1, height: "28px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: "600", fontFamily: "'DM Sans', sans-serif", transition: "all 0.18s", background: account === acc ? "#FFFFFF" : "transparent", color: account === acc ? "#1C1C1E" : "#6C6C70", boxShadow: account === acc ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}>
                   {acc}
                 </button>
               ))}
@@ -169,7 +169,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi} style={{ marginBottom: "2px" }}>
             {group.label && !c && !group.featured && (
-              <div className="ba-sidebar-group-label" style={{ padding: "0 20px", marginBottom: "4px", marginTop: gi > 0 ? "2px" : 0, fontSize: "10px", fontWeight: "600", letterSpacing: "0.8px", color: "#8E8E93", fontFamily: "Inter,sans-serif", textTransform: "uppercase" }}>
+              <div className="ba-sidebar-group-label" style={{ padding: "0 20px", marginBottom: "4px", marginTop: gi > 0 ? "2px" : 0, fontSize: "10px", fontWeight: "600", letterSpacing: "0.8px", color: "#8E8E93", fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase" }}>
                 {group.label}
               </div>
             )}
@@ -198,7 +198,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                     color: isActive ? "#1C1C1E" : "#6C6C70",
                     fontSize: "15px",
                     fontWeight: isActive ? "600" : "400",
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "'DM Sans', sans-serif",
                     textAlign: "left",
                     transition: "background 0.12s",
                     letterSpacing: "-0.01em",
@@ -231,28 +231,18 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         {c ? (
           onShowGuide && (
             <button onClick={onShowGuide} title="Guide interactif"
-              style={{ width: "36px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "Inter,sans-serif" }}>?</button>
+              style={{ width: "36px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "'DM Sans', sans-serif" }}>?</button>
           )
         ) : (<>
-          <button onClick={toggleCompact} title={compact ? "Mode normal" : "Mode compact (zoom arrière)"}
-            style={{ flex: 1, height: "32px", borderRadius: "8px", background: compact ? "#E8F9EF" : "#F2F2F7", border: "none", color: compact ? "#1E8449" : "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", transition: "all 0.2s" }}>
-            {compact ? (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="1" y1="7" x2="13" y2="7"/><line x1="7" y1="1" x2="7" y2="13"/><circle cx="7" cy="7" r="5.5"/></svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="1" y1="7" x2="13" y2="7"/><circle cx="7" cy="7" r="5.5"/></svg>
-            )}
-            <span style={{ fontSize: "9px", fontWeight: "600", fontFamily: "Inter,sans-serif" }}>{compact ? "Normal" : "Compact"}</span>
-          </button>
-
-          <button onClick={() => window.print()} title="Exporter en PDF"
+<button onClick={() => window.print()} title="Exporter en PDF"
             style={{ flex: 1, height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", transition: "all 0.2s" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            <span style={{ fontSize: "9px", fontWeight: "600", fontFamily: "Inter,sans-serif" }}>PDF</span>
+            <span style={{ fontSize: "9px", fontWeight: "600", fontFamily: "'DM Sans', sans-serif" }}>PDF</span>
           </button>
 
           {onShowGuide && (
             <button onClick={onShowGuide} title="Guide interactif"
-              style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "Inter,sans-serif", flexShrink: 0 }}>?</button>
+              style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>?</button>
           )}
         </>)}
       </div>}
@@ -271,13 +261,13 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
   );
 }
 
-export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, refreshAgo, toggleDark, toggleCompact, darkMode, compact, hidden, mobileOpen, onMobileClose, account, onSwitchAccount, marketScoringUi, externalCollapsed, onExternalToggle, onShowGuide }) {
+export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, hidden, mobileOpen, onMobileClose, account, onSwitchAccount, marketScoringUi, externalCollapsed, onExternalToggle, onShowGuide }) {
   const isMobile = useIsMobile();
   const [internalCollapsed, setInternalCollapsed] = useState(() => load("bourse_sidebar_collapsed", true));
   const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
   const toggleCollapse = onExternalToggle || (() => { const v = !internalCollapsed; setInternalCollapsed(v); save("bourse_sidebar_collapsed", v); });
 
-  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi, hideCollapseButton: externalCollapsed !== undefined, onShowGuide };
+  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi, onShowGuide };
 
   if (isMobile) {
     if (!mobileOpen) return null;

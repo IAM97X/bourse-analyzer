@@ -142,7 +142,7 @@ export default function OnboardingGuide({ onDone }) {
               flex: 1, padding: "12px", borderRadius: "14px",
               border: `1px solid ${C.border}`, background: C.snowOff,
               color: C.inkMuted, fontSize: "13px", fontWeight: "600",
-              cursor: "pointer", fontFamily: "Inter,sans-serif",
+              cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
             }}>
               ← Retour
             </button>
@@ -152,7 +152,7 @@ export default function OnboardingGuide({ onDone }) {
             border: "none",
             background: `linear-gradient(135deg, ${C.navy} 0%, #2563EB 100%)`,
             color: "#fff", fontSize: "13px", fontWeight: "700",
-            cursor: "pointer", fontFamily: "Inter,sans-serif",
+            cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
             boxShadow: "0 4px 14px rgba(26,74,138,0.35)",
           }}>
             {s.cta}
@@ -164,7 +164,7 @@ export default function OnboardingGuide({ onDone }) {
           <button onClick={finish} style={{
             marginTop: "14px", background: "none", border: "none",
             color: C.inkSubtle, fontSize: "11px", cursor: "pointer",
-            fontFamily: "Inter,sans-serif",
+            fontFamily: "'DM Sans', sans-serif",
           }}>
             Passer l'introduction
           </button>

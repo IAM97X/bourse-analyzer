@@ -26,7 +26,7 @@ function PinInput({ value, onChange, label }) {
           <input key={i} ref={refs[i]} type="password" inputMode="numeric" pattern="[0-9]*" maxLength={1}
             value={digits[i]} onChange={e => handleChange(i, e)} onKeyDown={e => handleKD(i, e)}
             autoComplete="off"
-            style={{ width: "58px", height: "64px", background: digits[i] ? "#EEF4FF" : "#F2F2F7", border: `1.5px solid ${digits[i] ? "#2D5986" : "#E5E5EA"}`, borderRadius: "16px", color: "#1C1C1E", fontSize: "26px", textAlign: "center", fontFamily: "Inter, sans-serif", outline: "none", transition: "all 0.15s", caretColor: "transparent" }}
+            style={{ width: "58px", height: "64px", background: digits[i] ? "#EEF4FF" : "#F2F2F7", border: `1.5px solid ${digits[i] ? "#2D5986" : "#E5E5EA"}`, borderRadius: "16px", color: "#1C1C1E", fontSize: "26px", textAlign: "center", fontFamily: "'DM Sans', sans-serif", outline: "none", transition: "all 0.15s", caretColor: "transparent" }}
             onFocus={e => { e.target.style.borderColor = "#2D5986"; e.target.style.background = "#EEF4FF"; }}
             onBlur={e => { e.target.style.borderColor = digits[i] ? "#2D5986" : "#E5E5EA"; e.target.style.background = digits[i] ? "#EEF4FF" : "#F2F2F7"; }} />
         ))}
@@ -147,7 +147,7 @@ function AuthPage({ onSession }) {
   const inp = (value, onChange, placeholder, type = "text") => (
     <input value={value} onChange={e => { onChange(e.target.value); setError(""); }}
       type={type} placeholder={placeholder} autoComplete="off" spellCheck="false"
-      style={{ width: "100%", background: "#F2F2F7", border: "1.5px solid #E5E5EA", borderRadius: "12px", padding: "13px 16px", color: "#1C1C1E", fontSize: "14px", fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box", marginBottom: "10px", transition: "border-color 0.15s" }}
+      style={{ width: "100%", background: "#F2F2F7", border: "1.5px solid #E5E5EA", borderRadius: "12px", padding: "13px 16px", color: "#1C1C1E", fontSize: "14px", fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box", marginBottom: "10px", transition: "border-color 0.15s" }}
       onFocus={e => e.target.style.borderColor = "#2D5986"}
       onBlur={e => e.target.style.borderColor = "#E5E5EA"} />
   );
@@ -166,20 +166,20 @@ function AuthPage({ onSession }) {
     </div>
   );
 
-  const btnPrimary = { width: "100%", background: "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", border: "none", borderRadius: "12px", padding: "14px", color: "#fff", fontSize: "14px", fontWeight: "600", fontFamily: "Inter, sans-serif", cursor: "pointer", marginTop: "6px", opacity: loading ? 0.6 : 1 };
-  const btnSecondary = { width: "100%", background: "#F2F2F7", border: "none", borderRadius: "12px", padding: "13px", color: "#1C1C1E", fontSize: "13px", fontWeight: "500", fontFamily: "Inter, sans-serif", cursor: "pointer", marginTop: "8px" };
-  const btnGhost = { background: "none", border: "none", color: "#8E8E93", fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer", padding: "10px", width: "100%" };
+  const btnPrimary = { width: "100%", background: "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", border: "none", borderRadius: "12px", padding: "14px", color: "#fff", fontSize: "14px", fontWeight: "600", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", marginTop: "6px", opacity: loading ? 0.6 : 1 };
+  const btnSecondary = { width: "100%", background: "#F2F2F7", border: "none", borderRadius: "12px", padding: "13px", color: "#1C1C1E", fontSize: "13px", fontWeight: "500", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", marginTop: "8px" };
+  const btnGhost = { background: "none", border: "none", color: "#8E8E93", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", padding: "10px", width: "100%" };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F5F5F7", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#F5F5F7", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "'DM Sans', sans-serif" }}>
 
       <div style={{ width: "100%", maxWidth: "380px" }}>
         {/* Logo + titre */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <div style={{ fontSize: "28px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", lineHeight: 1.1, fontFamily: "Inter, sans-serif" }}>
-            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+          <div style={{ fontSize: "36px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", lineHeight: 1.1, fontFamily: "'DM Sans', sans-serif" }}>
+            Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(135deg, #0F2D5E 0%, #2D6CB5 50%, #7BBFE8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
           </div>
-          <div style={{ fontSize: "13px", color: "#8E8E93", marginTop: "6px" }}>Mon assistant bourse personnel</div>
+          <div style={{ fontSize: "13px", color: "#8E8E93", marginTop: "6px" }}>La bourse, simplement.</div>
         </div>
 
         {/* Card */}

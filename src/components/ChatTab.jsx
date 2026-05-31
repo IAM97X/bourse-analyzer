@@ -306,7 +306,7 @@ Règles strictes :
               <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", marginTop: "1px" }}>Posez vos questions sur votre portefeuille</div>
             </div>
             {messages.length > 0 && (
-              <button onClick={() => setMessages([])} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "3px 8px", fontSize: "10px", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+              <button onClick={() => setMessages([])} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "3px 8px", fontSize: "10px", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                 Effacer
               </button>
             )}
@@ -352,7 +352,7 @@ Règles strictes :
                   </div>
                   <button
                     onClick={() => { setInput(`Explique-moi : "${todayDidYouKnow.fact}"`); setTimeout(() => inputRef.current?.focus(), 50); }}
-                    style={{ marginTop: "10px", background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "20px", padding: "5px 14px", fontSize: "10px", color: "rgba(255,255,255,0.7)", cursor: "pointer", fontFamily: "Inter,sans-serif", fontWeight: "600" }}>
+                    style={{ marginTop: "10px", background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "20px", padding: "5px 14px", fontSize: "10px", color: "rgba(255,255,255,0.7)", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "600" }}>
                     En savoir plus →
                   </button>
                 </div>
@@ -361,7 +361,7 @@ Règles strictes :
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                     {todaySuggestions.map(s => (
                       <button key={s} onClick={() => { setInput(s); setTimeout(() => inputRef.current?.focus(), 50); }}
-                        style={{ padding: "7px 13px", borderRadius: "20px", border: `1px solid ${C.border}`, background: C.cardGrad, color: C.inkSoft, fontSize: "11px", cursor: "pointer", fontFamily: "Inter,sans-serif", fontWeight: "500", transition: "all 0.15s", boxShadow: "0 1px 4px rgba(17,18,20,0.06)" }}>
+                        style={{ padding: "7px 13px", borderRadius: "20px", border: `1px solid ${C.border}`, background: C.cardGrad, color: C.inkSoft, fontSize: "11px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: "500", transition: "all 0.15s", boxShadow: "0 1px 4px rgba(17,18,20,0.06)" }}>
                         {s}
                       </button>
                     ))}
@@ -415,7 +415,7 @@ Règles strictes :
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
               placeholder={hasAI() ? "Posez votre question…" : "IA non disponible"}
-              style={{ flex: 1, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 13px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none" }}
+              style={{ flex: 1, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 13px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none" }}
             />
             <button onClick={send} disabled={!input.trim() || loading}
               style={{ width: "38px", height: "38px", borderRadius: "10px", border: "none",

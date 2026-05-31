@@ -31,7 +31,7 @@ function DividendesCard({ positions }) {
 
   if (paying.length === 0 && log.length === 0) return null;
 
-  const inp = { padding: "7px 10px", border: `1px solid ${C.border}`, borderRadius: "8px", fontSize: "12px", background: C.snow, color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", width: "100%", boxSizing: "border-box" };
+  const inp = { padding: "7px 10px", border: `1px solid ${C.border}`, borderRadius: "8px", fontSize: "12px", background: C.snow, color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", width: "100%", boxSizing: "border-box" };
 
   return (
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "22px", overflow: "hidden", boxShadow: shadow.card, marginBottom: "20px" }}>
@@ -49,7 +49,7 @@ function DividendesCard({ positions }) {
           </div>
         </div>
         <button onClick={() => setShowForm(s => !s)}
-          style={{ fontSize: "11px", fontWeight: "700", color: C.green, background: "white", border: `1px solid ${C.green}40`, borderRadius: "8px", padding: "5px 12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          style={{ fontSize: "11px", fontWeight: "700", color: C.green, background: "white", border: `1px solid ${C.green}40`, borderRadius: "8px", padding: "5px 12px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           + Ajouter
         </button>
       </div>
@@ -62,7 +62,7 @@ function DividendesCard({ positions }) {
           { label: "Total perçu (log)", value: fmtEur(totalPercu), color: C.goldDark },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ padding: "14px 18px", borderRight: `1px solid ${C.border}`, textAlign: "center" }}>
-            <div style={{ fontSize: "16px", fontWeight: "800", color, fontFamily: "Inter,sans-serif" }}>{value}</div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color, fontFamily: "'DM Sans', sans-serif" }}>{value}</div>
             <div style={{ fontSize: "10px", color: C.inkMuted, marginTop: "3px" }}>{label}</div>
           </div>
         ))}
@@ -87,8 +87,8 @@ function DividendesCard({ positions }) {
             <input type="number" min="0" step="0.01" placeholder="0.00" value={form.montant} onChange={e => setForm(f => ({ ...f, montant: e.target.value }))} style={inp} />
           </div>
           <div style={{ display: "flex", gap: "6px" }}>
-            <button onClick={addEntry} style={{ padding: "7px 14px", borderRadius: "8px", background: C.green, color: "white", border: "none", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Enregistrer</button>
-            <button onClick={() => setShowForm(false)} style={{ padding: "7px 14px", borderRadius: "8px", background: C.snowOff, color: C.inkMuted, border: `1px solid ${C.border}`, fontSize: "12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Annuler</button>
+            <button onClick={addEntry} style={{ padding: "7px 14px", borderRadius: "8px", background: C.green, color: "white", border: "none", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Enregistrer</button>
+            <button onClick={() => setShowForm(false)} style={{ padding: "7px 14px", borderRadius: "8px", background: C.snowOff, color: C.inkMuted, border: `1px solid ${C.border}`, fontSize: "12px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Annuler</button>
           </div>
         </div>
       )}
@@ -109,7 +109,7 @@ function DividendesCard({ positions }) {
             return (
               <div key={p.id} style={{ display: "grid", gridTemplateColumns: "36px 2fr 1fr 1fr 1fr 1fr", padding: "10px 20px", borderBottom: `1px solid ${C.border}`, alignItems: "center" }}>
                 <CompanyAvatar nom={p.nom} isin={p.isin} size={26} />
-                <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink, fontFamily: "Inter,sans-serif" }}>{p.nom}</div>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>{p.nom}</div>
                 <div style={{ fontSize: "12px", color: C.ink, fontWeight: "600" }}>{p.dividendeAnnuel ? fmtEur(p.dividendeAnnuel) : "—"}</div>
                 <div style={{ fontSize: "12px", fontWeight: "700", color: rdtPru != null ? C.green : C.inkSubtle }}>{rdtPru != null ? rdtPru.toFixed(2) + " %" : "—"}</div>
                 <div style={{ fontSize: "12px", color: C.inkMuted }}>{rdtCours != null ? rdtCours.toFixed(2) + " %" : "—"}</div>
@@ -128,7 +128,7 @@ function DividendesCard({ positions }) {
             <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 20px", borderBottom: `1px solid ${C.border}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <span style={{ fontSize: "10px", color: C.inkSubtle, minWidth: "72px" }}>{e.date}</span>
-                <span style={{ fontSize: "12px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif" }}>{e.nom}</span>
+                <span style={{ fontSize: "12px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>{e.nom}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <span style={{ fontSize: "13px", fontWeight: "700", color: C.green }}>+{fmtEur(e.montant)}</span>

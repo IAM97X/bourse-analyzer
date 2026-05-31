@@ -268,7 +268,7 @@ function GlobalProjectionChart({ positions, onClose }) {
           {GLOBAL_HORIZONS.map((h, i) => (
             <button key={h.label} onClick={() => setHidx(i)} style={{
               padding: "4px 10px", borderRadius: "6px", border: "none", cursor: "pointer",
-              fontSize: "11px", fontWeight: "700", fontFamily: "Inter, sans-serif",
+              fontSize: "11px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif",
               background: i === hidx ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.07)",
               color: i === hidx ? "#fff" : "rgba(255,255,255,0.45)",
               boxShadow: i === hidx ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
@@ -276,7 +276,7 @@ function GlobalProjectionChart({ positions, onClose }) {
             }}>{h.label}</button>
           ))}
           {onClose && (
-            <button onClick={onClose} style={{ marginLeft: "2px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontSize: "12px", color: "rgba(255,255,255,0.5)", fontFamily: "Inter, sans-serif" }}>✕</button>
+            <button onClick={onClose} style={{ marginLeft: "2px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontSize: "12px", color: "rgba(255,255,255,0.5)", fontFamily: "'DM Sans', sans-serif" }}>✕</button>
           )}
         </div>
       </div>
@@ -306,7 +306,7 @@ function GlobalProjectionChart({ positions, onClose }) {
           {gridPrices.map(v => (
             <g key={v}>
               <line x1={ML} x2={ML + CW} y1={yScale(v)} y2={yScale(v)} stroke="rgba(148,163,184,0.3)" strokeWidth="1" strokeDasharray="4,4" />
-              <text x={ML - 6} y={yScale(v) + 4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="Inter,sans-serif" fontWeight="500">
+              <text x={ML - 6} y={yScale(v) + 4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="'DM Sans', sans-serif" fontWeight="500">
                 {fmtK(v)}
               </text>
             </g>
@@ -314,14 +314,14 @@ function GlobalProjectionChart({ positions, onClose }) {
 
           {/* Labels X */}
           {xLabels.map(({ t }, i) => (
-            <text key={i} x={xScale(t)} y={MT + CH + 22} textAnchor="middle" fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">
+            <text key={i} x={xScale(t)} y={MT + CH + 22} textAnchor="middle" fontSize="9" fill="#94A3B8" fontFamily="'DM Sans', sans-serif">
               {new Date(t).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}
             </text>
           ))}
 
           {/* Séparateur "Auj." */}
           <line x1={todayX} x2={todayX} y1={MT} y2={MT + CH} stroke="rgba(148,163,184,0.5)" strokeWidth="1" strokeDasharray="4,3" />
-          <text x={todayX} y={MT - 4} textAnchor="middle" fontSize="8" fill="#94A3B8" fontFamily="Inter,sans-serif" fontWeight="600">Auj.</text>
+          <text x={todayX} y={MT - 4} textAnchor="middle" fontSize="8" fill="#94A3B8" fontFamily="'DM Sans', sans-serif" fontWeight="600">Auj.</text>
 
           {/* Area fill historique */}
           <polygon points={histPts} fill="url(#glb-hist-grad)" />
@@ -335,7 +335,7 @@ function GlobalProjectionChart({ positions, onClose }) {
           {pruTotal > 0 && pruTotal >= yMin && pruTotal <= yMax && (
             <>
               <line x1={ML} x2={ML + CW} y1={yScale(pruTotal)} y2={yScale(pruTotal)} stroke={C.goldDark} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.85" />
-              <text x={ML + CW + 3} y={yScale(pruTotal) + 4} fontSize="9" fill={C.goldDark} fontFamily="Inter,sans-serif" fontWeight="600">PRU</text>
+              <text x={ML + CW + 3} y={yScale(pruTotal) + 4} fontSize="9" fill={C.goldDark} fontFamily="'DM Sans', sans-serif" fontWeight="600">PRU</text>
             </>
           )}
 
@@ -819,7 +819,7 @@ Retourne ce JSON exact (aucun texte autour) :
             background: selectedPosId === "__global__" ? "rgba(124,58,237,0.12)" : C.snowOff,
             color: selectedPosId === "__global__" ? "#7C3AED" : C.inkMuted,
             fontSize: "11px", fontWeight: selectedPosId === "__global__" ? "700" : "500",
-            fontFamily: "Inter, sans-serif", cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
           }}>
             Projection globale
           </button>
@@ -829,7 +829,7 @@ Retourne ce JSON exact (aucun texte autour) :
               background: pos.id === selectedPosId ? C.navyLight : C.snowOff,
               color: pos.id === selectedPosId ? C.navy : C.inkMuted,
               fontSize: "11px", fontWeight: pos.id === selectedPosId ? "700" : "500",
-              fontFamily: "Inter, sans-serif", cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
             }}>
               {pos.nom.split(" ").slice(0,2).join(" ")}
             </button>

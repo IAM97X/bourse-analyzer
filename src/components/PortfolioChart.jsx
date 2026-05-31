@@ -51,7 +51,7 @@ export function InfoTip({ term, text, position = "top" }) {
     width: "240px", zIndex: 99999,
     boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
     pointerEvents: "none",
-    fontFamily: "Inter,sans-serif", fontWeight: "400",
+    fontFamily: "'DM Sans', sans-serif", fontWeight: "400",
   } : {};
 
   return (
@@ -61,7 +61,7 @@ export function InfoTip({ term, text, position = "top" }) {
         onMouseEnter={show}
         onMouseLeave={hide}
         onTouchStart={e => { e.preventDefault(); visible ? hide() : show(); }}
-        style={{ width: "15px", height: "15px", borderRadius: "50%", background: "rgba(148,163,184,0.2)", color: "#94A3B8", fontSize: "9px", fontWeight: "800", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "help", flexShrink: 0, userSelect: "none", border: "1px solid rgba(148,163,184,0.3)", fontFamily: "Inter,sans-serif" }}>
+        style={{ width: "15px", height: "15px", borderRadius: "50%", background: "rgba(148,163,184,0.2)", color: "#94A3B8", fontSize: "9px", fontWeight: "800", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "help", flexShrink: 0, userSelect: "none", border: "1px solid rgba(148,163,184,0.3)", fontFamily: "'DM Sans', sans-serif" }}>
         ?
       </span>
       {visible && rect && ReactDOM.createPortal(
@@ -275,7 +275,7 @@ export default function PortfolioChart({ hidden, account }) {
           setRebuildMsg(`${r.count} points générés`);
         } catch (e) { setRebuildMsg("Erreur : " + e.message); }
         setRebuilding(false);
-      }} disabled={rebuilding} style={{ padding: "10px 24px", borderRadius: "10px", background: C.navy, color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+      }} disabled={rebuilding} style={{ padding: "10px 24px", borderRadius: "10px", background: C.navy, color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
         {rebuilding ? "Reconstitution…" : "Reconstituer l'historique"}
       </button>
       {rebuildMsg && <div style={{ marginTop: "10px", fontSize: "11px", color: C.green, fontWeight: "600" }}>{rebuildMsg}</div>}
@@ -400,7 +400,7 @@ export default function PortfolioChart({ hidden, account }) {
           <div style={{ display: "flex", gap: "2px", background: C.snowOff, borderRadius: "10px", padding: "3px" }}>
             {PERIODS.map((p, i) => (
               <button key={p.label} onClick={() => changePidx(i)}
-                style={{ padding: "5px 11px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: "600", background: i === pidx ? "#fff" : "transparent", color: i === pidx ? C.ink : C.inkSubtle, boxShadow: i === pidx ? "0 1px 4px rgba(0,0,0,0.10)" : "none", transition: "all 0.15s", fontFamily: "Inter,sans-serif" }}>
+                style={{ padding: "5px 11px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: "600", background: i === pidx ? "#fff" : "transparent", color: i === pidx ? C.ink : C.inkSubtle, boxShadow: i === pidx ? "0 1px 4px rgba(0,0,0,0.10)" : "none", transition: "all 0.15s", fontFamily: "'DM Sans', sans-serif" }}>
                 {p.label}
               </button>
             ))}
@@ -413,7 +413,7 @@ export default function PortfolioChart({ hidden, account }) {
               setRebuildMsg(`${r.count} points · ${r.resolved}/${r.total} ISIN`);
             } catch (e) { setRebuildMsg("Erreur"); }
             setRebuilding(false);
-          }} disabled={rebuilding} style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, background: "transparent", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 10px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          }} disabled={rebuilding} style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, background: "transparent", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 10px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
             {rebuilding ? "⟳ Reconstitution…" : "⟳ Reconstituer"}
           </button>
           {rebuildMsg && <span style={{ fontSize: "9px", color: C.green, fontWeight: "600" }}>{rebuildMsg}</span>}
@@ -429,7 +429,7 @@ export default function PortfolioChart({ hidden, account }) {
         {gridVals.map((v, i) => (
           <g key={i}>
             <line x1={ML} x2={ML+CW} y1={yS(v)} y2={yS(v)} stroke="rgba(148,163,184,0.15)" strokeWidth="1" strokeDasharray="4,6" />
-            <text x={ML+CW+6} y={yS(v)+4} fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">
+            <text x={ML+CW+6} y={yS(v)+4} fontSize="9" fill="#94A3B8" fontFamily="'DM Sans', sans-serif">
               {v >= 10000 ? (v/1000).toFixed(1)+"k" : Math.round(v)}
             </text>
           </g>
@@ -437,7 +437,7 @@ export default function PortfolioChart({ hidden, account }) {
 
         {/* Labels X */}
         {xLabels.map(({ t, x }, i) => (
-          <text key={i} x={x} y={MT+CH+22} fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif"
+          <text key={i} x={x} y={MT+CH+22} fontSize="9" fill="#94A3B8" fontFamily="'DM Sans', sans-serif"
             textAnchor={i === 0 ? "start" : i === 4 ? "end" : "middle"}>
             {new Date(t).toLocaleDateString("fr-FR", xFmt)}
           </text>
@@ -457,7 +457,7 @@ export default function PortfolioChart({ hidden, account }) {
           return (<>
             <polyline points={pts(cvVals)} fill="none" stroke="#C8972A" strokeWidth="2" strokeDasharray="7,5" strokeLinejoin="round" strokeLinecap="round" opacity="0.9" />
             <rect x={ML+CW+4} y={yCV-9} width="62" height="18" rx="5" fill="#C8972A" />
-            <text x={ML+CW+35} y={yCV+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">C. versé</text>
+            <text x={ML+CW+35} y={yCV+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="'DM Sans', sans-serif">C. versé</text>
           </>);
         })()}
 
@@ -468,7 +468,7 @@ export default function PortfolioChart({ hidden, account }) {
             <polyline points={pts(vals)} fill="none" stroke={lineColor} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
             <circle cx={xS(dates[dates.length-1])} cy={yS(last)} r="4" fill={lineColor} stroke="#fff" strokeWidth="2" />
             <rect x={ML+CW+4} y={yLast-9} width="62" height="18" rx="5" fill={lineColor} />
-            <text x={ML+CW+35} y={yLast+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="Inter,sans-serif">Valeur</text>
+            <text x={ML+CW+35} y={yLast+4} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#fff" fontFamily="'DM Sans', sans-serif">Valeur</text>
           </>);
         })()}
 
@@ -485,17 +485,17 @@ export default function PortfolioChart({ hidden, account }) {
               const pvColor = hover.pv >= 0 ? "#4ADE80" : "#F87171";
               return (<>
                 <rect x={tx} y={ty} width={W} height={H} rx="8" fill="#0F172A" opacity="0.96" />
-                <text x={tx+W/2} y={ty+16} textAnchor="middle" fontSize="11" fill="#fff" fontFamily="Inter,sans-serif" fontWeight="800">{fmtEur(hover.val)}</text>
+                <text x={tx+W/2} y={ty+16} textAnchor="middle" fontSize="11" fill="#fff" fontFamily="'DM Sans', sans-serif" fontWeight="800">{fmtEur(hover.val)}</text>
                 {hasInfo && <>
                   <line x1={tx+10} x2={tx+W-10} y1={ty+24} y2={ty+24} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-                  <text x={tx+10} y={ty+38} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Capital versé</text>
-                  <text x={tx+W-10} y={ty+38} textAnchor="end" fontSize="9" fill="#FCD34D" fontFamily="Inter,sans-serif" fontWeight="600">{fmtEur(hover.cv)}</text>
-                  <text x={tx+10} y={ty+54} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Plus-value</text>
-                  <text x={tx+W-10} y={ty+54} textAnchor="end" fontSize="9" fill={pvColor} fontFamily="Inter,sans-serif" fontWeight="600">{hover.pv >= 0 ? "+" : ""}{fmtEur(hover.pv)}</text>
-                  <text x={tx+10} y={ty+70} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="Inter,sans-serif">Rendement</text>
-                  <text x={tx+W-10} y={ty+70} textAnchor="end" fontSize="9" fill={pvColor} fontFamily="Inter,sans-serif" fontWeight="600">{hover.cv > 0 ? ((hover.pv/hover.cv)*100).toFixed(1) : "—"}%</text>
+                  <text x={tx+10} y={ty+38} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="'DM Sans', sans-serif">Capital versé</text>
+                  <text x={tx+W-10} y={ty+38} textAnchor="end" fontSize="9" fill="#FCD34D" fontFamily="'DM Sans', sans-serif" fontWeight="600">{fmtEur(hover.cv)}</text>
+                  <text x={tx+10} y={ty+54} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="'DM Sans', sans-serif">Plus-value</text>
+                  <text x={tx+W-10} y={ty+54} textAnchor="end" fontSize="9" fill={pvColor} fontFamily="'DM Sans', sans-serif" fontWeight="600">{hover.pv >= 0 ? "+" : ""}{fmtEur(hover.pv)}</text>
+                  <text x={tx+10} y={ty+70} fontSize="9" fill="rgba(255,255,255,0.5)" fontFamily="'DM Sans', sans-serif">Rendement</text>
+                  <text x={tx+W-10} y={ty+70} textAnchor="end" fontSize="9" fill={pvColor} fontFamily="'DM Sans', sans-serif" fontWeight="600">{hover.cv > 0 ? ((hover.pv/hover.cv)*100).toFixed(1) : "—"}%</text>
                 </>}
-                <text x={tx+W/2} y={ty+H-6} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.3)" fontFamily="Inter,sans-serif">
+                <text x={tx+W/2} y={ty+H-6} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.3)" fontFamily="'DM Sans', sans-serif">
                   {new Date(hover.date).toLocaleDateString("fr-FR", { day:"numeric", month:"long", year:"numeric" })}
                 </text>
               </>);
@@ -507,7 +507,7 @@ export default function PortfolioChart({ hidden, account }) {
       {/* ── Drawdown strip ── */}
       {visibleCurves.drawdown && (
         <div style={{ marginTop: "8px" }}>
-          <div style={{ fontSize: "9px", color: "#EF4444", fontWeight: "700", marginBottom: "2px", fontFamily: "Inter,sans-serif" }}>
+          <div style={{ fontSize: "9px", color: "#EF4444", fontWeight: "700", marginBottom: "2px", fontFamily: "'DM Sans', sans-serif" }}>
             DRAWDOWN MAX {minDD.toFixed(1)}%
           </div>
           <svg viewBox={`0 0 ${VW} ${DDH}`} style={{ width: "100%", height: `${DDH}px`, display: "block" }}>
@@ -516,7 +516,7 @@ export default function PortfolioChart({ hidden, account }) {
               fill="rgba(239,68,68,0.15)" />
             <polyline points={ddVals.map((v, i) => `${xS(dates[i]).toFixed(1)},${yDD(v).toFixed(1)}`).join(" ")}
               fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinejoin="round" />
-            <text x={ML+CW+4} y={yDD(minDD)+4} fontSize="8" fill="#EF4444" fontFamily="Inter,sans-serif" fontWeight="700">{minDD.toFixed(1)}%</text>
+            <text x={ML+CW+4} y={yDD(minDD)+4} fontSize="8" fill="#EF4444" fontFamily="'DM Sans', sans-serif" fontWeight="700">{minDD.toFixed(1)}%</text>
           </svg>
         </div>
       )}
@@ -525,7 +525,7 @@ export default function PortfolioChart({ hidden, account }) {
       <div style={{ display: "flex", gap: "18px", justifyContent: "center", marginTop: "14px", flexWrap: "wrap" }}>
         {LEGEND.map(({ key, label, color, dash, fill }) => (
           <button key={key} onClick={() => toggleCurve(key)}
-            style={{ display: "flex", alignItems: "center", gap: "7px", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", borderRadius: "8px", opacity: visibleCurves[key] ? 1 : 0.35, transition: "opacity 0.2s", fontFamily: "Inter,sans-serif" }}>
+            style={{ display: "flex", alignItems: "center", gap: "7px", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", borderRadius: "8px", opacity: visibleCurves[key] ? 1 : 0.35, transition: "opacity 0.2s", fontFamily: "'DM Sans', sans-serif" }}>
             <svg width="24" height="10" style={{ flexShrink: 0 }}>
               {fill
                 ? <rect x="0" y="2" width="24" height="6" rx="2" fill={color} opacity="0.35" />

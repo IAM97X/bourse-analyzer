@@ -73,12 +73,12 @@ class AppErrorBoundary extends Component {
   render() {
     if (!this.state.error) return this.props.children;
     return (
-      <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", fontFamily: "Inter,sans-serif", padding: "24px", textAlign: "center" }}>
+      <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", fontFamily: "'DM Sans', sans-serif", padding: "24px", textAlign: "center" }}>
         <div style={{ fontSize: "32px", marginBottom: "12px" }}>⚠️</div>
         <div style={{ fontSize: "16px", fontWeight: "700", color: "#0F172A", marginBottom: "8px" }}>Une erreur s'est produite</div>
         <div style={{ fontSize: "12px", color: "#64748B", marginBottom: "8px", maxWidth: "500px", wordBreak: "break-word" }}>{this.state.error?.message || "Erreur inconnue"}</div>
         <pre style={{ fontSize: "9px", color: "#94A3B8", maxWidth: "90vw", overflowX: "auto", textAlign: "left", background: "#F8FAFC", padding: "8px", borderRadius: "8px", marginBottom: "16px", whiteSpace: "pre-wrap" }}>{this.state.error?.stack}</pre>
-        <button onClick={() => window.location.reload()} style={{ background: "#1E3A5F", color: "#fff", border: "none", borderRadius: "10px", padding: "10px 24px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Recharger</button>
+        <button onClick={() => window.location.reload()} style={{ background: "#1E3A5F", color: "#fff", border: "none", borderRadius: "10px", padding: "10px 24px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Recharger</button>
       </div>
     );
   }
@@ -96,7 +96,7 @@ function MobileBlock() {
       position: "fixed", inset: 0, zIndex: 99999,
       background: "linear-gradient(135deg, #021024 0%, #052659 100%)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      padding: "32px 24px", textAlign: "center", fontFamily: "Inter, sans-serif",
+      padding: "32px 24px", textAlign: "center", fontFamily: "'DM Sans', sans-serif",
     }}>
       <AppLogo size={48} />
       <div style={{ marginTop: "28px", fontSize: "22px", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
@@ -178,7 +178,7 @@ export default function BourseAnalyzer() {
         const toast = Object.assign(document.createElement("div"), {
           textContent: "🔄 Synchronisation en cours…",
         });
-        Object.assign(toast.style, { position:"fixed", bottom:"24px", left:"50%", transform:"translateX(-50%)", background:"#0F172A", color:"#fff", padding:"10px 20px", borderRadius:"50px", fontSize:"13px", fontFamily:"Inter,sans-serif", fontWeight:"600", zIndex:"99999", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", opacity:"0", transition:"opacity 0.3s" });
+        Object.assign(toast.style, { position:"fixed", bottom:"24px", left:"50%", transform:"translateX(-50%)", background:"#0F172A", color:"#fff", padding:"10px 20px", borderRadius:"50px", fontSize:"13px", fontFamily:"'DM Sans', sans-serif", fontWeight:"600", zIndex:"99999", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", opacity:"0", transition:"opacity 0.3s" });
         document.body.appendChild(toast);
         requestAnimationFrame(() => { toast.style.opacity = "1"; });
         setTimeout(() => window.location.reload(), 1200);
@@ -211,7 +211,7 @@ export default function BourseAnalyzer() {
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #021024 0%, #052659 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
         <AppLogo size={48} />
-        <div style={{ marginTop: "20px", fontSize: "13px", color: "rgba(193,232,255,0.5)", fontFamily: "Inter,sans-serif" }}>Chargement…</div>
+        <div style={{ marginTop: "20px", fontSize: "13px", color: "rgba(193,232,255,0.5)", fontFamily: "'DM Sans', sans-serif" }}>Chargement…</div>
       </div>
     </div>
   );

@@ -74,19 +74,19 @@ function DonutChart({ slices, total, CX = 110, CY = 110, R = 90, R_INNER = 44, h
       })}
       {hov ? (
         <>
-          <text x={CX} y={CY - 9} textAnchor="middle" fontSize="14" fontWeight="800" fill={hov.color} fontFamily="Inter, sans-serif">
+          <text x={CX} y={CY - 9} textAnchor="middle" fontSize="14" fontWeight="800" fill={hov.color} fontFamily="'DM Sans', sans-serif">
             {(hov.pct * 100).toFixed(1)}%
           </text>
-          <text x={CX} y={CY + 9} textAnchor="middle" fontSize="9" fill={C.inkMuted} fontFamily="Inter, sans-serif" fontWeight="600">
+          <text x={CX} y={CY + 9} textAnchor="middle" fontSize="9" fill={C.inkMuted} fontFamily="'DM Sans', sans-serif" fontWeight="600">
             {fmtEur(hov.valeur)}
           </text>
         </>
       ) : (
         <>
-          <text x={CX} y={CY - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={C.ink} fontFamily="Inter, sans-serif">
+          <text x={CX} y={CY - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={C.ink} fontFamily="'DM Sans', sans-serif">
             {centerLabel || fmtEur(total)}
           </text>
-          <text x={CX} y={CY + 10} textAnchor="middle" fontSize="9" fill={C.inkSubtle} fontFamily="Inter, sans-serif">
+          <text x={CX} y={CY + 10} textAnchor="middle" fontSize="9" fill={C.inkSubtle} fontFamily="'DM Sans', sans-serif">
             Total
           </text>
         </>

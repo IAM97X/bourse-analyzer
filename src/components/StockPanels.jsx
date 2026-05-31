@@ -218,7 +218,7 @@ export function LiveMarketPanel({ pos, onClose }) {
         {err && (
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", paddingBottom: "4px" }}>
             <div style={{ fontSize: "11px", color: "rgba(255,100,100,0.9)" }}>{err}</div>
-            <button onClick={load_} style={{ alignSelf: "flex-start", fontSize: "11px", fontWeight: "700", color: "#fff", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "6px 14px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Réessayer</button>
+            <button onClick={load_} style={{ alignSelf: "flex-start", fontSize: "11px", fontWeight: "700", color: "#fff", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "6px 14px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Réessayer</button>
           </div>
         )}
 
@@ -227,7 +227,7 @@ export function LiveMarketPanel({ pos, onClose }) {
             {/* Prix principal */}
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "10px" }}>
               <div>
-                <div style={{ fontSize: "36px", fontWeight: "900", color: "#fff", letterSpacing: "-1.5px", fontFamily: "Inter,sans-serif", lineHeight: 1 }}>
+                <div style={{ fontSize: "36px", fontWeight: "900", color: "#fff", letterSpacing: "-1.5px", fontFamily: "'DM Sans', sans-serif", lineHeight: 1 }}>
                   {fmtCours(data.last.close)}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
@@ -292,7 +292,7 @@ export function LiveMarketPanel({ pos, onClose }) {
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#F97316", boxShadow: "0 0 6px rgba(249,115,22,0.5)" }} />
                 <span style={{ fontSize: "10px", fontWeight: "700", color: "#C2410C", letterSpacing: "0.3px" }}>Point de contrôle</span>
               </div>
-              <div style={{ fontSize: "20px", fontWeight: "900", color: "#EA580C", fontFamily: "Inter,sans-serif", letterSpacing: "-0.5px" }}>{fmtCours(data.poc.mid)}</div>
+              <div style={{ fontSize: "20px", fontWeight: "900", color: "#EA580C", fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.5px" }}>{fmtCours(data.poc.mid)}</div>
               <div style={{ marginTop: "10px", height: "3px", borderRadius: "99px", background: "rgba(249,115,22,0.15)" }}>
                 <div style={{ width: "65%", height: "100%", borderRadius: "99px", background: "linear-gradient(90deg,#F97316,#FDBA74)" }} />
               </div>
@@ -304,7 +304,7 @@ export function LiveMarketPanel({ pos, onClose }) {
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#22D3EE", boxShadow: "0 0 6px rgba(34,211,238,0.4)" }} />
                 <span style={{ fontSize: "10px", fontWeight: "700", color: "#0E7490", letterSpacing: "0.3px" }}>Zone haute</span>
               </div>
-              <div style={{ fontSize: "20px", fontWeight: "900", color: "#0891B2", fontFamily: "Inter,sans-serif", letterSpacing: "-0.5px" }}>{fmtCours(data.VAH)}</div>
+              <div style={{ fontSize: "20px", fontWeight: "900", color: "#0891B2", fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.5px" }}>{fmtCours(data.VAH)}</div>
               <div style={{ marginTop: "10px", height: "3px", borderRadius: "99px", background: "rgba(34,211,238,0.12)" }}>
                 <div style={{ width: "45%", height: "100%", borderRadius: "99px", background: "linear-gradient(90deg,#22D3EE,#67E8F9)" }} />
               </div>
@@ -316,7 +316,7 @@ export function LiveMarketPanel({ pos, onClose }) {
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#22D3EE", boxShadow: "0 0 6px rgba(34,211,238,0.4)" }} />
                 <span style={{ fontSize: "10px", fontWeight: "700", color: "#0E7490", letterSpacing: "0.3px" }}>Zone basse</span>
               </div>
-              <div style={{ fontSize: "20px", fontWeight: "900", color: "#0891B2", fontFamily: "Inter,sans-serif", letterSpacing: "-0.5px" }}>{fmtCours(data.VAL)}</div>
+              <div style={{ fontSize: "20px", fontWeight: "900", color: "#0891B2", fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.5px" }}>{fmtCours(data.VAL)}</div>
               <div style={{ marginTop: "10px", height: "3px", borderRadius: "99px", background: "rgba(34,211,238,0.12)" }}>
                 <div style={{ width: "45%", height: "100%", borderRadius: "99px", background: "linear-gradient(90deg,#22D3EE,#67E8F9)" }} />
               </div>
@@ -329,7 +329,7 @@ export function LiveMarketPanel({ pos, onClose }) {
                   <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ADE80", boxShadow: "0 0 6px rgba(74,222,128,0.4)" }} />
                   <span style={{ fontSize: "10px", fontWeight: "700", color: "#15803D", letterSpacing: "0.3px" }}>Forte liquidité</span>
                 </div>
-                <div style={{ fontSize: "17px", fontWeight: "900", color: "#16A34A", fontFamily: "Inter,sans-serif", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
+                <div style={{ fontSize: "17px", fontWeight: "900", color: "#16A34A", fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
                   {fmtCours(data.hvn.lo)}<span style={{ fontSize: "13px", opacity: 0.5, margin: "0 2px" }}>–</span>{fmtCours(data.hvn.hi)}
                 </div>
                 <div style={{ marginTop: "10px", height: "3px", borderRadius: "99px", background: "rgba(74,222,128,0.15)" }}>
@@ -342,7 +342,7 @@ export function LiveMarketPanel({ pos, onClose }) {
                   <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#F87171", boxShadow: "0 0 6px rgba(248,113,113,0.4)" }} />
                   <span style={{ fontSize: "10px", fontWeight: "700", color: "#B91C1C", letterSpacing: "0.3px" }}>Faible liquidité</span>
                 </div>
-                <div style={{ fontSize: "17px", fontWeight: "900", color: "#DC2626", fontFamily: "Inter,sans-serif", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
+                <div style={{ fontSize: "17px", fontWeight: "900", color: "#DC2626", fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
                   {fmtCours(data.lvn.lo)}<span style={{ fontSize: "13px", opacity: 0.5, margin: "0 2px" }}>–</span>{fmtCours(data.lvn.hi)}
                 </div>
                 <div style={{ marginTop: "10px", height: "3px", borderRadius: "99px", background: "rgba(248,113,113,0.15)" }}>
@@ -771,17 +771,17 @@ export function StockProjectionChart({ pos, onClose }) {
           {PROJ_HORIZONS.map((h, i) => (
             <button key={h.label} onClick={() => setHidx(i)} style={{
               padding: "4px 10px", borderRadius: "6px", border: "none", cursor: "pointer",
-              fontSize: "11px", fontWeight: "700", fontFamily: "Inter, sans-serif",
+              fontSize: "11px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif",
               background: i === hidx ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.07)",
               color: i === hidx ? "#fff" : "rgba(255,255,255,0.45)",
               boxShadow: i === hidx ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
               transition: "all 0.15s",
             }}>{h.label}</button>
           ))}
-          <button onClick={() => setShowMA50(v => !v)} style={{ padding: "4px 9px", borderRadius: "6px", border: `1px solid ${showMA50 ? "rgba(245,158,11,0.55)" : "rgba(255,255,255,0.12)"}`, cursor: "pointer", fontSize: "10px", fontWeight: "700", fontFamily: "Inter, sans-serif", background: showMA50 ? "rgba(245,158,11,0.18)" : "rgba(255,255,255,0.05)", color: showMA50 ? "#F59E0B" : "rgba(255,255,255,0.4)", transition: "all 0.15s" }}>MA50</button>
-          <button onClick={() => setShowMA200(v => !v)} style={{ padding: "4px 9px", borderRadius: "6px", border: `1px solid ${showMA200 ? "rgba(139,92,246,0.55)" : "rgba(255,255,255,0.12)"}`, cursor: "pointer", fontSize: "10px", fontWeight: "700", fontFamily: "Inter, sans-serif", background: showMA200 ? "rgba(139,92,246,0.18)" : "rgba(255,255,255,0.05)", color: showMA200 ? "#A78BFA" : "rgba(255,255,255,0.4)", transition: "all 0.15s" }}>MA200</button>
+          <button onClick={() => setShowMA50(v => !v)} style={{ padding: "4px 9px", borderRadius: "6px", border: `1px solid ${showMA50 ? "rgba(245,158,11,0.55)" : "rgba(255,255,255,0.12)"}`, cursor: "pointer", fontSize: "10px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", background: showMA50 ? "rgba(245,158,11,0.18)" : "rgba(255,255,255,0.05)", color: showMA50 ? "#F59E0B" : "rgba(255,255,255,0.4)", transition: "all 0.15s" }}>MA50</button>
+          <button onClick={() => setShowMA200(v => !v)} style={{ padding: "4px 9px", borderRadius: "6px", border: `1px solid ${showMA200 ? "rgba(139,92,246,0.55)" : "rgba(255,255,255,0.12)"}`, cursor: "pointer", fontSize: "10px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", background: showMA200 ? "rgba(139,92,246,0.18)" : "rgba(255,255,255,0.05)", color: showMA200 ? "#A78BFA" : "rgba(255,255,255,0.4)", transition: "all 0.15s" }}>MA200</button>
           {onClose && (
-            <button onClick={onClose} style={{ marginLeft: "2px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontSize: "12px", color: "rgba(255,255,255,0.5)", fontFamily: "Inter, sans-serif" }}>✕</button>
+            <button onClick={onClose} style={{ marginLeft: "2px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "6px", padding: "4px 8px", cursor: "pointer", fontSize: "12px", color: "rgba(255,255,255,0.5)", fontFamily: "'DM Sans', sans-serif" }}>✕</button>
           )}
         </div>
       </div>
@@ -818,7 +818,7 @@ export function StockProjectionChart({ pos, onClose }) {
             {gridPrices.map(v => (
               <g key={v}>
                 <line x1={ML} x2={ML + CW} y1={yScale(v)} y2={yScale(v)} stroke="rgba(148,163,184,0.3)" strokeWidth="1" strokeDasharray="4,4" />
-                <text x={ML - 6} y={yScale(v) + 4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="Inter,sans-serif" fontWeight="500">
+                <text x={ML - 6} y={yScale(v) + 4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="'DM Sans', sans-serif" fontWeight="500">
                   {v >= 1000 ? (v / 1000).toFixed(1) + "k" : v >= 100 ? v.toFixed(0) : v.toFixed(1)}€
                 </text>
               </g>
@@ -826,7 +826,7 @@ export function StockProjectionChart({ pos, onClose }) {
 
             {/* Étiquettes X (dates) */}
             {xLabels.map(({ t }, i) => (
-              <text key={i} x={xScale(t)} y={MT + CH + 22} textAnchor="middle" fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">
+              <text key={i} x={xScale(t)} y={MT + CH + 22} textAnchor="middle" fontSize="9" fill="#94A3B8" fontFamily="'DM Sans', sans-serif">
                 {new Date(t).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" })}
               </text>
             ))}
@@ -836,7 +836,7 @@ export function StockProjectionChart({ pos, onClose }) {
               const todayX = xScale(chartData.dates[chartData.dates.length - 1]);
               return <>
                 <line x1={todayX} x2={todayX} y1={MT} y2={MT + CH} stroke="rgba(148,163,184,0.5)" strokeWidth="1" strokeDasharray="4,3" />
-                <text x={todayX} y={MT - 4} textAnchor="middle" fontSize="8" fill="#94A3B8" fontFamily="Inter,sans-serif" fontWeight="600">Auj.</text>
+                <text x={todayX} y={MT - 4} textAnchor="middle" fontSize="8" fill="#94A3B8" fontFamily="'DM Sans', sans-serif" fontWeight="600">Auj.</text>
               </>;
             })()}
 
@@ -865,7 +865,7 @@ export function StockProjectionChart({ pos, onClose }) {
             {pos.pru > 0 && pos.pru >= yMin && pos.pru <= yMax && (
               <>
                 <line x1={ML} x2={ML + CW} y1={yScale(pos.pru)} y2={yScale(pos.pru)} stroke={C.goldDark} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.85" />
-                <text x={ML + CW + 3} y={yScale(pos.pru) + 4} fontSize="9" fill={C.goldDark} fontFamily="Inter,sans-serif" fontWeight="600">PRU</text>
+                <text x={ML + CW + 3} y={yScale(pos.pru) + 4} fontSize="9" fill={C.goldDark} fontFamily="'DM Sans', sans-serif" fontWeight="600">PRU</text>
               </>
             )}
 
@@ -1005,7 +1005,7 @@ export function StockProjectionChart({ pos, onClose }) {
                   {[70, 50, 30].map(v => (
                     <g key={v}>
                       <line x1={RML} x2={RML+RCW} y1={rsiScale(v)} y2={rsiScale(v)} stroke={v===50?"#94A3B8":C.border} strokeWidth={v===50?"1":"0.8"} strokeDasharray={v===50?"":"3,3"} />
-                      <text x={RML-4} y={rsiScale(v)+3} textAnchor="end" fontSize="8" fill={C.inkSubtle} fontFamily="Inter,sans-serif">{v}</text>
+                      <text x={RML-4} y={rsiScale(v)+3} textAnchor="end" fontSize="8" fill={C.inkSubtle} fontFamily="'DM Sans', sans-serif">{v}</text>
                     </g>
                   ))}
                   {/* Ligne RSI */}
@@ -1171,7 +1171,7 @@ export function PriceEvolutionChart({ positions }) {
           {CHART_PERIODS.map((p, i) => (
             <button key={p.range} onClick={() => setPidx(i)} style={{
               padding: "4px 10px", borderRadius: "6px", border: "none", cursor: "pointer",
-              fontSize: "11px", fontWeight: "700", fontFamily: "Inter, sans-serif",
+              fontSize: "11px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif",
               background: i === pidx ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.07)",
               color: i === pidx ? "#fff" : "rgba(255,255,255,0.45)",
               boxShadow: i === pidx ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
@@ -1180,7 +1180,7 @@ export function PriceEvolutionChart({ positions }) {
           ))}
           <button onClick={() => setShowCac(v => !v)} style={{
             padding: "4px 9px", borderRadius: "6px", border: `1px solid ${showCac ? "rgba(204,255,0,0.5)" : "rgba(255,255,255,0.12)"}`,
-            cursor: "pointer", fontSize: "10px", fontWeight: "700", fontFamily: "Inter, sans-serif",
+            cursor: "pointer", fontSize: "10px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif",
             background: showCac ? "rgba(204,255,0,0.12)" : "rgba(255,255,255,0.05)",
             color: showCac ? "#CCFF00" : "rgba(255,255,255,0.4)", transition: "all 0.15s",
           }}>CAC 40</button>
@@ -1221,15 +1221,15 @@ export function PriceEvolutionChart({ positions }) {
             {gridVals.filter(v => v !== 0).map(v => (
               <g key={v}>
                 <line x1={ML} x2={ML+CW} y1={yScale(v)} y2={yScale(v)} stroke="rgba(148,163,184,0.22)" strokeWidth="1" strokeDasharray="4,4" />
-                <text x={ML-5} y={yScale(v)+4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="Inter,sans-serif" fontWeight="500">
+                <text x={ML-5} y={yScale(v)+4} textAnchor="end" fontSize="10" fill="#94A3B8" fontFamily="'DM Sans', sans-serif" fontWeight="500">
                   {v >= 0 ? "+" : ""}{v.toFixed(0)}%
                 </text>
               </g>
             ))}
-            <text x={ML-5} y={yScale(0)+4} textAnchor="end" fontSize="10" fill="#64748B" fontFamily="Inter,sans-serif" fontWeight="700">0%</text>
+            <text x={ML-5} y={yScale(0)+4} textAnchor="end" fontSize="10" fill="#64748B" fontFamily="'DM Sans', sans-serif" fontWeight="700">0%</text>
 
             {xLabels.map(({ frac, date }, i) => (
-              <text key={i} x={xScale(frac)} y={MT+CH+20} textAnchor="middle" fontSize="9" fill="#94A3B8" fontFamily="Inter,sans-serif">
+              <text key={i} x={xScale(frac)} y={MT+CH+20} textAnchor="middle" fontSize="9" fill="#94A3B8" fontFamily="'DM Sans', sans-serif">
                 {pidx === 0
                   ? new Date(date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
                   : pidx === 1

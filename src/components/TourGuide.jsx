@@ -6,34 +6,39 @@ const TOUR_KEY = "boursenext_tour_v1";
 
 const STEPS = [
   {
+    tab: TABS.OVERVIEW,
+    title: "Vos deux portefeuilles",
+    body: "Cette page résume votre PEA et votre CTO : valeur totale, gains, capital investi. Cliquez sur un compte pour y entrer.",
+  },
+  {
     tab: TABS.HOME,
     title: "Accueil — vue d'ensemble",
-    body: "Valorisation totale, performances du jour et depuis l'achat, graphique d'évolution et résumé des signaux IA.",
+    body: "Voyez en un coup d'œil combien vaut votre portefeuille, ce que vous avez gagné ou perdu, et comment il évolue dans le temps.",
   },
   {
     tab: TABS.PORTFOLIO,
     title: "Portefeuille — vos positions",
-    body: "Ajoutez vos actions et ETF. Cours en temps réel, plus-values, répartition sectorielle et miniature par ligne.",
+    body: "Ajoutez vos actions et ETF. L'app affiche automatiquement les cours du jour et calcule vos gains ou pertes.",
   },
   {
     tab: TABS.MARCHE,
     title: "Signaux IA — scoring dynamique",
-    body: "L'IA analyse chaque valeur : actualités, RSI, signaux techniques. Score /20 avec recommandation ACHAT / RENFORCER / ATTENDRE / VENDRE.",
+    body: "L'IA lit les actualités et analyse chaque action de votre portefeuille. Elle vous dit si c'est le bon moment pour acheter, attendre ou vendre.",
   },
   {
     tab: TABS.AUTOPILOT,
-    title: "Autopilot Atlas — DCA intelligent",
-    body: "Définissez votre budget mensuel. L'IA calcule les meilleures opportunités de renforcement dans l'univers PEA éligible.",
+    title: "Autopilot Atlas",
+    body: "Indiquez votre budget mensuel. L'IA choisit automatiquement les meilleures actions où investir ce mois-ci.",
   },
   {
     tab: TABS.CHAT,
     title: "Conseiller Privé",
-    body: "Posez toutes vos questions sur vos valeurs, la stratégie ou l'allocation. L'IA connaît votre portefeuille et vos analyses.",
+    body: "Posez n'importe quelle question sur la bourse ou vos actions. L'IA connaît votre portefeuille et vous répond en tenant compte de votre situation.",
   },
   {
     tab: TABS.AI_PORTFOLIO,
     title: "Portefeuille Autonome",
-    body: "Un second portefeuille géré entièrement par l'IA — investissement, arbitrage et protection automatiques avec stop-loss.",
+    body: "Un portefeuille géré entièrement par l'IA. Elle décide quoi acheter, quand vendre, et protège vos gains automatiquement.",
   },
   {
     tab: TABS.PORTFOLIO,
@@ -51,13 +56,10 @@ export function markTourDone() {
   try { localStorage.setItem(TOUR_KEY, "1"); } catch {}
 }
 
-export default function TourGuide({ onDone, changeTab }) {
-  const [step, setStep] = useState(0);
+export default function TourGuide({ onDone, changeTab, currentTab }) {
+  const initialStep = STEPS.findIndex(s => s.tab === currentTab);
+  const [step, setStep] = useState(initialStep >= 0 ? initialStep : 0);
   const [animDir, setAnimDir] = useState(1);
-
-  useEffect(() => {
-    changeTab(STEPS[0].tab);
-  }, []);
 
   const goTo = (i) => {
     if (i < 0 || i >= STEPS.length) return;
@@ -80,8 +82,8 @@ export default function TourGuide({ onDone, changeTab }) {
       {/* Overlay semi-transparent */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 1500,
-        background: "rgba(4,14,28,0.45)",
-        backdropFilter: "blur(2px)",
+        background: "rgba(4,14,28,0.25)",
+        backdropFilter: "blur(0px)",
         pointerEvents: "none",
       }} />
 
@@ -121,8 +123,8 @@ export default function TourGuide({ onDone, changeTab }) {
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "13px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
-                Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+              <span style={{ fontSize: "13px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "'DM Sans', sans-serif" }}>
+                Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(135deg, #0F2D5E 0%, #2D6CB5 50%, #7BBFE8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
               </span>
               <span style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, letterSpacing: "0.04em" }}>
                 Guide · {step + 1}/{STEPS.length}
@@ -157,7 +159,7 @@ export default function TourGuide({ onDone, changeTab }) {
                 flex: 1, padding: "11px", borderRadius: "14px",
                 border: `1px solid ${C.border}`, background: C.snowOff,
                 color: C.inkMuted, fontSize: "13px", fontWeight: "600",
-                cursor: "pointer", fontFamily: "Inter,sans-serif",
+                cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
               }}>← Retour</button>
             )}
             <button onClick={() => isLast ? finish() : goTo(step + 1)} style={{
@@ -167,7 +169,7 @@ export default function TourGuide({ onDone, changeTab }) {
                 ? `linear-gradient(135deg, #059669 0%, #10B981 100%)`
                 : `linear-gradient(135deg, ${C.navy} 0%, #2563EB 100%)`,
               color: "#fff", fontSize: "13px", fontWeight: "700",
-              cursor: "pointer", fontFamily: "Inter,sans-serif",
+              cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
               boxShadow: shadow.pill,
             }}>
               {isLast ? "Commencer →" : "Suivant →"}

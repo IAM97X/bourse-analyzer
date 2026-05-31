@@ -151,7 +151,7 @@ function AllocBar({ cat, tgt, cur, onChange }) {
           value={tgt || ""}
           placeholder="0"
           onChange={e => onChange(cat.key, e.target.value)}
-          style={{ width: "44px", textAlign: "center", border: `1.5px solid ${tgt > 0 ? color : C.border}`, borderRadius: "7px", padding: "4px 4px", fontSize: "12px", fontWeight: "700", color: tgt > 0 ? color : C.inkSubtle, background: tgt > 0 ? color + "08" : C.snowOff, fontFamily: "Inter,sans-serif", outline: "none" }}
+          style={{ width: "44px", textAlign: "center", border: `1.5px solid ${tgt > 0 ? color : C.border}`, borderRadius: "7px", padding: "4px 4px", fontSize: "12px", fontWeight: "700", color: tgt > 0 ? color : C.inkSubtle, background: tgt > 0 ? color + "08" : C.snowOff, fontFamily: "'DM Sans', sans-serif", outline: "none" }}
         />
         <span style={{ fontSize: "10px", color: C.inkSubtle, width: "10px" }}>%</span>
         <div style={{ width: "36px", textAlign: "left" }}>
@@ -186,7 +186,7 @@ function AnalyseStrategique({ analyse }) {
   return (
     <div style={{ background: "#fff", borderRadius: "16px", marginBottom: "12px", overflow: "hidden", border: `1px solid ${border}`, boxShadow: "0 2px 12px rgba(26,45,74,0.07)" }}>
       <button onClick={() => setOpen(v => !v)}
-        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "none", border: "none", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", background: "none", border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <span style={{ fontSize: "13px", fontWeight: "800", color: ink }}>Analyse stratégique</span>
           <span style={{ fontSize: "9px", fontWeight: "700", color: inkSub, background: "rgba(26,45,74,0.07)", borderRadius: "4px", padding: "2px 7px", letterSpacing: "0.8px", textTransform: "uppercase" }}>Conseiller IA</span>
@@ -679,8 +679,8 @@ RÈGLE MONTANT : ${nbOppMax === 1
       {/* ── Header ── */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#F2F2F7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
-            {load("bourse_ai_emoji", "🤖")}
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#F2F2F7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D6CB5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
           </div>
           <div>
             <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot Atlas</div>
@@ -696,15 +696,15 @@ RÈGLE MONTANT : ${nbOppMax === 1
               value={budget}
               onChange={e => updateBudget(e.target.value)}
               onBlur={e => commitBudget(e.target.value)}
-              style={{ width: "60px", border: "none", background: "transparent", fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", textAlign: "right" }}
+              style={{ width: "60px", border: "none", background: "transparent", fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", textAlign: "right" }}
             />
             <span style={{ fontSize: "11px", color: C.inkSubtle }}>€/mois</span>
           </div>
           <button
             onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,05–0,10 $ de crédits API.\n\nBudget à investir : ${budget}€\n\nConfirmer le lancement ?`)) runAnalysis(); }}
             disabled={running || !allocOk}
-            style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
-            {running ? "⟳ Analyse en cours…" : "⚡ Lancer l'analyse"}
+            style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
+            {running ? "Analyse en cours…" : "Lancer l'analyse"}
           </button>
           {result?.generatedAt && <span style={{ fontSize: "10px", color: C.inkSubtle }}>Dernière analyse : {new Date(result.generatedAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
         </div>
@@ -714,7 +714,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
       <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", marginBottom: "14px", overflow: "hidden" }}>
         <button
           onClick={() => setShowAllocEditor(v => !v)}
-          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "none", border: "none", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "none", border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>Répartition cible</span>
             {/* mini pills */}
@@ -748,7 +748,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px" }}>
               <span style={{ fontSize: "10px", color: C.inkSubtle }}>Actuel → Cible · ↑ sous-pondéré · ↓ sur-pondéré</span>
               <button onClick={resetAlloc}
-                style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                 Réinitialiser
               </button>
             </div>
@@ -758,7 +758,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
 
       {/* ── Warning API ── */}
       <div style={{ background: "rgba(200,151,42,0.07)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "10px 16px", marginBottom: "16px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
-        <span style={{ fontSize: "14px", flexShrink: 0, marginTop: "1px" }}>💡</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "1px" }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="#B45309" stroke="none"/></svg>
         <div style={{ fontSize: "11px", color: "#7A5A10", lineHeight: 1.6 }}>
           <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,15–0,25 $ en crédits Anthropic.<br />
           Conseil : lancez Autopilot Atlas <strong>1 à 2 fois par semaine</strong> maximum.
@@ -895,7 +895,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
                             <span style={{ fontSize: "10px", fontWeight: "700", color: catCol }}>{op.allocation_pct}% cible</span>
                           </div>
                         )}
-                        {catalyseurDisplay && <div style={{ fontSize: "11px", fontWeight: "600", color: "#966F1A", background: "rgba(200,151,42,0.1)", borderRadius: "5px", padding: "2px 8px", display: "inline-block" }}>⚡ {catalyseurDisplay}</div>}
+                        {catalyseurDisplay && <div style={{ fontSize: "11px", fontWeight: "600", color: "#966F1A", background: "rgba(200,151,42,0.1)", borderRadius: "5px", padding: "2px 8px", display: "inline-block" }}>{catalyseurDisplay}</div>}
                       </div>
                       <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
                         <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", background: acColor, borderRadius: "6px", padding: "3px 10px", whiteSpace: "nowrap" }}>{acShort}</span>
@@ -908,7 +908,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
                       {(op.rationale || "").replace(/<\/?cite[^>]*>/g, "")}
                     </div>
                     <button onClick={() => setExpanded(e => ({ ...e, [i]: !e[i] }))}
-                      style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: "none", padding: "0 0 8px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                      style={{ fontSize: "11px", color: C.inkSubtle, background: "none", border: "none", padding: "0 0 8px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                       {isExpanded ? "▲ Réduire" : "▼ Lire plus"}
                     </button>
                     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", borderTop: `1px solid ${C.border}`, paddingTop: "10px" }}>

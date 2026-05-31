@@ -776,7 +776,7 @@ function CourbeEvolution({ hidden, positions, account }) {
       <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
       <div style={{ marginBottom: "12px" }}>Aucune donnée disponible</div>
       <button onClick={() => fileInputRef.current?.click()}
-        style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.85)", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+        style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.85)", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
         + Importer CSV Boursobank
       </button>
       <div style={{ marginTop: "8px", fontSize: "10px", color: "rgba(255,255,255,0.25)" }}>Boursobank · Fortuneo · DEGIRO</div>
@@ -879,7 +879,7 @@ function CourbeEvolution({ hidden, positions, account }) {
           {dataSource === "snapshots" && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Snap</span>}
           <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
           <button onClick={() => fileInputRef.current?.click()}
-            style={{ padding: "2px 7px", borderRadius: "5px", border: `1px solid ${csvPoints ? lineClrUp+"40" : "rgba(26,45,74,0.13)"}`, background: "transparent", color: csvPoints ? lineClrUp : inkSub, fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+            style={{ padding: "2px 7px", borderRadius: "5px", border: `1px solid ${csvPoints ? lineClrUp+"40" : "rgba(26,45,74,0.13)"}`, background: "transparent", color: csvPoints ? lineClrUp : inkSub, fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
             {csvPoints ? "↑ CSV" : "+ CSV"}
           </button>
         </div>
@@ -1001,7 +1001,7 @@ function CourbeEvolution({ hidden, positions, account }) {
         <div style={{ display: "flex", background: "#f0f2f5", borderRadius: "8px", padding: "2px", gap: "1px" }}>
           {PERIODS.map(({ label, days }) => (
             <button key={days} onClick={() => setPeriod(days)}
-              style={{ padding: "3px 10px", borderRadius: "6px", border: "none", background: period === days ? "#fff" : "transparent", color: period === days ? ink : inkSub, fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", boxShadow: period === days ? "0 1px 3px rgba(26,45,74,0.10)" : "none", transition: "all 0.15s" }}>
+              style={{ padding: "3px 10px", borderRadius: "6px", border: "none", background: period === days ? "#fff" : "transparent", color: period === days ? ink : inkSub, fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: period === days ? "0 1px 3px rgba(26,45,74,0.10)" : "none", transition: "all 0.15s" }}>
               {label}
             </button>
           ))}

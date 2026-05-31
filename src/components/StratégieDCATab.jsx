@@ -464,7 +464,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
                 const pvPct = pos.pru > 0 ? (pos.cours - pos.pru) / pos.pru * 100 : 0;
                 return (
                   <div key={pos.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "7px 12px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink, fontFamily: "Inter, sans-serif" }}>{pos.nom}</span>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>{pos.nom}</span>
                     <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                       <span style={{ fontSize: "11px", color: pvPct >= 0 ? C.green : C.red, fontWeight: "700" }}>
                         {pvPct >= 0 ? "+" : ""}{pvPct.toFixed(1)} %
@@ -543,7 +543,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
             <select
               value={courtierKey}
               onChange={e => onSaveProfil && onSaveProfil({ ...profil, courtierPEA: e.target.value })}
-              style={{ fontSize: "10px", fontWeight: "700", color: C.navy, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 6px", background: C.snow, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+              style={{ fontSize: "10px", fontWeight: "700", color: C.navy, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 6px", background: C.snow, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
               {Object.entries(COURTIERS).map(([k, v]) => <option key={k} value={k}>{v.nom}</option>)}
             </select>
           </div>
@@ -850,7 +850,7 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
                 const horizon = mois <= 24 ? "court" : mois <= 48 ? "moyen" : mois <= 96 ? "long" : "tres-long";
                 onSaveProfil && onSaveProfil({ ...profil, dcaDuree: mois || profil?.dcaDuree, horizon });
               }}
-              style={{ width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box" }}
+              style={{ width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" }}
             />
           </div>
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "6px 12px", background: C.navyLight, borderRadius: "10px", border: `1px solid rgba(30,58,95,0.1)` }}>
@@ -864,7 +864,7 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
             <select
               value={profil?.dcaJour || 5}
               onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaJour: parseInt(e.target.value) })}
-              style={{ width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box", cursor: "pointer" }}>
+              style={{ width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box", cursor: "pointer" }}>
               {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
                 <option key={d} value={d}>{d < 10 ? `0${d}` : d} du mois</option>
               ))}
@@ -885,7 +885,7 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
                 type="number" min="0" step="10" placeholder="ex : 50"
                 value={profil?.dcaCroissanceMontant || ""}
                 onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaCroissanceMontant: parseFloat(e.target.value) || 0 })}
-                style={{ width: "100%", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box" }}
+                style={{ width: "100%", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" }}
               />
             </div>
             <div>
@@ -894,7 +894,7 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
                 type="number" min="1" max="10" step="1" placeholder="ex : 2"
                 value={profil?.dcaCroissancePeriode || ""}
                 onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaCroissancePeriode: parseInt(e.target.value) || 0 })}
-                style={{ width: "100%", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box" }}
+                style={{ width: "100%", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" }}
               />
             </div>
           </div>

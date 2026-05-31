@@ -39,7 +39,7 @@ export function OrivoSpinner({ size = 52, label, sublabel }) {
       </svg>
       {(label || sublabel) && (
         <div style={{ textAlign: "center" }}>
-          {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "Inter,sans-serif", animation: "bn-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
+          {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "'DM Sans', sans-serif", animation: "bn-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
           {sublabel && <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "4px" }}>{sublabel}</div>}
         </div>
       )}
@@ -53,7 +53,7 @@ export function StatBox({ label, value, color, sensitive }) {
   const blurStyle = hidden ? { filter: "blur(7px)", userSelect: "none", pointerEvents: "none" } : {};
   return (
     <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "14px", padding: mobile ? "18px 12px" : "16px 14px", textAlign: "center", boxShadow: shadow.card }}>
-      <div style={{ fontSize: "9px", color: C.inkSubtle, letterSpacing: "0.08em", fontWeight: "500", marginBottom: "5px", textTransform: "uppercase", fontFamily: "Inter,sans-serif" }}>{label}</div>
+      <div style={{ fontSize: "9px", color: C.inkSubtle, letterSpacing: "0.08em", fontWeight: "500", marginBottom: "5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{label}</div>
       <div style={{ fontSize: mobile ? "15px" : "13px", fontWeight: "600", color: color || C.ink, wordBreak: "break-word", lineHeight: "1.3", ...blurStyle }}>{value || "—"}</div>
     </div>
   );
@@ -65,7 +65,7 @@ export function Card({ title, icon, accentColor, children }) {
     <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "16px", overflow: "hidden", marginBottom: "16px", boxShadow: shadow.card }}>
       <div style={{ padding: mobile ? "16px 20px 10px" : "18px 24px 10px", display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${C.border}` }}>
         {icon && <span style={{ fontSize: "13px", opacity: 0.5 }}>{icon}</span>}
-        <span style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "Inter,sans-serif" }}>{title}</span>
+        <span style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{title}</span>
       </div>
       <div className="ba-card-body" style={{ padding: mobile ? "0 20px 18px" : "0 24px 22px" }}>{children}</div>
     </div>
@@ -89,7 +89,7 @@ export function LoadingPanel({ label = "Analyse en cours…" }) {
     <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "48px 32px", display: "flex", justifyContent: "center" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
         <AppLogo size={52} animated={true} />
-        {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "Inter,sans-serif", animation: "bn-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
+        {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "'DM Sans', sans-serif", animation: "bn-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
       </div>
     </div>
   );
@@ -110,7 +110,7 @@ export function ErrorPanel({ message, onRetry, retryLabel = "Réessayer" }) {
       <span style={{ color: C.red, fontSize: "13px", fontWeight: "500", flex: 1 }}>✕ {message}</span>
       {onRetry && (
         <button onClick={() => { if (countdown === null) { setCountdown(isRetryable ? 5 : 0); } }}
-          style={{ background: C.red, border: "none", borderRadius: "8px", padding: "8px 16px", color: "#fff", fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
+          style={{ background: C.red, border: "none", borderRadius: "8px", padding: "8px 16px", color: "#fff", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
           {countdown !== null ? `${retryLabel} (${countdown}s)` : retryLabel}
         </button>
       )}

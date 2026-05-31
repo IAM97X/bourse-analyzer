@@ -453,11 +453,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   };
 
 
-  const inp = { background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "11px 16px", color: C.ink, fontSize: "13px", fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box", width: "100%", fontWeight: "500" };
+  const inp = { background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "11px 16px", color: C.ink, fontSize: "13px", fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box", width: "100%", fontWeight: "500" };
   const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", display: "block" };
 
-  const btnPrimary = { background: "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", border: "none", borderRadius: "50px", padding: "11px 22px", color: "#fff", fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 16px rgba(45,108,181,0.30)", letterSpacing: "0.02em" };
-  const btnSecondary = (active) => ({ background: active ? C.redLight : C.snowOff, border: `1px solid ${active ? "rgba(220,38,38,0.2)" : C.border}`, borderRadius: "50px", padding: "11px 18px", color: active ? C.red : C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "600", cursor: "pointer" });
+  const btnPrimary = { background: "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", border: "none", borderRadius: "50px", padding: "11px 22px", color: "#fff", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 16px rgba(45,108,181,0.30)", letterSpacing: "0.02em" };
+  const btnSecondary = (active) => ({ background: active ? C.redLight : C.snowOff, border: `1px solid ${active ? "rgba(220,38,38,0.2)" : C.border}`, borderRadius: "50px", padding: "11px 18px", color: active ? C.red : C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600", cursor: "pointer" });
 
   return (
     <>
@@ -481,14 +481,14 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
         <input ref={importCsvRef} type="file" accept=".csv,.txt" style={{ display: "none" }} onChange={handleCsvImport} />
         <button onClick={() => importCsvRef.current?.click()}
-          style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer" }}>
+          style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
           {isMobile ? "↑ CSV" : "↑ Import CSV"}
         </button>
 
         <button
           onClick={() => onRunScoring && onRunScoring(positions)}
           disabled={marketScoringUi === UI.LOADING || positions.length === 0}
-          style={{ background: marketScoringUi === UI.LOADING ? C.snowOff : C.navyLight, border: `1px solid ${marketScoringUi === UI.LOADING ? C.border : "rgba(30,58,95,0.12)"}`, borderRadius: "8px", padding: "9px 16px", color: marketScoringUi === UI.LOADING ? C.inkSubtle : C.navy, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: marketScoringUi === UI.LOADING || positions.length === 0 ? "not-allowed" : "pointer" }}>
+          style={{ background: marketScoringUi === UI.LOADING ? C.snowOff : C.navyLight, border: `1px solid ${marketScoringUi === UI.LOADING ? C.border : "rgba(30,58,95,0.12)"}`, borderRadius: "8px", padding: "9px 16px", color: marketScoringUi === UI.LOADING ? C.inkSubtle : C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: marketScoringUi === UI.LOADING || positions.length === 0 ? "not-allowed" : "pointer" }}>
           {marketScoringUi === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={13} color={C.inkSubtle} /> Analyse…</span> : isMobile ? "🤖" : "🤖 Analyser toutes mes lignes"}
         </button>
 
@@ -504,7 +504,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
               setTimeout(() => setCaptureFlash(false), 1800);
               setShowCaptures(true);
             }}
-            style={{ background: captureFlash ? "rgba(5,150,105,0.12)" : C.snowOff, border: `1px solid ${captureFlash ? "rgba(5,150,105,0.3)" : C.border}`, borderRadius: "8px", padding: "9px 14px", color: captureFlash ? C.green : C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", transition: "all 0.3s ease", whiteSpace: "nowrap" }}>
+            style={{ background: captureFlash ? "rgba(5,150,105,0.12)" : C.snowOff, border: `1px solid ${captureFlash ? "rgba(5,150,105,0.3)" : C.border}`, borderRadius: "8px", padding: "9px 14px", color: captureFlash ? C.green : C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", transition: "all 0.3s ease", whiteSpace: "nowrap" }}>
             {captureFlash ? "✓ Capturé" : `📸${captureCount > 0 ? ` ${captureCount}` : ""}`}
           </button>
         )}
@@ -512,14 +512,14 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         {/* Voir les captures */}
         {captureCount > 0 && !showCaptures && (
           <button onClick={() => setShowCaptures(true)}
-            style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
+            style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
             📂{isMobile ? "" : " Voir"}
           </button>
         )}
 
         {positions.length > 0 && (
           <button onClick={() => window.print()} data-print-hide
-            style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
+            style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
             🖨️{isMobile ? "" : " PDF"}
           </button>
         )}
@@ -582,7 +582,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={savePosition} style={btnPrimary}>Enregistrer</button>
-            <button onClick={() => setShowForm(false)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 18px", color: C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer" }}>Annuler</button>
+            <button onClick={() => setShowForm(false)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 18px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>Annuler</button>
           </div>
         </div>
       )}
@@ -616,11 +616,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={() => applyImport(csvPreview.parsed)}
-              style={{ background: C.navy, border: "none", borderRadius: "8px", padding: "8px 18px", color: C.snow, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer" }}>
+              style={{ background: C.navy, border: "none", borderRadius: "8px", padding: "8px 18px", color: C.snow, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
               Appliquer l'import
             </button>
             <button onClick={() => setCsvPreview(null)}
-              style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 16px", color: C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer" }}>
+              style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 16px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
               Annuler
             </button>
           </div>
@@ -633,7 +633,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
             <button
               onClick={() => setShowCaptures(false)}
-              style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "600", cursor: "pointer" }}>
+              style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600", cursor: "pointer" }}>
               ✕ Fermer
             </button>
           </div>
@@ -653,7 +653,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
             <input
               value={searchText} onChange={e => setSearchText(e.target.value)}
               placeholder="🔍 Rechercher une valeur…"
-              style={{ flex: 1, minWidth: "160px", fontSize: "12px", fontFamily: "Inter, sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 12px", background: C.snow, color: C.ink, outline: "none" }}
+              style={{ flex: 1, minWidth: "160px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 12px", background: C.snow, color: C.ink, outline: "none" }}
             />
             <button onClick={() => {
               const cols = ["Nom","ISIN","PRU (€)","Quantité","Cours (€)","Valeur (€)","P/V %","Poids %"];
@@ -671,7 +671,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
               const a = document.createElement("a"); a.href = url;
               a.download = `portefeuille_${new Date().toISOString().slice(0,10)}.csv`;
               a.click(); URL.revokeObjectURL(url);
-            }} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 14px", fontSize: "11px", fontFamily: "Inter, sans-serif", fontWeight: "700", color: C.inkMuted, cursor: "pointer", whiteSpace: "nowrap" }}>
+            }} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 14px", fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", color: C.inkMuted, cursor: "pointer", whiteSpace: "nowrap" }}>
               ↓ Export CSV
             </button>
           </div>
@@ -755,7 +755,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                             {pos.isin && <span style={{ fontSize: "8px", color: C.inkSubtle, fontWeight: "500", letterSpacing: "0.3px", flexShrink: 0 }}>{pos.isin}</span>}
                             {sig && <span style={{ fontSize: "8px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "3px", padding: "1px 4px", whiteSpace: "nowrap", flexShrink: 0 }}>{sig}</span>}
                             <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance"
-                              style={{ background: "#5F01D1", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "10px", fontWeight: "700", color: "#fff", fontFamily: "Inter,sans-serif", padding: "2px 6px", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>
+                              style={{ background: "#5F01D1", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "10px", fontWeight: "700", color: "#fff", fontFamily: "'DM Sans', sans-serif", padding: "2px 6px", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>
                               Yahoo
                             </button>
                             {euronextUrl && <a href={euronextUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
@@ -768,7 +768,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                       <div onClick={e => { e.stopPropagation(); setEditCoursId(pos.id); setEditCoursVal(String(cours)); }} style={{ cursor: "text" }}>
                         {editCoursId === pos.id
                           ? <input autoFocus value={editCoursVal}
-                              style={{ width: "72px", fontSize: "12px", fontFamily: "Inter, sans-serif", color: C.navy, border: `1px solid ${C.navy}`, borderRadius: "4px", padding: "1px 5px", background: C.snowOff, outline: "none" }}
+                              style={{ width: "72px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", color: C.navy, border: `1px solid ${C.navy}`, borderRadius: "4px", padding: "1px 5px", background: C.snowOff, outline: "none" }}
                               onChange={e => setEditCoursVal(e.target.value)}
                               onBlur={() => { const v = parseFloat(editCoursVal.replace(",",".")); if (v > 0) { savePricePoint(pos.id, v); setPositions(prev => prev.map(p => p.id === pos.id ? { ...p, dernierCours: v, lastFetch: Date.now() } : p)); } setEditCoursId(null); }}
                               onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setEditCoursId(null); }} />
@@ -796,11 +796,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                       {/* Actions */}
                       <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
                         <button onClick={e => { e.stopPropagation(); setSellSimPos(pos); }}
-                          style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "6px", padding: "5px 8px", color: C.greenDark, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer", fontWeight: "700" }}>€</button>
+                          style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "6px", padding: "5px 8px", color: C.greenDark, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "700" }}>€</button>
                         <button onClick={e => { e.stopPropagation(); openForm(pos); }}
-                          style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "5px 8px", color: C.inkMuted, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>✏</button>
+                          style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "5px 8px", color: C.inkMuted, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✏</button>
                         <button onClick={e => { e.stopPropagation(); if (window.confirm(`Supprimer ${pos.nom} ?`)) setPositions(prev => prev.filter(p => p.id !== pos.id)); }}
-                          style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "6px", padding: "5px 8px", color: C.red, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>✕</button>
+                          style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "6px", padding: "5px 8px", color: C.red, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✕</button>
                       </div>
                     </div>
                   );
@@ -943,10 +943,10 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                         </a>
                       );
                     })()}
-                    <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance" style={{ background: "#5F01D1", border: "none", borderRadius: "8px", padding: "7px 14px", color: "#fff", fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: "700" }}>Yahoo Finance</button>
-                    <button onClick={() => setSellSimPos(pos)} title="Simuler une vente" style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "8px", padding: "7px 12px", color: C.greenDark, fontSize: "11px", fontFamily: "Inter, sans-serif", cursor: "pointer", fontWeight: "700" }}>€ Vendre</button>
-                    <button onClick={() => openForm(pos)} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 12px", color: C.inkMuted, fontSize: "11px", fontFamily: "Inter, sans-serif", cursor: "pointer" }}>✏</button>
-                    <button onClick={() => { if (window.confirm(`Supprimer ${pos.nom} ?`)) setPositions(prev => prev.filter(p => p.id !== pos.id)); }} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px 12px", color: C.red, fontSize: "11px", fontFamily: "Inter, sans-serif", cursor: "pointer" }}>✕</button>
+                    <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance" style={{ background: "#5F01D1", border: "none", borderRadius: "8px", padding: "7px 14px", color: "#fff", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "700" }}>Yahoo Finance</button>
+                    <button onClick={() => setSellSimPos(pos)} title="Simuler une vente" style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "8px", padding: "7px 12px", color: C.greenDark, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "700" }}>€ Vendre</button>
+                    <button onClick={() => openForm(pos)} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 12px", color: C.inkMuted, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✏</button>
+                    <button onClick={() => { if (window.confirm(`Supprimer ${pos.nom} ?`)) setPositions(prev => prev.filter(p => p.id !== pos.id)); }} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px 12px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✕</button>
                   </div>
                 </div>
               </div>
@@ -1396,11 +1396,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           {/* Buttons */}
           <div style={{ display: "flex", gap: "10px" }}>
             <button onClick={() => setVendreDisclaimer(null)}
-              style={{ flex: 1, padding: "12px", borderRadius: "12px", border: `1px solid ${C.border}`, background: C.snowOff, color: C.inkMuted, fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+              style={{ flex: 1, padding: "12px", borderRadius: "12px", border: `1px solid ${C.border}`, background: C.snowOff, color: C.inkMuted, fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
               Fermer
             </button>
             <button onClick={() => { setSellSimPos(vendreDisclaimer.pos); setVendreDisclaimer(null); }}
-              style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: C.navy, color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+              style={{ flex: 1, padding: "12px", borderRadius: "12px", border: "none", background: C.navy, color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
               Simuler la vente →
             </button>
           </div>

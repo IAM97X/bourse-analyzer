@@ -37,7 +37,7 @@ function BrokerLogo({ courtierKey }) {
       ) : (
         <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: "#6C6C70" }} />
       )}
-      <span style={{ fontSize: "11px", fontWeight: "600", color: C.inkMuted, fontFamily: "Inter,sans-serif" }}>
+      <span style={{ fontSize: "11px", fontWeight: "600", color: C.inkMuted, fontFamily: "'DM Sans', sans-serif" }}>
         {broker.label}
       </span>
     </div>
@@ -78,7 +78,7 @@ function AccountCard({ account, positions, onEnter, hidden, courtierKey }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
           <div style={{ width: "38px", height: "38px", borderRadius: "11px", background: btnGrad, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 4px 14px ${accentColor}44` }}>
-            <span style={{ fontSize: "13px", fontWeight: "800", color: "#fff", fontFamily: "Inter,sans-serif" }}>{account}</span>
+            <span style={{ fontSize: "13px", fontWeight: "800", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>{account}</span>
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: "15px", fontWeight: "700", color: C.ink, whiteSpace: "nowrap" }}>
@@ -152,7 +152,7 @@ function AccountCard({ account, positions, onEnter, hidden, courtierKey }) {
           borderRadius: "13px", border: "none",
           background: btnGrad,
           color: "#fff", fontSize: "13px", fontWeight: "700",
-          cursor: "pointer", fontFamily: "Inter,sans-serif",
+          cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
           boxShadow: `0 4px 16px ${accentColor}44`,
           transition: "opacity 0.15s",
           marginTop: "auto",

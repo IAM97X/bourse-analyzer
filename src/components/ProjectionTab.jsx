@@ -112,7 +112,7 @@ function SuiviHistorique() {
             const y = yS(v);
             return <g key={r}>
               <line x1={ML} x2={W - MR} y1={y} y2={y} stroke="#e5e7eb" strokeWidth="1" />
-              <text x={ML - 8} y={y + 4} fontSize="10" fill={C.inkSubtle} textAnchor="end" fontFamily="Inter,sans-serif">{fmtK(v)}</text>
+              <text x={ML - 8} y={y + 4} fontSize="10" fill={C.inkSubtle} textAnchor="end" fontFamily="'DM Sans', sans-serif">{fmtK(v)}</text>
             </g>;
           })}
 
@@ -133,7 +133,7 @@ function SuiviHistorique() {
             const idx = points.indexOf(p);
             const dt = new Date(p.date);
             const lbl = dt.toLocaleDateString("fr-FR", { month: "short", year: points.length > 30 ? "2-digit" : undefined });
-            return <text key={i} x={xS(idx)} y={H - 6} fontSize="10" fill={C.inkSubtle} textAnchor="middle" fontFamily="Inter,sans-serif">{lbl}</text>;
+            return <text key={i} x={xS(idx)} y={H - 6} fontSize="10" fill={C.inkSubtle} textAnchor="middle" fontFamily="'DM Sans', sans-serif">{lbl}</text>;
           })}
 
           {/* Zone hover invisible */}
@@ -154,10 +154,10 @@ function SuiviHistorique() {
               <circle cx={cx} cy={cy} r="5" fill="#16a34a" stroke="white" strokeWidth="2" />
               <circle cx={xS(idx)} cy={yS(hovP.projete)} r="4" fill={C.navy} stroke="white" strokeWidth="1.5" opacity="0.6" />
               <rect x={bx} y={cy - 38} width="140" height="70" rx="8" fill="white" stroke="#e5e7eb" strokeWidth="1" filter="drop-shadow(0 2px 6px rgba(0,0,0,0.08))" />
-              <text x={bx + 10} y={cy - 20} fontSize="10" fill={C.inkSubtle} fontFamily="Inter,sans-serif">{new Date(hovP.date).toLocaleDateString("fr-FR")}</text>
-              <text x={bx + 10} y={cy - 5} fontSize="12" fontWeight="700" fill="#16a34a" fontFamily="Inter,sans-serif">Réel : {fmtEur(Math.round(hovP.reel))}</text>
-              <text x={bx + 10} y={cy + 10} fontSize="11" fill={C.navy} fontFamily="Inter,sans-serif" opacity="0.7">Projeté : {fmtEur(Math.round(hovP.projete))}</text>
-              <text x={bx + 10} y={cy + 25} fontSize="11" fontWeight="700" fill={d >= 0 ? "#16a34a" : C.red} fontFamily="Inter,sans-serif">{d >= 0 ? "+" : ""}{fmtEur(Math.round(d))}</text>
+              <text x={bx + 10} y={cy - 20} fontSize="10" fill={C.inkSubtle} fontFamily="'DM Sans', sans-serif">{new Date(hovP.date).toLocaleDateString("fr-FR")}</text>
+              <text x={bx + 10} y={cy - 5} fontSize="12" fontWeight="700" fill="#16a34a" fontFamily="'DM Sans', sans-serif">Réel : {fmtEur(Math.round(hovP.reel))}</text>
+              <text x={bx + 10} y={cy + 10} fontSize="11" fill={C.navy} fontFamily="'DM Sans', sans-serif" opacity="0.7">Projeté : {fmtEur(Math.round(hovP.projete))}</text>
+              <text x={bx + 10} y={cy + 25} fontSize="11" fontWeight="700" fill={d >= 0 ? "#16a34a" : C.red} fontFamily="'DM Sans', sans-serif">{d >= 0 ? "+" : ""}{fmtEur(Math.round(d))}</text>
             </g>;
           })()}
         </svg>
@@ -554,7 +554,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
             <div style={{ display: "flex", background: "#ECFEFF", borderRadius: "10px", padding: "2px", border: "1px solid #A5F3FC" }}>
               {[1, 3, 5].map(y => (
                 <button key={y} onClick={() => setHistWindow(y)}
-                  style={{ padding: "5px 10px", borderRadius: "8px", border: "none", fontSize: "11px", fontWeight: "700", fontFamily: "Inter,sans-serif", cursor: "pointer", transition: "all 0.15s",
+                  style={{ padding: "5px 10px", borderRadius: "8px", border: "none", fontSize: "11px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", transition: "all 0.15s",
                     background: histWindow === y ? "#0891b2" : "transparent",
                     color: histWindow === y ? "#fff" : "#0891b2",
                     boxShadow: histWindow === y ? shadow.pill : "none" }}>
@@ -566,7 +566,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
             <div style={{ display: "flex", background: C.snowOff, borderRadius: "10px", padding: "2px", border: `1px solid ${C.border}` }}>
               {[10, 15, 20, 30, 40].map(y => (
                 <button key={y} onClick={() => { setHorizonYears(y); setTooltip(null); }}
-                  style={{ padding: "5px 14px", borderRadius: "8px", border: "none", fontSize: "11px", fontWeight: "700", fontFamily: "Inter,sans-serif", cursor: "pointer", transition: "all 0.15s",
+                  style={{ padding: "5px 14px", borderRadius: "8px", border: "none", fontSize: "11px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", transition: "all 0.15s",
                     background: horizonYears === y ? C.navy : "transparent",
                     color: horizonYears === y ? "#fff" : C.inkMuted,
                     boxShadow: horizonYears === y ? shadow.pill : "none" }}>
@@ -582,7 +582,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                   type="number" min="50" max="75" step="1"
                   value={ageRetraiteStr}
                   onChange={e => { setAgeRetraiteStr(e.target.value); const v = parseInt(e.target.value); if (v >= 50 && v <= 75) localStorage.setItem("bourse_age_retraite", String(v)); }}
-                  style={{ width: "38px", padding: "2px 4px", borderRadius: "6px", border: "1px solid rgba(245,158,11,0.35)", background: "#FFFBEB", fontSize: "11px", fontWeight: "800", color: "#92400E", fontFamily: "Inter,sans-serif", textAlign: "center", outline: "none" }}
+                  style={{ width: "38px", padding: "2px 4px", borderRadius: "6px", border: "1px solid rgba(245,158,11,0.35)", background: "#FFFBEB", fontSize: "11px", fontWeight: "800", color: "#92400E", fontFamily: "'DM Sans', sans-serif", textAlign: "center", outline: "none" }}
                 />
                 <span style={{ fontSize: "10px", color: "#92400E", fontWeight: "600" }}>ans</span>
               </div>
@@ -593,7 +593,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
               <input type="text" inputMode="decimal" value={inflationRateStr}
                 onClick={e => e.stopPropagation()}
                 onChange={e => { const raw = e.target.value; setInflationRateStr(raw); const v = parseFloat(raw.replace(",", ".")); if (!isNaN(v)) localStorage.setItem("bourse_inflation_rate", v); }}
-                style={{ width: "36px", border: "none", background: "transparent", fontSize: "10px", fontWeight: "700", color: showInflation ? C.goldDark : C.inkSubtle, textAlign: "center", outline: "none", fontFamily: "Inter,sans-serif" }} />
+                style={{ width: "36px", border: "none", background: "transparent", fontSize: "10px", fontWeight: "700", color: showInflation ? C.goldDark : C.inkSubtle, textAlign: "center", outline: "none", fontFamily: "'DM Sans', sans-serif" }} />
               <span style={{ fontSize: "10px", fontWeight: "700", color: showInflation ? C.goldDark : C.inkSubtle }}>%</span>
             </div>
             {/* Impôt de sortie */}
@@ -601,17 +601,17 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
               <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle }}>Impôt sortie</span>
               <input type="text" inputMode="decimal" value={impotSortieStr}
                 onChange={e => { const raw = e.target.value; setImpotSortieStr(raw); const v = parseFloat(raw.replace(",", ".")); if (!isNaN(v)) save("bourse_impot_sortie", v); }}
-                style={{ width: "32px", border: "none", background: "transparent", fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textAlign: "center", outline: "none", fontFamily: "Inter,sans-serif" }} />
+                style={{ width: "32px", border: "none", background: "transparent", fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textAlign: "center", outline: "none", fontFamily: "'DM Sans', sans-serif" }} />
               <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle }}>%</span>
             </div>
             {/* Projection historique */}
             <button onClick={() => histProj ? setHistProj(null) : computeHistoricalProj()} disabled={loadingHist}
-              style={{ padding: "6px 12px", borderRadius: "10px", fontSize: "10px", fontWeight: "700", fontFamily: "Inter,sans-serif", cursor: "pointer", border: `1px solid ${histProj ? "rgba(124,58,237,0.4)" : C.border}`, background: histProj ? "rgba(124,58,237,0.08)" : C.snowOff, color: histProj ? "#7C3AED" : C.inkMuted, opacity: loadingHist ? 0.6 : 1 }}>
+              style={{ padding: "6px 12px", borderRadius: "10px", fontSize: "10px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", border: `1px solid ${histProj ? "rgba(124,58,237,0.4)" : C.border}`, background: histProj ? "rgba(124,58,237,0.08)" : C.snowOff, color: histProj ? "#7C3AED" : C.inkMuted, opacity: loadingHist ? 0.6 : 1 }}>
               {loadingHist ? <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}><ThinkingSpinner size={12} color="#7C3AED" /> Calcul…</span> : histProj ? `⬟ ${(histProj.taux * 100).toFixed(1)}%/an ×` : "⬟ Projection historique"}
             </button>
             {/* Reconstruction historique */}
             <button onClick={reconstructSnapshots} disabled={reconstructing}
-              style={{ padding: "6px 12px", borderRadius: "10px", fontSize: "10px", fontWeight: "700", fontFamily: "Inter,sans-serif", cursor: "pointer", border: `1px solid #A5F3FC`, background: "#ECFEFF", color: "#0891b2", opacity: reconstructing ? 0.6 : 1 }}>
+              style={{ padding: "6px 12px", borderRadius: "10px", fontSize: "10px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", border: `1px solid #A5F3FC`, background: "#ECFEFF", color: "#0891b2", opacity: reconstructing ? 0.6 : 1 }}>
               {reconstructing ? <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}><ThinkingSpinner size={12} color="#0891b2" /> Reconstruction…</span> : "↺ Reconstruire l'historique"}
             </button>
           </div>
@@ -680,7 +680,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                   <line x1={PAD.left} x2={W - PAD.right} y1={y} y2={y}
                     stroke={i === 0 ? "#CBD5E1" : "#E8ECF2"} strokeWidth={i === 0 ? "1" : "0.6"} />
                   <text x={PAD.left - 10} y={y + 3.5} textAnchor="end" fontSize="8.5"
-                    fill="#94A3B8" fontFamily="Inter, sans-serif" fontWeight="500">{label}€</text>
+                    fill="#94A3B8" fontFamily="'DM Sans', sans-serif" fontWeight="500">{label}€</text>
                 </g>
               );
             })}
@@ -693,12 +693,12 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                 <g key={a}>
                   <line x1={x} x2={x} y1={PAD.top} y2={H - PAD.bottom} stroke="#E8ECF2" strokeWidth="0.6" />
                   <text x={x} y={H - PAD.bottom + 14} textAnchor="middle" fontSize="9"
-                    fill={a === 0 ? "#475569" : "#94A3B8"} fontFamily="Inter, sans-serif" fontWeight={a === 0 ? "700" : "500"}>
+                    fill={a === 0 ? "#475569" : "#94A3B8"} fontFamily="'DM Sans', sans-serif" fontWeight={a === 0 ? "700" : "500"}>
                     {a === 0 ? "Auj." : `${a} ans`}
                   </text>
                   {a > 0 && (
                     <text x={x} y={H - PAD.bottom + 56} textAnchor="middle" fontSize="8"
-                      fill="#B0BAC9" fontFamily="Inter, sans-serif" fontWeight="400">
+                      fill="#B0BAC9" fontFamily="'DM Sans', sans-serif" fontWeight="400">
                       {anneeCalendaire}
                     </text>
                   )}
@@ -711,7 +711,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
               const y = Math.floor(pastMois / 12);
               return (
                 <text x={xS(-pastMois)} y={H - PAD.bottom + 15} textAnchor="middle" fontSize="9"
-                  fill="#94A3B8" fontFamily="Inter, sans-serif">
+                  fill="#94A3B8" fontFamily="'DM Sans', sans-serif">
                   {pastMois >= 12 ? `-${y} an${y > 1 ? "s" : ""}` : `-${pastMois}m`}
                 </text>
               );
@@ -732,7 +732,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                     stroke="#F59E0B" strokeWidth={hoverRetraite ? 1.8 : 0.8}
                     strokeDasharray="4,3" opacity={hoverRetraite ? 0.9 : 0.25} />
                   <rect x={xR - 30} y={yB + 22} width={60} height={12} rx="3" fill="#FFFBEB" stroke="#F59E0B" strokeWidth="0.8" opacity={hoverRetraite ? 1 : 0.5} />
-                  <text x={xR} y={yB + 30} textAnchor="middle" fontSize="7" fill="#92400E" fontFamily="Inter, sans-serif" fontWeight="700" opacity={hoverRetraite ? 1 : 0.5}>Retraite {ageActuel + ansDuRetraite} ans</text>
+                  <text x={xR} y={yB + 30} textAnchor="middle" fontSize="7" fill="#92400E" fontFamily="'DM Sans', sans-serif" fontWeight="700" opacity={hoverRetraite ? 1 : 0.5}>Retraite {ageActuel + ansDuRetraite} ans</text>
                 </g>
               );
             })()}
@@ -753,7 +753,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                       fill="#EDE9FE" stroke={couleur} strokeWidth="0.8"
                       opacity={hoverPlafond ? 1 : 0.5} />
                     <text x={xP} y={yB + 30} textAnchor="middle" fontSize="7" fill={couleur}
-                      fontFamily="Inter, sans-serif" fontWeight="700" opacity={hoverPlafond ? 1 : 0.5}>{label}</text>
+                      fontFamily="'DM Sans', sans-serif" fontWeight="700" opacity={hoverPlafond ? 1 : 0.5}>{label}</text>
                   </>); })()}
                   <rect x={xP - 16} y={PAD.top} width={32} height={innerH} fill="transparent"
                     style={{ cursor: "crosshair" }}
@@ -814,7 +814,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                         stroke={sc.color} strokeWidth="0.8" opacity="0.4" />
                     )}
                     <text x={W - PAD.right + 7} y={yLabel} fontSize="8.5" fill={sc.color}
-                      fontFamily="Inter, sans-serif" fontWeight="700">{labelTxt}€</text>
+                      fontFamily="'DM Sans', sans-serif" fontWeight="700">{labelTxt}€</text>
                   </g>
                 );
               });
@@ -893,7 +893,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                         <rect x={xR + 9} y={yLabel - 7} width={lw} height={13} rx="3"
                           fill="white" stroke={sc.color} strokeWidth="0.9" />
                         <text x={xR + 9 + lw / 2} y={yLabel + 3} fontSize="7.5" fill={sc.color}
-                          textAnchor="middle" fontFamily="Inter, sans-serif" fontWeight="700">{labelTxt}</text>
+                          textAnchor="middle" fontFamily="'DM Sans', sans-serif" fontWeight="700">{labelTxt}</text>
                       </g>
                     );
                   })}
@@ -912,7 +912,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                   <rect x={tx - 2} y={ty - 9} width={lw} height={13} rx="3"
                     fill="white" stroke="#334155" strokeWidth="0.8" opacity="0.95" />
                   <text x={tx + lw/2 - 2} y={ty + 1} fontSize="9" fill="#1E293B"
-                    textAnchor="middle" fontFamily="Inter, sans-serif" fontWeight="700">{label}</text>
+                    textAnchor="middle" fontFamily="'DM Sans', sans-serif" fontWeight="700">{label}</text>
                 </g>
               );
             })()}
@@ -1156,7 +1156,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
         const montantNet  = R - totalImpots;
         const tauxEff     = R > 0 ? (totalImpots / R) * 100 : 0;
 
-        const inp  = { width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: "8px", fontSize: "13px", outline: "none", background: C.snow, color: C.ink, fontFamily: "Inter,sans-serif", boxSizing: "border-box" };
+        const inp  = { width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: "8px", fontSize: "13px", outline: "none", background: C.snow, color: C.ink, fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box" };
         const row  = { display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "2px" : "0", padding: "9px 0", borderBottom: `1px solid ${C.border}` };
         const lbl  = { fontSize: "12px", color: C.inkMuted };
         const val  = (c = C.ink) => ({ fontSize: "13px", fontWeight: "700", color: c, flexShrink: 0 });
@@ -1165,15 +1165,15 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
           <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", overflow: "hidden", boxShadow: shadow.card }}>
             {/* Header */}
             <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "10px", background: C.navyLight }}>
-              <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <div style={{ width: "32px", height: "32px", borderRadius: "10px", background: "linear-gradient(135deg, #2D6CB5, #4B9DD8)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="8" cy="8" r="6"/>
                   <path d="M8 5 L8 8 L10.5 9.5"/>
                 </svg>
               </div>
               <div>
-                <div style={{ fontSize: "13px", fontWeight: "700", color: C.navy }}>Simulateur de retrait PEA</div>
-                <div style={{ fontSize: "10px", color: C.inkMuted, marginTop: "1px" }}>Calcul de la fiscalité applicable selon l'ancienneté du plan</div>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: C.navy }}>Simulateur de retrait {account}</div>
+                <div style={{ fontSize: "10px", color: C.inkMuted, marginTop: "1px" }}>{isPEA ? "Calcul de la fiscalité applicable selon l'ancienneté du plan" : "Calcul de la fiscalité applicable sur les plus-values"}</div>
               </div>
             </div>
 
@@ -1186,7 +1186,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                   <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
                     {[0,1,2,3,5,7,10,15,20].map(h => (
                       <button key={h} onClick={() => setRetraitHorizon(h)}
-                        style={{ padding: "4px 9px", borderRadius: "16px", border: `1.5px solid ${retraitHorizon === h ? C.navy : C.border}`, background: retraitHorizon === h ? C.navyLight : C.snow, color: retraitHorizon === h ? C.navy : C.inkMuted, fontSize: "10px", fontWeight: retraitHorizon === h ? "700" : "500", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                        style={{ padding: "4px 9px", borderRadius: "16px", border: `1.5px solid ${retraitHorizon === h ? C.navy : C.border}`, background: retraitHorizon === h ? C.navyLight : C.snow, color: retraitHorizon === h ? C.navy : C.inkMuted, fontSize: "10px", fontWeight: retraitHorizon === h ? "700" : "500", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                         {h === 0 ? "Maintenant" : `${h}a`}
                       </button>
                     ))}
@@ -1197,7 +1197,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                       <div style={{ display: "flex", gap: "4px" }}>
                         {[[-5,"Pess.","#EF4444"],[0,"Neutre",C.inkMuted],[7,"Base","#2563EB"],[12,"Opt.",C.green]].map(([t,label,col]) => (
                           <button key={t} onClick={() => setRetraitTauxAn(t)}
-                            style={{ flex: 1, padding: "5px 2px", borderRadius: "8px", border: `1.5px solid ${retraitTauxAn === t ? col : C.border}`, background: retraitTauxAn === t ? col + "18" : C.snow, color: retraitTauxAn === t ? col : C.inkMuted, fontSize: "9px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif", textAlign: "center" }}>
+                            style={{ flex: 1, padding: "5px 2px", borderRadius: "8px", border: `1.5px solid ${retraitTauxAn === t ? col : C.border}`, background: retraitTauxAn === t ? col + "18" : C.snow, color: retraitTauxAn === t ? col : C.inkMuted, fontSize: "9px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", textAlign: "center" }}>
                             <div>{label}</div>
                             <div style={{ opacity: 0.7 }}>{t >= 0 ? "+" : ""}{t}%</div>
                           </button>
@@ -1213,25 +1213,27 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                     onChange={e => setRetraitMontant(e.target.value)} style={inp} />
                 </div>
 
+                {isPEA && (
                 <div>
                   <div style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", marginBottom: "6px" }}>Ancienneté du PEA</div>
                   <div style={{ display: "flex", gap: "6px" }}>
                     {[["avant5","Moins de 5 ans"],["apres5","5 ans et plus"]].map(([v, label]) => (
                       <button key={v} onClick={() => setRetraitAnciennete(v)}
-                        style={{ flex: 1, padding: "8px 6px", borderRadius: "8px", border: `1.5px solid ${retraitAnciennete === v ? C.navy : C.border}`, background: retraitAnciennete === v ? C.navyLight : C.snow, color: retraitAnciennete === v ? C.navy : C.inkMuted, fontSize: "11px", fontWeight: retraitAnciennete === v ? "700" : "400", cursor: "pointer", fontFamily: "Inter,sans-serif", transition: "all 0.15s" }}>
+                        style={{ flex: 1, padding: "8px 6px", borderRadius: "8px", border: `1.5px solid ${retraitAnciennete === v ? C.navy : C.border}`, background: retraitAnciennete === v ? C.navyLight : C.snow, color: retraitAnciennete === v ? C.navy : C.inkMuted, fontSize: "11px", fontWeight: retraitAnciennete === v ? "700" : "400", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s" }}>
                         {label}
                       </button>
                     ))}
                   </div>
                 </div>
+                )}
 
-                {retraitAnciennete === "avant5" && (
+                {(!isPEA || retraitAnciennete === "avant5") && (
                   <div>
                     <div style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", marginBottom: "6px" }}>Régime d'imposition (IR)</div>
                     <div style={{ display: "flex", gap: "6px" }}>
                       {[["pfu","Flat Tax 30 %"],["bareme","Barème progressif"]].map(([v, label]) => (
                         <button key={v} onClick={() => setRetraitRegime(v)}
-                          style={{ flex: 1, padding: "8px 6px", borderRadius: "8px", border: `1.5px solid ${retraitRegime === v ? C.navy : C.border}`, background: retraitRegime === v ? C.navyLight : C.snow, color: retraitRegime === v ? C.navy : C.inkMuted, fontSize: "11px", fontWeight: retraitRegime === v ? "700" : "400", cursor: "pointer", fontFamily: "Inter,sans-serif", transition: "all 0.15s" }}>
+                          style={{ flex: 1, padding: "8px 6px", borderRadius: "8px", border: `1.5px solid ${retraitRegime === v ? C.navy : C.border}`, background: retraitRegime === v ? C.navyLight : C.snow, color: retraitRegime === v ? C.navy : C.inkMuted, fontSize: "11px", fontWeight: retraitRegime === v ? "700" : "400", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s" }}>
                           {label}
                         </button>
                       ))}
@@ -1242,7 +1244,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                         <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
                           {[0, 11, 30, 41, 45].map(tmi => (
                             <button key={tmi} onClick={() => setRetraitTMI(tmi)}
-                              style={{ padding: "5px 10px", borderRadius: "6px", border: `1.5px solid ${retraitTMI === tmi ? C.navy : C.border}`, background: retraitTMI === tmi ? C.navy : C.snow, color: retraitTMI === tmi ? "#fff" : C.inkMuted, fontSize: "11px", fontWeight: "600", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+                              style={{ padding: "5px 10px", borderRadius: "6px", border: `1.5px solid ${retraitTMI === tmi ? C.navy : C.border}`, background: retraitTMI === tmi ? C.navy : C.snow, color: retraitTMI === tmi ? "#fff" : C.inkMuted, fontSize: "11px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                               {tmi}%
                             </button>
                           ))}
@@ -1326,7 +1328,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                     </div>
 
                     {/* Résultat net */}
-                    <div style={{ background: `linear-gradient(135deg, ${C.navy} 0%, #C9A96E 100%)`, borderRadius: "12px", padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-end" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "10px" : "0" }}>
+                    <div style={{ background: `linear-gradient(135deg, #1A3A6B 0%, #2D6CB5 60%, #4B9DD8 100%)`, borderRadius: "12px", padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-end" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "10px" : "0" }}>
                       <div>
                         <div style={{ fontSize: "10px", color: "rgba(193,232,255,0.8)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "1px" }}>Montant net reçu</div>
                         <div style={{ fontSize: isMobile ? "28px" : "22px", fontWeight: "800", color: "#FFFFFF", marginTop: "3px" }}>{fmtEur(montantNet)}</div>

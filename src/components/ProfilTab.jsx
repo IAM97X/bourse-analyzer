@@ -46,11 +46,11 @@ export function ApiKeysSection() {
             <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px" }}>Prioritaire sur Gemini si configurée. Active des analyses plus poussées.</div>
             <input style={inp} type="password" placeholder="sk-ant-api03-…" value={keys.anthropic || ""} onChange={e => setKeys(k => ({ ...k, anthropic: e.target.value }))} autoComplete="off" spellCheck="false" />
           </div>
-          <button onClick={handleSave} style={{ background: saved ? C.greenLight : C.navy, border: saved ? `1px solid rgba(5,150,105,0.2)` : "none", borderRadius: "12px", padding: "12px", color: saved ? C.green : "#fff", fontSize: "12px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>
+          <button onClick={handleSave} style={{ background: saved ? C.greenLight : C.navy, border: saved ? `1px solid rgba(5,150,105,0.2)` : "none", borderRadius: "12px", padding: "12px", color: saved ? C.green : "#fff", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
             {saved ? "✓ Clés sauvegardées" : "Sauvegarder les clés"}
           </button>
           {hasKeys && (
-            <button onClick={() => { save("bourse_api_keys", {}); setKeys({}); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "12px", padding: "9px", color: C.inkMuted, fontSize: "11px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>
+            <button onClick={() => { save("bourse_api_keys", {}); setKeys({}); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "12px", padding: "9px", color: C.inkMuted, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
               Effacer les clés
             </button>
           )}
@@ -74,7 +74,7 @@ export function AccountDatesSection() {
 
   const agePEA = peaDate ? ((Date.now() - new Date(peaDate).getTime()) / (1000*60*60*24*365)).toFixed(1) : null;
   const ageCTO = ctoDate ? ((Date.now() - new Date(ctoDate).getTime()) / (1000*60*60*24*365)).toFixed(1) : null;
-  const inp = { width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "10px 14px", color: C.ink, fontSize: "13px", fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box" };
+  const inp = { width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "10px 14px", color: C.ink, fontSize: "13px", fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" };
   const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", display: "block" };
 
   return (
@@ -96,7 +96,7 @@ export function AccountDatesSection() {
           {ageCTO && <div style={{ fontSize: "10px", marginTop: "5px", color: C.inkSubtle }}>{ageCTO} ans — flat tax 30%</div>}
         </div>
       </div>
-      <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: "10px", border: saved ? `1px solid rgba(5,150,105,0.25)` : `1px solid ${C.border}`, background: saved ? C.greenLight : C.snowOff, color: saved ? C.green : C.inkMuted, fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+      <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: "10px", border: saved ? `1px solid rgba(5,150,105,0.25)` : `1px solid ${C.border}`, background: saved ? C.greenLight : C.snowOff, color: saved ? C.green : C.inkMuted, fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
         {saved ? "✓ Dates enregistrées" : "Enregistrer les dates"}
       </button>
     </div>
@@ -113,7 +113,7 @@ function ProfilSection({ title, children }) {
   );
 }
 
-const INP_STYLE = { width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "12px 16px", color: C.ink, fontSize: "14px", fontFamily: "Inter,sans-serif", outline: "none", boxSizing: "border-box", fontWeight: "500" };
+const INP_STYLE = { width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "12px 16px", color: C.ink, fontSize: "14px", fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box", fontWeight: "500" };
 const LBL_STYLE = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "8px", display: "block" };
 
 // ─── Profil Tab ───────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ function ProfilTab({ profil, onChange }) {
   const inp    = INP_STYLE;
   const lbl    = LBL_STYLE;
   const Section = ProfilSection;
-  const optBtn = (active) => ({ flex: 1, padding: "11px 8px", background: active ? C.paleBlue : C.snowOff, border: active ? `1px solid rgba(30,58,95,0.12)` : `1px solid ${C.border}`, borderRadius: "12px", color: active ? C.navy : C.inkMuted, fontSize: "12px", fontFamily: "Inter,sans-serif", cursor: "pointer", textAlign: "center", fontWeight: active ? "700" : "400" });
+  const optBtn = (active) => ({ flex: 1, padding: "11px 8px", background: active ? C.paleBlue : C.snowOff, border: active ? `1px solid rgba(30,58,95,0.12)` : `1px solid ${C.border}`, borderRadius: "12px", color: active ? C.navy : C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", textAlign: "center", fontWeight: active ? "700" : "400" });
 
   return (
     <div>
@@ -326,7 +326,7 @@ function ProfilTab({ profil, onChange }) {
             <AccountDatesSection />
           </Section>
 
-          <button onClick={handleSave} style={{ width: "100%", background: saved ? C.greenLight : C.navy, border: saved ? `1px solid rgba(5,150,105,0.2)` : "none", borderRadius: "14px", padding: "14px", color: saved ? C.green : "#fff", fontSize: "13px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer", boxShadow: saved ? "none" : shadow.hover }}>
+          <button onClick={handleSave} style={{ width: "100%", background: saved ? C.greenLight : C.navy, border: saved ? `1px solid rgba(5,150,105,0.2)` : "none", borderRadius: "14px", padding: "14px", color: saved ? C.green : "#fff", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", boxShadow: saved ? "none" : shadow.hover }}>
             {saved ? "✓ Enregistré" : "Enregistrer le profil"}
           </button>
         </div>
@@ -374,7 +374,7 @@ export function ParametresTab({ profil, onChange }) {
               <div style={{ display: "flex", gap: "6px" }}>
                 {AI_EMOJI_OPTIONS.map((cat, i) => (
                   <button key={i} onClick={() => setEmojiCatIdx(i)}
-                    style={{ padding: "4px 10px", borderRadius: "8px", border: `1px solid ${emojiCatIdx === i ? C.navy : C.border}`, background: emojiCatIdx === i ? C.navyLight : C.snowOff, color: emojiCatIdx === i ? C.navy : C.inkMuted, fontSize: "11px", fontFamily: "Inter,sans-serif", fontWeight: "600", cursor: "pointer" }}>
+                    style={{ padding: "4px 10px", borderRadius: "8px", border: `1px solid ${emojiCatIdx === i ? C.navy : C.border}`, background: emojiCatIdx === i ? C.navyLight : C.snowOff, color: emojiCatIdx === i ? C.navy : C.inkMuted, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600", cursor: "pointer" }}>
                     {cat.label}
                   </button>
                 ))}
@@ -392,12 +392,12 @@ export function ParametresTab({ profil, onChange }) {
           <div>
             <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px" }}>Nom de l'assistant</label>
             <input value={aiCfg.nom || ""} onChange={e => saveAiCfg({ nom: e.target.value })} placeholder="ex: Aria, Max, Léa…"
-              style={{ width: "100%", fontSize: "13px", fontFamily: "Inter,sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none", boxSizing: "border-box" }} />
+              style={{ width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none", boxSizing: "border-box" }} />
           </div>
           <div>
             <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px" }}>Ton</label>
             <select value={aiCfg.ton || "pedagogique"} onChange={e => saveAiCfg({ ton: e.target.value })}
-              style={{ width: "100%", fontSize: "13px", fontFamily: "Inter,sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none" }}>
+              style={{ width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none" }}>
               <option value="pedagogique">Pédagogique</option>
               <option value="professionnel">Direct et professionnel</option>
               <option value="conservateur">Prudent et conservateur</option>
@@ -407,7 +407,7 @@ export function ParametresTab({ profil, onChange }) {
           <div>
             <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px" }}>Longueur des réponses</label>
             <select value={aiCfg.longueur || "concis"} onChange={e => saveAiCfg({ longueur: e.target.value })}
-              style={{ width: "100%", fontSize: "13px", fontFamily: "Inter,sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none" }}>
+              style={{ width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none" }}>
               <option value="concis">Concis (3-5 phrases)</option>
               <option value="detaille">Détaillé</option>
             </select>
@@ -416,12 +416,12 @@ export function ParametresTab({ profil, onChange }) {
             <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px" }}>Instructions personnalisées</label>
             <textarea value={aiCfg.instructions || ""} onChange={e => saveAiCfg({ instructions: e.target.value })}
               placeholder="ex: Je suis un investisseur prudent, privilégie les ETF…" rows={4}
-              style={{ width: "100%", fontSize: "12px", fontFamily: "Inter,sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+              style={{ width: "100%", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none", resize: "vertical", boxSizing: "border-box" }} />
             <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Injectées dans chaque conversation avec l'assistant.</div>
           </div>
           {(aiCfg.nom || aiCfg.instructions) && (
             <button onClick={() => saveAiCfg({ nom: "", ton: "pedagogique", longueur: "concis", instructions: "" })}
-              style={{ alignSelf: "flex-start", background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px 14px", color: C.red, fontSize: "11px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>
+              style={{ alignSelf: "flex-start", background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px 14px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
               Réinitialiser
             </button>
           )}
@@ -438,10 +438,10 @@ export function ParametresTab({ profil, onChange }) {
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a"); a.href = url; a.download = `bourse-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
-          }} style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "8px", padding: "9px 16px", color: C.navy, fontSize: "12px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>
+          }} style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "8px", padding: "9px 16px", color: C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
             ↓ Exporter JSON
           </button>
-          <label style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 16px", color: C.inkMuted, fontSize: "12px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>
+          <label style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 16px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
             ↑ Importer JSON
             <input type="file" accept=".json" style={{ display: "none" }} onChange={e => {
               const file = e.target.files?.[0]; if (!file) return;

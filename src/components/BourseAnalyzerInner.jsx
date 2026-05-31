@@ -63,7 +63,7 @@ function PillBar({ pills, active, onChange }) {
             style={{
               padding: "8px 18px", borderRadius: "50px", cursor: "pointer",
               fontSize: "13px", fontWeight: isActive ? "600" : "400",
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: "'DM Sans', sans-serif",
               background: isActive ? "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)" : "transparent",
               color: isActive ? "#FFFFFF" : "#6C6C70",
               border: isActive ? "none" : "1px solid rgba(0,0,0,0.1)",
@@ -90,7 +90,7 @@ function GeminiBanner({ onDismiss, onSettings }) {
         </div>
       </div>
       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-        <button onClick={onSettings} style={{ fontSize: "11px", fontWeight: "700", color: "#1D4ED8", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", borderRadius: "8px", padding: "5px 12px", cursor: "pointer", fontFamily: "Inter,sans-serif" }}>
+        <button onClick={onSettings} style={{ fontSize: "11px", fontWeight: "700", color: "#1D4ED8", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", borderRadius: "8px", padding: "5px 12px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
           Ajouter Claude
         </button>
         <button onClick={onDismiss} style={{ background: "none", border: "none", color: "#93C5FD", cursor: "pointer", fontSize: "14px", padding: "2px 4px", lineHeight: 1 }} title="Fermer">×</button>
@@ -111,7 +111,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     try { return !localStorage.getItem(ONBOARDING_KEY); } catch { return false; }
   });
   const [showTour, setShowTour] = useState(false);
-  const showGuide = useCallback(() => { try { localStorage.removeItem("boursenext_tour_v1"); } catch {} setShowTour(true); }, []);
+  const showGuide = useCallback(() => { setShowTour(true); }, []);
   const [mobileNavOpen, setMobileNavOpen]       = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => load("bourse_sidebar_collapsed", true));
   const toggleSidebarCollapse = useCallback(() => setSidebarCollapsed(v => { const next = !v; save("bourse_sidebar_collapsed", next); return next; }), []);
@@ -131,7 +131,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     setActiveTab(lastTab);
   };
   const [profil, setProfil]                     = useState(() => load("bourse_profil", DEFAULT_PROFIL));
-  const [compact, setCompact]                   = useState(() => load("bourse_compact", false));
   const [portfolioVersion, setPortfolioVersion] = useState(0);
   const [refreshing, setRefreshing]             = useState(true);
   const [showBrand, setShowBrand]               = useState(true);
@@ -142,7 +141,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [marketScores, setMarketScores]         = useState(() => load("bourse_market_scores", null));
   const [marketScoringUi, setMarketScoringUi]   = useState(() => load("bourse_market_scores", null)?.length > 0 ? UI.RESULT : UI.IDLE);
   const [hiddenValues, setHiddenValues]         = useState(() => load("bourse_hidden", false));
-  const toggleCompact = () => setCompact(c => { save("bourse_compact", !c); return !c; });
   const toggleHidden  = () => setHiddenValues(h => { save("bourse_hidden", !h); return !h; });
   const [localUserName, setLocalUserName]       = useState(userName || "");
   const [editingName, setEditingName]           = useState(false);
@@ -458,14 +456,14 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
   if (isOverview) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "Inter, sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>
         <style>{`
           @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         `}</style>
         {/* Logo en haut */}
         <div style={{ padding: "24px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: "20px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
-            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(270deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 4s ease infinite" }}>Next</span>
+          <div style={{ fontSize: "20px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif" }}>
+            Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(270deg, #0F2D5E, #2D6CB5, #7BBFE8, #2D6CB5, #0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 4s ease infinite" }}>Next</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {/* Bouton masquer/afficher valeurs */}
@@ -478,19 +476,20 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             </button>
             {/* Déconnexion */}
             <button onClick={onLogout} title="Se déconnecter"
-              style={{ height: "36px", padding: "0 14px", borderRadius: "20px", border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.7)", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: C.inkMuted, fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "6px" }}>
+              style={{ height: "36px", padding: "0 14px", borderRadius: "20px", border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.7)", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: C.inkMuted, fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "6px" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               Déconnexion
             </button>
           </div>
         </div>
         <OverviewTab onNavigate={changeTab} onSwitchAccount={switchAccount} hidden={hiddenValues} portfolioVersion={portfolioVersion} />
+        {showTour && <TourGuide changeTab={changeTab} currentTab={activeTab} onDone={() => { setShowTour(false); }} />}
       </div>
     );
   }
 
   return (
-    <div className={compact ? "ba-compact" : ""} style={{ display: "flex", minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "Inter, sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
         @keyframes bn-next-wave   { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes bn-brand-in    { from{opacity:0;transform:translateY(-6px) scale(0.92)} to{opacity:1;transform:none} }
@@ -504,8 +503,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         active={activeTab} onChange={changeTab}
         portfolioVersion={portfolioVersion}
         refreshAll={refreshAll} refreshing={refreshing} refreshAgo={refreshAgo}
-        toggleCompact={toggleCompact}
-        compact={compact}
         hidden={hiddenValues}
         mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)}
         account={account} onSwitchAccount={switchAccount}
@@ -561,7 +558,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                         }}
                         onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
                         placeholder="Votre prénom ou pseudo"
-                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "13px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }}
+                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }}
                       />
                       <input
                         value={aiName}
@@ -569,10 +566,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                         onBlur={() => { save("bourse_ai_name", aiName.trim()); }}
                         onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
                         placeholder="Nom de votre IA (ex : Atlas)"
-                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "13px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }}
+                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }}
                       />
                       <button onClick={onLogout}
-                        style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px", color: C.red, fontSize: "11px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>
+                        style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
                         🚪 Se déconnecter
                       </button>
                     </div>
@@ -597,7 +594,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                     </div>
                     {avatarEmoji && (
                       <div style={{ borderTop: `1px solid ${C.border}`, padding: "6px 10px" }}>
-                        <button onClick={() => { pickEmoji(""); setEmojiPickerOpen(false); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 8px", color: C.inkSubtle, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>✕ Retirer l'emoji</button>
+                        <button onClick={() => { pickEmoji(""); setEmojiPickerOpen(false); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 8px", color: C.inkSubtle, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✕ Retirer l'emoji</button>
                       </div>
                     )}
                   </div>
@@ -619,8 +616,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 {/* BourseNext — fondu entrant */}
                 <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", pointerEvents: "none" }}>
                   {showBrand
-                    ? <span key="brand" style={{ fontSize: "22px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif", animation: refreshing ? "bn-brand-in 0.5s ease-out forwards" : "bn-brand-out 0.5s ease-in forwards" }}>
-                        Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
+                    ? <span key="brand" style={{ fontSize: "22px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif", animation: refreshing ? "bn-brand-in 0.5s ease-out forwards" : "bn-brand-out 0.5s ease-in forwards" }}>
+                        Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(135deg, #0F2D5E, #2D6CB5, #7BBFE8, #2D6CB5, #0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
                       </span>
                     : <span style={{ fontSize: "15px", fontWeight: "600", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
                   }
@@ -659,7 +656,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                       </div>
                       {avatarEmoji && (
                         <div style={{ borderTop: `1px solid ${C.border}`, padding: "6px 10px" }}>
-                          <button onClick={() => { pickEmoji(""); setEmojiPickerOpen(false); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 8px", color: C.inkSubtle, fontSize: "10px", fontFamily: "Inter,sans-serif", cursor: "pointer" }}>✕ Retirer l'emoji</button>
+                          <button onClick={() => { pickEmoji(""); setEmojiPickerOpen(false); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "7px", padding: "4px 8px", color: C.inkSubtle, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✕ Retirer l'emoji</button>
                         </div>
                       )}
                     </div>
@@ -687,7 +684,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 <div data-account-menu style={{ position: "relative" }}>
                   <div ref={accountTriggerRef} onClick={() => { setAccountMenuOpen(o => !o); setEmojiPickerOpen(false); }} title="Compte"
                     style={{ display: "flex", alignItems: "center", gap: "5px", padding: "5px 10px", borderRadius: "10px", background: C.navyLight, border: `1px solid ${C.border}`, cursor: "pointer", userSelect: "none" }}>
-                    <span style={{ fontSize: "11px", fontWeight: "700", color: C.inkSoft, fontFamily: "Inter,sans-serif", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{localUserName || "Compte"}</span>
+                    <span style={{ fontSize: "11px", fontWeight: "700", color: C.inkSoft, fontFamily: "'DM Sans', sans-serif", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{localUserName || "Compte"}</span>
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke={C.inkSubtle} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
                   {accountMenuOpen && createPortal(
@@ -696,13 +693,13 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                         onBlur={() => { const name = localUserName.trim() || "Utilisateur"; setLocalUserName(name); try { const s = JSON.parse(localStorage.getItem("bourse_session") || "{}"); localStorage.setItem("bourse_session", JSON.stringify({ ...s, name })); } catch {} }}
                         onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setAccountMenuOpen(false); }}
                         placeholder="Votre prénom ou pseudo"
-                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
+                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
                       <input value={aiName} onChange={e => setAiName(e.target.value)}
                         onBlur={() => { save("bourse_ai_name", aiName.trim()); }}
                         onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
                         placeholder="Nom de votre IA (ex : Atlas)"
-                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "Inter,sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
-                      <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "8px", color: C.red, fontSize: "11px", fontFamily: "Inter,sans-serif", fontWeight: "700", cursor: "pointer" }}>🚪 Se déconnecter</button>
+                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
+                      <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "8px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>🚪 Se déconnecter</button>
                     </div>
                   , document.body)}
                 </div>
@@ -824,7 +821,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       {showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); setShowTour(shouldShowTour()); }} />}
 
       {/* ── Tour interactif ── */}
-      {showTour && <TourGuide changeTab={changeTab} onDone={() => { markTourDone(); setShowTour(false); }} />}
+      {showTour && <TourGuide changeTab={changeTab} currentTab={activeTab} onDone={() => { setShowTour(false); }} />}
 
       {/* ── Bottom navigation bar (mobile only) ── */}
       <nav className="ba-bottom-nav">
@@ -835,7 +832,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             <button key={key} onClick={() => changeTab(key)}
               style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "3px", background: "none", border: "none", cursor: "pointer", padding: "6px 2px", position: "relative" }}>
               <span style={{ width: "40px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "10px", background: isActive ? "#F2F2F7" : "transparent", color: isActive ? "#1C1C1E" : C.inkSubtle, fontSize: "14px", transition: "all 0.18s" }}>{icon}</span>
-              <span style={{ fontSize: "9px", fontWeight: isActive ? "500" : "400", color: isActive ? C.accent : C.inkSubtle, fontFamily: "Inter, sans-serif" }}>{SHORT[key] || key}</span>
+              <span style={{ fontSize: "9px", fontWeight: isActive ? "500" : "400", color: isActive ? C.accent : C.inkSubtle, fontFamily: "'DM Sans', sans-serif" }}>{SHORT[key] || key}</span>
             </button>
           );
         })}
@@ -888,9 +885,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
         /* ── Densité globale ── */
         .ba-content-inner { zoom: 0.94; }
-
-        /* ── Mode compact ── */
-        .ba-compact > *:not(:first-child) { zoom: 0.93; }
 
         /* ── Toolbar status ── */
         .ba-toolbar-status { font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; }
@@ -955,7 +949,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         @media print {
           body { background: #fff !important; }
           .ba-sidebar { display: none !important; }
-          .ba-compact > *:not(:first-child) { zoom: 1; }
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       `}</style>
