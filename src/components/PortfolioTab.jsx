@@ -489,7 +489,12 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           onClick={() => onRunScoring && onRunScoring(positions)}
           disabled={marketScoringUi === UI.LOADING || positions.length === 0}
           style={{ background: marketScoringUi === UI.LOADING ? C.snowOff : C.navyLight, border: `1px solid ${marketScoringUi === UI.LOADING ? C.border : "rgba(30,58,95,0.12)"}`, borderRadius: "8px", padding: "9px 16px", color: marketScoringUi === UI.LOADING ? C.inkSubtle : C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: marketScoringUi === UI.LOADING || positions.length === 0 ? "not-allowed" : "pointer" }}>
-          {marketScoringUi === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={21} color={C.inkSubtle} /> Analyse…</span> : isMobile ? "🤖" : "🤖 Analyser toutes mes lignes"}
+          {marketScoringUi === UI.LOADING
+            ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={21} color={C.inkSubtle} /> Analyse…</span>
+            : <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                {isMobile ? "" : "Analyser toutes mes lignes"}
+              </span>}
         </button>
 
         {/* Bouton Capturer */}
@@ -505,7 +510,15 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
               setShowCaptures(true);
             }}
             style={{ background: captureFlash ? "rgba(5,150,105,0.12)" : C.snowOff, border: `1px solid ${captureFlash ? "rgba(5,150,105,0.3)" : C.border}`, borderRadius: "8px", padding: "9px 14px", color: captureFlash ? C.green : C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", transition: "all 0.3s ease", whiteSpace: "nowrap" }}>
-            {captureFlash ? "✓ Capturé" : `📸${captureCount > 0 ? ` ${captureCount}` : ""}`}
+            {captureFlash
+              ? <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Capturé
+                </span>
+              : <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  {captureCount > 0 ? captureCount : ""}
+                </span>}
           </button>
         )}
 
@@ -513,14 +526,10 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         {captureCount > 0 && !showCaptures && (
           <button onClick={() => setShowCaptures(true)}
             style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
-            📂{isMobile ? "" : " Voir"}
-          </button>
-        )}
-
-        {positions.length > 0 && (
-          <button onClick={() => window.print()} data-print-hide
-            style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
-            🖨️{isMobile ? "" : " PDF"}
+            <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              {isMobile ? "" : "Voir"}
+            </span>
           </button>
         )}
 

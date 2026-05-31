@@ -8,7 +8,6 @@ import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
 import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy } from "../lib/api";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { ThinkingSpinner } from "./UI";
-import AppLogo from "./AppLogo";
 import Tooltip from "./Tooltip";
 
 const AI_POTENTIEL_KEY = "bourse_ai_potentiel";
@@ -524,7 +523,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             disabled={marketScoringUi === UI.LOADING}
             style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
             {marketScoringUi === UI.LOADING
-              ? <><AppLogo size={14} animated={true} /> Analyse en cours…</>
+              ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color="currentColor" /> Analyse en cours…</span>
               : "Lancer le scoring IA"}
           </button>
         </div>
@@ -703,8 +702,10 @@ Retourne ce JSON exact (aucun texte autour) :
                   disabled={aiPotLoading || !hasAI()}
                   style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: aiPotLoading ? "not-allowed" : "pointer", background: aiPotLoading ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: aiPotLoading ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
                   {aiPotLoading
-                    ? <><AppLogo size={14} animated={true} /> Analyse en cours…</>
-                    : ap && !ap.error ? "🔄 Relancer" : "🤖 Analyser le potentiel"}
+                    ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color="currentColor" /> Analyse en cours…</span>
+                    : ap && !ap.error
+                      ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-7.94"/></svg>Relancer</span>
+                      : <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>Analyser le potentiel</span>}
                 </button>
               </div>
             </div>

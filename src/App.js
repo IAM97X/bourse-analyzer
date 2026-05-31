@@ -10,7 +10,6 @@ import CompanyAvatar from "./components/CompanyAvatar";
 import MarketStatusBar from "./components/MarketStatusBar";
 import DashboardBar from "./components/DashboardBar";
 import Sidebar, { IconChat, NAV_GROUPS } from "./components/Sidebar";
-import AppLogo from "./components/AppLogo";
 import AutopilotIA from "./components/AutopilotIA";
 import ChatTab, { AIAssistant } from "./components/ChatTab";
 import PortfolioPieChart, { ISIN_SECTEUR } from "./components/PortfolioPieChart";
@@ -98,7 +97,10 @@ function MobileBlock() {
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       padding: "32px 24px", textAlign: "center", fontFamily: "'DM Sans', sans-serif",
     }}>
-      <AppLogo size={48} />
+      <div style={{ fontSize: "28px", fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>
+        <span style={{ fontWeight: "300", color: "rgba(193,232,255,0.85)" }}>Bourse</span>
+        <span style={{ fontWeight: "800", background: "linear-gradient(135deg, #0F2D5E 0%, #2D6CB5 50%, #7BBFE8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Next</span>
+      </div>
       <div style={{ marginTop: "28px", fontSize: "22px", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.2 }}>
         Application non disponible<br />sur mobile
       </div>
@@ -209,9 +211,17 @@ export default function BourseAnalyzer() {
 
   if (state === "loading") return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #021024 0%, #052659 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ textAlign: "center" }}>
-        <AppLogo size={48} />
-        <div style={{ marginTop: "20px", fontSize: "13px", color: "rgba(193,232,255,0.5)", fontFamily: "'DM Sans', sans-serif" }}>Chargement…</div>
+      <style>{`
+        @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes bn-load-in   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes bn-load-pulse{ 0%,100%{opacity:0.35} 50%{opacity:0.7} }
+      `}</style>
+      <div style={{ textAlign: "center", animation: "bn-load-in 0.6s ease forwards" }}>
+        <div style={{ fontSize: "36px", fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>
+          <span style={{ fontWeight: "300", color: "rgba(193,232,255,0.85)" }}>Bourse</span>
+          <span style={{ fontWeight: "800", letterSpacing: "-0.04em", backgroundImage: "linear-gradient(270deg, #0F2D5E, #2D6CB5, #7BBFE8, #2D6CB5, #0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 3s ease infinite" }}>Next</span>
+        </div>
+        <div style={{ marginTop: "20px", fontSize: "12px", color: "rgba(193,232,255,0.5)", fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.08em", textTransform: "uppercase", animation: "bn-load-pulse 1.8s ease-in-out infinite" }}>Chargement…</div>
       </div>
     </div>
   );

@@ -11,10 +11,13 @@ export function ApiKeysSection() {
   const [show, setShow]   = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    save("bourse_api_keys", keys);
-    setSaved(true); setTimeout(() => setSaved(false), 2000);
-  };
+  useEffect(() => {
+    const t = setTimeout(() => {
+      save("bourse_api_keys", keys);
+      setSaved(true); setTimeout(() => setSaved(false), 1500);
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [keys]);
 
   const inp = { width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "10px 14px", color: C.ink, fontSize: "12px", fontFamily: "monospace", outline: "none", boxSizing: "border-box" };
   const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", display: "block" };
@@ -46,9 +49,7 @@ export function ApiKeysSection() {
             <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px" }}>Prioritaire sur Gemini si configurée. Active des analyses plus poussées.</div>
             <input style={inp} type="password" placeholder="sk-ant-api03-…" value={keys.anthropic || ""} onChange={e => setKeys(k => ({ ...k, anthropic: e.target.value }))} autoComplete="off" spellCheck="false" />
           </div>
-          <button onClick={handleSave} style={{ background: saved ? C.greenLight : C.navy, border: saved ? `1px solid rgba(5,150,105,0.2)` : "none", borderRadius: "12px", padding: "12px", color: saved ? C.green : "#fff", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
-            {saved ? "✓ Clés sauvegardées" : "Sauvegarder les clés"}
-          </button>
+          {saved && <div style={{ fontSize: "11px", color: C.green, fontWeight: "600" }}>✓ Sauvegardé</div>}
           {hasKeys && (
             <button onClick={() => { save("bourse_api_keys", {}); setKeys({}); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "12px", padding: "9px", color: C.inkMuted, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>
               Effacer les clés
@@ -64,13 +65,9 @@ export function ApiKeysSection() {
 export function AccountDatesSection() {
   const [peaDate, setPeaDate] = useState(() => load("bourse_pea_ouverture", ""));
   const [ctoDate, setCtoDate] = useState(() => load("bourse_cto_ouverture", ""));
-  const [saved, setSaved]     = useState(false);
 
-  const handleSave = () => {
-    save("bourse_pea_ouverture", peaDate || "");
-    save("bourse_cto_ouverture", ctoDate || "");
-    setSaved(true); setTimeout(() => setSaved(false), 2000);
-  };
+  useEffect(() => { save("bourse_pea_ouverture", peaDate || ""); }, [peaDate]);
+  useEffect(() => { save("bourse_cto_ouverture", ctoDate || ""); }, [ctoDate]);
 
   const agePEA = peaDate ? ((Date.now() - new Date(peaDate).getTime()) / (1000*60*60*24*365)).toFixed(1) : null;
   const ageCTO = ctoDate ? ((Date.now() - new Date(ctoDate).getTime()) / (1000*60*60*24*365)).toFixed(1) : null;
@@ -96,9 +93,6 @@ export function AccountDatesSection() {
           {ageCTO && <div style={{ fontSize: "10px", marginTop: "5px", color: C.inkSubtle }}>{ageCTO} ans — flat tax 30%</div>}
         </div>
       </div>
-      <button onClick={handleSave} style={{ padding: "8px 18px", borderRadius: "10px", border: saved ? `1px solid rgba(5,150,105,0.25)` : `1px solid ${C.border}`, background: saved ? C.greenLight : C.snowOff, color: saved ? C.green : C.inkMuted, fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
-        {saved ? "✓ Dates enregistrées" : "Enregistrer les dates"}
-      </button>
     </div>
   );
 }
@@ -121,38 +115,36 @@ function ProfilTab({ profil, onChange }) {
   const [form, setForm]   = useState(profil || {});
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    const p = {
-      ...form,
-      dcaMensuel:    parseFloat(String(form.dcaMensuel    || "0").replace(",", ".")) || 0,
-      dcaDuree:      parseInt(String(form.dcaDuree))      || 12,
-      especesPEA:    parseFloat(String(form.especesPEA    || "0").replace(",", ".")) || 0,
-      especesCTO:    parseFloat(String(form.especesCTO    || "0").replace(",", ".")) || 0,
-      objectifEuros:  parseFloat(String(form.objectifEuros  || "0").replace(",", ".")) || 0,
-      versementsPEA:  parseFloat(String(form.versementsPEA  || "0").replace(",", ".")) || 0,
-      versementsCTO:  parseFloat(String(form.versementsCTO  || "0").replace(",", ".")) || 0,
-      valeurJan1:     parseFloat(String(form.valeurJan1  || "0").replace(",", ".")) || 0,
-      valeurMois1:    parseFloat(String(form.valeurMois1 || "0").replace(",", ".")) || 0,
-    };
-    onChange(p); save("bourse_profil", p);
-    // Sauvegarder la baseline de projection si objectif défini et pas encore de ref
-    if (p.objectifEuros > 0) {
-      const existingRef = (() => { try { return JSON.parse(localStorage.getItem("bourse_projection_ref") || "null"); } catch { return null; } })();
-      if (!existingRef) {
-        const positions = (() => { try { return JSON.parse(localStorage.getItem("bourse_portfolio") || "[]"); } catch { return []; } })();
-        const valeur = positions.reduce((s, pos) => s + (pos.dernierCours || pos.pru || 0) * (pos.quantite || 0), 0);
-        if (valeur > 0) {
-          const horizonAns = { court: 2, moyen: 4, long: 8, "tres-long": 15 }[p.horizon] || 8;
-          localStorage.setItem("bourse_projection_ref", JSON.stringify({
-            date: new Date().toISOString().slice(0, 10),
-            valeur, dcaMensuel: p.dcaMensuel || 0,
-            objectif: p.objectifEuros, horizonAns,
-          }));
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const p = {
+        ...form,
+        dcaMensuel:   parseFloat(String(form.dcaMensuel   || "0").replace(",", ".")) || 0,
+        dcaDuree:     parseInt(String(form.dcaDuree))     || 12,
+        especesPEA:   parseFloat(String(form.especesPEA   || "0").replace(",", ".")) || 0,
+        especesCTO:   parseFloat(String(form.especesCTO   || "0").replace(",", ".")) || 0,
+        objectifEuros: parseFloat(String(form.objectifEuros || "0").replace(",", ".")) || 0,
+        versementsPEA: parseFloat(String(form.versementsPEA || "0").replace(",", ".")) || 0,
+        versementsCTO: parseFloat(String(form.versementsCTO || "0").replace(",", ".")) || 0,
+        valeurJan1:    parseFloat(String(form.valeurJan1  || "0").replace(",", ".")) || 0,
+        valeurMois1:   parseFloat(String(form.valeurMois1 || "0").replace(",", ".")) || 0,
+      };
+      onChange(p); save("bourse_profil", p);
+      if (p.objectifEuros > 0) {
+        const existingRef = (() => { try { return JSON.parse(localStorage.getItem("bourse_projection_ref") || "null"); } catch { return null; } })();
+        if (!existingRef) {
+          const positions = (() => { try { return JSON.parse(localStorage.getItem("bourse_portfolio") || "[]"); } catch { return []; } })();
+          const valeur = positions.reduce((s, pos) => s + (pos.dernierCours || pos.pru || 0) * (pos.quantite || 0), 0);
+          if (valeur > 0) {
+            const horizonAns = { court: 2, moyen: 4, long: 8, "tres-long": 15 }[p.horizon] || 8;
+            localStorage.setItem("bourse_projection_ref", JSON.stringify({ date: new Date().toISOString().slice(0, 10), valeur, dcaMensuel: p.dcaMensuel || 0, objectif: p.objectifEuros, horizonAns }));
+          }
         }
       }
-    }
-    setSaved(true); setTimeout(() => setSaved(false), 2200);
-  };
+      setSaved(true); setTimeout(() => setSaved(false), 1500);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [form]);
 
   const inp    = INP_STYLE;
   const lbl    = LBL_STYLE;
@@ -326,9 +318,9 @@ function ProfilTab({ profil, onChange }) {
             <AccountDatesSection />
           </Section>
 
-          <button onClick={handleSave} style={{ width: "100%", background: saved ? C.greenLight : C.navy, border: saved ? `1px solid rgba(5,150,105,0.2)` : "none", borderRadius: "14px", padding: "14px", color: saved ? C.green : "#fff", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", boxShadow: saved ? "none" : shadow.hover }}>
-            {saved ? "✓ Enregistré" : "Enregistrer le profil"}
-          </button>
+          {saved && (
+            <div style={{ textAlign: "center", fontSize: "11px", color: C.green, fontWeight: "600", padding: "6px 0" }}>✓ Sauvegardé automatiquement</div>
+          )}
         </div>
       </div>
     </div>

@@ -118,10 +118,10 @@ export const LOGO_DB = {
 };
 
 export function resolveLogoUrl(nom, isin) {
-  if (isin && LOGO_DB.isin[isin]) return `https://logo.clearbit.com/${LOGO_DB.isin[isin]}`;
+  if (isin && LOGO_DB.isin[isin]) return `https://img.logo.dev/${LOGO_DB.isin[isin]}?token=free&size=128`;
   const lower = (nom || "").toLowerCase();
   for (const [kw, domain] of LOGO_DB.name) {
-    if (lower.includes(kw)) return `https://logo.clearbit.com/${domain}`;
+    if (lower.includes(kw)) return `https://img.logo.dev/${domain}?token=free&size=128`;
   }
   return null;
 }
@@ -152,7 +152,7 @@ export function buildLogoSources(nom, isin) {
     for (const [kw, d] of LOGO_DB.name) { if (lower.includes(kw)) return d; }
     return null;
   })();
-  if (dbDomain) sources.push({ url: `https://logo.clearbit.com/${dbDomain}`, cover: "72%" });
+  if (dbDomain) sources.push({ url: `https://img.logo.dev/${dbDomain}?token=free&size=128`, cover: "72%" });
   if (isin) {
     sources.push({ url: `https://live.euronext.com/sites/default/files/thumbnails/image/${isin}.jpg`,       cover: "90%" });
     sources.push({ url: `https://live.euronext.com/sites/default/files/thumbnails/image/${isin}-XPAR.jpg`, cover: "90%" });

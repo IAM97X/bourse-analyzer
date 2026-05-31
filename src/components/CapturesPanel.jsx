@@ -74,9 +74,11 @@ function CapturesPanel({ account }) {
 
   if (accountCaptures.length === 0) return (
     <div style={{ background: C.snowOff, border: `1px dashed ${C.border}`, borderRadius: "12px", padding: "28px 20px", textAlign: "center", marginBottom: "20px" }}>
-      <div style={{ fontSize: "28px", marginBottom: "10px", opacity: 0.35 }}>📂</div>
+      <div style={{ marginBottom: "10px", opacity: 0.35, display:"flex", justifyContent:"center" }}>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.inkMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </div>
       <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "4px" }}>Aucune capture</div>
-      <div style={{ fontSize: "11px", color: C.inkMuted }}>Cliquez sur <strong>📸 Capturer</strong> pour enregistrer l'état du portefeuille à l'instant T.</div>
+      <div style={{ fontSize: "11px", color: C.inkMuted }}>Cliquez sur <strong>Capturer</strong> pour enregistrer l'état du portefeuille à l'instant T.</div>
     </div>
   );
 
@@ -85,7 +87,10 @@ function CapturesPanel({ account }) {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
         <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink, letterSpacing: "0.5px" }}>
-          📂 Captures — {account}
+          <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            Captures — {account}
+          </span>
           <span style={{ marginLeft: "8px", fontSize: "10px", fontWeight: "600", color: C.inkSubtle, background: C.snowOff, borderRadius: "5px", padding: "1px 7px" }}>{accountCaptures.length}</span>
         </div>
         <button onClick={clearAll} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "6px", padding: "4px 10px", fontSize: "10px", color: C.inkSubtle, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
@@ -104,7 +109,9 @@ function CapturesPanel({ account }) {
             <div key={cap.id} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", overflow: "hidden", boxShadow: shadow.card }}>
               {/* Row */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 14px", cursor: "pointer" }} onClick={() => setExpanded(isOpen ? null : cap.id)}>
-                <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: C.navyLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "16px" }}>📸</div>
+                <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: C.navyLight, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.navy} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{cap.label}</div>
                   <div style={{ fontSize: "10px", color: C.inkSubtle }}>{cap.summary.nbPositions} position{cap.summary.nbPositions > 1 ? "s" : ""}</div>
