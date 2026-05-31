@@ -106,7 +106,7 @@ export const NAV_GROUPS = [
   ]},
 ];
 
-function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi, onShowGuide }) {
+function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi, onShowGuide, isDemo = false, demoFreeTabs = null }) {
   const isMobile = useIsMobile();
   const allPositions = sanitizePositions(load("bourse_portfolio", []));
   const positions    = allPositions.filter(p => (p.compte || "PEA") === (account || "PEA"));
@@ -178,6 +178,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
               const isActive = (itemGroup || [key]).includes(active);
               const isFeatured = itemFeatured || group.featured;
               const isScoringLoading = (itemGroup || [key]).includes(TABS.MARCHE) && marketScoringUi === "loading";
+              const isLocked = isDemo && demoFreeTabs && !demoFreeTabs.has(key);
               const handleClick = () => {
                 if (key === TABS.PLUS) { handleNav(TABS.PLUS); return; }
                 if ((itemGroup || [key]).includes(active)) { if (onClose) onClose(); return; }
@@ -185,7 +186,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
               };
               return (
                 <button key={key} className={`ba-sidebar-item${isActive ? " ba-sidebar-item-active" : ""}`}
-                  onClick={handleClick} title={c ? label : undefined}
+                  onClick={handleClick} title={c ? (isLocked ? `${label} — Créer un compte` : label) : undefined}
                   style={{
                     width: "100%", display: "flex", alignItems: "center",
                     gap: 0,
@@ -195,7 +196,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                     background: isActive ? "#F2F2F7" : "transparent",
                     border: "none",
                     cursor: "pointer",
-                    color: isActive ? "#1C1C1E" : "#6C6C70",
+                    color: isLocked ? "#C0C0C8" : (isActive ? "#1C1C1E" : "#6C6C70"),
                     fontSize: "15px",
                     fontWeight: isActive ? "600" : "400",
                     fontFamily: "'DM Sans', sans-serif",
@@ -203,6 +204,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                     transition: "background 0.12s",
                     letterSpacing: "-0.01em",
                     position: "relative",
+                    opacity: isLocked ? 0.55 : 1,
                   }}>
                   {c
                     ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
@@ -210,16 +212,18 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
                           ? <span style={{ fontSize: "11px", background: isActive ? "rgba(184,146,10,0.18)" : "#B07D2E", color: isActive ? "#B07D2E" : "#FFF8E7", borderRadius: "6px", padding: "3px 8px", fontWeight: "700", letterSpacing: "0.4px" }}>IA</span>
                           : <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93" }}>{icon}</span>
                         }
+                        {isLocked && <span style={{ position: "absolute", top: "-4px", right: "-6px", fontSize: "9px" }}>🔒</span>}
                         {isScoringLoading && <span style={{ position: "absolute", top: "-3px", right: "-3px", width: "7px", height: "7px", borderRadius: "50%", background: "#8E8E93", animation: "pulse 1.2s ease-in-out infinite" }} />}
                       </span>
                     : <span style={{ flex: 1, display: "flex", alignItems: "center", gap: "12px" }}>
                         {!isFeatured && <span style={{ color: isActive ? "#1C1C1E" : "#8E8E93", display: "flex", alignItems: "center", flexShrink: 0 }}>{icon}</span>}
-                        <span style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: "7px", flex: 1 }}>
                           {isFeatured
                             ? <span style={{ fontSize: "10px", background: isActive ? "rgba(184,146,10,0.18)" : "#B07D2E", color: isActive ? "#B07D2E" : "#FFF8E7", borderRadius: "6px", padding: "2px 7px", fontWeight: "700", letterSpacing: "0.4px" }}>IA</span>
                             : label
                           }
                           {isScoringLoading && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", animation: "pulse 1.2s ease-in-out infinite", flexShrink: 0 }} />}
+                          {isLocked && <span style={{ fontSize: "10px", marginLeft: "auto" }}>🔒</span>}
                         </span>
                       </span>
                   }
@@ -237,11 +241,11 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
               style={{ width: "36px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "'DM Sans', sans-serif" }}>?</button>
           )
         ) : (<>
-<button onClick={() => window.print()} title="Exporter en PDF"
+{!isDemo && <button onClick={() => window.print()} title="Exporter en PDF"
             style={{ flex: 1, height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", transition: "all 0.2s" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span style={{ fontSize: "9px", fontWeight: "600", fontFamily: "'DM Sans', sans-serif" }}>PDF</span>
-          </button>
+          </button>}
 
           {onShowGuide && (
             <button onClick={onShowGuide} title="Guide interactif"
@@ -264,13 +268,13 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
   );
 }
 
-export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, hidden, mobileOpen, onMobileClose, account, onSwitchAccount, marketScoringUi, externalCollapsed, onExternalToggle, onShowGuide }) {
+export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, hidden, mobileOpen, onMobileClose, account, onSwitchAccount, marketScoringUi, externalCollapsed, onExternalToggle, onShowGuide, isDemo = false, demoFreeTabs = null }) {
   const isMobile = useIsMobile();
   const [internalCollapsed, setInternalCollapsed] = useState(() => load("bourse_sidebar_collapsed", true));
   const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
   const toggleCollapse = onExternalToggle || (() => { const v = !internalCollapsed; setInternalCollapsed(v); save("bourse_sidebar_collapsed", v); });
 
-  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi, onShowGuide };
+  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi, onShowGuide, isDemo, demoFreeTabs };
 
   if (isMobile) {
     if (!mobileOpen) return null;
