@@ -700,7 +700,7 @@ export default function AIPortfolioTab({ account, hidden }) {
           <button onClick={handleRunCycle} disabled={cycling}
             style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
             {cycling
-              ? <><AppLogo size={16} animated={true} /> Analyse en cours…</>
+              ? <><AppLogo size={16} animated={true} /> BNext…</>
               : "▶ Lancer un cycle"}
           </button>
           <button onClick={handleReset} title="Réinitialiser le portefeuille IA"

@@ -179,7 +179,7 @@ function AuthPage({ onSession }) {
           <div style={{ fontSize: "36px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", lineHeight: 1.1, fontFamily: "'DM Sans', sans-serif" }}>
             Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(135deg, #0F2D5E 0%, #2D6CB5 50%, #7BBFE8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
           </div>
-          <div style={{ fontSize: "13px", color: "#8E8E93", marginTop: "6px" }}>La bourse, simplement.</div>
+          <div style={{ fontSize: "13px", color: "#8E8E93", marginTop: "6px" }}>Soyez le prochain.</div>
         </div>
 
         {/* Card */}

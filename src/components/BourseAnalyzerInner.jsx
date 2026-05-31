@@ -392,7 +392,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         return `- ${p.nom}${p.isin ? ` (ISIN: ${p.isin})` : ""}${p.ticker ? ` [${p.ticker}]` : ""}, PRU ${p.pru}€, cours ${cours}€, qté ${p.quantite}, valeur ${valeur}€, PV ${pvSign}${pvPct}%${rsiStr}${volStr}`;
       }).join("\n");
 
-      const userMsg = `Portefeuille PEA à analyser (DCA long terme, 10 ans) :\n${posListe}\n\nDONNÉES MARCHÉ EN TEMPS RÉEL :\n${contextBlocks}\n\nJSON uniquement.`;
+      const today = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+      const userMsg = `Date d'aujourd'hui : ${today}. Les catalyseurs doivent être les plus récents disponibles — évite tout événement antérieur à 12 mois sauf s'il est structurellement déterminant.\n\nPortefeuille PEA à analyser (DCA long terme, 10 ans) :\n${posListe}\n\nDONNÉES MARCHÉ EN TEMPS RÉEL :\n${contextBlocks}\n\nJSON uniquement.`;
 
       const data = await enqueueApi(() => callClaude(MARKET_SCORING_PROMPT, userMsg, false));
       const scores = data?.classement;

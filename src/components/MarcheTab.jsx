@@ -4,11 +4,19 @@ import { sanitizePositions, fmtEur, isETFName, linReg } from "../lib/finance";
 import { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
 import { load, save } from "../lib/storage";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
+import { AUTOPILOT_UNIVERSE } from "../constants/universe";
 import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
 import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy } from "../lib/api";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { ThinkingSpinner } from "./UI";
 import Tooltip from "./Tooltip";
+
+function tickerFromUniverse(isin, nom) {
+  const all = Object.values(AUTOPILOT_UNIVERSE).flat();
+  if (isin) { const hit = all.find(u => u.isin === isin); if (hit) return hit.symbol; }
+  if (nom) { const n = nom.toLowerCase(); const hit = all.find(u => u.nom?.toLowerCase().includes(n) || n.includes(u.nom?.toLowerCase())); if (hit) return hit.symbol; }
+  return null;
+}
 
 const AI_POTENTIEL_KEY = "bourse_ai_potentiel";
 
@@ -45,7 +53,13 @@ function GlobalProjectionChart({ positions, onClose }) {
     async function run() {
       const cache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY_M) || "{}"); } catch { return {}; } })();
 
-      // Résoudre les tickers manquants
+      // Résoudre les tickers manquants — d'abord via universe.js (local, sans réseau)
+      for (const p of positions) {
+        if (p.isin && !p.ticker && !cache[p.isin]) {
+          const t = tickerFromUniverse(p.isin, p.nom);
+          if (t) cache[p.isin] = t;
+        }
+      }
       const missing = positions.filter(p => p.isin && !p.ticker && !cache[p.isin]);
       await Promise.all(missing.map(async p => {
         try {
@@ -505,7 +519,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
               {marketScoringUi === "loading" && (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#B07D2E", fontWeight: "600" }}>
                   <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#B07D2E", display: "inline-block", animation: "pulse 1.2s ease-in-out infinite" }} />
-                  Analyse en cours…
+                  BNext…
                 </span>
               )}
               {marketScoringUi !== "loading" && scoredAgo && (
@@ -523,7 +537,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             disabled={marketScoringUi === UI.LOADING}
             style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
             {marketScoringUi === UI.LOADING
-              ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color="currentColor" /> Analyse en cours…</span>
+              ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color="currentColor" /> BNext…</span>
               : "Lancer le scoring IA"}
           </button>
         </div>
@@ -573,8 +587,9 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
                   </div>
                   {s.resume && <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: "1.5" }}>{s.resume}</div>}
                   {s.catalyseur_cle && (
-                    <div style={{ fontSize: "11px", color: C.inkSubtle, display: "flex", alignItems: "center", gap: "5px" }}>
-                      <span style={{ fontWeight: "700", color: C.inkMuted }}>Catalyseur :</span> {s.catalyseur_cle}
+                    <div style={{ fontSize: "11px", color: C.inkSubtle, display: "flex", alignItems: "baseline", gap: "5px", flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: "700", color: C.inkMuted, flexShrink: 0, whiteSpace: "nowrap" }}>Catalyseur :</span>
+                      <span>{s.catalyseur_cle}</span>
                     </div>
                   )}
                   {!pos._hasRealtime && (
@@ -702,7 +717,7 @@ Retourne ce JSON exact (aucun texte autour) :
                   disabled={aiPotLoading || !hasAI()}
                   style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: aiPotLoading ? "not-allowed" : "pointer", background: aiPotLoading ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: aiPotLoading ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
                   {aiPotLoading
-                    ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color="currentColor" /> Analyse en cours…</span>
+                    ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color="currentColor" /> BNext…</span>
                     : ap && !ap.error
                       ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-7.94"/></svg>Relancer</span>
                       : <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>Analyser le potentiel</span>}

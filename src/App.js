@@ -121,6 +121,7 @@ function MobileBlock() {
 export default function BourseAnalyzer() {
   const [state, setState] = useState("loading"); // "loading" | "auth" | "app"
   const [userName, setUserName] = useState("");
+  const [loginKey, setLoginKey] = useState(0);
   const [isMobileScreen, setIsMobileScreen] = useState(() => isPhone());
 
   useEffect(() => {
@@ -194,6 +195,7 @@ export default function BourseAnalyzer() {
 
   const handleSession = (name) => {
     setUserName(name);
+    setLoginKey(k => k + 1);
     setState("app");
   };
 
@@ -221,11 +223,12 @@ export default function BourseAnalyzer() {
           <span style={{ fontWeight: "300", color: "rgba(193,232,255,0.85)" }}>Bourse</span>
           <span style={{ fontWeight: "800", letterSpacing: "-0.04em", backgroundImage: "linear-gradient(270deg, #0F2D5E, #2D6CB5, #7BBFE8, #2D6CB5, #0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 3s ease infinite" }}>Next</span>
         </div>
+        <div style={{ marginTop: "8px", fontSize: "13px", color: "rgba(193,232,255,0.45)", fontFamily: "'DM Sans', sans-serif", fontWeight: "300", letterSpacing: "0.06em" }}>Soyez le prochain.</div>
         <div style={{ marginTop: "20px", fontSize: "12px", color: "rgba(193,232,255,0.5)", fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.08em", textTransform: "uppercase", animation: "bn-load-pulse 1.8s ease-in-out infinite" }}>Chargement…</div>
       </div>
     </div>
   );
 
   if (state === "auth") return <AuthPage onSession={handleSession} />;
-  return <AppErrorBoundary><MobileProvider><BourseAnalyzerInner userName={userName} onLogout={handleLogout} /></MobileProvider></AppErrorBoundary>;
+  return <AppErrorBoundary><MobileProvider><BourseAnalyzerInner key={loginKey} userName={userName} onLogout={handleLogout} /></MobileProvider></AppErrorBoundary>;
 }

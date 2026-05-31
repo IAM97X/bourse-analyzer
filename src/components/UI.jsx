@@ -84,7 +84,7 @@ export function ThinkingSpinner({ size = 22, color = "#1A3A5C" }) {
   );
 }
 
-export function LoadingPanel({ label = "Analyse en cours…" }) {
+export function LoadingPanel({ label = "BNext…" }) {
   return (
     <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "48px 32px", display: "flex", justifyContent: "center" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>

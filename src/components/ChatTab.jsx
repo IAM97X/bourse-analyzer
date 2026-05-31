@@ -843,7 +843,7 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
             <div style={{ fontSize: "12px", color: C.inkSubtle, marginBottom: "14px" }}>Analyse croisée : surexpositions, corrélations cachées, secteurs manquants, position DCA prioritaire.</div>
             <button onClick={() => { detectOpportunities(); setActivePanel("chat"); }} disabled={isBusy}
               style={{ padding: "9px 20px", borderRadius: "12px", border: "none", cursor: isBusy ? "not-allowed" : "pointer", background: isBusy ? C.snowDim : `linear-gradient(135deg, #1E8449 0%, ${C.green} 100%)`, color: isBusy ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", boxShadow: !isBusy ? "0 4px 16px rgba(39,174,96,0.35)" : "none", transition: "all 0.15s" }}>
-              {oppoLoading ? "Analyse en cours…" : "Détecter les opportunités →"}
+              {oppoLoading ? "BNext…" : "Détecter les opportunités →"}
             </button>
           </div>
         </div>

@@ -8,8 +8,8 @@ import CompanyAvatar from "./CompanyAvatar";
 import PortfolioPieChart from "./PortfolioPieChart";
 import Tooltip from "./Tooltip";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
-import { AVIS_PARSE_PROMPT } from "../constants/prompts";
 import { AUTOPILOT_UNIVERSE } from "../constants/universe";
+import { AVIS_PARSE_PROMPT } from "../constants/prompts";
 
 // ─── Catégories et couleurs (miroir AutopilotIA) ───────────────────────────────
 const ALLOC_CATS = [
@@ -579,6 +579,21 @@ function betaClassify(beta) {
 
 const BENCHMARK_CACHE_KEY = "bourse_benchmark_cache";
 const TICKER_CACHE_KEY    = "bourse_isin_ticker_cache";
+
+// Lookup ticker depuis universe.js sans appel réseau (par ISIN ou nom)
+function tickerFromUniverse(isin, nom) {
+  const all = Object.values(AUTOPILOT_UNIVERSE).flat();
+  if (isin) {
+    const hit = all.find(u => u.isin === isin);
+    if (hit) return hit.symbol;
+  }
+  if (nom) {
+    const nomLower = nom.toLowerCase();
+    const hit = all.find(u => u.nom?.toLowerCase().includes(nomLower) || nomLower.includes(u.nom?.toLowerCase()));
+    if (hit) return hit.symbol;
+  }
+  return null;
+}
 const BENCHMARK_TTL_MS    = 4 * 60 * 60 * 1000; // 4 heures
 
 function BenchmarkComparaison() {
@@ -1452,7 +1467,7 @@ function CorrelationMatrix({ positions }) {
 
     // Résolution tickers manquants
     const resolved = await Promise.all(eligible.map(async p => {
-      let ticker = (p.isin && tickerCache[p.isin]) || p.ticker || null;
+      let ticker = (p.isin && tickerCache[p.isin]) || p.ticker || tickerFromUniverse(p.isin, p.nom) || null;
       if (!ticker && p.isin) {
         try {
           const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(p.isin)}&quotesCount=5&newsCount=0`;
