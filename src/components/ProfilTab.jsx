@@ -3,6 +3,7 @@ import { C, shadow } from "../constants/theme";
 import { load, save } from "../lib/storage";
 import { fmtEur } from "../lib/finance";
 import { COURTIERS } from "../constants/courtiers";
+import { isDemoMode } from "../constants/demoData";
 
 // ─── API Keys Section (réutilisée dans Paramètres) ────────────────────────────
 export function ApiKeysSection() {
@@ -11,13 +12,23 @@ export function ApiKeysSection() {
   const [show, setShow]   = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const demo = isDemoMode();
+
   useEffect(() => {
+    if (demo) return;
     const t = setTimeout(() => {
       save("bourse_api_keys", keys);
       setSaved(true); setTimeout(() => setSaved(false), 1500);
     }, 1000);
     return () => clearTimeout(t);
-  }, [keys]);
+  }, [keys, demo]);
+
+  if (demo) return (
+    <div style={{ background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: "14px", padding: "16px 18px", fontSize: "13px", color: "#1E3A5F", lineHeight: 1.6 }}>
+      <span style={{ fontWeight: "700" }}>Clés API</span> — Non disponibles en mode démo.<br/>
+      <span style={{ color: "#64748B", fontSize: "12px" }}>Créez un compte pour configurer vos clés et accéder aux analyses IA en temps réel.</span>
+    </div>
+  );
 
   const inp = { width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "10px 14px", color: C.ink, fontSize: "12px", fontFamily: "monospace", outline: "none", boxSizing: "border-box" };
   const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", display: "block" };

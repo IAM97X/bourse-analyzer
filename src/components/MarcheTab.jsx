@@ -3,6 +3,7 @@ import { C, shadow } from "../constants/theme";
 import { sanitizePositions, fmtEur, isETFName, linReg } from "../lib/finance";
 import { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
 import { load, save } from "../lib/storage";
+import { isDemoMode } from "../constants/demoData";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { AUTOPILOT_UNIVERSE } from "../constants/universe";
 import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
@@ -526,14 +527,14 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
               )}
             </div>
           </div>
-          <button
+          {!isDemoMode() && <button
             onClick={() => { if (window.confirm(`Le scoring IA recherche les actualités en temps réel pour chaque position.\n\nCoût estimé : ~0,10–0,20 $ de crédits API.\n\nConfirmer ?`)) onRunScoring && onRunScoring(positions); }}
             disabled={marketScoringUi === UI.LOADING}
-            style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
+            style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : C.accentGrad, color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
             {marketScoringUi === UI.LOADING
               ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"13px" }}><BNextLabel /></span>
               : "Lancer le scoring IA"}
-          </button>
+          </button>}
         </div>
 
         {marketScoringUi === UI.IDLE && scores.length === 0 && (
@@ -606,7 +607,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
       </div>
 
       {/* ── Potentiel du portefeuille (IA) ── */}
-      {(() => {
+      {!isDemoMode() && (() => {
         const totalVal = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
         const totalInv = positions.reduce((s, p) => s + p.pru * p.quantite, 0);
         const pvPct    = totalInv > 0 ? (totalVal - totalInv) / totalInv * 100 : 0;
@@ -708,13 +709,11 @@ Retourne ce JSON exact (aucun texte autour) :
                 )}
                 <button
                   onClick={analyzePortfolioPotentiel}
-                  disabled={aiPotLoading || !hasAI()}
+                  disabled={isDemoMode() || aiPotLoading || !hasAI()}
                   style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: aiPotLoading ? "not-allowed" : "pointer", background: aiPotLoading ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: aiPotLoading ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
                   {aiPotLoading
                     ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"13px" }}><BNextLabel /></span>
-                    : ap && !ap.error
-                      ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-7.94"/></svg>Relancer</span>
-                      : <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>Analyser le potentiel</span>}
+                    : ap && !ap.error ? "Relancer" : "Analyser le potentiel"}
                 </button>
               </div>
             </div>

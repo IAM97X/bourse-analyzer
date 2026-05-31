@@ -1,19 +1,19 @@
 export const AUTOPILOT_UNIVERSE = {
   PEA: [
     // ETFs diversifiés → tous profils
-    { symbol: "CW8.PA",   isin: "FR0010315150", nom: "Amundi MSCI World",            type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
+    { symbol: "CW8.PA",   isin: "LU1681043599", nom: "Amundi MSCI World",            type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
     { symbol: "WPEA.PA",  isin: "FR0013412285", nom: "Amundi World PEA",             type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
     { symbol: "PAEEM.PA", isin: "FR0013412020", nom: "Amundi MSCI Emerging Markets", type: "ETF",    secteur: "ETF Émergents",     profil_min: "prudent" },
     { symbol: "PUST.PA",  isin: "FR0013412683", nom: "Amundi PEA S&P 500 ESG",      type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
     { symbol: "LYPS.PA",  isin: "LU1781541179", nom: "Amundi S&P 500",              type: "ETF",    secteur: "ETF USA",           profil_min: "prudent" },
-    { symbol: "PANX.PA",  isin: "FR0011871110", nom: "Amundi PEA Nasdaq-100",       type: "ETF",    secteur: "ETF Tech",          profil_min: "prudent" },
+    { symbol: "PANX.PA",  isin: "FR0013412269", nom: "Amundi PEA Nasdaq-100",       type: "ETF",    secteur: "ETF Tech",          profil_min: "prudent" },
     { symbol: "PCEU.PA",  isin: "FR0010261198", nom: "Amundi MSCI Europe",          type: "ETF",    secteur: "ETF Europe",        profil_min: "prudent" },
     { symbol: "ESE.PA",   isin: "IE00B4L5Y983", nom: "iShares Core MSCI Europe",    type: "ETF",    secteur: "ETF Europe",        profil_min: "prudent" },
     { symbol: "EWLD.PA",  isin: "IE00B4L5YX21", nom: "iShares MSCI World Swap PEA", type: "ETF",    secteur: "ETF Monde",         profil_min: "prudent" },
     // Blue chips solides → équilibré+
     { symbol: "AI.PA",    isin: "FR0000120073", nom: "Air Liquide",                 type: "Action", secteur: "Industrie",         profil_min: "equilibre" },
     { symbol: "MC.PA",    isin: "FR0000121014", nom: "LVMH",                        type: "Action", secteur: "Luxe",              profil_min: "equilibre" },
-    { symbol: "TTE.PA",   isin: "FR0014000MR3", nom: "TotalEnergies",               type: "Action", secteur: "Énergie",           profil_min: "equilibre" },
+    { symbol: "TTE.PA",   isin: "FR0000120271", nom: "TotalEnergies",               type: "Action", secteur: "Énergie",           profil_min: "equilibre" },
     { symbol: "SAN.PA",   isin: "FR0000120578", nom: "Sanofi",                      type: "Action", secteur: "Santé",             profil_min: "equilibre" },
     { symbol: "OR.PA",    isin: "FR0000120321", nom: "L'Oréal",                     type: "Action", secteur: "Cosmétiques",       profil_min: "equilibre" },
     { symbol: "BNP.PA",   isin: "FR0000131104", nom: "BNP Paribas",                 type: "Action", secteur: "Banque",            profil_min: "equilibre" },

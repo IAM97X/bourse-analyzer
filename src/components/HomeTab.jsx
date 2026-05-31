@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { sanitizePositions, fmtEur } from "../lib/finance";
 import { load, save } from "../lib/storage";
+import { isDemoMode } from "../constants/demoData";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { TABS } from "../constants/tabs";
@@ -789,11 +790,15 @@ function CourbeEvolution({ hidden, positions, account }) {
     <div style={{ background: "linear-gradient(160deg, #1A3A5C 0%, #2D5986 100%)", borderRadius: "16px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: "12px", boxShadow: "0 4px 16px rgba(30,58,95,0.22)" }}>
       <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
       <div style={{ marginBottom: "12px" }}>Aucune donnée disponible</div>
-      <button onClick={() => fileInputRef.current?.click()}
-        style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.85)", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
-        + Importer CSV Boursobank
-      </button>
-      <div style={{ marginTop: "8px", fontSize: "10px", color: "rgba(255,255,255,0.25)" }}>Boursobank · Fortuneo · DEGIRO</div>
+      {!isDemoMode() && (
+        <>
+          <button onClick={() => fileInputRef.current?.click()}
+            style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.85)", fontSize: "12px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+            + Importer CSV Boursobank
+          </button>
+          <div style={{ marginTop: "8px", fontSize: "10px", color: "rgba(255,255,255,0.25)" }}>Boursobank · Fortuneo · DEGIRO</div>
+        </>
+      )}
     </div>
   );
 
@@ -892,10 +897,12 @@ function CourbeEvolution({ hidden, positions, account }) {
           {dataSource === "yahoo"     && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Yahoo</span>}
           {dataSource === "snapshots" && <span style={{ fontSize: "9px", color: inkMut, fontWeight: "600" }}>● Snap</span>}
           <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
-          <button onClick={() => fileInputRef.current?.click()}
-            style={{ padding: "2px 7px", borderRadius: "5px", border: `1px solid ${csvPoints ? lineClrUp+"40" : "rgba(26,45,74,0.13)"}`, background: "transparent", color: csvPoints ? lineClrUp : inkSub, fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
-            {csvPoints ? "↑ CSV" : "+ CSV"}
-          </button>
+          {!isDemoMode() && (
+            <button onClick={() => fileInputRef.current?.click()}
+              style={{ padding: "2px 7px", borderRadius: "5px", border: `1px solid ${csvPoints ? lineClrUp+"40" : "rgba(26,45,74,0.13)"}`, background: "transparent", color: csvPoints ? lineClrUp : inkSub, fontSize: "10px", fontWeight: "600", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+              {csvPoints ? "↑ CSV" : "+ CSV"}
+            </button>
+          )}
         </div>
       </div>
 

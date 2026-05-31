@@ -37,6 +37,8 @@ import { fetchYahooAnalysts, fetchGoogleNewsRSS, formatExternalContext } from ".
 import PWAInstallBanner from "./components/PWAInstallBanner";
 import AuthPage from "./components/AuthPage";
 import BourseAnalyzerInner from "./components/BourseAnalyzerInner";
+import LandingPage from "./components/LandingPage";
+import { loadDemoData, isDemoMode } from "./constants/demoData";
 
 
 
@@ -117,7 +119,7 @@ function MobileBlock() {
 }
 
 export default function BourseAnalyzer() {
-  const [state, setState] = useState("loading"); // "loading" | "auth" | "app"
+  const [state, setState] = useState("loading"); // "loading" | "landing" | "auth" | "app"
   const [userName, setUserName] = useState("");
   const [loginKey, setLoginKey] = useState(0);
   const [isMobileScreen, setIsMobileScreen] = useState(() => isPhone());
@@ -135,8 +137,8 @@ export default function BourseAnalyzer() {
       try {
         const s = JSON.parse(localStorage.getItem("bourse_session") || "null");
         if (s?.name) { setUserName(s.name); setState("app"); }
-        else setState("auth");
-      } catch { setState("auth"); }
+        else setState("landing");
+      } catch { setState("landing"); }
       return;
     }
 
@@ -153,8 +155,8 @@ export default function BourseAnalyzer() {
         try {
           const s = JSON.parse(localStorage.getItem("bourse_session") || "null");
           if (s?.name && !s.uid) { setUserName(s.name); setState("app"); }
-          else setState("auth");
-        } catch { setState("auth"); }
+          else setState("landing");
+        } catch { setState("landing"); }
       }
     });
 
@@ -204,7 +206,14 @@ export default function BourseAnalyzer() {
     }
     localStorage.removeItem("bourse_session");
     setSyncUserId(null);
-    setState("auth");
+    setState("landing");
+  };
+
+  const handleDemo = () => {
+    loadDemoData();
+    setUserName("Démo");
+    setLoginKey(k => k + 1);
+    setState("app");
   };
 
   if (isMobileScreen) return <MobileBlock />;
@@ -227,6 +236,7 @@ export default function BourseAnalyzer() {
     </div>
   );
 
+  if (state === "landing") return <LandingPage onDemo={handleDemo} onLogin={() => setState("auth")} />;
   if (state === "auth") return <AuthPage onSession={handleSession} />;
   return <AppErrorBoundary><MobileProvider><BourseAnalyzerInner key={loginKey} userName={userName} onLogout={handleLogout} /></MobileProvider></AppErrorBoundary>;
 }

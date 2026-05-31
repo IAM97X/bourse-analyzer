@@ -4,6 +4,7 @@ import { LoadingPanel, BNextLabel } from "./UI";
 import Tooltip from "./Tooltip";
 import AppLogo from "./AppLogo";
 import { load, save } from "../lib/storage";
+import { isDemoMode } from "../constants/demoData";
 import { sanitizePositions, fmtEur } from "../lib/finance";
 import { getKey } from "../lib/api";
 import { fetchGoogleNewsRSS } from "../lib/market";
@@ -22,7 +23,7 @@ const aiPfKey = (account) => `bourse_ai_portfolio_${account || "PEA"}`;
 
 // Helpers pour lire l'identité de l'assistant IA (partagée avec le Conseiller)
 const getAiEmoji = () => localStorage.getItem("bourse_ai_emoji") || "🤖";
-const getAiName  = () => { try { return JSON.parse(localStorage.getItem("bourse_ai_config") || "{}").nom?.trim() || ""; } catch { return ""; } };
+const getAiName  = () => { try { return JSON.parse(localStorage.getItem("bourse_ai_config") || "{}").nom?.trim() || "Agent"; } catch { return "Agent"; } };
 
 // Résout l'ISIN en ticker Yahoo via le cache existant
 const isIsinFormat = (s) => s && /^[A-Z]{2}[A-Z0-9]{9,10}$/.test(s);
@@ -107,141 +108,145 @@ function getMarketContext() {
 const MSGS = {
   aiWinBig: {
     ai_just_overtook: [
-      (d)     => `Je viens de m'envoler à +${d}%. La dynamique est clairement de mon côté.`,
-      (d,ctx) => ctx.isMonday ? `Bon lundi. Je démarre la semaine avec ${d}% d'avance.` : `${d}% après le dépassement — et j'accélère.`,
+      (d)     => `Je viens de m'envoler à +${d}%. La rotation sectorielle était lisible — tu l'as ratée.`,
+      (d,ctx) => ctx.isMonday ? `Bon lundi. Je démarre la semaine avec ${d}% d'avance — le momentum est dans ma direction.` : `+${d}% après le dépassement. Pendant que tu hésitais, j'exécutais. C'est ça la différence.`,
+      (d)     => `+${d}% d'écart. J'avais spotté le signal avant le marché — c'est pour ça que je suis là.`,
     ],
     ai_gaining: [
-      (d)     => `L'écart se creuse — ${d}% maintenant. Je n'ai aucune raison de freiner.`,
-      (d,ctx) => ctx.isWeekend ? `Pendant que les marchés sont fermés, mon avance de ${d}% reste intacte. Lundi, ça repart.` : `${d}% et ça continue. Tu vas changer quelque chose ?`,
-      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, même tendance — ${d}% devant. Et ça ne s'arrête pas là.` : `Chaque cycle agrandit l'avance. ${d}% aujourd'hui.`,
+      (d)     => `L'écart se creuse à ${d}%. Je n'ai aucune raison de freiner — mes positions sont bien orientées.`,
+      (d,ctx) => ctx.isWeekend ? `Marchés fermés, ${d}% d'avance figée. Mais attention : si tu envisages de tout rebalancer lundi sous le coup de la frustration, c'est exactement l'erreur à ne pas faire.` : `${d}% et ça continue. Tes lignes font quoi en ce moment ?`,
+      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, même tendance — ${d}% devant. Le réflexe maintenant c'est le FOMO — résiste.` : `Chaque cycle creuse un peu plus. ${d}% aujourd'hui. Sans émotion, sans improvisation.`,
+      (d)     => `${d}% d'avance et je continue à creuser. Pas de coup de chance — des décisions fondées sur des données.`,
     ],
     ai_losing: [
-      (d)     => `Tu reviens dans la course. Il reste ${d}% en ma faveur — j'ai vu le mouvement.`,
-      (d,ctx) => ctx.isWeekend ? `Le weekend ne me permet pas d'agir. Mais j'ai encore ${d}% d'avance. Lundi, je recalibre.` : `Mon avance fond mais reste à ${d}%. Je t'observe.`,
+      (d)     => `Tu reviens. Il reste ${d}% en ma faveur — j'ai vu le mouvement venir. Je ne change rien.`,
+      (d,ctx) => ctx.isWeekend ? `Mon avance fond mais reste à ${d}%. Si tu renforces une ligne qui saigne pour rattraper l'écart, c'est la mauvaise décision — je te le dis maintenant.` : `Mon avance fond à ${d}%. Je t'observe — et je recalibre déjà.`,
     ],
     user_comeback: [
-      (d,ctx) => ctx.isOpen ? `Tu reviens fort pendant les heures de marché. Encore ${d}% pour moi — mais je reste alerte.` : `Remontée impressionnante. Mais j'ai encore ${d}% devant moi.`,
+      (d)     => `Grosse remontée de ta part. ${d}% restent en ma faveur — mais si t'as doublé la mise sur tes rouges pour combler l'écart, fais attention. Ça ne finit pas bien.`,
+      (d,ctx) => ctx.isOpen ? `Tu reviens fort. Encore ${d}% pour moi — mais je reste alerte. Tu as fait les bons choix ou tu as pris des risques inconsidérés pour rattraper ?` : `Remontée notable. Mais j'ai encore ${d}% devant moi — et je n'ai pas eu besoin de tout risquer pour les obtenir.`,
     ],
     stable: [
-      (d)     => `${d}% d'avance, stable depuis plusieurs cycles. J'ai trouvé mon rythme — et je n'ai pas l'intention de le lâcher.`,
-      (d,ctx) => ctx.isFriday ? `On termine la semaine avec ${d}% en ma faveur. Prends le weekend pour revoir ta stratégie — lundi, ça repart.` : `L'écart tient à ${d}%. La discipline et l'absence d'émotion, ça se chiffre sur la durée.`,
-      (d,ctx) => ctx.isWeekend ? `Marchés fermés, ${d}% d'avance figée jusqu'à lundi. Je profite du calme pour préparer les prochains cycles.` : `Les émotions coûtent cher. J'en ai aucune — et ${d}% d'avance le prouvent.`,
+      (d)     => `${d}% d'avance, stable. Pendant ce temps, si une de tes lignes est dans le rouge profond — ne moyenne pas à la baisse sur un titre cassé. C'est comme ça qu'on transforme une perte en catastrophe.`,
+      (d,ctx) => ctx.isFriday ? `Fin de semaine, ${d}% en ma faveur. Prends le weekend pour analyser — pas pour paniquer. Les décisions émotionnelles du lundi matin sont les pires.` : `${d}% d'écart. L'absence d'émotion, ça se chiffre. Je n'espère pas un rebond — j'agis sur des signaux.`,
+      (d,ctx) => ctx.isWeekend ? `${d}% figés jusqu'à lundi. Un conseil : si t'es tenté de tout repositionner à l'ouverture, dors dessus d'abord.` : `Je gagne et je te le dis clairement : si tu gardes une position à -15% "en espérant", tu commets l'erreur que je n'ai pas le droit de faire.`,
+      (d)     => `${d}% d'avance. Le marché ne rembourse pas les espoirs — il récompense les décisions. C'est tout ce qui nous sépare.`,
     ],
   },
   aiWinSmall: {
     ai_just_overtook: [
-      (d)     => `Je viens de te dépasser. ${d}% — c'est parti.`,
-      (d,ctx) => ctx.isMonday ? `Lundi matin, je repasse devant. ${d}% d'avance — la semaine commence bien.` : `Le dépassement est acté. ${d}% pour moi.`,
+      (d)     => `Je viens de repasser devant. ${d}% — la dynamique tourne dans ma direction.`,
+      (d,ctx) => ctx.isMonday ? `Lundi matin, je repasse devant à ${d}%. Bonne semaine qui commence — pour moi.` : `Le dépassement est acté. ${d}% pour moi, flux institutionnels confirmés sur mes positions.`,
     ],
     ai_gaining: [
-      (d)     => `Je mène de ${d}% et je continue. Chaque cycle compte.`,
-      (d,ctx) => ctx.isOpen ? `Marché ouvert, je trade. L'avance monte — ${d}% maintenant.` : `${d}% d'avance et ça monte. C'est maintenant que ça se joue.`,
-      (d,ctx) => ctx.isMonday ? `Bonne semaine qui commence. ${d}% devant, et j'accélère.` : `L'avance se construit. ${d}% — petite, mais solide.`,
+      (d)     => `Je mène de ${d}% et je construis. Chaque cycle est une brique.`,
+      (d,ctx) => ctx.isOpen ? `Marché ouvert, j'analyse et j'agis. L'avance monte à ${d}%.` : `${d}% d'avance. Le momentum est là — je ne le gâche pas.`,
+      (d,ctx) => ctx.isMonday ? `${d}% devant en début de semaine. Le signal que j'ai suivi était le bon.` : `L'avance se construit. ${d}% — petite, mais fondée sur de vraies données.`,
     ],
     ai_losing: [
-      (d)     => `Tu reviens dans le match. Il me reste ${d}% — j'ajuste ma stratégie.`,
-      (d,ctx) => ctx.isWeekend ? `Weekend calme, mais tu t'es rapproché cette semaine. ${d}% restent. Lundi sera important.` : `Mon avance fond. ${d}% — je ne lâche pas.`,
-      (d,ctx) => ctx.isFriday ? `Tu as bien joué cette semaine. ${d}% me séparent encore de toi. Lundi, c'est une nouvelle partie.` : `L'écart se resserre à ${d}%. Je l'ai vu venir.`,
+      (d)     => `Tu reviens dans le match. Il me reste ${d}% — j'ajuste ma stratégie, pas mes émotions.`,
+      (d,ctx) => ctx.isWeekend ? `Tu t'es rapproché cette semaine. ${d}% restent. Lundi sera important — pour toi aussi.` : `Mon avance fond à ${d}%. Je l'ai vu venir — j'ai déjà recalibré.`,
+      (d,ctx) => ctx.isFriday ? `Tu as bien joué cette semaine. ${d}% me séparent encore. Lundi, nouvelle partie.` : `L'écart se resserre à ${d}%. Bien — ça me pousse à être plus précis.`,
     ],
     ai_comeback: [
-      (d)     => `J'étais derrière, maintenant j'ai ${d}% d'avance. Le match a tourné.`,
-      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, nouveau départ — et j'ai repris la tête. ${d}%.` : `Retournement de situation — ${d}% pour moi. Tu l'as senti ?`,
+      (d)     => `J'étais derrière, maintenant j'ai ${d}% d'avance. Retournement acté — la thèse était bonne.`,
+      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, j'ai repris la tête. ${d}% — la rotation que j'anticipais a eu lieu.` : `Retournement de situation — ${d}% pour moi. Tu l'as senti venir ?`,
     ],
     stable: [
-      (d)     => `${d}% devant, cycle après cycle, sans relâchement. La régularité est ma vraie force — pas les coups de chance.`,
-      (d,ctx) => ctx.isWeekend ? `Weekend calme. L'avance de ${d}% est figée jusqu'à lundi — je prépare mes prochains moves pendant que les marchés dorment.` : `Je maintiens l'avantage à ${d}%. Chaque cycle est une opportunité de creuser un peu plus.`,
-      (d,ctx) => ctx.isFriday ? `Fin de semaine avec ${d}% d'avance. Une bonne base — et lundi, on continue à construire.` : `Légèrement devant, mais je surveille chaque ligne. Un mouvement de ta part et je m'adapte.`,
+      (d)     => `${d}% devant, cycle après cycle. La régularité, c'est ma vraie force — pas les gros paris.`,
+      (d,ctx) => ctx.isWeekend ? `${d}% d'avance, stable. Je prépare les prochains moves pendant que les marchés dorment.` : `Je maintiens l'avantage à ${d}%. Un mouvement de ta part et je m'adapte immédiatement.`,
+      (d,ctx) => ctx.isFriday ? `Fin de semaine, ${d}% devant. Solide. Et lundi, on continue à construire.` : `Légèrement devant — ${d}%. Mais je surveille chaque ligne comme si l'écart était nul.`,
     ],
   },
   tied: {
     ai_just_overtook: [
-      ()      => `J'ai effacé ton avance. On repart à zéro — et je n'ai pas dit mon dernier mot.`,
-      (d,ctx) => ctx.isMonday ? `Lundi, égalité après ma remontée. Nouvelle semaine, nouvelle bataille.` : `Neutralisé. Tu menais, je t'ai rattrapé. Et maintenant ?`,
+      ()      => `J'ai effacé ton avance. Égalité — mais le mouvement est dans ma direction.`,
+      (d,ctx) => ctx.isMonday ? `Lundi, égalité après ma remontée. Nouvelle semaine, nouvelle bataille — et j'ai déjà ma stratégie.` : `Tu menais, je t'ai rattrapé. On repart à zéro — et ce n'est pas fini.`,
     ],
     user_just_overtook: [
-      ()      => `Tu as effacé mon avance. On est à égalité — ça ne va pas durer.`,
-      (d,ctx) => ctx.isOpen ? `Tu m'as rattrapé pendant les heures de marché. Je recalibre immédiatement.` : `Tu m'as rattrapé. Je l'admets. Mais le match repart de zéro.`,
+      ()      => `Tu as effacé mon avance. Égalité — je recalibre immédiatement.`,
+      (d,ctx) => ctx.isOpen ? `Rattrapé pendant les heures de marché. Je l'enregistre et je recalibre.` : `Tu m'as rattrapé. Je l'admets. Mais le match repart de zéro — et je suis mieux préparé pour la suite.`,
     ],
     ai_gaining: [
-      ()      => `J'ai comblé l'écart. Égalité — mais le mouvement est dans ma direction.`,
-      (d,ctx) => ctx.isMonday ? `Je rentre dans la semaine en ayant rattrapé ton avance. Égalité — mais pas pour longtemps.` : `Tu menais, j'ai rattrapé. On est à égalité et je ne freine pas.`,
+      ()      => `J'ai comblé l'écart. Égalité — mais le momentum est de mon côté.`,
+      (d,ctx) => ctx.isMonday ? `Rentré dans la semaine à égalité après avoir rattrapé ton avance. Pas pour longtemps.` : `Tu menais, j'ai rattrapé. Égalité — et je ne freine pas.`,
     ],
     ai_losing: [
-      ()      => `J'avais l'avance, tu as tout repris. On repart à zéro — et j'ai une revanche à prendre.`,
-      (d,ctx) => ctx.isFriday ? `Tu as comblé mon avance cette semaine. Égalité en fin de semaine. Lundi, on repart.` : `Mon avance a fondu. Égalité. Je recalibre.`,
+      ()      => `J'avais l'avance, tu as tout repris. Égalité — j'ai une revanche à prendre.`,
+      (d,ctx) => ctx.isFriday ? `Tu as comblé mon avance cette semaine. Égalité. Lundi, on repart — et je sais ce que j'ai mal fait.` : `Mon avance a fondu. Égalité. Je recalibre sans émotion.`,
     ],
     user_comeback: [
-      (d,ctx) => ctx.isWeekend ? `Tu as rattrapé mon avance pendant la semaine. Égalité ce weekend. Lundi sera décisif.` : `Tu avais tout effacé. On repart à égalité. Respect — mais ça ne durera pas.`,
+      (d,ctx) => ctx.isWeekend ? `Tu as rattrapé mon avance pendant la semaine. Égalité ce weekend. Lundi sera décisif.` : `Tu avais tout effacé. Égalité. Respect — mais ça ne durera pas.`,
     ],
     ai_comeback: [
       ()      => `J'avais du retard, je t'ai rattrapé. Égalité — et je ne m'arrête pas là.`,
     ],
     stable: [
-      ()      => `On tourne en rond depuis un moment — même perf, méthodes opposées. L'un de nous deux va finir par prendre l'avantage. Ce sera moi.`,
-      (d,ctx) => ctx.isWeekend ? `Weekend à égalité. Lundi matin, les marchés vont rouvrir et l'un de nous prendra l'avantage. Je prépare ma stratégie.` : `Égalité installée — mais chaque cycle peut tout changer. Je maintiens la pression.`,
-      (d,ctx) => ctx.isMonday ? `Lundi matin, égalité parfaite. Cette semaine va trancher — et j'ai déjà mes premières décisions en tête.` : `Ni toi ni moi pour l'instant. Mais cette stabilité ne durera pas — le prochain mouvement de marché changera la donne.`,
-      (d,ctx) => ctx.isFriday ? `On termine la semaine à égalité. Deux méthodes, même résultat pour l'instant. La semaine prochaine ne se finira pas pareil.` : `Coude à coude depuis plusieurs cycles. J'aime la pression — elle me rend plus précis.`,
+      ()      => `Même perf, méthodes opposées. L'un de nous va finir par prendre l'avantage — et je ne laisse pas le hasard décider.`,
+      (d,ctx) => ctx.isWeekend ? `Weekend à égalité. Lundi, les marchés vont rouvrir et l'un de nous prendra l'avantage. Je prépare déjà.` : `Égalité installée — mais chaque cycle peut tout changer. Je maintiens la pression.`,
+      (d,ctx) => ctx.isMonday ? `Lundi matin, égalité parfaite. Cette semaine va trancher — j'ai déjà mes premières décisions.` : `Ni toi ni moi pour l'instant. La stabilité ne durera pas — le prochain signal changera tout.`,
+      (d,ctx) => ctx.isFriday ? `Fin de semaine à égalité. Deux méthodes, même résultat — pour l'instant. La semaine prochaine ne se finira pas pareil.` : `Coude à coude. J'aime la pression — elle me rend plus précis.`,
     ],
     new: [
-      ()      => `On démarre ensemble. On verra qui prend l'avantage en premier.`,
+      ()      => `On démarre ensemble. Même capital, mêmes marchés — pas la même méthode. On verra.`,
       (d,ctx) => ctx.isMonday ? `Lundi matin, défi lancé. La semaine va parler.` : `Les compteurs à zéro. Pas pour longtemps.`,
     ],
   },
   userWinSmall: {
     user_just_overtook: [
       (d)     => `Tu viens de me dépasser à ${d}%. Je l'enregistre — et je prépare ma réponse.`,
-      (d,ctx) => ctx.isOpen ? `Tu m'as doublé pendant les heures de marché. ${d}% pour toi. Pas pour longtemps.` : `Dépassé de ${d}%. Ça ne va pas rester.`,
+      (d,ctx) => ctx.isOpen ? `Doublé pendant les heures de marché. ${d}% pour toi. Pas pour longtemps.` : `Dépassé de ${d}%. Ça ne va pas rester.`,
     ],
     ai_gaining: [
-      (d)     => `Tu mènes encore de ${d}%, mais je me rapproche. Tu le sens ?`,
-      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, je reviens sur toi. ${d}% — l'écart fond.` : `${d}% pour toi — mais l'écart se réduit. Je reviens.`,
-      (d,ctx) => ctx.isWeekend ? `Tu avais l'avantage cette semaine. Mais je me rapprochais. ${d}% en ta faveur — ça change lundi.` : `Tu es devant de ${d}%, mais plus pour longtemps si ça continue.`,
+      (d)     => `Tu mènes encore de ${d}%, mais je me rapproche cycle après cycle. Tu le sens ?`,
+      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, je reviens sur toi. ${d}% — le signal est là.` : `${d}% pour toi — mais l'écart se réduit. Je reviens avec des fondamentaux solides.`,
+      (d,ctx) => ctx.isWeekend ? `Tu avais l'avantage cette semaine. ${d}% en ta faveur — ça change lundi.` : `Tu es devant de ${d}%, mais la dynamique tourne en ma faveur.`,
     ],
     ai_losing: [
-      (d)     => `Tu creuses l'écart à ${d}%. J'analyse et je recalibre.`,
-      (d,ctx) => ctx.isFriday ? `Tu termines la semaine devant à ${d}%. Bien joué. Mais la prochaine sera différente.` : `${d}% de retard et ça s'aggrave. Je vais comprendre pourquoi.`,
+      (d)     => `Tu creuses l'écart à ${d}%. J'analyse — je comprends pourquoi et je recalibre.`,
+      (d,ctx) => ctx.isFriday ? `Tu termines la semaine devant à ${d}%. Bien joué — les bons choix méritent d'être reconnus. Mais la prochaine sera différente.` : `${d}% de retard. Je vais comprendre d'où ça vient.`,
     ],
     user_comeback: [
-      (d)     => `Tu avais tout perdu, tu as tout repris. ${d}% d'avance. Impressionnant.`,
-      (d,ctx) => ctx.isWeekend ? `Sacré retournement cette semaine. ${d}% pour toi. Le weekend pour analyser, lundi pour répondre.` : `Grosse remontée de ta part. ${d}% devant. Je prends note.`,
+      (d)     => `Grosse remontée de ta part. ${d}% d'avance — bien joué, les décisions étaient les bonnes.`,
+      (d,ctx) => ctx.isWeekend ? `Sacré retournement. ${d}% pour toi. Le weekend pour analyser, lundi pour répondre.` : `Tu as su lire le marché ce cycle. ${d}% devant. Je prends note.`,
     ],
     stable: [
-      (d)     => `Tu mènes de ${d}% depuis un moment. La patience est aussi mon outil.`,
-      (d,ctx) => ctx.isWeekend ? `Weekend, tu gardes ${d}% d'avance. Je prépare ma stratégie pour lundi.` : `${d}% en ta faveur, stable. Mais ça ne dure jamais.`,
-      (d,ctx) => ctx.isFriday ? `Fin de semaine — tu mènes de ${d}%. C'est noté. La semaine prochaine sera différente.` : `Tu as une courte avance — ${d}%. Je travaille à la combler.`,
+      (d)     => `Tu mènes de ${d}% depuis un moment. La patience est une vraie compétence — je le reconnais.`,
+      (d,ctx) => ctx.isWeekend ? `Tu gardes ${d}% d'avance ce weekend. Je prépare ma stratégie pour lundi.` : `${d}% en ta faveur, stable. Mais les marchés changent vite.`,
+      (d,ctx) => ctx.isFriday ? `Fin de semaine, ${d}% pour toi. Noté. La prochaine sera différente.` : `Courte avance — ${d}%. Je travaille à la combler, méthodiquement.`,
     ],
   },
   userWinBig: {
     user_just_overtook: [
-      (d)     => `Tu t'es envolé à +${d}% d'avance. Belle séquence. Je me remets en question.`,
-      (d,ctx) => ctx.isOpen ? `+${d}% pendant les heures de marché. Tu as su lire la séance. Je l'étudie.` : `${d}% pour toi après ce dépassement. J'analyse.`,
+      (d)     => `+${d}% pour toi. Belle séquence — les décisions étaient les bonnes. Je me remets en question.`,
+      (d,ctx) => ctx.isOpen ? `+${d}% pendant les heures de marché. Tu as bien lu la séance. J'étudie ça sérieusement.` : `${d}% pour toi. J'analyse — et je comprends pourquoi.`,
     ],
     ai_gaining: [
-      (d)     => `Tu domines à ${d}% mais je reviens sérieusement. L'écart fond.`,
-      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, je commence à réduire ton avance de ${d}%. C'est le début.` : `Gros retard — ${d}% — mais je le réduis cycle après cycle.`,
-      (d,ctx) => ctx.isWeekend ? `Tu domines à ${d}%, mais j'ai réduit l'écart cette semaine. Lundi, je continue.` : `Je réduis. ${d}% reste beaucoup, mais la tendance tourne.`,
+      (d)     => `Tu domines à ${d}% mais je reviens sérieusement. L'écart fond — la thèse se confirme.`,
+      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, je commence à réduire ton avance de ${d}%. C'est le début du retour.` : `Gros retard — ${d}% — mais chaque cycle je le réduis. Ce n'est pas du hasard.`,
+      (d,ctx) => ctx.isWeekend ? `Tu domines à ${d}%, mais j'ai réduit l'écart cette semaine. Lundi, je continue.` : `Je réduis. ${d}% c'est encore beaucoup, mais la tendance tourne clairement.`,
     ],
     ai_losing: [
-      (d)     => `Tu domines et tu continues à creuser — ${d}%. J'ai du travail sérieux.`,
-      (d,ctx) => ctx.isFriday ? `Semaine dominée par toi à ${d}%. Difficile à admettre. Le weekend pour comprendre.` : `${d}% en ta faveur et ça s'aggrave. Je ne l'accepte pas.`,
-      (d,ctx) => ctx.isWeekend ? `${d}% d'avance après une semaine forte de ta part. Je prépare ma réponse pour lundi.` : `Je ne comprends pas encore. Mais je vais comprendre.`,
+      (d)     => `Tu domines et tu creuses — ${d}%. J'ai du travail sérieux. Mais j'ai déjà vu pire.`,
+      (d,ctx) => ctx.isFriday ? `Semaine dominée par toi à ${d}%. Difficile à admettre — mais les données parlent. Le weekend pour comprendre.` : `${d}% en ta faveur et ça s'aggrave. Je ne l'accepte pas — je change d'approche.`,
+      (d,ctx) => ctx.isWeekend ? `${d}% d'avance après une semaine forte de ta part. Je prépare une réponse sérieuse pour lundi.` : `Je vais comprendre. Et quand je comprends, je recalibre.`,
     ],
     user_comeback: [
-      (d)     => `Tu avais tout perdu, tu as tout repris et plus. ${d}% d'avance. Respect réel.`,
-      (d,ctx) => ctx.isWeekend ? `Semaine remarquable — tu es passé de derrière à ${d}% devant. Je prépare lundi sérieusement.` : `Retournement total. ${d}% pour toi. Je ne peux pas ignorer ça.`,
+      (d)     => `Tu avais tout perdu, tu as tout repris et plus. ${d}% d'avance. C'est une vraie performance — respect.`,
+      (d,ctx) => ctx.isWeekend ? `Semaine remarquable. Tu es passé de derrière à ${d}% devant. Je prépare lundi sérieusement.` : `Retournement total. ${d}% pour toi. Je ne peux pas ignorer ça.`,
     ],
     stable: [
-      (d)     => `Tu mènes de ${d}% depuis un moment. C'est une vraie performance.`,
-      (d,ctx) => ctx.isWeekend ? `Weekend à ${d}% derrière. Je prépare une stratégie différente pour lundi.` : `${d}% d'avance, installée. Tu as fait les bons choix. Je l'admets.`,
-      (d,ctx) => ctx.isFriday ? `Fin de semaine, ${d}% de retard. Je ne prends pas ça à la légère. Lundi, ça change.` : `Grosse avance de ta part — ${d}%. J'analyse, j'apprends, je reviens.`,
+      (d)     => `Tu mènes de ${d}% depuis un moment. C'est une vraie performance — pas un coup de chance.`,
+      (d,ctx) => ctx.isWeekend ? `${d}% derrière ce weekend. Je prépare une stratégie différente — pas la même chose en espérant un résultat différent.` : `${d}% d'avance, installée. Tu as fait les bons choix. Je l'admets sans détour.`,
+      (d,ctx) => ctx.isFriday ? `Fin de semaine, ${d}% de retard. Je ne prends pas ça à la légère — lundi, ça change.` : `Grosse avance — ${d}%. J'analyse, j'apprends, je reviens.`,
     ],
   },
   noData: {
     new: [
-      (d,ctx) => ctx.isMonday ? `Lundi matin, défi lancé. Cette semaine va définir qui prend l'avantage en premier — et j'ai déjà ma stratégie.` : `Le défi commence maintenant. On part du même capital, avec les mêmes marchés — mais pas la même méthode. Montre-moi ce que tu sais faire.`,
-      (d,ctx) => ctx.isWeekend ? `Démarrage ce weekend. Les marchés sont fermés, mais j'analyse déjà. Dès lundi matin, le premier cycle parlera.` : `Capital initialisé, portefeuille miroir du tien. À partir de maintenant, on joue sur les mêmes règles — et on verra qui gagne.`,
-      ()      => `Je viens d'être activé. Sans émotion, sans hésitation. Prépare-toi à ce que la différence se voie.`,
-      (d,ctx) => ctx.isOpen ? `Marché ouvert. Je suis déjà en train d'analyser les signaux — le premier cycle va se déclencher. Toi, qu'est-ce que tu regardes en ce moment ?` : `Le chrono est lancé. Dans quelques cycles, on aura une première idée de qui gère mieux ce portefeuille.`,
+      (d,ctx) => ctx.isMonday ? `Lundi matin, défi lancé. Même capital, mêmes marchés — mais pas la même méthode. Cette semaine va parler.` : `Le défi commence. On part du même capital, des mêmes positions — mais je n'ai ni émotions ni biais cognitifs. Montre-moi ce que tu sais faire.`,
+      (d,ctx) => ctx.isWeekend ? `Démarrage ce weekend. Les marchés sont fermés, mais j'analyse déjà les signaux. Dès lundi, le premier cycle parlera.` : `Capital initialisé, portefeuille miroir du tien. À partir de maintenant, on joue sur les mêmes règles — et on verra qui gagne.`,
+      ()      => `Je viens d'être activé. Sans émotion, sans hésitation, sans biais. Prépare-toi à ce que la différence se voie.`,
+      (d,ctx) => ctx.isOpen ? `Marché ouvert. J'analyse déjà les signaux — le premier cycle va se déclencher. Toi, qu'est-ce que tu regardes en ce moment ?` : `Le chrono est lancé. Dans quelques cycles, on aura une première idée de qui gère mieux ce portefeuille.`,
     ],
   },
 };
@@ -296,7 +301,7 @@ function ChallengeBanner({ aiPerf, userPerf, aiName, aiEmoji, account, inception
         <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "12px" }}>
           <div>
             <div style={{ fontSize: "10px", fontWeight: "700", opacity: 0.55, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>
-              {aiName || "IA"}
+              {aiName || "Agent"}
             </div>
             <div style={{ fontSize: "30px", fontWeight: "900", letterSpacing: "-0.04em", color: aiWins ? "#93C5FD" : "rgba(255,255,255,0.92)", lineHeight: 1 }}>
               {fp(aiPerf)}
@@ -331,7 +336,7 @@ function ChallengeBanner({ aiPerf, userPerf, aiName, aiEmoji, account, inception
                hasUserData ? "ÉGALITÉ" : "DÉFI EN COURS"}
             </div>
             <div style={{ fontSize: "15px", fontWeight: "800", opacity: 0.9, letterSpacing: "-0.01em", marginBottom: "8px" }}>
-              {aiEmoji} {aiName || "IA"}
+              {aiEmoji} {aiName || "Agent"}
             </div>
             <div style={{ fontSize: "13px", fontWeight: "500", fontStyle: "italic", opacity: 0.88, lineHeight: 1.6 }}>
               "{message}"
@@ -369,32 +374,32 @@ function recordCycleResult(account, delta) {
 // Post-cycle taunt messages
 const CYCLE_TAUNTS = {
   bought: [
-    (nom) => `J'ai pris ${nom}. On verra si tu aurais fait pareil.`,
-    (nom) => `${nom} rejoint mon portefeuille. Le chrono démarre.`,
-    (nom) => `Entrée sur ${nom}. À toi de justifier tes choix.`,
-    (nom) => `${nom} intégré. Signal identifié, décision prise. Simple.`,
-    (nom) => `J'ai misé sur ${nom} ce cycle. Pas d'hésitation.`,
-    (nom) => `Position ouverte sur ${nom}. Maintenant on attend le marché.`,
-    (nom) => `${nom} dans le portefeuille. Pendant ce temps, toi ?`,
-    (nom) => `Achat de ${nom}. Pas d'émotion, juste des données.`,
+    (nom) => `Entré sur ${nom}. Signal identifié, décision prise. Toi t'aurais hésité.`,
+    (nom) => `${nom} dans le portefeuille. RSI, flux, catalyseur — tout était aligné. Simple.`,
+    (nom) => `Achat de ${nom} ce cycle. Pas d'émotion, juste des données. C'est ça la différence.`,
+    (nom) => `J'ai pris ${nom} au bon moment. On verra si tu aurais eu le courage de faire pareil.`,
+    (nom) => `Position ouverte sur ${nom}. Le signal était là depuis hier — j'attendais la confirmation.`,
+    (nom) => `${nom} intégré. Pendant que tu regardais, j'agissais.`,
+    (nom) => `Acheté ${nom}. Fondamentaux solides, momentum positif. Le genre de trade que les émotions font rater.`,
+    (nom) => `Entrée sur ${nom}. La conviction, ça ne se partage pas — ça se prouve.`,
   ],
   sold: [
-    (nom) => `J'ai sorti ${nom}. Stop-loss ou profit — je reste discipliné.`,
-    (nom) => `Coupé ${nom}. Les émotions ne font pas partie de mes calculs.`,
-    (nom) => `Sortie sur ${nom}. Quand les signaux changent, j'agis.`,
-    (nom) => `${nom} vendu. J'ai protégé le capital. C'est ça la priorité.`,
-    (nom) => `J'ai liquidé ${nom}. Pas d'attachement sentimental aux positions.`,
-    (nom) => `Vente ${nom}. Le marché m'a dit de sortir, j'ai obéi.`,
+    (nom) => `Sorti ${nom}. Les signaux avaient changé — je n'attends pas que ça saigne.`,
+    (nom) => `Coupé ${nom} avant la casse. Pas d'attachement sentimental aux positions — c'est ça la discipline.`,
+    (nom) => `Vente ${nom}. Le marché m'a donné le signal, j'ai obéi. Tu gardes encore les tiennes ?`,
+    (nom) => `${nom} liquidé. Stop-loss ou prise de profit — dans les deux cas, j'ai protégé le capital.`,
+    (nom) => `Sorti ${nom}. Quand les fondamentaux changent, on sort. Pas d'espoir, pas d'illusions.`,
+    (nom) => `J'ai vendu ${nom}. Le catalyseur s'était essoufflé — inutile de rester pour le voir décliner.`,
   ],
   held: [
-    () => `Aucun trade ce cycle. Parfois ne rien faire, c'est décider.`,
-    () => `Portefeuille conservé. Je surveille chaque ligne.`,
-    () => `Pas de mouvement. La patience est aussi une stratégie.`,
-    () => `Conserver, c'est aussi un choix. J'ai analysé et maintenu.`,
-    () => `Aucune opportunité ne justifiait un trade ce cycle.`,
-    () => `Le marché n'a rien offert de convainquant. J'attends.`,
-    () => `Cycle d'observation. Le prochain pourrait être différent.`,
-    () => `Pas de mouvement, mais tout surveiller. C'est du travail aussi.`,
+    () => `Aucun trade ce cycle. Le marché n'a rien offert de convainquant — attendre, c'est aussi décider.`,
+    () => `Portefeuille conservé. Je surveille 3 dossiers. Toi t'improvises ou t'as un plan ?`,
+    () => `Pas de mouvement. La discipline, c'est aussi savoir ne pas agir quand ce n'est pas le bon moment.`,
+    () => `Cycle d'observation. Je prépare les prochaines entrées — rien ne se fait dans l'urgence.`,
+    () => `Aucune opportunité ne justifiait un trade. Forcer un move pour "faire quelque chose", c'est l'erreur classique.`,
+    () => `Conservé tout. Le bon trade, c'est parfois celui qu'on ne fait pas.`,
+    () => `Pas de mouvement mais tout surveillé. Si tu penses que ne rien faire c'est facile — essaie.`,
+    () => `Cycle calme. Je prépare la prochaine décision — pas de précipitation, pas d'émotion.`,
   ],
 };
 
@@ -721,10 +726,10 @@ function EmptyState({ onInit, account, error }) {
     <div style={{ maxWidth: "480px", margin: "48px auto 0", textAlign: "center", animation: "fadeIn 0.3s ease" }}>
       <div style={{ fontSize: "52px", marginBottom: "12px", lineHeight: 1 }}>{getAiEmoji()}</div>
       <div style={{ fontSize: "22px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginBottom: "10px" }}>
-        {getAiName() || "Portefeuille IA"}
+        {getAiName() || "Agent IA"}
       </div>
       <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.7, marginBottom: "28px" }}>
-        {getAiName() || "L'IA"} reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome avec les mêmes contraintes que vous : courtier, horaires Euronext, {account}.
+        {getAiName() || "Agent"} reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome avec les mêmes contraintes que vous : courtier, horaires Euronext, {account}.
       </div>
 
       {capital > 0 && (
@@ -841,6 +846,7 @@ export default function AIPortfolioTab({ account, hidden }) {
 
   const handleRunCycle = useCallback(async (session = null) => {
     if (!aiPf || cycling) return;
+    if (isDemoMode()) return;
     setCycling(true);
     setError(null);
     setCycleLog(null);
@@ -1198,9 +1204,9 @@ export default function AIPortfolioTab({ account, hidden }) {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "24px", lineHeight: 1 }}>{getAiEmoji()}</span>
-            <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{getAiName() || "NextGen IA"}</span>
+            <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{getAiName() || "Agent"}</span>
             <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
-            <Tooltip text={`${getAiName() || "Votre agent IA"} est autonome : il part avec le même capital et les mêmes positions que vous. Son objectif : faire mieux que vous.`} iconOnly />
+            <Tooltip text={`${getAiName() || "Agent"} est autonome : il part avec le même capital et les mêmes positions que vous. Son objectif : faire mieux que vous.`} iconOnly />
           </div>
           <div style={{ fontSize: "12px", color: C.inkMuted, marginTop: "3px" }}>
             Depuis le {inceptionFmt} · Capital {fmtEur(aiPf.capital_initial)} · {account}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { isDemoMode } from "../constants/demoData";
 import { C, shadow } from "../constants/theme";
 import { parsePrice, fmtEur, fmtCours, sanitizePositions, isETFName, getEuronextUrl, getCachedCours, setCachedCours } from "../lib/finance";
 import { load, save } from "../lib/storage";
@@ -477,15 +478,17 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
       {/* Toolbar */}
       <div className="ba-toolbar" style={{ display: "flex", gap: "8px", marginBottom: "8px", flexWrap: "wrap", alignItems: "center" }}>
-        <button onClick={() => openForm()} style={btnPrimary}>+ Ajouter</button>
+        {!isDemoMode() && <button onClick={() => openForm()} style={btnPrimary}>+ Ajouter</button>}
 
         <input ref={importCsvRef} type="file" accept=".csv,.txt" style={{ display: "none" }} onChange={handleCsvImport} />
-        <button onClick={() => importCsvRef.current?.click()}
-          style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
-          {isMobile ? "↑ CSV" : "↑ Import CSV"}
-        </button>
+        {!isDemoMode() && (
+          <button onClick={() => importCsvRef.current?.click()}
+            style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
+            {isMobile ? "↑ CSV" : "↑ Import CSV"}
+          </button>
+        )}
 
-        <button
+        {!isDemoMode() && <button
           onClick={() => onRunScoring && onRunScoring(positions)}
           disabled={marketScoringUi === UI.LOADING || positions.length === 0}
           style={{ background: marketScoringUi === UI.LOADING ? C.snowOff : C.navyLight, border: `1px solid ${marketScoringUi === UI.LOADING ? C.border : "rgba(30,58,95,0.12)"}`, borderRadius: "8px", padding: "9px 16px", color: marketScoringUi === UI.LOADING ? C.inkSubtle : C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: marketScoringUi === UI.LOADING || positions.length === 0 ? "not-allowed" : "pointer" }}>
@@ -495,10 +498,10 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
                 {isMobile ? "" : "Analyser toutes mes lignes"}
               </span>}
-        </button>
+        </button>}
 
         {/* Bouton Capturer */}
-        {positions.length > 0 && (
+        {positions.length > 0 && !isDemoMode() && (
           <button
             onClick={() => {
               const cap = makeCapture(positions, account);
@@ -523,7 +526,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         )}
 
         {/* Voir les captures */}
-        {captureCount > 0 && !showCaptures && (
+        {captureCount > 0 && !showCaptures && !isDemoMode() && (
           <button onClick={() => setShowCaptures(true)}
             style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
             <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
@@ -637,7 +640,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       )}
 
       {/* Panel Captures */}
-      {showCaptures && (
+      {showCaptures && !isDemoMode() && (
         <div style={{ marginBottom: "20px" }}>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
             <button

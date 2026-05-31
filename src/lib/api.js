@@ -36,7 +36,10 @@ const _ENV = {
 };
 
 export const getKey = (name) => {
-  try { const k = JSON.parse(localStorage.getItem("bourse_api_keys") || "{}"); return k[name] || _ENV[name] || ""; }
+  try {
+    if (localStorage.getItem("bourse_demo_mode") === "1") return _ENV[name] || "";
+    const k = JSON.parse(localStorage.getItem("bourse_api_keys") || "{}"); return k[name] || _ENV[name] || "";
+  }
   catch { return _ENV[name] || ""; }
 };
 
