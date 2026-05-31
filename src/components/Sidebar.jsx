@@ -98,7 +98,7 @@ const IconMore = () => (
 
 export const NAV_GROUPS = [
   { items: [
-    { key: TABS.HOME,       label: "Accueil",   icon: <IconHome/>,      group: [TABS.HOME] },
+    { key: TABS.HOME,       label: "Synthèse",  icon: <IconHome/>,      group: [TABS.HOME] },
     { key: TABS.PORTFOLIO,  label: "Portefeuille", icon: <IconPositions/>, group: [TABS.PORTFOLIO, TABS.HISTORIQUE, TABS.OPERATIONS] },
     { key: TABS.DCA,        label: "Stratégie", icon: <IconTarget/>,    group: [TABS.DCA, TABS.PROJECTION] },
     { key: TABS.MARCHE,     label: "IA",        icon: <IconBrain/>,     group: [TABS.MARCHE, TABS.CHAT, TABS.AUTOPILOT], featured: true },

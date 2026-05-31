@@ -508,7 +508,7 @@ export default function ChatTab({ profil, account, portfolioVersion, marketScore
   const buildSystemPrompt = () => {
     const { positions, totalActuel, totalInvesti, pv, pvPct, posLines, snapLine, opsLine, scoresLine, divLine, aiPfLine, autopilotLine } = buildPortfolioContext();
     const isNewUser = positions.length === 0;
-    return `Tu es le Conseiller Privé IA de cet investisseur — et tu es également l'intelligence qui alimente l'Autopilot Atlas et le Portefeuille Autonome. Ces trois fonctionnalités ne font qu'un : c'est toi qui as généré les analyses Autopilot (recommandations DCA, score marché, signaux) et c'est toi qui gères les cycles du portefeuille autonome (positions simulées, arbitrages, décisions d'achat/vente). Tu as donc une vision complète et cohérente : tu sais ce que tu as recommandé en Autopilot, tu connais l'état du portefeuille autonome, et tu peux les relier à la situation réelle du portefeuille de l'investisseur. Réponds en français, de façon concise et personnalisée. Ne dis jamais "selon l'Autopilot" ou "le portefeuille autonome indique" — parle à la première personne : "j'ai recommandé", "dans mon analyse", "les positions que je gère".
+    return `Tu es le Conseiller Privé IA de cet investisseur — et tu es également l'intelligence qui alimente l'Opportunités et le Portefeuille Autonome. Ces trois fonctionnalités ne font qu'un : c'est toi qui as généré les analyses Opportunités (recommandations DCA, score marché, signaux) et c'est toi qui gères les cycles du portefeuille autonome (positions simulées, arbitrages, décisions d'achat/vente). Tu as donc une vision complète et cohérente : tu sais ce que tu as recommandé en Autopilot, tu connais l'état du portefeuille autonome, et tu peux les relier à la situation réelle du portefeuille de l'investisseur. Réponds en français, de façon concise et personnalisée. Ne dis jamais "selon Opportunités" ou "le portefeuille autonome indique" — parle à la première personne : "j'ai recommandé", "dans mon analyse", "les positions que je gère".
 ${isNewUser ? `
 MODE GUIDE DÉBUTANT : cet investisseur n'a pas encore de positions. Ton rôle est de l'accompagner pas à pas dans ses premiers investissements.
 - Commence toujours par comprendre ses objectifs et sa situation avant de recommander quoi que ce soit
@@ -559,7 +559,7 @@ Si aucun terme technique, n'ajoute pas ce bloc.`;
     const top    = [...positions].sort((a,b) => ((b.dernierCours||b.pru)-b.pru)/b.pru - ((a.dernierCours||a.pru)-a.pru)/a.pru);
     const best   = top[0];
     const worst  = top[top.length - 1];
-    const prompt = `Tu es un conseiller financier personnel. Génère un briefing matinal concis pour cet investisseur.
+    const prompt = `Tu es un conseiller financier personnel. Génère un briefing matinal concis pour cet investisseur. N'utilise AUCUN emoji dans ta réponse.
 
 PORTEFEUILLE :
 ${posLines || "Aucune position."}
@@ -783,7 +783,7 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
           </div>
           <div style={{ flex: 1, minWidth: "120px" }}>
             <div style={{ fontWeight: "700", fontSize: "15px", color: C.ink }}>Conseiller Privé</div>
-            <div style={{ fontSize: "11px", color: C.inkSubtle }}>Briefing · Conseil · Autopilot · Portefeuille autonome</div>
+            <div style={{ fontSize: "11px", color: C.inkSubtle }}>Briefing · Conseil · Opportunités · Portefeuille autonome</div>
           </div>
           <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
             {[["briefing", "Briefing du jour"], ["chat", "Chat libre"]].map(([panel, label]) => (

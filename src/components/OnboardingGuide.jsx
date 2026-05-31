@@ -37,7 +37,7 @@ const STEPS = [
     visual: null,
     tag: "Intelligence Artificielle",
     title: "L'IA analyse, vous décidez",
-    body: "Scoring marché en temps réel, Autopilot pour scanner tout votre portefeuille, et un assistant financier disponible 24h/24 pour répondre à vos questions.",
+    body: "Scoring marché en temps réel, Opportunités pour scanner tout votre portefeuille, et un assistant financier disponible 24h/24 pour répondre à vos questions.",
     cta: "Suivant →",
   },
   {

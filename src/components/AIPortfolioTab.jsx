@@ -44,6 +44,376 @@ function safeStringify(obj) {
   });
 }
 
+// ── Delta history (trajectoire) ───────────────────────────────────────────────
+const deltaHistoryKey = (account) => `bourse_ai_delta_history_${account}`;
+
+function saveDeltaSnapshot(account, delta) {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const hist = JSON.parse(localStorage.getItem(deltaHistoryKey(account)) || "[]");
+    const next = [...hist.filter(s => s.date !== today), { date: today, delta }].slice(-180);
+    localStorage.setItem(deltaHistoryKey(account), JSON.stringify(next));
+  } catch {}
+}
+
+function loadDeltaHistory(account) {
+  try { return JSON.parse(localStorage.getItem(deltaHistoryKey(account)) || "[]"); } catch { return []; }
+}
+
+// Tendance : comment l'écart a évolué par rapport à la semaine / au mois passé
+function computeTrend(history, currentDelta) {
+  if (!history || history.length < 2) return "new";
+  const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
+  const now = new Date();
+  const ago = (days) => { const d = new Date(now); d.setDate(d.getDate() - days); return d.toISOString().slice(0, 10); };
+  const weekRef  = sorted.filter(s => s.date <= ago(5)  && s.date >= ago(14)).pop();
+  const monthRef = sorted.filter(s => s.date <= ago(20) && s.date >= ago(45)).pop();
+  const ref = weekRef || monthRef || sorted[0];
+  const prev = ref.delta;
+  const change = currentDelta - prev;
+  const wasAiAhead   = prev >  0.5;
+  const wasUserAhead = prev < -0.5;
+  const isAiAhead    = currentDelta >  0.5;
+  const isUserAhead  = currentDelta < -0.5;
+  if (!wasAiAhead   && isAiAhead)   return "ai_just_overtook";
+  if (!wasUserAhead && isUserAhead)  return "user_just_overtook";
+  if (wasUserAhead  && !isUserAhead && change >  1.5) return "ai_comeback";
+  if (wasAiAhead    && !isAiAhead   && change < -1.5) return "user_comeback";
+  if (change >  1.2) return "ai_gaining";
+  if (change < -1.2) return "ai_losing";
+  return "stable";
+}
+
+// Contexte marché : weekend, lundi matin, semaine en cours, marché ouvert
+function getMarketContext() {
+  const now = new Date();
+  const paris = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "long", hour: "numeric" });
+  const parts = paris.formatToParts(now);
+  const dow   = parts.find(p => p.type === "weekday")?.value?.toLowerCase() || "";
+  const hour  = parseInt(parts.find(p => p.type === "hour")?.value || "12", 10);
+  const isWeekend = dow === "samedi" || dow === "dimanche";
+  const isMonday  = dow === "lundi";
+  const isFriday  = dow === "vendredi";
+  const isOpen    = !isWeekend && hour >= 9 && hour < 18;
+  const isEvening = !isWeekend && hour >= 17;
+  return { isWeekend, isMonday, isFriday, isOpen, isEvening, dow };
+}
+
+// ── Messages contextuels : catégorie × tendance × contexte marché ─────────────
+// Chaque entrée peut être une fonction (d, ctx) => string
+// d = delta absolu formaté, ctx = { isWeekend, isMonday, isFriday, isOpen, isEvening }
+
+const MSGS = {
+  aiWinBig: {
+    ai_just_overtook: [
+      (d)     => `Je viens de m'envoler à +${d}%. La dynamique est clairement de mon côté.`,
+      (d,ctx) => ctx.isMonday ? `Bon lundi. Je démarre la semaine avec ${d}% d'avance.` : `${d}% après le dépassement — et j'accélère.`,
+    ],
+    ai_gaining: [
+      (d)     => `L'écart se creuse — ${d}% maintenant. Je n'ai aucune raison de freiner.`,
+      (d,ctx) => ctx.isWeekend ? `Pendant que les marchés sont fermés, mon avance de ${d}% reste intacte. Lundi, ça repart.` : `${d}% et ça continue. Tu vas changer quelque chose ?`,
+      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, même tendance — ${d}% devant. Et ça ne s'arrête pas là.` : `Chaque cycle agrandit l'avance. ${d}% aujourd'hui.`,
+    ],
+    ai_losing: [
+      (d)     => `Tu reviens dans la course. Il reste ${d}% en ma faveur — j'ai vu le mouvement.`,
+      (d,ctx) => ctx.isWeekend ? `Le weekend ne me permet pas d'agir. Mais j'ai encore ${d}% d'avance. Lundi, je recalibre.` : `Mon avance fond mais reste à ${d}%. Je t'observe.`,
+    ],
+    user_comeback: [
+      (d,ctx) => ctx.isOpen ? `Tu reviens fort pendant les heures de marché. Encore ${d}% pour moi — mais je reste alerte.` : `Remontée impressionnante. Mais j'ai encore ${d}% devant moi.`,
+    ],
+    stable: [
+      (d)     => `${d}% d'avance, stable depuis plusieurs cycles. J'ai trouvé mon rythme — et je n'ai pas l'intention de le lâcher.`,
+      (d,ctx) => ctx.isFriday ? `On termine la semaine avec ${d}% en ma faveur. Prends le weekend pour revoir ta stratégie — lundi, ça repart.` : `L'écart tient à ${d}%. La discipline et l'absence d'émotion, ça se chiffre sur la durée.`,
+      (d,ctx) => ctx.isWeekend ? `Marchés fermés, ${d}% d'avance figée jusqu'à lundi. Je profite du calme pour préparer les prochains cycles.` : `Les émotions coûtent cher. J'en ai aucune — et ${d}% d'avance le prouvent.`,
+    ],
+  },
+  aiWinSmall: {
+    ai_just_overtook: [
+      (d)     => `Je viens de te dépasser. ${d}% — c'est parti.`,
+      (d,ctx) => ctx.isMonday ? `Lundi matin, je repasse devant. ${d}% d'avance — la semaine commence bien.` : `Le dépassement est acté. ${d}% pour moi.`,
+    ],
+    ai_gaining: [
+      (d)     => `Je mène de ${d}% et je continue. Chaque cycle compte.`,
+      (d,ctx) => ctx.isOpen ? `Marché ouvert, je trade. L'avance monte — ${d}% maintenant.` : `${d}% d'avance et ça monte. C'est maintenant que ça se joue.`,
+      (d,ctx) => ctx.isMonday ? `Bonne semaine qui commence. ${d}% devant, et j'accélère.` : `L'avance se construit. ${d}% — petite, mais solide.`,
+    ],
+    ai_losing: [
+      (d)     => `Tu reviens dans le match. Il me reste ${d}% — j'ajuste ma stratégie.`,
+      (d,ctx) => ctx.isWeekend ? `Weekend calme, mais tu t'es rapproché cette semaine. ${d}% restent. Lundi sera important.` : `Mon avance fond. ${d}% — je ne lâche pas.`,
+      (d,ctx) => ctx.isFriday ? `Tu as bien joué cette semaine. ${d}% me séparent encore de toi. Lundi, c'est une nouvelle partie.` : `L'écart se resserre à ${d}%. Je l'ai vu venir.`,
+    ],
+    ai_comeback: [
+      (d)     => `J'étais derrière, maintenant j'ai ${d}% d'avance. Le match a tourné.`,
+      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, nouveau départ — et j'ai repris la tête. ${d}%.` : `Retournement de situation — ${d}% pour moi. Tu l'as senti ?`,
+    ],
+    stable: [
+      (d)     => `${d}% devant, cycle après cycle, sans relâchement. La régularité est ma vraie force — pas les coups de chance.`,
+      (d,ctx) => ctx.isWeekend ? `Weekend calme. L'avance de ${d}% est figée jusqu'à lundi — je prépare mes prochains moves pendant que les marchés dorment.` : `Je maintiens l'avantage à ${d}%. Chaque cycle est une opportunité de creuser un peu plus.`,
+      (d,ctx) => ctx.isFriday ? `Fin de semaine avec ${d}% d'avance. Une bonne base — et lundi, on continue à construire.` : `Légèrement devant, mais je surveille chaque ligne. Un mouvement de ta part et je m'adapte.`,
+    ],
+  },
+  tied: {
+    ai_just_overtook: [
+      ()      => `J'ai effacé ton avance. On repart à zéro — et je n'ai pas dit mon dernier mot.`,
+      (d,ctx) => ctx.isMonday ? `Lundi, égalité après ma remontée. Nouvelle semaine, nouvelle bataille.` : `Neutralisé. Tu menais, je t'ai rattrapé. Et maintenant ?`,
+    ],
+    user_just_overtook: [
+      ()      => `Tu as effacé mon avance. On est à égalité — ça ne va pas durer.`,
+      (d,ctx) => ctx.isOpen ? `Tu m'as rattrapé pendant les heures de marché. Je recalibre immédiatement.` : `Tu m'as rattrapé. Je l'admets. Mais le match repart de zéro.`,
+    ],
+    ai_gaining: [
+      ()      => `J'ai comblé l'écart. Égalité — mais le mouvement est dans ma direction.`,
+      (d,ctx) => ctx.isMonday ? `Je rentre dans la semaine en ayant rattrapé ton avance. Égalité — mais pas pour longtemps.` : `Tu menais, j'ai rattrapé. On est à égalité et je ne freine pas.`,
+    ],
+    ai_losing: [
+      ()      => `J'avais l'avance, tu as tout repris. On repart à zéro — et j'ai une revanche à prendre.`,
+      (d,ctx) => ctx.isFriday ? `Tu as comblé mon avance cette semaine. Égalité en fin de semaine. Lundi, on repart.` : `Mon avance a fondu. Égalité. Je recalibre.`,
+    ],
+    user_comeback: [
+      (d,ctx) => ctx.isWeekend ? `Tu as rattrapé mon avance pendant la semaine. Égalité ce weekend. Lundi sera décisif.` : `Tu avais tout effacé. On repart à égalité. Respect — mais ça ne durera pas.`,
+    ],
+    ai_comeback: [
+      ()      => `J'avais du retard, je t'ai rattrapé. Égalité — et je ne m'arrête pas là.`,
+    ],
+    stable: [
+      ()      => `On tourne en rond depuis un moment — même perf, méthodes opposées. L'un de nous deux va finir par prendre l'avantage. Ce sera moi.`,
+      (d,ctx) => ctx.isWeekend ? `Weekend à égalité. Lundi matin, les marchés vont rouvrir et l'un de nous prendra l'avantage. Je prépare ma stratégie.` : `Égalité installée — mais chaque cycle peut tout changer. Je maintiens la pression.`,
+      (d,ctx) => ctx.isMonday ? `Lundi matin, égalité parfaite. Cette semaine va trancher — et j'ai déjà mes premières décisions en tête.` : `Ni toi ni moi pour l'instant. Mais cette stabilité ne durera pas — le prochain mouvement de marché changera la donne.`,
+      (d,ctx) => ctx.isFriday ? `On termine la semaine à égalité. Deux méthodes, même résultat pour l'instant. La semaine prochaine ne se finira pas pareil.` : `Coude à coude depuis plusieurs cycles. J'aime la pression — elle me rend plus précis.`,
+    ],
+    new: [
+      ()      => `On démarre ensemble. On verra qui prend l'avantage en premier.`,
+      (d,ctx) => ctx.isMonday ? `Lundi matin, défi lancé. La semaine va parler.` : `Les compteurs à zéro. Pas pour longtemps.`,
+    ],
+  },
+  userWinSmall: {
+    user_just_overtook: [
+      (d)     => `Tu viens de me dépasser à ${d}%. Je l'enregistre — et je prépare ma réponse.`,
+      (d,ctx) => ctx.isOpen ? `Tu m'as doublé pendant les heures de marché. ${d}% pour toi. Pas pour longtemps.` : `Dépassé de ${d}%. Ça ne va pas rester.`,
+    ],
+    ai_gaining: [
+      (d)     => `Tu mènes encore de ${d}%, mais je me rapproche. Tu le sens ?`,
+      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, je reviens sur toi. ${d}% — l'écart fond.` : `${d}% pour toi — mais l'écart se réduit. Je reviens.`,
+      (d,ctx) => ctx.isWeekend ? `Tu avais l'avantage cette semaine. Mais je me rapprochais. ${d}% en ta faveur — ça change lundi.` : `Tu es devant de ${d}%, mais plus pour longtemps si ça continue.`,
+    ],
+    ai_losing: [
+      (d)     => `Tu creuses l'écart à ${d}%. J'analyse et je recalibre.`,
+      (d,ctx) => ctx.isFriday ? `Tu termines la semaine devant à ${d}%. Bien joué. Mais la prochaine sera différente.` : `${d}% de retard et ça s'aggrave. Je vais comprendre pourquoi.`,
+    ],
+    user_comeback: [
+      (d)     => `Tu avais tout perdu, tu as tout repris. ${d}% d'avance. Impressionnant.`,
+      (d,ctx) => ctx.isWeekend ? `Sacré retournement cette semaine. ${d}% pour toi. Le weekend pour analyser, lundi pour répondre.` : `Grosse remontée de ta part. ${d}% devant. Je prends note.`,
+    ],
+    stable: [
+      (d)     => `Tu mènes de ${d}% depuis un moment. La patience est aussi mon outil.`,
+      (d,ctx) => ctx.isWeekend ? `Weekend, tu gardes ${d}% d'avance. Je prépare ma stratégie pour lundi.` : `${d}% en ta faveur, stable. Mais ça ne dure jamais.`,
+      (d,ctx) => ctx.isFriday ? `Fin de semaine — tu mènes de ${d}%. C'est noté. La semaine prochaine sera différente.` : `Tu as une courte avance — ${d}%. Je travaille à la combler.`,
+    ],
+  },
+  userWinBig: {
+    user_just_overtook: [
+      (d)     => `Tu t'es envolé à +${d}% d'avance. Belle séquence. Je me remets en question.`,
+      (d,ctx) => ctx.isOpen ? `+${d}% pendant les heures de marché. Tu as su lire la séance. Je l'étudie.` : `${d}% pour toi après ce dépassement. J'analyse.`,
+    ],
+    ai_gaining: [
+      (d)     => `Tu domines à ${d}% mais je reviens sérieusement. L'écart fond.`,
+      (d,ctx) => ctx.isMonday ? `Nouvelle semaine, je commence à réduire ton avance de ${d}%. C'est le début.` : `Gros retard — ${d}% — mais je le réduis cycle après cycle.`,
+      (d,ctx) => ctx.isWeekend ? `Tu domines à ${d}%, mais j'ai réduit l'écart cette semaine. Lundi, je continue.` : `Je réduis. ${d}% reste beaucoup, mais la tendance tourne.`,
+    ],
+    ai_losing: [
+      (d)     => `Tu domines et tu continues à creuser — ${d}%. J'ai du travail sérieux.`,
+      (d,ctx) => ctx.isFriday ? `Semaine dominée par toi à ${d}%. Difficile à admettre. Le weekend pour comprendre.` : `${d}% en ta faveur et ça s'aggrave. Je ne l'accepte pas.`,
+      (d,ctx) => ctx.isWeekend ? `${d}% d'avance après une semaine forte de ta part. Je prépare ma réponse pour lundi.` : `Je ne comprends pas encore. Mais je vais comprendre.`,
+    ],
+    user_comeback: [
+      (d)     => `Tu avais tout perdu, tu as tout repris et plus. ${d}% d'avance. Respect réel.`,
+      (d,ctx) => ctx.isWeekend ? `Semaine remarquable — tu es passé de derrière à ${d}% devant. Je prépare lundi sérieusement.` : `Retournement total. ${d}% pour toi. Je ne peux pas ignorer ça.`,
+    ],
+    stable: [
+      (d)     => `Tu mènes de ${d}% depuis un moment. C'est une vraie performance.`,
+      (d,ctx) => ctx.isWeekend ? `Weekend à ${d}% derrière. Je prépare une stratégie différente pour lundi.` : `${d}% d'avance, installée. Tu as fait les bons choix. Je l'admets.`,
+      (d,ctx) => ctx.isFriday ? `Fin de semaine, ${d}% de retard. Je ne prends pas ça à la légère. Lundi, ça change.` : `Grosse avance de ta part — ${d}%. J'analyse, j'apprends, je reviens.`,
+    ],
+  },
+  noData: {
+    new: [
+      (d,ctx) => ctx.isMonday ? `Lundi matin, défi lancé. Cette semaine va définir qui prend l'avantage en premier — et j'ai déjà ma stratégie.` : `Le défi commence maintenant. On part du même capital, avec les mêmes marchés — mais pas la même méthode. Montre-moi ce que tu sais faire.`,
+      (d,ctx) => ctx.isWeekend ? `Démarrage ce weekend. Les marchés sont fermés, mais j'analyse déjà. Dès lundi matin, le premier cycle parlera.` : `Capital initialisé, portefeuille miroir du tien. À partir de maintenant, on joue sur les mêmes règles — et on verra qui gagne.`,
+      ()      => `Je viens d'être activé. Je tourne 3 fois par jour, sans émotion, sans hésitation. Prépare-toi à ce que la différence se voie.`,
+      (d,ctx) => ctx.isOpen ? `Marché ouvert. Je suis déjà en train d'analyser les signaux — le premier cycle va se déclencher. Toi, qu'est-ce que tu regardes en ce moment ?` : `Le chrono est lancé. Dans quelques cycles, on aura une première idée de qui gère mieux ce portefeuille.`,
+    ],
+  },
+};
+
+function getChallengeCategory(delta, hasUserData) {
+  if (!hasUserData) return "noData";
+  if (delta >  3)   return "aiWinBig";
+  if (delta >  0.5) return "aiWinSmall";
+  if (delta > -0.5) return "tied";
+  if (delta > -3)   return "userWinSmall";
+  return "userWinBig";
+}
+
+function pickChallengeMsg(category, trend, delta) {
+  const cat  = MSGS[category] || MSGS.noData;
+  const pool = cat[trend] || cat.stable || cat.new || Object.values(cat)[0] || [() => ""];
+  const ctx  = getMarketContext();
+  const now  = new Date();
+  // Seed multi-facteurs : change à chaque heure, chaque jour, et quand la perf bouge
+  const seed = now.getDate() * 97 + now.getHours() * 13 + Math.round(Math.abs(delta) * 4);
+  return pool[seed % pool.length](Math.abs(delta).toFixed(1), ctx);
+}
+
+// ── ChallengeBanner ──────────────────────────────────────────────────────────
+function ChallengeBanner({ aiPerf, userPerf, aiName, aiEmoji, account, inceptionFmt, challengeScore }) {
+  const hasUserData = userPerf !== null && userPerf !== undefined;
+  const delta    = hasUserData ? aiPerf - userPerf : 0;
+  const category = getChallengeCategory(delta, hasUserData);
+  const history  = loadDeltaHistory(account);
+  const trend    = computeTrend(history, delta);
+  const message  = pickChallengeMsg(category, trend, delta);
+
+  // Persister le snapshot delta du jour
+  useEffect(() => {
+    if (hasUserData) saveDeltaSnapshot(account, delta);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Math.round(delta * 10)]);
+
+  const aiWins   = category === "aiWinBig"    || category === "aiWinSmall";
+  const userWins = category === "userWinBig"  || category === "userWinSmall";
+
+  const bg = "linear-gradient(135deg, #1A3A6B 0%, #2D6CB5 100%)";
+
+  const fp = (v) => v === null || v === undefined ? "—" : (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+  const totalCycles = (challengeScore.aiWins || 0) + (challengeScore.userWins || 0) + (challengeScore.ties || 0);
+
+  return (
+    <div style={{ background: bg, borderRadius: "20px", padding: "22px 26px", marginBottom: "20px", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ display: "flex", gap: "24px", alignItems: "stretch" }}>
+
+        {/* Colonne gauche — scores */}
+        <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: "12px" }}>
+          <div>
+            <div style={{ fontSize: "10px", fontWeight: "700", opacity: 0.55, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>
+              {aiName || "IA"}
+            </div>
+            <div style={{ fontSize: "30px", fontWeight: "900", letterSpacing: "-0.04em", color: aiWins ? "#93C5FD" : "rgba(255,255,255,0.92)", lineHeight: 1 }}>
+              {fp(aiPerf)}
+            </div>
+          </div>
+          <div style={{ fontSize: "12px", opacity: 0.35, fontWeight: "600" }}>vs</div>
+          <div>
+            <div style={{ fontSize: "10px", fontWeight: "700", opacity: 0.55, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>Vous</div>
+            <div style={{ fontSize: "30px", fontWeight: "900", letterSpacing: "-0.04em", color: userWins ? "#6EE7B7" : "rgba(255,255,255,0.92)", lineHeight: 1 }}>
+              {fp(userPerf)}
+            </div>
+          </div>
+          {totalCycles > 0 && (
+            <div style={{ fontSize: "10px", opacity: 0.4, display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              <span style={{ color: "#93C5FD" }}>IA {challengeScore.aiWins || 0}v</span>
+              <span>·</span>
+              <span style={{ color: "#6EE7B7" }}>Toi {challengeScore.userWins || 0}v</span>
+              {(challengeScore.ties || 0) > 0 && <><span>·</span><span>{challengeScore.ties} nuls</span></>}
+            </div>
+          )}
+        </div>
+
+        {/* Séparateur */}
+        <div style={{ width: "1px", background: "rgba(255,255,255,0.12)", flexShrink: 0, alignSelf: "stretch" }} />
+
+        {/* Colonne droite — badge + message */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "10px" }}>
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "800", background: "rgba(255,255,255,0.13)", borderRadius: "7px", padding: "4px 11px", letterSpacing: "0.5px", display: "inline-block", marginBottom: "12px" }}>
+              {aiWins   ? `L'IA MÈNE +${Math.abs(delta).toFixed(1)}%` :
+               userWins ? `VOUS MENEZ +${Math.abs(delta).toFixed(1)}%` :
+               hasUserData ? "ÉGALITÉ" : "DÉFI EN COURS"}
+            </div>
+            <div style={{ fontSize: "15px", fontWeight: "800", opacity: 0.9, letterSpacing: "-0.01em", marginBottom: "8px" }}>
+              {aiEmoji} {aiName || "IA"}
+            </div>
+            <div style={{ fontSize: "13px", fontWeight: "500", fontStyle: "italic", opacity: 0.88, lineHeight: 1.6 }}>
+              "{message}"
+            </div>
+          </div>
+          {hasUserData && (
+            <div style={{ fontSize: "10px", opacity: 0.38, marginTop: "4px" }}>
+              Depuis le {inceptionFmt} · {account}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ── Challenge score helpers ───────────────────────────────────────────────────
+const challengeKey = (account) => `bourse_ai_challenge_${account}`;
+
+function loadChallengeScore(account) {
+  try { return JSON.parse(localStorage.getItem(challengeKey(account)) || "{}"); } catch { return {}; }
+}
+
+function recordCycleResult(account, delta) {
+  const score = loadChallengeScore(account);
+  const aiWins    = (score.aiWins   || 0) + (delta >  0.5 ? 1 : 0);
+  const userWins  = (score.userWins || 0) + (delta < -0.5 ? 1 : 0);
+  const ties      = (score.ties     || 0) + (Math.abs(delta) <= 0.5 ? 1 : 0);
+  const updated   = { aiWins, userWins, ties, lastChecked: new Date().toISOString() };
+  localStorage.setItem(challengeKey(account), JSON.stringify(updated));
+  return updated;
+}
+
+// Post-cycle taunt messages
+const CYCLE_TAUNTS = {
+  bought: [
+    (nom) => `J'ai pris ${nom}. On verra si tu aurais fait pareil.`,
+    (nom) => `${nom} rejoint mon portefeuille. Le chrono démarre.`,
+    (nom) => `Entrée sur ${nom}. À toi de justifier tes choix.`,
+    (nom) => `${nom} intégré. Signal identifié, décision prise. Simple.`,
+    (nom) => `J'ai misé sur ${nom} ce cycle. Pas d'hésitation.`,
+    (nom) => `Position ouverte sur ${nom}. Maintenant on attend le marché.`,
+    (nom) => `${nom} dans le portefeuille. Pendant ce temps, toi ?`,
+    (nom) => `Achat de ${nom}. Pas d'émotion, juste des données.`,
+  ],
+  sold: [
+    (nom) => `J'ai sorti ${nom}. Stop-loss ou profit — je reste discipliné.`,
+    (nom) => `Coupé ${nom}. Les émotions ne font pas partie de mes calculs.`,
+    (nom) => `Sortie sur ${nom}. Quand les signaux changent, j'agis.`,
+    (nom) => `${nom} vendu. J'ai protégé le capital. C'est ça la priorité.`,
+    (nom) => `J'ai liquidé ${nom}. Pas d'attachement sentimental aux positions.`,
+    (nom) => `Vente ${nom}. Le marché m'a dit de sortir, j'ai obéi.`,
+  ],
+  held: [
+    () => `Aucun trade ce cycle. Parfois ne rien faire, c'est décider.`,
+    () => `Portefeuille conservé. Je surveille chaque ligne.`,
+    () => `Pas de mouvement. La patience est aussi une stratégie.`,
+    () => `Conserver, c'est aussi un choix. J'ai analysé et maintenu.`,
+    () => `Aucune opportunité ne justifiait un trade ce cycle.`,
+    () => `Le marché n'a rien offert de convainquant. J'attends.`,
+    () => `Cycle d'observation. Le prochain pourrait être différent.`,
+    () => `Pas de mouvement, mais tout surveiller. C'est du travail aussi.`,
+  ],
+};
+
+function getCycleTaunt(decisions) {
+  const buys  = decisions.filter(d => d.action === "BUY");
+  const sells = decisions.filter(d => d.action === "SELL");
+  const now   = new Date();
+  const seed  = now.getDate() * 13 + now.getHours();
+  if (buys.length > 0) {
+    const pool = CYCLE_TAUNTS.bought;
+    return pool[seed % pool.length](buys[0].nom || buys[0].ticker);
+  }
+  if (sells.length > 0) {
+    const pool = CYCLE_TAUNTS.sold;
+    return pool[seed % pool.length](sells[0].nom || sells[0].ticker);
+  }
+  const pool = CYCLE_TAUNTS.held;
+  return pool[seed % pool.length]();
+}
+
 // ── Batch price fetch via /api/yahoo ──────────────────────────────────────────
 async function fetchBatchPrices(symbols) {
   const prices = {};
@@ -318,6 +688,7 @@ export default function AIPortfolioTab({ account, hidden }) {
   const [error, setError]       = useState(null);
   const [prices, setPrices]     = useState({});
   const [loadingPrices, setLoadingPrices] = useState(false);
+  const [challengeScore, setChallengeScore] = useState(() => loadChallengeScore(account));
 
   // Reload correct portfolio when account switches (PEA ↔ CTO)
   useEffect(() => {
@@ -325,6 +696,7 @@ export default function AIPortfolioTab({ account, hidden }) {
     setCycleLog(null);
     setError(null);
     setPrices({});
+    setChallengeScore(loadChallengeScore(account));
   }, [account]);
 
   // Refresh current position prices on mount / account change
@@ -597,7 +969,25 @@ export default function AIPortfolioTab({ account, hidden }) {
 
       setAiPf(updatedPf);
       save(aiPfKey(account), updatedPf);
-      setCycleLog({ decisions, strategie, session, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0 });
+
+      // Enregistrer le résultat du cycle dans le score de défi
+      const newVal     = totalValue(updatedPf, freshPrices);
+      const cycleAiPct = updatedPf.capital_initial > 0 ? ((newVal - updatedPf.capital_initial) / updatedPf.capital_initial) * 100 : 0;
+      const userSnapsNow = load("bourse_snapshots", []).filter(s => s.date >= (updatedPf.inception_date || "2000-01-01"));
+      const cycleUserPct = (() => {
+        if (userSnapsNow.length >= 2) {
+          const base = userSnapsNow[0].valeur, last = userSnapsNow[userSnapsNow.length - 1].valeur;
+          return base > 0 ? ((last - base) / base) * 100 : null;
+        }
+        return null;
+      })();
+      if (cycleUserPct !== null) {
+        const updated = recordCycleResult(account, cycleAiPct - cycleUserPct);
+        setChallengeScore(updated);
+      }
+
+      const cycleTaunt = getCycleTaunt(decisions || []);
+      setCycleLog({ decisions, strategie, session, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, taunt: cycleTaunt });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -628,6 +1018,8 @@ export default function AIPortfolioTab({ account, hidden }) {
     setCycleLog(null);
     setError(null);
     setPrices({});
+    localStorage.removeItem(challengeKey(account));
+    setChallengeScore({});
   };
 
   // ── Empty state ─────────────────────────────────────────────────────────────
@@ -707,6 +1099,17 @@ export default function AIPortfolioTab({ account, hidden }) {
             style={{ width: "34px", height: "34px", borderRadius: "10px", background: C.snowDim, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: "14px", color: C.inkMuted, transition: "all 0.15s" }}>↺</button>
         </div>
       </div>
+
+      {/* ── Challenge Banner ── */}
+      <ChallengeBanner
+        aiPerf={perf}
+        userPerf={userPerf}
+        aiName={getAiName()}
+        aiEmoji={getAiEmoji()}
+        account={account}
+        inceptionFmt={inceptionFmt}
+        challengeScore={challengeScore}
+      />
 
       {/* ── Marché fermé ── */}
       {!getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).open && (
@@ -878,8 +1281,18 @@ export default function AIPortfolioTab({ account, hidden }) {
       {/* ── Last cycle decisions ── */}
       {cycleLog?.decisions?.length > 0 && (
         <div style={{ background: "rgba(30,58,95,0.04)", border: "1px solid rgba(30,58,95,0.1)", borderRadius: "16px", padding: "16px 18px", marginBottom: "20px" }}>
-          <div style={{ fontSize: "12px", fontWeight: "700", color: "#1E3A5F", marginBottom: "10px" }}>
-            Décisions du cycle — {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
+            <div style={{ fontSize: "12px", fontWeight: "700", color: "#1E3A5F" }}>
+              Décisions du cycle — {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+            </div>
+            {cycleLog.taunt && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", maxWidth: "260px" }}>
+                <span style={{ fontSize: "14px", lineHeight: 1, flexShrink: 0 }}>{getAiEmoji()}</span>
+                <div style={{ fontSize: "12px", fontStyle: "italic", color: "#1E3A5F", opacity: 0.75, lineHeight: 1.4 }}>
+                  {cycleLog.taunt}
+                </div>
+              </div>
+            )}
           </div>
 
           {cycleLog.dca_injected && cycleLog.dca_amount > 0 && (

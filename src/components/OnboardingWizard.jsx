@@ -69,7 +69,7 @@ const SLIDES = [
     type: "feature",
     Icon: IconAI,
     title: "Intelligence artificielle",
-    desc: "Signaux marché, Autopilot DCA, Conseiller Privé et Portefeuille Autonome — quatre outils intégrés.",
+    desc: "Signaux marché, Opportunités, Conseiller Privé et Portefeuille Autonome — quatre outils intégrés.",
   },
   {
     type: "feature",

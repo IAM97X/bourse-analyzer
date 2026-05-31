@@ -681,7 +681,11 @@ RÈGLE MONTANT : ${nbOppMax === 1
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div>
-            <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot Atlas</div>
+            <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>
+              <Tooltip text={`Opportunités scanne votre portefeuille ${account} et l'univers de valeurs éligibles pour identifier les meilleures opportunités d'achat ce mois selon votre profil de risque, votre DCA et les signaux marché en temps réel.`}>
+                Opportunités
+              </Tooltip>
+            </div>
             <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {universe.length} instruments · Profil {profilLabel}</div>
           </div>
         </div>
@@ -731,7 +735,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
         {showAllocEditor && (
           <div style={{ padding: "4px 16px 14px", borderTop: `1px solid ${C.border}` }}>
             <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "10px", marginTop: "8px" }}>
-              Définissez votre répartition cible par catégorie. L'Autopilot priorisera les catégories sous-pondérées dans votre portefeuille actuel.
+              Définissez votre répartition cible par catégorie. Les Opportunités prioriseront les catégories sous-pondérées dans votre portefeuille actuel.
               {!allocOk && <span style={{ color: C.red, fontWeight: "700" }}> Total : {allocTotal}% (doit être 100%)</span>}
             </div>
             {ALLOC_CATS.map(cat => (
@@ -759,7 +763,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "1px" }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="#B45309" stroke="none"/></svg>
         <div style={{ fontSize: "11px", color: "#7A5A10", lineHeight: 1.6 }}>
           <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,20–0,40 $ en crédits Anthropic (web search inclus).<br />
-          Conseil : lancez Autopilot Atlas <strong>1 à 2 fois par semaine</strong> maximum.
+          Conseil : lancez Opportunités <strong>1 à 2 fois par semaine</strong> maximum.
         </div>
       </div>
 

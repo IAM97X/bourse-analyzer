@@ -16,12 +16,12 @@ const BN_KEYFRAMES = `
 
 export function BNextLabel() {
   return (
-    <>
+    <span style={{ display: "inline-flex", alignItems: "center", fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`@keyframes bn-next-wave{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`}</style>
-      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: "300" }}>B</span>
-      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: "800", letterSpacing: "-0.03em", backgroundImage: "linear-gradient(270deg,#0F2D5E,#2D6CB5,#7BBFE8,#2D6CB5,#0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 3s ease infinite" }}>Next</span>
-      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: "300" }}>…</span>
-    </>
+      <span style={{ fontWeight: "300" }}>B</span>
+      <span style={{ fontWeight: "800", letterSpacing: "-0.03em", backgroundImage: "linear-gradient(270deg,#0F2D5E,#2D6CB5,#7BBFE8,#2D6CB5,#0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 3s ease infinite" }}>Next</span>
+      <span style={{ fontWeight: "300" }}>…</span>
+    </span>
   );
 }
 

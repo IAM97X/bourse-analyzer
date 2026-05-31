@@ -174,7 +174,6 @@ export default function OverviewTab({ onNavigate, onSwitchAccount, hidden, portf
 
   const profil   = load("bourse_profil", {});
   const userName = (() => { try { return JSON.parse(localStorage.getItem("bourse_session") || "{}").name || ""; } catch { return ""; } })();
-  const autopilot = load(`bourse_autopilot_last_PEA_${profil?.risque || "equilibre"}`, null);
 
   const peaTotal = peaPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
   const ctoTotal = ctoPositions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
@@ -246,12 +245,6 @@ export default function OverviewTab({ onNavigate, onSwitchAccount, hidden, portf
               </div>
             </div>
           </div>
-          {autopilot?.score_marche && (
-            <div style={{ padding: "10px 16px", borderRadius: "12px", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)", textAlign: "center", flexShrink: 0 }}>
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.55)", marginBottom: "4px" }}>Score marché</div>
-              <div style={{ fontSize: "22px", fontWeight: "800", color: "#fff" }}>{autopilot.score_marche}<span style={{ fontSize: "11px", opacity: 0.5 }}>/20</span></div>
-            </div>
-          )}
         </div>
       )}
 

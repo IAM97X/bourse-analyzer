@@ -139,6 +139,8 @@ export async function callClaude(system, userMessage, useSearch = false, _retrie
     if (res.status === 401) throw new Error(`Clé API invalide. Vérifiez vos paramètres.`);
     if (data.error) throw new Error(`[${res.status}] ${data.error.message || data.error}`);
     const text = parseText(data);
+    // Si web search native et pas de texte (stop_reason: tool_use), on laisse retry
+    if (!text && useSearch && !getKey("google") && attempt < _retries - 1) { await delay(2000); continue; }
     if (!text) throw new Error("Réponse vide.");
     const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const s = clean.indexOf("{"), e = clean.lastIndexOf("}");

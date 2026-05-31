@@ -27,7 +27,7 @@ const STEPS = [
   },
   {
     tab: TABS.AUTOPILOT,
-    title: "Autopilot Atlas",
+    title: "Opportunités",
     body: "Indiquez votre budget mensuel. L'IA choisit automatiquement les meilleures actions où investir ce mois-ci.",
   },
   {
