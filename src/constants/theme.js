@@ -20,9 +20,9 @@ export const C = {
 
   // Primary
   navy:       "#1C1C1E",
-  navyLight:  "rgba(28,28,30,0.06)",
-  paleBlue:   "rgba(30,58,95,0.08)",
-  navyPill:   "#2D5986",
+  navyLight:  "rgba(45,108,181,0.07)",
+  paleBlue:   "rgba(45,108,181,0.08)",
+  navyPill:   "#2D6CB5",
 
   // Green
   green:      "#27AE60",
@@ -34,7 +34,8 @@ export const C = {
   redLight:   "rgba(231,76,60,0.08)",
 
   // Accent
-  accent:     "#1E3A5F",
+  accent:     "#2D6CB5",
+  accentGrad: "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)",
 
   // Card gradients
   cardGrad:      "linear-gradient(150deg, #FFFFFF 0%, #EEF4FF 100%)",
@@ -48,9 +49,9 @@ export const C = {
   sbBorder:     "rgba(17,18,20,0.07)",
   sbText:       "#8896A8",
   sbTextActive: "#111214",
-  sbHover:      "rgba(30,58,95,0.06)",
-  sbActive:     "rgba(30,58,95,0.09)",
-  sbAccent:     "#1E3A5F",
+  sbHover:      "rgba(45,108,181,0.06)",
+  sbActive:     "rgba(45,108,181,0.09)",
+  sbAccent:     "#2D6CB5",
 };
 
 export const shadow = {
@@ -58,5 +59,5 @@ export const shadow = {
   float: "0 4px 16px rgba(17,18,20,0.07)",
   hover: "0 6px 20px rgba(30,58,95,0.10)",
   gold:  "0 2px 8px rgba(255,215,0,0.14)",
-  pill:  "0 2px 8px rgba(30,58,95,0.18)",
+  pill:  "0 2px 8px rgba(45,108,181,0.25)",
 };

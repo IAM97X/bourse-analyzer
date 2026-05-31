@@ -7,18 +7,19 @@ import { useIsMobile } from "../context/mobile";
 import AppLogo from "./AppLogo";
 
 const IconHome = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="7.5" height="7.5" rx="1"/>
-    <rect x="13.5" y="3" width="7.5" height="7.5" rx="1"/>
-    <rect x="3" y="13.5" width="7.5" height="7.5" rx="1"/>
-    <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1"/>
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3"  y="3"  width="8" height="5" rx="1"/>
+    <rect x="13" y="3"  width="8" height="9" rx="1"/>
+    <rect x="3"  y="11" width="8" height="9" rx="1"/>
+    <rect x="13" y="15" width="8" height="5" rx="1"/>
   </svg>
 );
 const IconPositions = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="7" width="20" height="14" rx="2"/>
-    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-    <line x1="2" y1="12" x2="22" y2="12" strokeOpacity="0.3"/>
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="butt" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9"/>
+    <line x1="12" y1="12" x2="12" y2="3.2"/>
+    <line x1="12" y1="12" x2="19.5" y2="16"/>
+    <line x1="12" y1="12" x2="4.5" y2="8"/>
   </svg>
 );
 const IconPie = () => (
@@ -41,12 +42,13 @@ const IconTrending = () => (
   </svg>
 );
 const IconTarget = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2"/>
-    <line x1="3"  y1="9"  x2="21" y2="9" strokeOpacity="0.35"/>
-    <line x1="8"  y1="2"  x2="8"  y2="6"/>
-    <line x1="16" y1="2"  x2="16" y2="6"/>
-    <path d="M8 14l3 3 5-4"/>
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="4"  r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="5"  cy="7"  r="1.2" fill="currentColor" stroke="none"/>
+    <circle cx="19" cy="7"  r="1.2" fill="currentColor" stroke="none"/>
+    <path d="M5 7 L7 17h10L19 7 L14 11 L12 5 L10 11 Z" strokeLinejoin="round"/>
+    <line x1="6" y1="20" x2="18" y2="20"/>
+    <line x1="5.5" y1="17" x2="18.5" y2="17"/>
   </svg>
 );
 const IconWave = () => (
@@ -88,17 +90,17 @@ const IconBrain = () => (
   </svg>
 );
 const IconMore = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="8" r="4"/>
-    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="7" r="3.5" fill="currentColor" stroke="none"/>
+    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeLinejoin="round"/>
   </svg>
 );
 
 export const NAV_GROUPS = [
   { items: [
     { key: TABS.HOME,       label: "Accueil",   icon: <IconHome/>,      group: [TABS.HOME] },
-    { key: TABS.PORTFOLIO,  label: "Positions", icon: <IconPositions/>, group: [TABS.PORTFOLIO, TABS.HISTORIQUE, TABS.OPERATIONS] },
-    { key: TABS.DCA,        label: "DCA",       icon: <IconTarget/>,    group: [TABS.DCA, TABS.PROJECTION] },
+    { key: TABS.PORTFOLIO,  label: "Portefeuille", icon: <IconPositions/>, group: [TABS.PORTFOLIO, TABS.HISTORIQUE, TABS.OPERATIONS] },
+    { key: TABS.DCA,        label: "Stratégie", icon: <IconTarget/>,    group: [TABS.DCA, TABS.PROJECTION] },
     { key: TABS.MARCHE,     label: "IA",        icon: <IconBrain/>,     group: [TABS.MARCHE, TABS.CHAT, TABS.AUTOPILOT], featured: true },
     { key: TABS.PLUS,       label: "Compte",    icon: <IconMore/>,      group: [TABS.PLUS, TABS.PROFIL, TABS.SETTINGS] },
   ]},
@@ -119,21 +121,17 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#FFFFFF" }}>
       {mobileCompact && (
-        <div style={{ padding: "12px 0 10px", borderBottom: "1px solid #E5E5EA", display: "flex", justifyContent: "center", flexShrink: 0 }}>
-          <AppLogo size={34} />
-        </div>
+        <div style={{ padding: "12px 0 10px", display: "flex", justifyContent: "center", flexShrink: 0 }} />
       )}
       {!mobileCompact && !isMobile && !c && (
-        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid #E5E5EA", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-          <AppLogo size={28} />
-          <div style={{ fontSize: "15px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
-            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+        <div style={{ padding: "18px 20px 10px", display: "flex", alignItems: "center", flexShrink: 0 }}>
+          <div style={{ fontSize: "18px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif", lineHeight: 1 }}>
+            Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
           </div>
         </div>
       )}
       {!mobileCompact && isMobile && (
-        <div className="ba-sidebar-logo" style={{ padding: "20px 20px 16px", borderBottom: "1px solid #E5E5EA", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-          <AppLogo size={38} />
+        <div className="ba-sidebar-logo" style={{ padding: "20px 20px 16px", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: "19px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span></div>
           </div>
@@ -142,7 +140,7 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
       )}
 
       {onSwitchAccount && (
-        <div style={{ padding: (c || mobileCompact) ? "10px 8px" : "10px 16px", borderBottom: "1px solid #E5E5EA", flexShrink: 0 }}>
+        <div style={{ padding: (c || mobileCompact) ? "6px 8px" : "4px 16px 10px", flexShrink: 0 }}>
           {c ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
               {["PEA","CTO"].map(acc => (
@@ -227,13 +225,8 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         ))}
       </div>
 
-      {!mobileCompact && <div className="ba-sidebar-footer" style={{ padding: "10px 12px", borderTop: "1px solid #E5E5EA", display: "flex", gap: "5px", justifyContent: "center", flexShrink: 0 }}>
-        {c ? (
-          <button onClick={toggleCollapse} title="Déplier la sidebar"
-            style={{ width: "34px", height: "34px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="5,2 10,7 5,12"/></svg>
-          </button>
-        ) : (<>
+      {!mobileCompact && <div className="ba-sidebar-footer" style={{ padding: "10px 12px", display: "flex", gap: "5px", justifyContent: "center", flexShrink: 0 }}>
+        {c ? null : (<>
           <button onClick={toggleCompact} title={compact ? "Mode normal" : "Mode compact (zoom arrière)"}
             style={{ flex: 1, height: "32px", borderRadius: "8px", background: compact ? "#E8F9EF" : "#F2F2F7", border: "none", color: compact ? "#1E8449" : "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", transition: "all 0.2s" }}>
             {compact ? (

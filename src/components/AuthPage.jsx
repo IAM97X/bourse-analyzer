@@ -167,7 +167,7 @@ function AuthPage({ onSession }) {
     </div>
   );
 
-  const btnPrimary = { width: "100%", background: "#1C1C1E", border: "none", borderRadius: "12px", padding: "14px", color: "#fff", fontSize: "14px", fontWeight: "600", fontFamily: "Inter, sans-serif", cursor: "pointer", marginTop: "6px", opacity: loading ? 0.6 : 1 };
+  const btnPrimary = { width: "100%", background: "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", border: "none", borderRadius: "12px", padding: "14px", color: "#fff", fontSize: "14px", fontWeight: "600", fontFamily: "Inter, sans-serif", cursor: "pointer", marginTop: "6px", opacity: loading ? 0.6 : 1 };
   const btnSecondary = { width: "100%", background: "#F2F2F7", border: "none", borderRadius: "12px", padding: "13px", color: "#1C1C1E", fontSize: "13px", fontWeight: "500", fontFamily: "Inter, sans-serif", cursor: "pointer", marginTop: "8px" };
   const btnGhost = { background: "none", border: "none", color: "#8E8E93", fontSize: "12px", fontFamily: "Inter, sans-serif", cursor: "pointer", padding: "10px", width: "100%" };
 

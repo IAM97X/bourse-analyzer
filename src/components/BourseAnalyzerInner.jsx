@@ -62,7 +62,7 @@ function PillBar({ pills, active, onChange }) {
               padding: "8px 18px", borderRadius: "50px", cursor: "pointer",
               fontSize: "13px", fontWeight: isActive ? "600" : "400",
               fontFamily: "'Inter', sans-serif",
-              background: isActive ? "#1C1C1E" : "transparent",
+              background: isActive ? "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)" : "transparent",
               color: isActive ? "#FFFFFF" : "#6C6C70",
               border: isActive ? "none" : "1px solid rgba(0,0,0,0.1)",
               boxShadow: "none",
@@ -164,7 +164,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
   // Animation au chargement initial de la page (1.6s puis disparition)
   useEffect(() => {
-    const t = setTimeout(() => setRefreshing(false), 1600);
+    const t = setTimeout(() => setRefreshing(false), 4500);
     return () => clearTimeout(t);
   }, []);
 
@@ -475,7 +475,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               <button onClick={() => setMobileNavOpen(o => !o)} title="Menu"
                 style={{ width: "40px", height: "40px", background: "transparent", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "5px", padding: 0, flexShrink: 0 }}>
                 {mobileNavOpen
-                  ? <AppLogo size={24} />
+                  ? null
                   : <>
                       <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
                       <span style={{ display: "block", width: "20px", height: "1.5px", background: C.ink, borderRadius: "2px" }} />
@@ -485,7 +485,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </button>
               {/* Centre : logo + nom onglet */}
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", minWidth: 0 }}>
-                <AppLogo size={22} />
                 <span style={{ fontSize: "13px", fontWeight: "700", color: C.ink, letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tabLabel}</span>
               </div>
               {/* Droite : avatar seul */}
@@ -565,18 +564,15 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </button>
               {/* CENTER — logo + onglet actif */}
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
-                <div onClick={() => { changeTab(TABS.HOME); softRefresh(); }} title="Accueil · Actualiser"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: "4px 6px", borderRadius: "10px", transition: "background 0.15s", animation: refreshing ? "bn-brand-in 0.4s ease-out" : undefined }}
-                  onMouseEnter={e => e.currentTarget.style.background = C.navyLight}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <AppLogo size={28} animated={refreshing} />
+                {/* BourseNext — fondu entrant */}
+                <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", pointerEvents: "none" }}>
+                  {showBrand
+                    ? <span key="brand" style={{ fontSize: "22px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif", animation: refreshing ? "bn-brand-in 0.5s ease-out forwards" : "bn-brand-out 0.5s ease-in forwards" }}>
+                        Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
+                      </span>
+                    : <span style={{ fontSize: "15px", fontWeight: "600", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
+                  }
                 </div>
-                {showBrand
-                  ? <span key="brand" style={{ fontSize: "17px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif", animation: refreshing ? "bn-brand-in 0.4s ease-out forwards" : "bn-brand-out 0.6s ease-in forwards" }}>
-                      Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8, #85CFEF, #2D6CB5, #1A4A8A)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
-                    </span>
-                  : <span style={{ fontSize: "15px", fontWeight: "600", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
-                }
               </div>
               {/* RIGHT — emoji + compte séparés */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
@@ -617,6 +613,23 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                     </div>
                   , document.body)}
                 </div>
+
+                {/* Bouton masquer valeurs */}
+                <button onClick={toggleHidden} title={hiddenValues ? "Afficher les valeurs" : "Masquer les valeurs"}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", borderRadius: "10px", background: hiddenValues ? C.navyLight : "transparent", border: `1px solid ${hiddenValues ? C.accent : C.border}`, cursor: "pointer", flexShrink: 0, transition: "all 0.2s" }}>
+                  {hiddenValues ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.inkMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  )}
+                </button>
 
                 {/* Bouton compte */}
                 <div data-account-menu style={{ position: "relative" }}>

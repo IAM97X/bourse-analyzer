@@ -753,7 +753,7 @@ export function StockProjectionChart({ pos, onClose }) {
   return (
     <div style={{ background: C.snow, borderRadius: "16px", overflow: "hidden", marginTop: "16px", boxShadow: "0 8px 32px rgba(30,58,95,0.12)", border: `1px solid ${C.border}` }}>
       {/* En-tête gradient */}
-      <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+      <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
           <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>📊 {pos.nom}</span>
           {finalPct != null && (
@@ -1162,7 +1162,7 @@ export function PriceEvolutionChart({ positions }) {
   return (
     <div style={{ background: C.snow, borderRadius: "16px", overflow: "hidden", marginTop: "20px", boxShadow: "0 8px 32px rgba(30,58,95,0.12)", border: `1px solid ${C.border}` }}>
       {/* En-tête gradient */}
-      <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+      <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>📈 Évolution comparative</span>
           {series.length > 0 && <span style={{ fontSize: "10px", fontWeight: "600", color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.08)", borderRadius: "5px", padding: "2px 7px" }}>{series.length} valeur{series.length > 1 ? "s" : ""}</span>}

@@ -406,7 +406,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
       {/* ── Argumentaire d'investissement ── */}
       <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "20px", overflow: "hidden", marginBottom: "20px" }}>
         {/* Header */}
-        <div style={{ background: "linear-gradient(135deg, #111214 0%, #1E3A5F 100%)", padding: "13px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", padding: "13px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", fontWeight: "700", textTransform: "uppercase", marginBottom: "3px" }}>
               Argumentaire d'investissement

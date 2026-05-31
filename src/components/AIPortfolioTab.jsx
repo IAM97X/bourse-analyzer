@@ -285,7 +285,7 @@ function EmptyState({ onInit, account, error }) {
         </div>
       )}
 
-      <button onClick={onInit} style={{ padding: "14px 36px", borderRadius: "14px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", color: "#fff", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", fontFamily: "Inter,sans-serif", boxShadow: "0 6px 24px rgba(30,58,95,0.35)", transition: "transform 0.18s" }}
+      <button onClick={onInit} style={{ padding: "14px 36px", borderRadius: "14px", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#fff", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700", fontFamily: "Inter,sans-serif", boxShadow: "0 6px 24px rgba(30,58,95,0.35)", transition: "transform 0.18s" }}
         onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
         onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
         Activer le Portefeuille IA →
@@ -690,7 +690,7 @@ export default function AIPortfolioTab({ account, hidden }) {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "24px", lineHeight: 1 }}>{getAiEmoji()}</span>
             <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{getAiName() || "NextGen IA"}</span>
-            <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg,#080B0F,#2D5986)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
+            <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
           </div>
           <div style={{ fontSize: "12px", color: C.inkMuted, marginTop: "3px" }}>
             Depuis le {inceptionFmt} · Capital {fmtEur(aiPf.capital_initial)} · {account}
@@ -698,7 +698,7 @@ export default function AIPortfolioTab({ account, hidden }) {
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <button onClick={handleRunCycle} disabled={cycling}
-            style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg,#080B0F 0%,#1E3A5F 100%)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
+            style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "Inter,sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
             {cycling
               ? <><AppLogo size={16} animated={true} /> Analyse en cours…</>
               : "▶ Lancer un cycle"}

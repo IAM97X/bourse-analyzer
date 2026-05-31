@@ -149,13 +149,13 @@ function GlobalProjectionChart({ positions, onClose }) {
 
   // ── Rendu loading / error ──
   if (state.status === "loading") return (
-    <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", borderRadius: "14px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
+    <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", borderRadius: "14px", padding: "28px", textAlign: "center", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
       <ThinkingSpinner size={18} color="#a78bfa" />
       <div style={{ marginTop: "10px" }}>Calcul projection globale… {Math.round(state.progress * 100)}%</div>
     </div>
   );
   if (state.status === "error") return (
-    <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", borderRadius: "14px", padding: "18px", color: "#f87171", fontSize: "12px" }}>
+    <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", borderRadius: "14px", padding: "18px", color: "#f87171", fontSize: "12px" }}>
       {state.error}
       <button onClick={onClose} style={{ marginLeft: "12px", background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "13px" }}>✕</button>
     </div>
@@ -244,7 +244,7 @@ function GlobalProjectionChart({ positions, onClose }) {
     <div style={{ background: C.snow, borderRadius: "16px", overflow: "hidden", marginTop: "16px", boxShadow: "0 8px 32px rgba(30,58,95,0.12)", border: `1px solid ${C.border}` }}>
 
       {/* En-tête gradient */}
-      <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+      <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
           <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>Portefeuille</span>
           {finalPct != null && (
@@ -522,7 +522,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
           <button
             onClick={() => onRunScoring && onRunScoring(positions)}
             disabled={marketScoringUi === UI.LOADING}
-            style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
+            style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
             {marketScoringUi === UI.LOADING
               ? <><AppLogo size={14} animated={true} /> Analyse en cours…</>
               : "Lancer le scoring IA"}
@@ -701,7 +701,7 @@ Retourne ce JSON exact (aucun texte autour) :
                 <button
                   onClick={analyzePortfolioPotentiel}
                   disabled={aiPotLoading || !hasAI()}
-                  style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: aiPotLoading ? "not-allowed" : "pointer", background: aiPotLoading ? C.snowDim : "linear-gradient(135deg,#080B0F 0%,#1E3A5F 100%)", color: aiPotLoading ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
+                  style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: aiPotLoading ? "not-allowed" : "pointer", background: aiPotLoading ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: aiPotLoading ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}>
                   {aiPotLoading
                     ? <><AppLogo size={14} animated={true} /> Analyse en cours…</>
                     : ap && !ap.error ? "🔄 Relancer" : "🤖 Analyser le potentiel"}

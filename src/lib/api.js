@@ -5,8 +5,8 @@ const PROXIES = [
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
 ];
 export async function fetchWithProxy(url, opts = {}) {
-  // En production, on passe par le proxy Vercel pour éviter les blocages Yahoo
-  if (process.env.NODE_ENV === "production" && url.includes("yahoo.com")) {
+  // Proxy Vercel en prod ET en dev (vercel dev ou localhost avec /api disponible)
+  if (url.includes("yahoo.com")) {
     try {
       const proxyUrl = `/api/yahoo-proxy?url=${encodeURIComponent(url)}`;
       const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000), ...opts });

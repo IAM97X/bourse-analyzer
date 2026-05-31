@@ -280,7 +280,7 @@ Règles strictes :
       <button onClick={() => setOpen(v => !v)} title="Assistant IA"
         style={{ position: "fixed", bottom: isMobile ? "76px" : "24px", right: "20px", zIndex: 999,
           width: "52px", height: "52px", borderRadius: "50%",
-          background: open ? "#111214" : "linear-gradient(135deg, #080B0F 0%, #142641 40%, #1E3A5F 75%, #2D5986 100%)",
+          background: open ? "#1A3A6B" : "linear-gradient(135deg, #1A3A6B, #2D6CB5)",
           border: "none", cursor: "pointer", boxShadow: "0 6px 28px rgba(30,58,95,0.45)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: open ? "18px" : "22px", transition: "all 0.2s", color: "#fff",
@@ -299,7 +299,7 @@ Règles strictes :
           display: "flex", flexDirection: "column", overflow: "hidden",
           border: `1px solid ${C.border}`, animation: "fadeIn 0.18s ease",
         }}>
-          <div style={{ background: "linear-gradient(135deg, #080B0F 0%, #142641 50%, #1E3A5F 100%)", padding: "14px 18px", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+          <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", padding: "14px 18px", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
             <span style={{ fontSize: "20px" }}>{aiEmoji}</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: "13px", fontWeight: "800", color: "#fff", letterSpacing: "-0.01em" }}>{aiCfg.nom?.trim() ? `${aiCfg.nom.trim()} IA` : "Assistant IA"}</div>
@@ -321,7 +321,7 @@ Règles strictes :
                   Ajoutez une clé <strong>Gemini</strong> (gratuite) ou <strong>Claude</strong> dans Paramètres pour activer l'assistant.
                 </div>
                 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer"
-                  style={{ display: "inline-block", background: "linear-gradient(135deg, #1E3A5F, #2D5986)", color: "#fff", borderRadius: "10px", padding: "10px 20px", fontSize: "12px", fontWeight: "700", textDecoration: "none", marginBottom: "12px" }}>
+                  style={{ display: "inline-block", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#fff", borderRadius: "10px", padding: "10px 20px", fontSize: "12px", fontWeight: "700", textDecoration: "none", marginBottom: "12px" }}>
                   Clé Gemini gratuite →
                 </a>
                 <div style={{ fontSize: "10px", color: C.inkSubtle, lineHeight: "1.6" }}>Ajoutez votre clé dans<br/><strong>Profil → Clés API</strong></div>
@@ -373,10 +373,10 @@ Règles strictes :
             {messages.map((m, i) => (
               <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
                 {m.role === "assistant" && (
-                  <span style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg, #1E3A5F, #2D5986)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", flexShrink: 0, marginRight: "8px", marginTop: "2px", boxShadow: "0 2px 8px rgba(30,58,95,0.30)" }}>{aiEmoji}</span>
+                  <span style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", flexShrink: 0, marginRight: "8px", marginTop: "2px", boxShadow: "0 2px 8px rgba(30,58,95,0.30)" }}>{aiEmoji}</span>
                 )}
                 {m.role === "user" ? (
-                  <div style={{ maxWidth: "78%", padding: "10px 14px", borderRadius: "16px 16px 4px 16px", background: "linear-gradient(135deg, #142641 0%, #1E3A5F 100%)", color: "#fff", fontSize: "12px", lineHeight: "1.65" }}>
+                  <div style={{ maxWidth: "78%", padding: "10px 14px", borderRadius: "16px 16px 4px 16px", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#fff", fontSize: "12px", lineHeight: "1.65" }}>
                     {m.content}
                   </div>
                 ) : (
@@ -397,7 +397,7 @@ Règles strictes :
 
             {loading && (
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ width: "26px", height: "26px", borderRadius: "50%", background: "linear-gradient(135deg, #1E3A5F, #2D5986)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", flexShrink: 0 }}>{aiEmoji}</span>
+                <span style={{ width: "26px", height: "26px", borderRadius: "50%", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", flexShrink: 0 }}>{aiEmoji}</span>
                 <div style={{ padding: "10px 16px", borderRadius: "4px 16px 16px 16px", background: C.snowOff, border: `1px solid ${C.border}`, display: "flex", gap: "4px", alignItems: "center" }}>
                   {[0,1,2].map(d => (
                     <span key={d} style={{ width: "6px", height: "6px", borderRadius: "50%", background: C.accent, display: "inline-block", animation: `pulse 1.2s ${d * 0.2}s infinite` }} />
@@ -420,7 +420,7 @@ Règles strictes :
             <button onClick={send} disabled={!input.trim() || loading}
               style={{ width: "38px", height: "38px", borderRadius: "10px", border: "none",
                 cursor: input.trim() && !loading ? "pointer" : "default",
-                background: input.trim() && !loading ? "linear-gradient(135deg, #1E3A5F 0%, #2D5986 100%)" : C.snowDim,
+                background: input.trim() && !loading ? "linear-gradient(135deg, #1A3A6B, #2D6CB5)" : C.snowDim,
                 color: input.trim() && !loading ? "#fff" : C.inkSubtle,
                 fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0, transition: "all 0.15s",
@@ -779,7 +779,7 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
 
       <div style={{ padding: "16px 0 12px", borderBottom: `1px solid ${C.border}`, marginBottom: "12px", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: shadow.pill, flexShrink: 0 }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: shadow.pill, flexShrink: 0 }}>
             <IconChat />
           </div>
           <div style={{ flex: 1, minWidth: "120px" }}>
@@ -882,13 +882,13 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
                       ×
                     </button>
                   )}
-                  <div style={{ maxWidth: "78%", padding: "10px 14px", borderRadius: "16px 16px 4px 16px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", color: "#fff", boxShadow: shadow.card, fontSize: "13.5px", lineHeight: "1.55" }}>
+                  <div style={{ maxWidth: "78%", padding: "10px 14px", borderRadius: "16px 16px 4px 16px", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#fff", boxShadow: shadow.card, fontSize: "13.5px", lineHeight: "1.55" }}>
                     {sess.userMsg}
                   </div>
                 </div>
                 {sess.assistantMsg && (
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                    <div style={{ width: "26px", height: "26px", borderRadius: "8px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0, marginTop: "2px" }}>
+                    <div style={{ width: "26px", height: "26px", borderRadius: "8px", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0, marginTop: "2px" }}>
                       <IconChat />
                     </div>
                     <div style={{ maxWidth: "78%" }}>
@@ -930,7 +930,7 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
 
             {isBusy && (
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ width: "26px", height: "26px", borderRadius: "8px", background: "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}><IconChat /></div>
+                <div style={{ width: "26px", height: "26px", borderRadius: "8px", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}><IconChat /></div>
                 <div style={{ padding: "10px 16px", background: C.snow, borderRadius: "16px 16px 16px 4px", border: `1px solid ${C.border}`, boxShadow: shadow.card, display: "flex", gap: "5px", alignItems: "center" }}>
                   {[0,1,2].map(j => <span key={j} style={{ width: "6px", height: "6px", borderRadius: "50%", background: C.accent, display: "inline-block", animation: `chatDot 1.2s ease-in-out ${j * 0.2}s infinite` }} />)}
                 </div>
@@ -948,7 +948,7 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
                 placeholder="Posez une question sur votre portefeuille…" rows={2}
                 style={{ flex: 1, padding: "10px 14px", borderRadius: "14px", border: `1px solid ${C.border}`, background: C.snow, fontSize: "13.5px", color: C.ink, resize: "none", fontFamily: "inherit", outline: "none", boxShadow: shadow.card, lineHeight: "1.5" }} />
               <button onClick={() => sendMessage()} disabled={!input.trim() || isBusy}
-                style={{ width: "42px", height: "42px", borderRadius: "12px", border: "none", cursor: input.trim() && !isBusy ? "pointer" : "not-allowed", background: input.trim() && !isBusy ? "linear-gradient(135deg, #080B0F 0%, #1E3A5F 100%)" : C.snowDim, color: input.trim() && !isBusy ? "#fff" : C.inkSubtle, fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: input.trim() && !isBusy ? shadow.pill : "none", transition: "all 0.15s" }}>
+                style={{ width: "42px", height: "42px", borderRadius: "12px", border: "none", cursor: input.trim() && !isBusy ? "pointer" : "not-allowed", background: input.trim() && !isBusy ? "linear-gradient(135deg, #1A3A6B, #2D6CB5)" : C.snowDim, color: input.trim() && !isBusy ? "#fff" : C.inkSubtle, fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: input.trim() && !isBusy ? shadow.pill : "none", transition: "all 0.15s" }}>
                 ↑
               </button>
             </div>

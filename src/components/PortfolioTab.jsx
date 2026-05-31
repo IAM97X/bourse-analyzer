@@ -456,7 +456,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   const inp = { background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "11px 16px", color: C.ink, fontSize: "13px", fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box", width: "100%", fontWeight: "500" };
   const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", display: "block" };
 
-  const btnPrimary = { background: "linear-gradient(135deg, #111214 0%, #1E3A5F 100%)", border: "none", borderRadius: "50px", padding: "11px 22px", color: "#fff", fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 16px rgba(30,58,95,0.30)", letterSpacing: "0.02em" };
+  const btnPrimary = { background: "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", border: "none", borderRadius: "50px", padding: "11px 22px", color: "#fff", fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 16px rgba(45,108,181,0.30)", letterSpacing: "0.02em" };
   const btnSecondary = (active) => ({ background: active ? C.redLight : C.snowOff, border: `1px solid ${active ? "rgba(220,38,38,0.2)" : C.border}`, borderRadius: "50px", padding: "11px 18px", color: active ? C.red : C.inkMuted, fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: "600", cursor: "pointer" });
 
   return (

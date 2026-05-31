@@ -56,7 +56,7 @@ function WeeklySummary({ positions, totalActuel, totalPV, hidden }) {
   };
 
   return (
-    <div style={{ background: "linear-gradient(135deg, #0C1829 0%, #1E3A5F 100%)", borderRadius: "20px", padding: "20px 24px", marginTop: "16px", boxShadow: shadow.float, position: "relative", overflow: "hidden" }}>
+    <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", borderRadius: "20px", padding: "20px 24px", marginTop: "16px", boxShadow: shadow.float, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 50%, rgba(74,158,219,0.15) 0%, transparent 60%)", pointerEvents: "none" }} />
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", position: "relative" }}>
         <div style={{ flex: 1 }}>
