@@ -111,14 +111,25 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     try { return !localStorage.getItem(ONBOARDING_KEY); } catch { return false; }
   });
   const [showTour, setShowTour] = useState(false);
+  const showGuide = useCallback(() => { try { localStorage.removeItem("boursenext_tour_v1"); } catch {} setShowTour(true); }, []);
   const [mobileNavOpen, setMobileNavOpen]       = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => load("bourse_sidebar_collapsed", true));
   const toggleSidebarCollapse = useCallback(() => setSidebarCollapsed(v => { const next = !v; save("bourse_sidebar_collapsed", next); return next; }), []);
   const [account, setAccount]                   = useState(() => load("bourse_account", "PEA"));
   const prevAccountRef                          = useRef(null);
-  const switchAccount = (acc) => { prevAccountRef.current = account; setAccount(acc); save("bourse_account", acc); };
-  const [activeTab, setActiveTab]               = useState(() => load("bourse_active_tab", TABS.OVERVIEW));
-  const changeTab = (tab) => { setActiveTab(tab); save("bourse_active_tab", tab); };
+  const [activeTab, setActiveTab]               = useState(() => {
+    const acc = load("bourse_account", "PEA");
+    return load(`bourse_active_tab_${acc}`, TABS.OVERVIEW);
+  });
+  const changeTab = (tab) => { setActiveTab(tab); save(`bourse_active_tab_${account}`, tab); };
+  const switchAccount = (acc) => {
+    prevAccountRef.current = account;
+    save(`bourse_active_tab_${account}`, activeTab);
+    const lastTab = load(`bourse_active_tab_${acc}`, TABS.HOME);
+    setAccount(acc);
+    save("bourse_account", acc);
+    setActiveTab(lastTab);
+  };
   const [profil, setProfil]                     = useState(() => load("bourse_profil", DEFAULT_PROFIL));
   const [compact, setCompact]                   = useState(() => load("bourse_compact", false));
   const [portfolioVersion, setPortfolioVersion] = useState(0);
@@ -499,6 +510,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)}
         account={account} onSwitchAccount={switchAccount}
         marketScoringUi={marketScoringUi}
+        onShowGuide={showGuide}
         externalCollapsed={sidebarCollapsed} onExternalToggle={toggleSidebarCollapse}
       />
 

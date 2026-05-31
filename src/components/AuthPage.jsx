@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { load, save, supabase, setSyncUserId, pullFromCloud } from "../lib/storage";
-import AppLogo from "./AppLogo";
 import { ThinkingSpinner } from "./UI";
 
 const LOCAL_PIN_KEY  = "bourse_local_pin";
@@ -177,9 +176,6 @@ function AuthPage({ onSession }) {
       <div style={{ width: "100%", maxWidth: "380px" }}>
         {/* Logo + titre */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "68px", height: "68px", borderRadius: "20px", background: "#FFFFFF", marginBottom: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-            <AppLogo size={42} animated={loading} />
-          </div>
           <div style={{ fontSize: "28px", fontWeight: "300", color: "#1C1C1E", letterSpacing: "-0.02em", lineHeight: 1.1, fontFamily: "Inter, sans-serif" }}>
             Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #2D6CB5, #5B9BD5)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
           </div>

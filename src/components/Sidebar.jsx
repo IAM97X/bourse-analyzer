@@ -106,7 +106,7 @@ export const NAV_GROUPS = [
   ]},
 ];
 
-function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi, hideCollapseButton = false }) {
+function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, onClose, account, onSwitchAccount, mobileCompact = false, marketScoringUi, hideCollapseButton = false, onShowGuide }) {
   const isMobile = useIsMobile();
   const allPositions = sanitizePositions(load("bourse_portfolio", []));
   const positions    = allPositions.filter(p => (p.compte || "PEA") === (account || "PEA"));
@@ -228,7 +228,12 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
       </div>
 
       {!mobileCompact && <div className="ba-sidebar-footer" style={{ padding: "10px 12px", display: "flex", gap: "5px", justifyContent: "center", flexShrink: 0 }}>
-        {c ? null : (<>
+        {c ? (
+          onShowGuide && (
+            <button onClick={onShowGuide} title="Guide interactif"
+              style={{ width: "36px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "Inter,sans-serif" }}>?</button>
+          )
+        ) : (<>
           <button onClick={toggleCompact} title={compact ? "Mode normal" : "Mode compact (zoom arrière)"}
             style={{ flex: 1, height: "32px", borderRadius: "8px", background: compact ? "#E8F9EF" : "#F2F2F7", border: "none", color: compact ? "#1E8449" : "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", transition: "all 0.2s" }}>
             {compact ? (
@@ -244,6 +249,11 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span style={{ fontSize: "9px", fontWeight: "600", fontFamily: "Inter,sans-serif" }}>PDF</span>
           </button>
+
+          {onShowGuide && (
+            <button onClick={onShowGuide} title="Guide interactif"
+              style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "Inter,sans-serif", flexShrink: 0 }}>?</button>
+          )}
         </>)}
       </div>}
 
@@ -261,13 +271,13 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
   );
 }
 
-export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, refreshAgo, toggleDark, toggleCompact, darkMode, compact, hidden, mobileOpen, onMobileClose, account, onSwitchAccount, marketScoringUi, externalCollapsed, onExternalToggle }) {
+export default function Sidebar({ active, onChange, portfolioVersion, refreshAll, refreshing, refreshAgo, toggleDark, toggleCompact, darkMode, compact, hidden, mobileOpen, onMobileClose, account, onSwitchAccount, marketScoringUi, externalCollapsed, onExternalToggle, onShowGuide }) {
   const isMobile = useIsMobile();
   const [internalCollapsed, setInternalCollapsed] = useState(() => load("bourse_sidebar_collapsed", true));
   const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
   const toggleCollapse = onExternalToggle || (() => { const v = !internalCollapsed; setInternalCollapsed(v); save("bourse_sidebar_collapsed", v); });
 
-  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi, hideCollapseButton: externalCollapsed !== undefined };
+  const sharedProps = { active, onChange, portfolioVersion, refreshAll, refreshing, toggleDark, toggleCompact, darkMode, compact, hidden, collapsed, toggleCollapse, account, onSwitchAccount, marketScoringUi, hideCollapseButton: externalCollapsed !== undefined, onShowGuide };
 
   if (isMobile) {
     if (!mobileOpen) return null;

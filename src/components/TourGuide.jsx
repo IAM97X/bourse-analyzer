@@ -1,64 +1,44 @@
 import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { TABS } from "../constants/tabs";
-import AppLogo from "./AppLogo";
 
 const TOUR_KEY = "boursenext_tour_v1";
 
 const STEPS = [
   {
     tab: TABS.HOME,
-    icon: "👋",
-    title: "Bienvenue sur BourseNext",
-    body: "Je suis ton guide. En moins d'une minute, je te montre tout ce que l'app peut faire pour toi. C'est parti !",
-  },
-  {
-    tab: TABS.HOME,
-    icon: "🏠",
-    title: "Accueil — Ta vue d'ensemble",
-    body: "Retrouve ici la valorisation totale de ton portefeuille, tes performances du jour, du mois et depuis l'achat, ainsi que le graphique d'évolution.",
+    title: "Accueil — vue d'ensemble",
+    body: "Valorisation totale, performances du jour et depuis l'achat, graphique d'évolution et résumé des signaux IA.",
   },
   {
     tab: TABS.PORTFOLIO,
-    icon: "📊",
-    title: "Portefeuille — Tes positions",
-    body: "Ajoute tes actions, ETF et obligations. Cours en temps réel, plus-values, répartition sectorielle et sparklines par ligne.",
+    title: "Portefeuille — vos positions",
+    body: "Ajoutez vos actions et ETF. Cours en temps réel, plus-values, répartition sectorielle et miniature par ligne.",
   },
   {
     tab: TABS.MARCHE,
-    icon: "🧠",
-    title: "Marché — Scoring IA dynamique",
-    body: "L'IA analyse chaque valeur : actualités, RSI, signaux techniques. Score sur 20 avec recommandation ACHAT / RENFORCER / ATTENDRE / VENDRE.",
-  },
-  {
-    tab: TABS.CHAT,
-    icon: "💬",
-    title: "Assistant IA — Ton conseiller 24h/24",
-    body: "Pose toutes tes questions sur la bourse, tes valeurs ou tes stratégies. Gratuit avec une clé Gemini (Google AI Studio).",
-  },
-  {
-    tab: TABS.AI_PORTFOLIO,
-    icon: "🤖",
-    title: "Portefeuille IA Autonome",
-    body: "Un portefeuille géré entièrement par l'IA. Il investit, arbitre et protège automatiquement tes positions avec stop-loss et journal de décisions.",
+    title: "Signaux IA — scoring dynamique",
+    body: "L'IA analyse chaque valeur : actualités, RSI, signaux techniques. Score /20 avec recommandation ACHAT / RENFORCER / ATTENDRE / VENDRE.",
   },
   {
     tab: TABS.AUTOPILOT,
-    icon: "⚡",
     title: "Autopilot Atlas — DCA intelligent",
-    body: "Définis ton budget mensuel et laisse l'IA trouver les meilleures opportunités d'investissement dans l'univers PEA éligible.",
+    body: "Définissez votre budget mensuel. L'IA calcule les meilleures opportunités de renforcement dans l'univers PEA éligible.",
   },
   {
-    tab: TABS.PROFIL,
-    icon: "⚙️",
-    title: "Profil — Personnalise ton expérience",
-    body: "Renseigne ton profil investisseur, ton courtier et tes clés API Gemini ou Claude pour débloquer toutes les fonctionnalités IA.",
+    tab: TABS.CHAT,
+    title: "Conseiller Privé",
+    body: "Posez toutes vos questions sur vos valeurs, la stratégie ou l'allocation. L'IA connaît votre portefeuille et vos analyses.",
+  },
+  {
+    tab: TABS.AI_PORTFOLIO,
+    title: "Portefeuille Autonome",
+    body: "Un second portefeuille géré entièrement par l'IA — investissement, arbitrage et protection automatiques avec stop-loss.",
   },
   {
     tab: TABS.PORTFOLIO,
-    icon: "🎉",
-    title: "Tu es prêt !",
-    body: "Commence par ajouter ta première position dans l'onglet Portefeuille. BourseNext s'occupe du reste.",
+    title: "Prêt à commencer",
+    body: "Ajoutez votre première position dans Portefeuille. Ce guide est accessible à tout moment via le bouton « ? » en bas de la sidebar.",
     isLast: true,
   },
 ];
@@ -141,8 +121,10 @@ export default function TourGuide({ onDone, changeTab }) {
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <AppLogo size={22} />
-              <span style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <span style={{ fontSize: "13px", fontWeight: "300", color: C.ink, letterSpacing: "-0.02em", fontFamily: "Inter, sans-serif" }}>
+                Bourse<span style={{ fontWeight: "900", letterSpacing: "-0.05em", backgroundImage: "linear-gradient(135deg, #1A4A8A, #4B9DD8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+              </span>
+              <span style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, letterSpacing: "0.04em" }}>
                 Guide · {step + 1}/{STEPS.length}
               </span>
             </div>
@@ -150,14 +132,9 @@ export default function TourGuide({ onDone, changeTab }) {
           </div>
 
           {/* Contenu */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "20px" }}>
-            <div style={{ width: "48px", height: "48px", flexShrink: 0, borderRadius: "16px", background: C.paleBlue, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>
-              {s.icon}
-            </div>
-            <div>
-              <div style={{ fontSize: "15px", fontWeight: "800", color: C.ink, letterSpacing: "-0.02em", marginBottom: "6px", lineHeight: "1.3" }}>{s.title}</div>
-              <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.6" }}>{s.body}</div>
-            </div>
+          <div style={{ marginBottom: "20px" }}>
+            <div style={{ fontSize: "15px", fontWeight: "800", color: C.ink, letterSpacing: "-0.02em", marginBottom: "8px", lineHeight: "1.3" }}>{s.title}</div>
+            <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.65" }}>{s.body}</div>
           </div>
 
           {/* Points de progression */}
