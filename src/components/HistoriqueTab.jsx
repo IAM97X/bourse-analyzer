@@ -3,7 +3,7 @@ import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtPct, fmtCours, sanitizePositions, isETFName } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { fetchWithProxy, enqueueApi, callClaude } from "../lib/api";
-import { ThinkingSpinner } from "./UI";
+import { BNextLabel } from "./UI";
 import CompanyAvatar from "./CompanyAvatar";
 import PortfolioPieChart from "./PortfolioPieChart";
 import Tooltip from "./Tooltip";
@@ -339,7 +339,7 @@ function PEAAvisOperes({ account = "PEA" }) {
   return (
     <div style={{ marginTop: "28px" }}>
       <div style={{ fontSize: "11px", fontWeight: "800", color: C.ink, letterSpacing: "0.5px", marginBottom: "14px" }}>
-        📄 Avis d'opérés
+        Avis d'opérés
       </div>
 
       {/* Import PDF */}
@@ -347,7 +347,7 @@ function PEAAvisOperes({ account = "PEA" }) {
         <input ref={pdfRef} type="file" accept=".pdf" multiple style={{ display: "none" }} onChange={handlePdf} />
         <button onClick={() => pdfRef.current?.click()} disabled={ui === UI.LOADING}
           style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: ui === UI.LOADING ? "not-allowed" : "pointer" }}>
-          {ui === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={21} color={C.goldDark} /> {progress.done}/{progress.total} analysé{progress.done > 1 ? "s" : ""}…</span> : "↑ Importer des avis PDF"}
+          {ui === UI.LOADING ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"13px" }}><BNextLabel /></span> : "↑ Importer des avis PDF"}
         </button>
         {ui === UI.RESULT && <span style={{ fontSize: "11px", color: C.green, fontWeight: "600" }}>✓ {progress.total} fichier{progress.total > 1 ? "s" : ""} — {filteredOps.length} opération{filteredOps.length > 1 ? "s" : ""} au total</span>}
         {errors.length > 0 && errors.map((e, i) => <span key={i} style={{ fontSize: "11px", color: C.red, fontWeight: "600" }}>⚠ {e}</span>)}
@@ -405,7 +405,6 @@ function PEAAvisOperes({ account = "PEA" }) {
 
       {filteredOps.length === 0 && ui === UI.IDLE && (
         <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "22px", padding: "40px 32px", textAlign: "center", boxShadow: shadow.card }}>
-          <div style={{ fontSize: "36px", marginBottom: "14px", lineHeight: 1 }}>📄</div>
           <div style={{ fontSize: "15px", fontWeight: "800", color: C.ink, marginBottom: "8px" }}>Aucune transaction importée</div>
           <div style={{ fontSize: "12px", color: C.inkMuted, maxWidth: "420px", margin: "0 auto 24px", lineHeight: "1.6" }}>
             Importez vos avis d'opérés au format PDF. Claude analyse chaque document et extrait automatiquement vos <strong>achats</strong>, <strong>ventes</strong>, <strong>dividendes</strong> et <strong>frais</strong>.
@@ -515,7 +514,6 @@ function FeeWarnings({ account = "PEA" }) {
   return (
     <div style={{ background: C.cardGradGold, borderRadius: "20px", padding: "18px 22px", marginBottom: "20px", boxShadow: shadow.card, border: `1px solid rgba(245,158,11,0.30)` }}>
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-        <span style={{ fontSize: "16px" }}>⚡</span>
         <span style={{ fontSize: "12px", fontWeight: "800", color: C.goldDark }}>Frais de courtage élevés</span>
         <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "5px", padding: "2px 7px", marginLeft: "auto" }}>{warnings.length} position{warnings.length > 1 ? "s" : ""}</span>
       </div>
@@ -542,7 +540,7 @@ function FeeWarnings({ account = "PEA" }) {
             </div>
             {qteMin && w.trades[0]?.prix > 0 && (
               <div style={{ marginTop: "5px", fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "6px", padding: "5px 10px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                💡 Pour ramener les frais à &lt;1% : investir sur au moins{" "}
+                Pour ramener les frais à &lt;1% : investir sur au moins{" "}
                 <strong style={{ color: C.ink }}>{fmtEur(w.totalFrais * 100)}</strong> ({Math.ceil(w.totalFrais / (w.trades[0].prix * 0.01)).toLocaleString("fr-FR")} titres à ce cours)
               </div>
             )}
@@ -719,7 +717,7 @@ function BenchmarkComparaison() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
         <div>
-          <div style={{ fontSize: "12px", fontWeight: "800", color: C.ink }}>📊 Performance vs Indices</div>
+          <div style={{ fontSize: "12px", fontWeight: "800", color: C.ink }}>Performance vs Indices</div>
           {cached?.ts && <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "2px" }}>
             Mis à jour le {new Date(cached.ts).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
           </div>}
@@ -727,7 +725,7 @@ function BenchmarkComparaison() {
         <button onClick={fetchAll} disabled={loading}
           style={{ fontSize: "11px", fontWeight: "700", padding: "5px 12px", borderRadius: "7px", cursor: loading ? "not-allowed" : "pointer",
             fontFamily: "'DM Sans', sans-serif", background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, color: C.navy }}>
-          {loading ? <ThinkingSpinner size={21} color={C.inkSubtle} /> : "↻ Actualiser"}
+          {loading ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"13px" }}><BNextLabel /></span> : "↻ Actualiser"}
         </button>
       </div>
 
@@ -907,7 +905,7 @@ function StatistiquesHistorique() {
       <div style={{ background: C.cardGradGreen, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "22px 26px", marginBottom: "20px", boxShadow: shadow.card }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px", marginBottom: "18px" }}>
           <div>
-            <div style={{ fontSize: "12px", fontWeight: "800", color: C.ink, letterSpacing: "0.5px" }}>📈 Rendement global du portefeuille</div>
+            <div style={{ fontSize: "12px", fontWeight: "800", color: C.ink, letterSpacing: "0.5px" }}>Rendement global du portefeuille</div>
             {premierDate && <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "3px" }}>Depuis le {new Date(premierDate).toLocaleDateString("fr-FR")}</div>}
             <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
               {["pru","fifo"].map(m => (
@@ -1738,7 +1736,6 @@ function DividendTracker({ account = "PEA", positions = [] }) {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "16px" }}>💰</span>
           <span style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>Dividendes reçus</span>
           <span style={{ fontSize: "10px", color: C.inkSubtle, background: C.snowOff, borderRadius: "5px", padding: "2px 6px" }}>{accountDivs.length}</span>
           <span style={{ fontSize: "10px", color: C.inkSubtle }}>· {account}</span>

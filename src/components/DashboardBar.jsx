@@ -61,7 +61,6 @@ function WeeklySummary({ positions, totalActuel, totalPV, hidden }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", position: "relative" }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-            <div style={{ fontSize: "16px" }}>📅</div>
             <div>
               <div style={{ fontSize: "11px", fontWeight: "800", color: "rgba(255,255,255,0.9)", letterSpacing: "0.5px" }}>Bilan hebdomadaire</div>
               <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.45)", marginTop: "1px" }}>{dateStr}</div>
@@ -80,7 +79,7 @@ function WeeklySummary({ positions, totalActuel, totalPV, hidden }) {
             </div>
             {best && (
               <div style={{ background: "rgba(110,231,183,0.12)", borderRadius: "12px", padding: "10px 14px", minWidth: "130px", border: "1px solid rgba(110,231,183,0.2)" }}>
-                <div style={{ fontSize: "9px", color: "rgba(110,231,183,0.7)", fontWeight: "600", letterSpacing: "0.8px", marginBottom: "4px" }}>🏆 MEILLEURE</div>
+                <div style={{ fontSize: "9px", color: "rgba(110,231,183,0.7)", fontWeight: "600", letterSpacing: "0.8px", marginBottom: "4px" }}>MEILLEURE</div>
                 <div style={{ fontSize: "12px", fontWeight: "800", color: "#fff", ...blurStyle }}>{best.nom.split(" ")[0]}</div>
                 <div style={{ fontSize: "10px", fontWeight: "700", color: "#6EE7B7", marginTop: "2px", ...blurStyle }}>+{best.pvPct.toFixed(1)}%</div>
               </div>

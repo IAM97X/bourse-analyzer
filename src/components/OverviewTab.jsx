@@ -109,7 +109,7 @@ function AccountCard({ account, positions, onEnter, hidden, courtierKey }) {
 
       {isEmpty ? (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px", padding: "24px 0" }}>
-          <div style={{ fontSize: "32px", opacity: 0.35 }}>📂</div>
+          <div style={{ opacity: 0.35 }}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
           <div style={{ fontSize: "12.5px", color: C.inkSubtle, textAlign: "center" }}>Aucune position dans ce compte</div>
         </div>
       ) : (

@@ -4,7 +4,7 @@ import { fmtEur, fmtPct, linReg } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
 import { useIsMobile } from "../context/mobile";
-import { StatBox, ThinkingSpinner } from "./UI";
+import { StatBox, BNextLabel } from "./UI";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 const DEFAULT_POSITIONS = [];
@@ -489,7 +489,6 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
 
   if (totalActuel === 0) return (
     <div style={{ textAlign: "center", padding: "60px 20px", color: C.inkSubtle }}>
-      <div style={{ fontSize: "32px", marginBottom: "14px", opacity: 0.2 }}>📈</div>
       <div style={{ fontSize: "14px", fontWeight: "600" }}>Aucune position · Ajoutez des positions dans l'onglet Portefeuille</div>
     </div>
   );
@@ -607,12 +606,12 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
             {/* Projection historique */}
             <button onClick={() => histProj ? setHistProj(null) : computeHistoricalProj()} disabled={loadingHist}
               style={{ padding: "6px 12px", borderRadius: "10px", fontSize: "10px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", border: `1px solid ${histProj ? "rgba(124,58,237,0.4)" : C.border}`, background: histProj ? "rgba(124,58,237,0.08)" : C.snowOff, color: histProj ? "#7C3AED" : C.inkMuted, opacity: loadingHist ? 0.6 : 1 }}>
-              {loadingHist ? <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}><ThinkingSpinner size={12} color="#7C3AED" /> Calcul…</span> : histProj ? `⬟ ${(histProj.taux * 100).toFixed(1)}%/an ×` : "⬟ Projection historique"}
+              {loadingHist ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"11px" }}><BNextLabel /></span> : histProj ? `⬟ ${(histProj.taux * 100).toFixed(1)}%/an ×` : "⬟ Projection historique"}
             </button>
             {/* Reconstruction historique */}
             <button onClick={reconstructSnapshots} disabled={reconstructing}
               style={{ padding: "6px 12px", borderRadius: "10px", fontSize: "10px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", border: `1px solid #A5F3FC`, background: "#ECFEFF", color: "#0891b2", opacity: reconstructing ? 0.6 : 1 }}>
-              {reconstructing ? <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}><ThinkingSpinner size={12} color="#0891b2" /> Reconstruction…</span> : "↺ Reconstruire l'historique"}
+              {reconstructing ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"11px" }}><BNextLabel /></span> : "↺ Reconstruire l'historique"}
             </button>
           </div>
         </div>
@@ -1009,7 +1008,6 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
         <div style={{ background: "linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)", border: "1px solid #D97706", borderRadius: "20px", padding: "22px 24px", boxShadow: shadow.card }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px" }}>
             <div style={{ width: "36px", height: "36px", borderRadius: "12px", background: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ fontSize: "18px" }}>🏖</span>
             </div>
             <div>
               <div style={{ fontSize: "13px", fontWeight: "800", color: "#92400E" }}>À la retraite — {ageActuel + ansDuRetraite} ans</div>
@@ -1075,7 +1073,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
         </div>
         {/* Coût réel */}
         <div style={{ display: "grid", gridTemplateColumns: `130px repeat(${HORIZONS_TABLE.length}, 1fr)`, padding: "10px 16px", borderBottom: `1px solid ${C.border}`, background: C.snowOff }}>
-          <div style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600" }}>💰 Coût réel</div>
+          <div style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600" }}>Coût réel</div>
           {HORIZONS_TABLE.map(m => (
             <div key={m} style={{ fontSize: "11px", color: C.inkMuted, textAlign: "center" }}>{fmtEur(investi(m))}</div>
           ))}

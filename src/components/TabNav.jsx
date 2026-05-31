@@ -51,8 +51,8 @@ export function SignalBadge({ signal }) {
   if (signal === "VENDRE") {
     return (
       <div style={{ background: "#FFF5F5", border: "2px solid #DC2626", borderRadius: "16px", padding: "14px 20px", textAlign: "center", animation: "vendreAlarm 0.8s ease-in-out infinite", boxShadow: "0 4px 24px rgba(220,38,38,0.3)" }}>
-        <div style={{ fontSize: "22px", fontWeight: "900", color: "#DC2626", letterSpacing: "2px", textTransform: "uppercase" }}>🚨 ÉJECTEZ-VOUS 🚨</div>
-        <div style={{ fontSize: "11px", color: "#DC2626", opacity: 0.75, fontWeight: "800", letterSpacing: "3px", marginTop: "4px" }}>⚠ VENDRE MAINTENANT ⚠</div>
+        <div style={{ fontSize: "22px", fontWeight: "900", color: "#DC2626", letterSpacing: "2px", textTransform: "uppercase" }}>ÉJECTEZ-VOUS</div>
+        <div style={{ fontSize: "11px", color: "#DC2626", opacity: 0.75, fontWeight: "800", letterSpacing: "3px", marginTop: "4px" }}>VENDRE MAINTENANT</div>
       </div>
     );
   }

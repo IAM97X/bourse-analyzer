@@ -7,14 +7,28 @@ import { TABS } from "../constants/tabs";
 import { fetchWithProxy, hasClaudeKey, hasAI } from "../lib/api";
 import { fetchFMPHistorical } from "../lib/market";
 import MarketStatusBar from "./MarketStatusBar";
+import { AUTOPILOT_UNIVERSE } from "../constants/universe";
 
 const SNAPSHOTS_KEY      = "bourse_snapshots";
 const TICKER_CACHE_KEY   = "bourse_isin_ticker_cache";
 const EVOLUTION_CSV_KEY  = "bourse_evolution_csv";
 
-// Résout une liste d'ISINs en tickers Yahoo — utilise le cache, résout les manquants via Yahoo Search
+// Résout une liste d'ISINs en tickers Yahoo — utilise le cache, universe.js, puis Yahoo Search
+const _universeAll = Object.values(AUTOPILOT_UNIVERSE).flat();
+function tickerFromUniverse(isin) {
+  const hit = _universeAll.find(u => u.isin === isin);
+  return hit?.symbol || null;
+}
+
 async function resolveISINsToTickers(isins) {
   const cache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY) || "{}"); } catch { return {}; } })();
+  // Lookup local via universe.js avant tout appel réseau
+  for (const isin of isins) {
+    if (isin && !cache[isin]) {
+      const t = tickerFromUniverse(isin);
+      if (t) cache[isin] = t;
+    }
+  }
   const missing = isins.filter(isin => isin && !cache[isin]);
   if (missing.length) {
     await Promise.all(missing.map(async (isin) => {
@@ -1023,7 +1037,7 @@ export default function HomeTab({ account = "PEA", onTabChange, hidden, profil: 
 
   if (!positions.length) return (
     <div style={{ textAlign: "center", padding: "60px 20px" }}>
-      <div style={{ fontSize: "36px", marginBottom: "14px" }}>📂</div>
+      <div style={{ marginBottom: "14px", display: "flex", justifyContent: "center" }}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
       <div style={{ fontSize: "15px", fontWeight: "700", color: "#fff", marginBottom: "6px" }}>Portefeuille vide</div>
       <div style={{ fontSize: "13px", lineHeight: "1.6", color: "rgba(255,255,255,0.55)", marginBottom: "20px" }}>
         Ajoutez vos positions pour voir votre tableau de bord.

@@ -22,7 +22,7 @@ function PersonalAdvice({ data, profil }) {
   const fraisEntree = nbEntree ? calcFraisCourtage(nbEntree * entree) : 0;
   const risqueLabel = { prudent: "Prudent · 5% max", equilibre: "Équilibré · 10% max", dynamique: "Dynamique · 15% max", "tres-dynamique": "Très dynamique · 20% max" }[profil.risque] || "";
   return (
-    <Card title="Conseil personnalisé — Gestion Libre" icon="💼" accentColor={C.goldDark}>
+    <Card title="Conseil personnalisé — Gestion Libre" accentColor={C.goldDark}>
       <div style={{ fontSize: "11px", color: C.inkMuted, marginBottom: "14px", fontWeight: "500" }}>Profil {risqueLabel} · Capital {fmtEur(capital)}</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "8px", marginBottom: "14px" }}>
         <StatBox label="Max / ligne" value={fmtEur(maxInvest)} color={C.goldDark} sensitive />
@@ -32,7 +32,7 @@ function PersonalAdvice({ data, profil }) {
       </div>
       {nbActions > 0 && (
         <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "12px 16px", marginBottom: "12px" }}>
-          <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "8px" }}>🏦 Frais de courtage (Gestion Libre)</div>
+          <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "8px" }}>Frais de courtage (Gestion Libre)</div>
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
             <div><span style={{ fontSize: "11px", color: C.inkSubtle }}>Montant ordre : </span><strong style={{ color: C.ink }}>{fmtEur(montant)}</strong></div>
             <div><span style={{ fontSize: "11px", color: C.inkSubtle }}>Frais : </span><strong style={{ color: C.goldDark }}>{fmtEur(frais)}</strong> <span style={{ fontSize: "10px", color: C.inkSubtle }}>({montant <= 500 ? "fixe ≤500€" : "0,5% min 3,99€"})</span></div>
@@ -107,7 +107,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
 
       {/* Performance */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-        <Card title="Performance" icon="📈" accentColor={C.green}>
+        <Card title="Performance" accentColor={C.green}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
             <StatBox label="Cours actuel" value={data.performance?.cours_actuel} color={C.navy} />
             <StatBox label="Évol. 1 an"   value={data.performance?.evolution_1an}  color={data.performance?.evolution_1an?.startsWith("+") ? C.green : C.red} />
@@ -115,7 +115,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
             <StatBox label="+ Haut 52s"   value={data.performance?.plus_haut_52s} />
           </div>
         </Card>
-        <Card title="Caractéristiques" icon="📊" accentColor={C.navy}>
+        <Card title="Caractéristiques" accentColor={C.navy}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
             <StatBox label="Capitalisation"    value={data.fondamentaux?.capitalisation} />
             <StatBox label="Nb composants"     value={data.fondamentaux?.nb_composants} />
@@ -128,7 +128,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
       {/* Répartition géographique + sectorielle */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
         {(data.repartition_geo || []).length > 0 && (
-          <Card title="Répartition géographique" icon="🌍" accentColor={C.navy}>
+          <Card title="Répartition géographique" accentColor={C.navy}>
             {data.repartition_geo.map((g, i) => (
               <div key={i} style={{ marginBottom: "8px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: C.inkMuted, marginBottom: "3px" }}>
@@ -142,7 +142,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
           </Card>
         )}
         {(data.repartition_sectorielle || []).length > 0 && (
-          <Card title="Répartition sectorielle" icon="🏭" accentColor={C.goldDark}>
+          <Card title="Répartition sectorielle" accentColor={C.goldDark}>
             {data.repartition_sectorielle.map((s, i) => (
               <div key={i} style={{ marginBottom: "8px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: C.inkMuted, marginBottom: "3px" }}>
@@ -159,7 +159,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
 
       {/* Analyse technique */}
       {data.analyse_technique && (
-        <Card title="Analyse technique" icon="📉" accentColor={C.navy}>
+        <Card title="Analyse technique" accentColor={C.navy}>
           <div className="ba-g4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", marginBottom: "14px" }}>
             <StatBox label="Tendance"    value={data.analyse_technique.tendance}   color={data.analyse_technique.tendance === "Haussière" ? C.green : data.analyse_technique.tendance === "Baissière" ? C.red : C.goldDark} />
             <StatBox label="Support"     value={data.analyse_technique.support} />
@@ -182,7 +182,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
 
       {/* Macro */}
       {data.macro && (
-        <Card title="Contexte macro-économique" icon="🌐" accentColor={C.goldDark}>
+        <Card title="Contexte macro-économique" accentColor={C.goldDark}>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {[
               { label: "Impact taux d'intérêt",   val: data.macro.impact_taux },
@@ -201,7 +201,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
 
       {/* Points forts / vigilance */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-        <Card title="Points forts" icon="✅" accentColor={C.green}>
+        <Card title="Points forts" accentColor={C.green}>
           {(data.points_forts || []).map((p, i) => (
             <div key={i} style={{ display: "flex", gap: "10px", padding: "7px 0", borderBottom: i < data.points_forts.length - 1 ? `1px solid ${C.border}` : "none" }}>
               <span style={{ color: C.green, flexShrink: 0, fontWeight: "700" }}>▸</span>
@@ -209,7 +209,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
             </div>
           ))}
         </Card>
-        <Card title="Points de vigilance" icon="⚠️" accentColor={C.red}>
+        <Card title="Points de vigilance" accentColor={C.red}>
           {(data.points_vigilance || []).map((p, i) => (
             <div key={i} style={{ display: "flex", gap: "10px", padding: "7px 0", borderBottom: i < data.points_vigilance.length - 1 ? `1px solid ${C.border}` : "none" }}>
               <span style={{ color: C.red, flexShrink: 0, fontWeight: "700" }}>▸</span>
@@ -221,7 +221,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
 
       {/* DCA Conseil — section centrale */}
       {data.dca_conseil && (
-        <Card title="Argumentaire DCA — Gestion Libre" icon="📅" accentColor={C.navy}>
+        <Card title="Argumentaire DCA — Gestion Libre" accentColor={C.navy}>
           {data.dca_conseil.argumentaire_principal && (
             <p style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.75", marginBottom: "16px" }}>{data.dca_conseil.argumentaire_principal}</p>
           )}
@@ -233,7 +233,7 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
           )}
           {/* Calcul frais de courtage */}
           <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "16px", marginBottom: "16px" }}>
-            <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "12px" }}>🏦 Coûts de transaction</div>
+            <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "12px" }}>Coûts de transaction</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               {/* Seuil minimal 200€ PEA */}
               <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "12px" }}>
@@ -299,14 +299,14 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
       )}
 
       {/* Timing */}
-      <Card title="Timing & Point d'entrée" icon="⏱" accentColor={C.navy}>
+      <Card title="Timing & Point d'entrée" accentColor={C.navy}>
         <div style={{ marginBottom: "14px" }}>
           <div style={{ fontSize: "10px", color: C.inkSubtle, letterSpacing: "1.5px", fontWeight: "600", textTransform: "uppercase", marginBottom: "6px" }}>Zone d'entrée conseillée</div>
           <div style={{ fontSize: "24px", fontWeight: "800", color: C.navy }}>{data.timing?.point_entree}</div>
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
           {(data.timing?.catalyseurs || []).map((c, i) => (
-            <div key={i} style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "6px", padding: "5px 12px", fontSize: "12px", color: C.navy, fontWeight: "500" }}>📅 {c}</div>
+            <div key={i} style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "6px", padding: "5px 12px", fontSize: "12px", color: C.navy, fontWeight: "500" }}>{c}</div>
           ))}
         </div>
         {data.timing?.recommandation_timing && (
@@ -364,7 +364,7 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
 
       {/* Performance + Fondamentaux */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-        <Card title="Performance" icon="📈" accentColor={C.green}>
+        <Card title="Performance" accentColor={C.green}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
             <StatBox label="Cours actuel" value={data.performance?.cours_actuel} color={C.navy} />
             <StatBox label="Évol. 1 an" value={data.performance?.evolution_1an} color={data.performance?.evolution_1an?.startsWith("+") ? C.green : C.red} />
@@ -372,7 +372,7 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
             <StatBox label="+ Bas 52s" value={data.performance?.plus_bas_52s} />
           </div>
         </Card>
-        <Card title="Fondamentaux" icon="📊" accentColor={C.navy}>
+        <Card title="Fondamentaux" accentColor={C.navy}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
             <StatBox label="PER" value={data.fondamentaux?.per} />
             <StatBox label="Dividende" value={data.fondamentaux?.dividende} color={C.goldDark} />
@@ -384,7 +384,7 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
 
       {/* Analyse technique */}
       {data.analyse_technique && (
-        <Card title="Analyse technique" icon="📉" accentColor={C.navy}>
+        <Card title="Analyse technique" accentColor={C.navy}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", marginBottom: "12px" }}>
             <StatBox label="Tendance"   value={data.analyse_technique.tendance}   color={data.analyse_technique.tendance === "Haussière" ? C.green : data.analyse_technique.tendance === "Baissière" ? C.red : C.goldDark} />
             <StatBox label="RSI"        value={data.analyse_technique.rsi}        color={parseFloat(data.analyse_technique.rsi) > 70 ? C.red : parseFloat(data.analyse_technique.rsi) < 30 ? C.green : C.goldDark} />
@@ -410,7 +410,7 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
 
       {/* Points forts / vigilance */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-        <Card title="Points forts" icon="✅" accentColor={C.green}>
+        <Card title="Points forts" accentColor={C.green}>
           {(data.points_forts || []).map((p, i) => (
             <div key={i} style={{ display: "flex", gap: "10px", padding: "8px 0", borderBottom: i < data.points_forts.length - 1 ? `1px solid ${C.border}` : "none" }}>
               <span style={{ color: C.green, flexShrink: 0, fontWeight: "700" }}>▸</span>
@@ -418,7 +418,7 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
             </div>
           ))}
         </Card>
-        <Card title="Points de vigilance" icon="⚠️" accentColor={C.red}>
+        <Card title="Points de vigilance" accentColor={C.red}>
           {(data.points_vigilance || []).map((p, i) => (
             <div key={i} style={{ display: "flex", gap: "10px", padding: "8px 0", borderBottom: i < data.points_vigilance.length - 1 ? `1px solid ${C.border}` : "none" }}>
               <span style={{ color: C.red, flexShrink: 0, fontWeight: "700" }}>▸</span>
@@ -429,7 +429,7 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
       </div>
 
       {/* Valorisation */}
-      <Card title="Valorisation & Consensus analystes" icon="🎯" accentColor={C.goldDark}>
+      <Card title="Valorisation & Consensus analystes" accentColor={C.goldDark}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px", marginBottom: "14px" }}>
           <StatBox label="Objectif moyen" value={data.valorisation?.objectif_moyen} color={C.goldDark} />
           <StatBox label="Objectif haut" value={data.valorisation?.objectif_haut} color={C.green} />
@@ -447,14 +447,14 @@ function ResultPanel({ data, query, timestamp, profil, onRefresh }) {
       </Card>
 
       {/* Timing */}
-      <Card title="Timing & Point d'entrée" icon="⏱" accentColor={C.navy}>
+      <Card title="Timing & Point d'entrée" accentColor={C.navy}>
         <div style={{ marginBottom: "14px" }}>
           <div style={{ fontSize: "10px", color: C.inkSubtle, letterSpacing: "1.5px", fontWeight: "600", textTransform: "uppercase", marginBottom: "6px" }}>Zone d'entrée conseillée</div>
           <div style={{ fontSize: "24px", fontWeight: "800", color: C.navy, letterSpacing: "-0.02em" }}>{data.timing?.point_entree}</div>
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
           {(data.timing?.catalyseurs || []).map((c, i) => (
-            <div key={i} style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "6px", padding: "5px 12px", fontSize: "12px", color: C.navy, fontWeight: "500" }}>📅 {c}</div>
+            <div key={i} style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "6px", padding: "5px 12px", fontSize: "12px", color: C.navy, fontWeight: "500" }}>{c}</div>
           ))}
         </div>
         <p style={{ fontSize: "13px", color: C.inkMuted, lineHeight: "1.7", margin: 0 }}>{data.timing?.recommandation_timing}</p>
@@ -494,7 +494,7 @@ function PortfolioResult({ data, timestamp }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-        <Card title="Forces" icon="✅" accentColor={C.green}>
+        <Card title="Forces" accentColor={C.green}>
           {(data.forces || []).map((f, i) => (
             <div key={i} style={{ display: "flex", gap: "10px", padding: "7px 0", borderBottom: i < data.forces.length - 1 ? `1px solid ${C.border}` : "none" }}>
               <span style={{ color: C.green, flexShrink: 0, fontWeight: "700" }}>▸</span>
@@ -502,7 +502,7 @@ function PortfolioResult({ data, timestamp }) {
             </div>
           ))}
         </Card>
-        <Card title="Faiblesses" icon="⚠️" accentColor={C.red}>
+        <Card title="Faiblesses" accentColor={C.red}>
           {(data.faiblesses || []).map((f, i) => (
             <div key={i} style={{ display: "flex", gap: "10px", padding: "7px 0", borderBottom: i < data.faiblesses.length - 1 ? `1px solid ${C.border}` : "none" }}>
               <span style={{ color: C.red, flexShrink: 0, fontWeight: "700" }}>▸</span>
@@ -512,7 +512,7 @@ function PortfolioResult({ data, timestamp }) {
         </Card>
       </div>
 
-      <Card title="Diversification" icon="🌍" accentColor={C.navy}>
+      <Card title="Diversification" accentColor={C.navy}>
         <div style={{ fontSize: "13px", color: C.ink, marginBottom: "6px" }}><span style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600" }}>GÉOGRAPHIE · </span>{data.diversification?.geographie}</div>
         <div style={{ fontSize: "13px", color: C.ink, marginBottom: "12px" }}><span style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600" }}>CONCENTRATION · </span>{data.diversification?.concentration}</div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -522,11 +522,11 @@ function PortfolioResult({ data, timestamp }) {
         </div>
       </Card>
 
-      <Card title="Cohérence profil" icon="👤" accentColor={C.goldDark}>
+      <Card title="Cohérence profil" accentColor={C.goldDark}>
         <p style={{ fontSize: "13px", color: C.inkMuted, margin: 0, lineHeight: "1.7" }}>{data.coherence_profil}</p>
       </Card>
 
-      <Card title="Recommandations" icon="🎯" accentColor={C.green}>
+      <Card title="Recommandations" accentColor={C.green}>
         {(data.recommandations || []).map((r, i) => (
           <div key={i} style={{ display: "flex", gap: "10px", padding: "8px 0", borderBottom: i < data.recommandations.length - 1 ? `1px solid ${C.border}` : "none" }}>
             <span style={{ color: C.green, flexShrink: 0, fontWeight: "700" }}>›</span>
@@ -535,7 +535,7 @@ function PortfolioResult({ data, timestamp }) {
         ))}
       </Card>
 
-      <Card title="Nouvelles opportunités" icon="💡" accentColor={C.goldDark}>
+      <Card title="Nouvelles opportunités" accentColor={C.goldDark}>
         {(data.opportunites || []).map((o, i) => (
           <div key={i} style={{ display: "flex", gap: "10px", padding: "8px 0", borderBottom: i < data.opportunites.length - 1 ? `1px solid ${C.border}` : "none" }}>
             <span style={{ color: C.goldDark, flexShrink: 0, fontWeight: "700" }}>›</span>

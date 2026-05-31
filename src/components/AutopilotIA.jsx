@@ -5,6 +5,7 @@ import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur, PROFIL_RANK, getEuronextUrl, checkPEAEligibility, isETFName } from "../lib/finance";
 import { callClaude, CLAUDE_MODELS, fetchWithProxy } from "../lib/api";
 import Tooltip from "./Tooltip";
+import { BNextLabel } from "./UI";
 
 // Yahoo Finance sector → ALLOC_CATS
 const YAHOO_SECTOR_TO_CAT = {
@@ -679,9 +680,6 @@ RÈGLE MONTANT : ${nbOppMax === 1
       {/* ── Header ── */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#F2F2F7", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D6CB5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-          </div>
           <div>
             <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Autopilot Atlas</div>
             <div style={{ fontSize: "11px", color: C.inkSubtle }}>Scan {account} · {universe.length} instruments · Profil {profilLabel}</div>
@@ -704,7 +702,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
             onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,05–0,10 $ de crédits API.\n\nBudget à investir : ${budget}€\n\nConfirmer le lancement ?`)) runAnalysis(); }}
             disabled={running || !allocOk}
             style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
-            {running ? "BNext…" : "Lancer l'analyse"}
+            {running ? <BNextLabel /> : "Lancer l'analyse"}
           </button>
           {result?.generatedAt && <span style={{ fontSize: "10px", color: C.inkSubtle }}>Dernière analyse : {new Date(result.generatedAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
         </div>
@@ -942,8 +940,8 @@ RÈGLE MONTANT : ${nbOppMax === 1
       {/* ── État vide ── */}
       {!result && !running && !error && (
         <div style={{ textAlign: "center", padding: "60px 20px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", boxShadow: shadow.card }}>
-          <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: "#F2F2F7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", fontSize: "28px" }}>
-            {load("bourse_ai_emoji", "🤖")}
+          <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: "#F2F2F7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2D6CB5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="22" y1="12" x2="19" y2="12"/><line x1="5" y1="12" x2="2" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
           </div>
           <div style={{ fontSize: "16px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Prêt à scanner le marché</div>
           <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "380px", margin: "0 auto 20px" }}>

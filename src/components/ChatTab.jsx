@@ -6,6 +6,7 @@ import { sanitizePositions } from "../lib/finance";
 import { callClaudeConversation, hasClaudeKey, hasAI } from "../lib/api";
 import { useIsMobile } from "../context/mobile";
 import { IconChat } from "./Sidebar";
+import { BNextLabel } from "./UI";
 
 const AI_CONFIG_KEY = "bourse_ai_config";
 const AI_EMOJI_KEY  = "bourse_ai_emoji";
@@ -315,7 +316,6 @@ Règles strictes :
           <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "10px" }}>
             {!hasAI() && (
               <div style={{ textAlign: "center", paddingTop: "16px" }}>
-                <div style={{ fontSize: "36px", marginBottom: "12px" }}>🔑</div>
                 <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>IA non disponible</div>
                 <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "20px", lineHeight: "1.6" }}>
                   Ajoutez une clé <strong>Gemini</strong> (gratuite) ou <strong>Claude</strong> dans Paramètres pour activer l'assistant.
@@ -338,7 +338,6 @@ Règles strictes :
                   </div>
                 )}
                 <div style={{ background: "linear-gradient(135deg, #0C1829 0%, #1A3558 100%)", borderRadius: "16px", padding: "14px 16px", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", top: "-10px", right: "-10px", fontSize: "60px", opacity: 0.07, lineHeight: 1 }}>💡</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
                     <span style={{ fontSize: "9px", fontWeight: "700", color: "rgba(255,255,255,0.45)", letterSpacing: "1.5px", textTransform: "uppercase" }}>Le saviez-vous ?</span>
                     <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.25)", marginLeft: "auto" }}>Renouvelle chaque matin</span>
@@ -843,7 +842,7 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
             <div style={{ fontSize: "12px", color: C.inkSubtle, marginBottom: "14px" }}>Analyse croisée : surexpositions, corrélations cachées, secteurs manquants, position DCA prioritaire.</div>
             <button onClick={() => { detectOpportunities(); setActivePanel("chat"); }} disabled={isBusy}
               style={{ padding: "9px 20px", borderRadius: "12px", border: "none", cursor: isBusy ? "not-allowed" : "pointer", background: isBusy ? C.snowDim : `linear-gradient(135deg, #1E8449 0%, ${C.green} 100%)`, color: isBusy ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", boxShadow: !isBusy ? "0 4px 16px rgba(39,174,96,0.35)" : "none", transition: "all 0.15s" }}>
-              {oppoLoading ? "BNext…" : "Détecter les opportunités →"}
+              {oppoLoading ? <BNextLabel /> : "Détecter les opportunités →"}
             </button>
           </div>
         </div>

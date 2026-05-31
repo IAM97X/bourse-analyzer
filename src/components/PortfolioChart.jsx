@@ -264,7 +264,6 @@ export default function PortfolioChart({ hidden, account }) {
 
   if (displaySnaps.length < 2) return (
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "32px", textAlign: "center", marginTop: "16px", boxShadow: shadow.card }}>
-      <div style={{ fontSize: "28px", marginBottom: "10px" }}>📈</div>
       <div style={{ fontSize: "14px", fontWeight: "700", color: C.ink, marginBottom: "6px" }}>Historique en construction</div>
       <div style={{ fontSize: "12px", color: C.inkSubtle, marginBottom: "16px" }}>Clique sur <strong>Reconstituer</strong> pour générer l'historique depuis tes transactions.</div>
       <button onClick={async () => {

@@ -83,7 +83,6 @@ function GeminiBanner({ onDismiss, onSettings }) {
   return (
     <div style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.07), rgba(99,102,241,0.04))", border: "1px solid rgba(59,130,246,0.2)", borderRadius: "16px", padding: "12px 16px", marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <span style={{ fontSize: "16px" }}>✨</span>
         <div>
           <div style={{ fontSize: "12px", fontWeight: "700", color: "#1D4ED8" }}>IA Gemini active — gratuit</div>
           <div style={{ fontSize: "11px", color: "#3B82F6", marginTop: "1px" }}>Pour des analyses plus précises, ajoutez une clé Claude dans les Paramètres.</div>
@@ -571,7 +570,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                       />
                       <button onClick={onLogout}
                         style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
-                        🚪 Se déconnecter
+                        Se déconnecter
                       </button>
                     </div>
                     {/* Sélecteur emoji */}
@@ -700,7 +699,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                         onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
                         placeholder="Nom de votre IA (ex : Atlas)"
                         style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
-                      <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "8px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>🚪 Se déconnecter</button>
+                      <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "8px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>Se déconnecter</button>
                     </div>
                   , document.body)}
                 </div>
@@ -765,8 +764,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "480px" }}>
                   {[
-                    { key: TABS.PROFIL,   icon: "👤", label: "Profil",    desc: "Stratégie, horizon et préférences", color: "#FFF7ED", accent: "#F97316" },
-                    { key: TABS.SETTINGS, icon: "⚙️", label: "Paramètres", desc: "Clés API, cloud et options",        color: "#F8FAFC", accent: "#64748B" },
+                    { key: TABS.PROFIL,   icon: null, label: "Profil",    desc: "Stratégie, horizon et préférences", color: "#FFF7ED", accent: "#F97316" },
+                    { key: TABS.SETTINGS, icon: null, label: "Paramètres", desc: "Clés API, cloud et options",        color: "#F8FAFC", accent: "#64748B" },
                   ].map(({ key, icon, label, desc, color, accent }) => (
                     <button key={key} onClick={() => changeTab(key)} className="ba-card-hover"
                       style={{ display: "flex", alignItems: "center", gap: "14px", background: "rgba(255,255,255,0.85)", border: "1px solid rgba(15,23,42,0.07)", borderRadius: "14px", padding: "14px 16px", textAlign: "left", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", width: "100%" }}>
@@ -796,7 +795,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             )}
 
             {activeTab === TABS.HOME       && <HomeTab account={account} profil={profil} marketScores={marketScores} onTabChange={changeTab} hidden={hiddenValues} />}
-            {PORTFOLIO_TABS.includes(activeTab) && <DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} />}
+            {PORTFOLIO_TABS.includes(activeTab) && activeTab !== TABS.HISTORIQUE && <DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} />}
             {activeTab === TABS.PORTFOLIO  && <PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} />}
             {activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
             {activeTab === TABS.PROJECTION && <ProjectionTab profil={profil} account={account} />}

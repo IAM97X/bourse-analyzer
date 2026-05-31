@@ -11,7 +11,19 @@ const BN_KEYFRAMES = `
   @keyframes bn-sp-arc2 { 0%,100%{stroke-dasharray:6,51;stroke-dashoffset:0} 50%{stroke-dasharray:44,13;stroke-dashoffset:-18} }
   @keyframes bn-sp-arc3 { 0%,100%{stroke-dasharray:4,31;stroke-dashoffset:0} 50%{stroke-dasharray:27,8;stroke-dashoffset:-11} }
   @keyframes bn-text-pulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+  @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 `;
+
+export function BNextLabel() {
+  return (
+    <>
+      <style>{`@keyframes bn-next-wave{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`}</style>
+      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: "300" }}>B</span>
+      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: "800", letterSpacing: "-0.03em", backgroundImage: "linear-gradient(270deg,#0F2D5E,#2D6CB5,#7BBFE8,#2D6CB5,#0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 3s ease infinite" }}>Next</span>
+      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: "300" }}>…</span>
+    </>
+  );
+}
 
 export function OrivoSpinner({ size = 52, label, sublabel }) {
   return (
@@ -63,7 +75,7 @@ export function Card({ title, icon, accentColor, children }) {
   const mobile = window.innerWidth < 768;
   return (
     <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "16px", overflow: "hidden", marginBottom: "16px", boxShadow: shadow.card }}>
-      <div style={{ padding: mobile ? "16px 20px 10px" : "18px 24px 10px", display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ padding: mobile ? "16px 20px 10px" : "18px 24px 10px", display: "flex", alignItems: "center", gap: "8px" }}>
         {icon && <span style={{ fontSize: "13px", opacity: 0.5 }}>{icon}</span>}
         <span style={{ fontSize: "10px", fontWeight: "600", color: C.inkSubtle, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{title}</span>
       </div>
@@ -84,12 +96,12 @@ export function ThinkingSpinner({ size = 22, color = "#1A3A5C" }) {
   );
 }
 
-export function LoadingPanel({ label = "BNext…" }) {
+export function LoadingPanel() {
   return (
     <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "48px 32px", display: "flex", justifyContent: "center" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
         <AppLogo size={52} animated={true} />
-        {label && <div style={{ fontSize: "13px", color: C.ink, fontWeight: "700", fontFamily: "'DM Sans', sans-serif", animation: "bn-text-pulse 2s ease-in-out infinite" }}>{label}</div>}
+        <div style={{ fontSize: "14px", fontFamily: "'DM Sans', sans-serif" }}><BNextLabel /></div>
       </div>
     </div>
   );

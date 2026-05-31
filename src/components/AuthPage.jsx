@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { load, save, supabase, setSyncUserId, pullFromCloud } from "../lib/storage";
-import { ThinkingSpinner } from "./UI";
+import { BNextLabel } from "./UI";
 
 const LOCAL_PIN_KEY  = "bourse_local_pin";
 const LOCAL_NAME_KEY = "bourse_local_name";
@@ -133,7 +133,7 @@ function AuthPage({ onSession }) {
   };
 
   const handleResetLocal = () => {
-    if (!window.confirm("⚠️ Réinitialiser efface TOUTES vos données. Continuer ?")) return;
+    if (!window.confirm("Réinitialiser efface TOUTES vos données. Continuer ?")) return;
     localStorage.clear();
     window.location.reload();
   };
@@ -161,7 +161,7 @@ function AuthPage({ onSession }) {
           style={{ width: "100%", background: "#F2F2F7", border: "1.5px solid #E5E5EA", borderRadius: "12px", padding: "11px 44px 11px 14px", color: "#1C1C1E", fontSize: "12px", fontFamily: "monospace", outline: "none", boxSizing: "border-box" }}
           onFocus={e => e.target.style.borderColor = "#2D5986"}
           onBlur={e => e.target.style.borderColor = "#E5E5EA"} />
-        {field !== "cx" && <button onClick={() => toggleShow(field)} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8E8E93", fontSize: "14px" }}>{showKeys[field] ? "🙈" : "👁"}</button>}
+        {field !== "cx" && <button onClick={() => toggleShow(field)} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8E8E93", fontSize: "10px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600" }}>{showKeys[field] ? "Cacher" : "Voir"}</button>}
       </div>
     </div>
   );
@@ -209,7 +209,7 @@ function AuthPage({ onSession }) {
                   <input type={showKeys["anthropic"] ? "text" : "password"} placeholder="sk-ant-api03-…" value={keys.anthropic}
                     onChange={e => setKeys(k => ({ ...k, anthropic: e.target.value }))} autoComplete="off" spellCheck="false"
                     style={{ width: "100%", background: "#F2F2F7", border: `1.5px solid ${keys.anthropic.trim() ? "rgba(22,163,74,0.5)" : "#E5E5EA"}`, borderRadius: "12px", padding: "11px 44px 11px 14px", color: "#1C1C1E", fontSize: "12px", fontFamily: "monospace", outline: "none", boxSizing: "border-box" }} />
-                  <button onClick={() => toggleShow("anthropic")} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8E8E93", fontSize: "14px" }}>{showKeys["anthropic"] ? "🙈" : "👁"}</button>
+                  <button onClick={() => toggleShow("anthropic")} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8E8E93", fontSize: "10px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600" }}>{showKeys["anthropic"] ? "Cacher" : "Voir"}</button>
                 </div>
                 {keys.anthropic.trim() && <div style={{ fontSize: "10px", color: "#16a34a", marginTop: "4px" }}>✓ Toutes les fonctionnalités IA disponibles</div>}
               </div>
@@ -230,7 +230,7 @@ function AuthPage({ onSession }) {
                   {inp(email, setEmail, "Email", "email")}
                   {inp(password, setPassword, "Mot de passe", "password")}
                   <button onClick={() => { setMode("reset"); setError(""); setInfo(""); }} style={{ ...btnGhost, textAlign: "right", fontSize: "11px", padding: "4px 0 10px" }}>Mot de passe oublié ?</button>
-                  <button onClick={handleSignIn} disabled={loading} style={btnPrimary}>{loading ? <span style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px" }}><ThinkingSpinner size={16} color="#fff" /> Connexion…</span> : "Se connecter →"}</button>
+                  <button onClick={handleSignIn} disabled={loading} style={btnPrimary}>{loading ? <span style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px" }}><BNextLabel /></span> : "Se connecter →"}</button>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "14px 0" }}>
                     <div style={{ flex: 1, height: "1px", background: "#E5E5EA" }} />
                     <span style={{ fontSize: "11px", color: "#C7C7CC" }}>ou</span>
@@ -241,7 +241,7 @@ function AuthPage({ onSession }) {
                 </>
               ) : hasPinSet ? (
                 <>
-                  <div style={{ fontSize: "20px", fontWeight: "700", color: "#1C1C1E", marginBottom: "4px" }}>Bonjour 👋</div>
+                  <div style={{ fontSize: "20px", fontWeight: "700", color: "#1C1C1E", marginBottom: "4px" }}>Bonjour</div>
                   <div style={{ fontSize: "12px", color: "#8E8E93", marginBottom: "24px" }}>Entrez votre code PIN</div>
                   <PinInput value={pin} onChange={v => { setPin(v); setError(""); }} label="Code PIN" />
                   <button onClick={handleLocal} style={{ ...btnPrimary, marginTop: "4px" }}>Accéder →</button>
@@ -250,7 +250,7 @@ function AuthPage({ onSession }) {
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: "20px", fontWeight: "700", color: "#1C1C1E", marginBottom: "4px" }}>Bienvenue 👋</div>
+                  <div style={{ fontSize: "20px", fontWeight: "700", color: "#1C1C1E", marginBottom: "4px" }}>Bienvenue</div>
                   <div style={{ fontSize: "12px", color: "#8E8E93", marginBottom: "24px" }}>Choisissez un code PIN à 4 chiffres</div>
                   <PinInput value={pin} onChange={v => { setPin(v); setError(""); }} label="Code PIN" />
                   <PinInput value={pinConfirm} onChange={v => { setPinConfirm(v); setError(""); }} label="Confirmer le PIN" />
@@ -268,7 +268,7 @@ function AuthPage({ onSession }) {
               {inp(email, setEmail, "Email", "email")}
               {inp(password, setPassword, "Mot de passe (min. 6 car.)", "password")}
               <div style={{ fontSize: "11px", color: "#8E8E93", marginBottom: "10px", lineHeight: "1.6" }}>Votre portefeuille sera synchronisé entre tous vos appareils.</div>
-              <button onClick={handleSignUp} disabled={loading} style={btnPrimary}>{loading ? <span style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px" }}><ThinkingSpinner size={16} color="#fff" /> Création…</span> : "Créer mon compte →"}</button>
+              <button onClick={handleSignUp} disabled={loading} style={btnPrimary}>{loading ? <span style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px" }}><BNextLabel /></span> : "Créer mon compte →"}</button>
               <button onClick={() => { setMode("signin"); setError(""); }} style={btnGhost}>← Retour à la connexion</button>
             </>
           )}
@@ -278,7 +278,7 @@ function AuthPage({ onSession }) {
             <>
               <div style={{ fontSize: "18px", fontWeight: "700", color: "#1C1C1E", marginBottom: "18px" }}>Réinitialiser</div>
               {inp(email, setEmail, "Votre email", "email")}
-              <button onClick={handleReset} disabled={loading} style={btnPrimary}>{loading ? <span style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px" }}><ThinkingSpinner size={16} color="#fff" /> Envoi…</span> : "Envoyer le lien →"}</button>
+              <button onClick={handleReset} disabled={loading} style={btnPrimary}>{loading ? <span style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px" }}><BNextLabel /></span> : "Envoyer le lien →"}</button>
               <button onClick={() => { setMode("signin"); setError(""); setInfo(""); }} style={btnGhost}>← Retour</button>
             </>
           )}

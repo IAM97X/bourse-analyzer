@@ -27,7 +27,7 @@ export function ApiKeysSection() {
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "18px 20px", boxShadow: shadow.card }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setShow(s => !s)}>
         <div>
-          <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink }}>🔑 Clés API</div>
+          <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink }}>Clés API</div>
           <div style={{ fontSize: "11px", color: C.inkMuted, marginTop: "2px" }}>
             {hasKeys ? "Configurées · stockées localement" : "Non configurées · fonctions IA désactivées"}
           </div>

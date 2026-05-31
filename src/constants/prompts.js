@@ -23,7 +23,7 @@ Pour chaque valeur, attribue :
   Le signal DOIT correspondre à la plage de score_marche indiquée.
 - score_marche : entier entre 0 et 20 (0=très négatif, 20=très positif)
 - resume : 1-2 phrases concrètes avec les arguments clés (fondamentaux, secteur, dynamique)
-- catalyseur_cle : événement factuel récent (actualités) OU catalyseur structurel (positionnement marché, pipeline produits, contrats cadre) si actualités absentes. Ne jamais laisser vide si la valeur a un secteur ou une thèse d'investissement identifiable.
+- catalyseur_cle : événement factuel récent issu des actualités disponibles. Si aucune actualité récente et significative n'est identifiable, laisser vide "". Ne pas inventer de catalyseur structurel générique pour remplir le champ.
 
 Réponds UNIQUEMENT en JSON valide, sans markdown, sans texte autour :
 {"classement":[{"isin":"...","nom":"...","signal":"ACHAT|RENFORCER|ATTENDRE|PRUDENCE|VENDRE","score_marche":17,"resume":"...","catalyseur_cle":"..."}]}`;

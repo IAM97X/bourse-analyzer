@@ -3,7 +3,7 @@ import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtCours, sanitizePositions, getCachedCours, linReg, computeMA, computeRSI } from "../lib/finance";
 import { load } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
-import { ThinkingSpinner, LoadingPanel, ErrorPanel } from "./UI";
+import { BNextLabel, LoadingPanel, ErrorPanel } from "./UI";
 import { InfoTip } from "./PortfolioChart";
 import CompanyAvatar from "./CompanyAvatar";
 import { TABS } from "../constants/tabs";
@@ -212,7 +212,7 @@ export function LiveMarketPanel({ pos, onClose }) {
             <svg width="18" height="18" viewBox="0 0 18 18" style={{ animation: "spin 0.9s linear infinite" }} fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round">
               <circle cx="9" cy="9" r="7" strokeOpacity="0.3"/><path d="M9 2 A7 7 0 0 1 16 9"/>
             </svg>
-            <span style={{ fontSize: "12px", fontWeight: "600", display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={14} color={C.inkMuted} /> Chargement marché intraday…</span>
+            <span style={{ fontSize: "13px", display:"inline-flex", alignItems:"center" }}><BNextLabel /></span>
           </div>
         )}
         {err && (
@@ -755,7 +755,7 @@ export function StockProjectionChart({ pos, onClose }) {
       {/* En-tête gradient */}
       <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>📊 {pos.nom}</span>
+          <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>{pos.nom}</span>
           {finalPct != null && (
             <span style={{ fontSize: "11px", fontWeight: "700", padding: "3px 10px", borderRadius: "20px",
               color: finalPct >= 0 ? "#4ADE80" : "#F87171",
@@ -1164,7 +1164,7 @@ export function PriceEvolutionChart({ positions }) {
       {/* En-tête gradient */}
       <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>📈 Évolution comparative</span>
+          <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>Évolution comparative</span>
           {series.length > 0 && <span style={{ fontSize: "10px", fontWeight: "600", color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.08)", borderRadius: "5px", padding: "2px 7px" }}>{series.length} valeur{series.length > 1 ? "s" : ""}</span>}
         </div>
         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", alignItems: "center" }}>

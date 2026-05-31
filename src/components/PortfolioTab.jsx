@@ -6,7 +6,7 @@ import { getKey, enqueueApi, callClaude, fetchWithProxy } from "../lib/api";
 import { useIsMobile, useIsTablet } from "../context/mobile";
 import { UI, DEFAULT_POSITIONS, SIGNAL_CONFIG, translateSecteur } from "../constants/config";
 import { parseBoursobankCSV, openLink, yahooFinanceUrl } from "../lib/market";
-import { ThinkingSpinner } from "./UI";
+import { BNextLabel } from "./UI";
 import { LiveMarketPanel, SellSimulator, PriceRangeBar } from "./StockPanels";
 import PortfolioPieChart, { ISIN_SECTEUR, detectSecteurNom } from "./PortfolioPieChart";
 import DividendesCard from "./DividendesCard";
@@ -58,7 +58,7 @@ function SwipeableCard({ children, onSwipeLeft, disabled }) {
     <div style={{ position: "relative", marginBottom: "14px", borderRadius: "18px", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, background: `rgba(220,38,38,${0.04 + reveal * 0.14})`, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: "22px", borderRadius: "18px" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", opacity: reveal, transform: `scale(${0.7 + reveal * 0.3})`, transition: "transform 0.1s" }}>
-          <div style={{ fontSize: "20px" }}>🗑</div>
+          <div style={{ fontSize: "16px", fontWeight: "700" }}>✕</div>
           <div style={{ fontSize: "9px", fontWeight: "800", color: C.red, letterSpacing: "1px" }}>SUPPRIMER</div>
         </div>
       </div>
@@ -467,7 +467,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         <div style={{ marginBottom: "16px" }}>
           {alerts.map((a, i) => (
             <div key={i} style={{ background: a.color === C.green ? C.greenLight : C.redLight, border: `1px solid ${a.color === C.green ? "rgba(5,150,105,0.2)" : "rgba(220,38,38,0.2)"}`, borderRadius: "8px", padding: "12px 16px", marginBottom: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "13px", color: a.color, fontWeight: "700" }}>🔔 {a.nom} · {a.type} · {fmtEur(a.cours)}{a.seuil ? ` (seuil ${fmtEur(a.seuil)})` : ""}</span>
+              <span style={{ fontSize: "13px", color: a.color, fontWeight: "700" }}>{a.nom} · {a.type} · {fmtEur(a.cours)}{a.seuil ? ` (seuil ${fmtEur(a.seuil)})` : ""}</span>
               <button onClick={() => setAlerts(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: C.inkMuted, cursor: "pointer", fontSize: "16px" }}>✕</button>
             </div>
           ))}
@@ -490,7 +490,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           disabled={marketScoringUi === UI.LOADING || positions.length === 0}
           style={{ background: marketScoringUi === UI.LOADING ? C.snowOff : C.navyLight, border: `1px solid ${marketScoringUi === UI.LOADING ? C.border : "rgba(30,58,95,0.12)"}`, borderRadius: "8px", padding: "9px 16px", color: marketScoringUi === UI.LOADING ? C.inkSubtle : C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: marketScoringUi === UI.LOADING || positions.length === 0 ? "not-allowed" : "pointer" }}>
           {marketScoringUi === UI.LOADING
-            ? <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}><ThinkingSpinner size={21} color={C.inkSubtle} /> Analyse…</span>
+            ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"13px" }}><BNextLabel /></span>
             : <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
                 {isMobile ? "" : "Analyser toutes mes lignes"}
@@ -561,7 +561,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: "10px", marginBottom: "16px" }}>
             <div>
-              <label style={lbl}>🔔 Objectif (% depuis PRU)</label>
+              <label style={lbl}>Objectif (% depuis PRU)</label>
               <input style={inp} placeholder="+50" value={form.alerteHautePct ?? ""} onChange={e => {
                 const raw = e.target.value;
                 const pct = parseFloat(raw.replace(",", "."));
@@ -571,7 +571,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
               {(() => { const pruNum = parseFloat(String(form.pru).replace(",", ".")) || 0; const pct = parseFloat(String(form.alerteHautePct).replace(",", ".")); return (!isNaN(pct) && pruNum > 0) ? <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "3px" }}>≈ {fmtCours(pruNum * (1 + pct / 100))}</div> : null; })()}
             </div>
             <div>
-              <label style={lbl}>🔔 Stop-loss (% depuis PRU)</label>
+              <label style={lbl}>Stop-loss (% depuis PRU)</label>
               <input style={inp} placeholder="-15" value={form.alerteBassePct ?? ""} onChange={e => {
                 const raw = e.target.value;
                 const pct = parseFloat(raw.replace(",", "."));
@@ -661,7 +661,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center", flexWrap: "wrap" }}>
             <input
               value={searchText} onChange={e => setSearchText(e.target.value)}
-              placeholder="🔍 Rechercher une valeur…"
+              placeholder="Rechercher une valeur…"
               style={{ flex: 1, minWidth: "160px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 12px", background: C.snow, color: C.ink, outline: "none" }}
             />
             <button onClick={() => {
@@ -908,12 +908,12 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                   {(() => {
                     if (!ia?.signal) {
                       if (marketScoringUi === UI.ERROR) return <span style={{ fontSize: "10px", color: C.red, fontStyle: "italic" }}>⚠ signal indisponible</span>;
-                      if (marketScoringUi === UI.LOADING) return <span style={{ display:"inline-flex", alignItems:"center", gap:"4px", fontSize: "10px", color: C.inkSubtle }}><ThinkingSpinner size={19} color={C.inkSubtle} /> analyse…</span>;
+                      if (marketScoringUi === UI.LOADING) return <span style={{ display:"inline-flex", alignItems:"center", fontSize:"11px" }}><BNextLabel /></span>;
                       return null;
                     }
                     if (ia.signal === "VENDRE") return (
                       <span onClick={() => setVendreDisclaimer({ pos, resume: ia.resume || "" })} style={{ fontSize: "10px", fontWeight: "900", color: "#FF0000", background: "#1A0000", border: "1.5px solid #FF0000", borderRadius: "5px", padding: "2px 8px", letterSpacing: "1px", cursor: "pointer", whiteSpace: "nowrap", animation: "vendreAlarm 0.8s ease-in-out infinite", boxShadow: "0 0 8px #FF000066" }}>
-                        🚨 VENDRE
+                        VENDRE
                       </span>
                     );
                     return <span title={ia.resume || ""} style={{ fontSize: "10px", fontWeight: "800", color: sigColor, background: sigColor + "18", border: `1px solid ${sigColor}40`, borderRadius: "5px", padding: "2px 8px", letterSpacing: "0.5px", cursor: "default", whiteSpace: "nowrap" }}>{ia.signal}</span>;
@@ -921,7 +921,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                   {badge && <span style={{ background: badge.bg, border: `1px solid ${badge.border}`, borderRadius: "5px", padding: "2px 8px", fontSize: "10px", color: badge.color, fontWeight: "700", whiteSpace: "nowrap" }}>{badge.label}</span>}
                   {!badge && (pos.alerteHaute || pos.alerteBasse) && (
                     <span title={[pos.alerteHaute && `Obj: ${fmtCours(pos.alerteHaute)}`, pos.alerteBasse && `Stop: ${fmtCours(pos.alerteBasse)}`].filter(Boolean).join(" · ")}
-                      style={{ fontSize: "11px", color: C.inkSubtle, cursor: "default", lineHeight: 1 }}>🔔</span>
+                      style={{ fontSize: "11px", color: C.inkSubtle, cursor: "default", lineHeight: 1 }} />
                   )}
                   {alerteConcentration && <span style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "5px", padding: "2px 8px", fontSize: "10px", color: C.red, fontWeight: "700", whiteSpace: "nowrap" }}>⚠ {poids.toFixed(0)}% concentr.</span>}
                 </div>
@@ -992,7 +992,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
               {/* Statut fetch / timestamp */}
               {(isFetching || fetchError || pos.lastFetch) && (
                 <div style={{ padding: "0 16px 8px", display: "flex", alignItems: "center", gap: "8px" }}>
-                  {isFetching && <span style={{ display:"inline-flex", alignItems:"center", gap:"4px", fontSize: "10px", color: C.navy }}><ThinkingSpinner size={19} color={C.navy} /> actualisation cours…</span>}
+                  {isFetching && <span style={{ display:"inline-flex", alignItems:"center", fontSize:"11px" }}><BNextLabel /></span>}
                   {fetchError && !isFetching && <span style={{ fontSize: "10px", color: C.red }}>⚠ {fetchError}</span>}
                   {!isFetching && !fetchError && pos.lastFetch && <span style={{ fontSize: "10px", color: C.inkSubtle }}>↻ {new Date(pos.lastFetch).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>}
                 </div>
@@ -1338,7 +1338,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         return (
           <div style={{ background: C.snow, border: `1px solid ${nbAlerte > 0 ? "rgba(220,38,38,0.2)" : C.border}`, borderRadius: "20px", padding: "18px 22px", marginBottom: "20px", boxShadow: shadow.card }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
-              <div style={{ fontSize: "11px", fontWeight: "800", color: C.ink }}>⚖ Analyse de risque · seuil {seuil}% / ligne ({profil?.risque || "?"})</div>
+              <div style={{ fontSize: "11px", fontWeight: "800", color: C.ink }}>Analyse de risque · seuil {seuil}% / ligne ({profil?.risque || "?"})</div>
               <div style={{ display: "flex", gap: "10px" }}>
                 {nbAlerte > 0 && <span style={{ fontSize: "10px", fontWeight: "700", color: C.red, background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "5px", padding: "2px 8px" }}>⚠ {nbAlerte} ligne{nbAlerte>1?"s":""} > {seuil*2}%</span>}
                 {nbModere > 0 && <span style={{ fontSize: "10px", fontWeight: "700", color: C.goldDark, background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "5px", padding: "2px 8px" }}>{nbModere} entre {seuil}–{seuil*2}%</span>}
@@ -1382,7 +1382,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         <div style={{ background: "#fff", borderRadius: "24px", padding: "32px 28px", maxWidth: "420px", width: "100%", boxShadow: "0 32px 80px rgba(0,0,0,0.35)", animation: "fadeIn 0.2s ease" }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: "#1A0000", border: "2px solid #FF0000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>🚨</div>
+            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: "#1A0000", border: "2px solid #FF0000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "900", color: "#FF0000", flexShrink: 0 }}>!</div>
             <div>
               <div style={{ fontSize: "16px", fontWeight: "800", color: "#CC0000", letterSpacing: "-0.02em" }}>Signal VENDRE</div>
               <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px" }}>{vendreDisclaimer.pos.nom}</div>

@@ -13,7 +13,7 @@ import Sidebar, { IconChat, NAV_GROUPS } from "./components/Sidebar";
 import AutopilotIA from "./components/AutopilotIA";
 import ChatTab, { AIAssistant } from "./components/ChatTab";
 import PortfolioPieChart, { ISIN_SECTEUR } from "./components/PortfolioPieChart";
-import { StatBox, Card, ThinkingSpinner, LoadingPanel, ErrorPanel } from "./components/UI";
+import { StatBox, Card, LoadingPanel, ErrorPanel } from "./components/UI";
 import ProjectionTab from "./components/ProjectionTab";
 import PortfolioChart, { InfoTip } from "./components/PortfolioChart";
 import HistoriqueTab, { OperationsTab } from "./components/HistoriqueTab";
@@ -73,7 +73,6 @@ class AppErrorBoundary extends Component {
     if (!this.state.error) return this.props.children;
     return (
       <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", fontFamily: "'DM Sans', sans-serif", padding: "24px", textAlign: "center" }}>
-        <div style={{ fontSize: "32px", marginBottom: "12px" }}>⚠️</div>
         <div style={{ fontSize: "16px", fontWeight: "700", color: "#0F172A", marginBottom: "8px" }}>Une erreur s'est produite</div>
         <div style={{ fontSize: "12px", color: "#64748B", marginBottom: "8px", maxWidth: "500px", wordBreak: "break-word" }}>{this.state.error?.message || "Erreur inconnue"}</div>
         <pre style={{ fontSize: "9px", color: "#94A3B8", maxWidth: "90vw", overflowX: "auto", textAlign: "left", background: "#F8FAFC", padding: "8px", borderRadius: "8px", marginBottom: "16px", whiteSpace: "pre-wrap" }}>{this.state.error?.stack}</pre>
@@ -108,7 +107,6 @@ function MobileBlock() {
         BourseNext est optimisé pour les écrans de <strong style={{ color: "rgba(193,232,255,0.9)" }}>tablette et ordinateur</strong>.
       </div>
       <div style={{ marginTop: "32px", display: "flex", alignItems: "center", gap: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "14px", padding: "14px 20px" }}>
-        <span style={{ fontSize: "22px" }}>💻</span>
         <div style={{ textAlign: "left" }}>
           <div style={{ fontSize: "12px", fontWeight: "700", color: "#fff" }}>Accède depuis un ordinateur</div>
           <div style={{ fontSize: "11px", color: "rgba(193,232,255,0.5)", marginTop: "2px" }}>ou une tablette (≥ 768 px)</div>
