@@ -50,6 +50,17 @@ export const GLOSSARY = {
   BETA:       "Sensibilité du titre par rapport au marché. Beta > 1 : titre plus volatile que l'indice (amplifie les hausses ET les baisses). Beta < 1 : titre défensif, moins sensible aux variations du marché.",
   ALPHA:      "Surperformance par rapport à l'indice de référence à risque égal. Un alpha positif signifie que le gérant (ou le titre) a fait mieux que le marché.",
 
+  // ── Portefeuille IA autonome ─────────────────────────────────────────────
+  "PORTEFEUILLE IA": "Votre agent IA est autonome : il part avec le même capital et les mêmes positions que vous. Son objectif : faire mieux que vous.",
+  PILOT:        "Profil de stratégie du portefeuille IA. Définit l'approche d'investissement : allocation cible, niveau de risque, critères d'achat/vente. Changeable à tout moment sans réinitialiser le portefeuille.",
+  CYCLE:        "Session d'analyse et d'exécution automatique. 3 cycles par jour : ouverture (9h05), midi (12h30) et clôture (17h15), jours ouvrés. Chaque cycle récupère les cours, analyse le marché et ajuste les positions selon la stratégie du pilote.",
+  "CAPITAL INITIAL": "Montant de départ du portefeuille IA, calculé à l'activation depuis vos positions réelles et liquidités. Référence pour la performance absolue.",
+  BENCHMARK:    "Indice de comparaison : CW8.PA (MSCI World EUR hedged) pour le PEA, IWDA.AS pour le CTO. Montre si l'IA fait mieux ou moins bien qu'un simple ETF monde.",
+  "STOP-LOSS AUTO": "Le portefeuille IA vend automatiquement toute position perdant plus de 15% depuis son prix d'achat moyen (PRU), pour limiter les pertes sans intervention humaine.",
+  "VALEUR IA":  "Valorisation totale du portefeuille IA = somme des positions aux cours actuels + cash disponible.",
+  "CASH DISPO": "Liquidités non investies dans le portefeuille IA. L'IA maintient toujours une réserve minimum (5% du capital) pour saisir les opportunités.",
+  JOURNAL:      "Historique de toutes les décisions du portefeuille IA : achats, ventes, stops. Permet de suivre le raisonnement de l'IA position par position et comparer avec vos propres choix.",
+
   // ── Stratégie & risque ───────────────────────────────────────────────────
   "STOP-LOSS": "Ordre automatique de vente déclenché si le cours descend en dessous d'un seuil défini. Protège contre les pertes importantes en sortant d'une position avant qu'elle ne s'aggrave.",
   "TAKE PROFIT": "Ordre automatique de vente déclenché quand le cours atteint un objectif de gain défini. Permet de sécuriser une plus-value sans avoir à surveiller le marché en permanence.",

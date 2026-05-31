@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { GLOSSARY } from "../constants/glossary";
 
-export default function Tooltip({ term, children, text }) {
+export default function Tooltip({ term, children, text, iconOnly }) {
   const [visible, setVisible]   = useState(false);
   const [above, setAbove]       = useState(true);
   const [coords, setCoords]     = useState({});
@@ -43,12 +43,16 @@ export default function Tooltip({ term, children, text }) {
 
   if (!definition) return children || <span>{term}</span>;
 
-  const TIP_W = 250;
+  const TIP_W = 300;
   const leftPos = Math.max(8, Math.min((coords.left || 0) - TIP_W / 2, window.innerWidth - TIP_W - 8));
+  const viewH = window.innerHeight;
+  const spaceBelow = viewH - (coords.bottom || 0) - 6;
   const tipStyle = {
     position: "fixed",
     zIndex: 99999,
     width: `${TIP_W}px`,
+    maxHeight: `${Math.min(320, spaceBelow > 80 ? spaceBelow - 12 : (coords.top || 200) - 12)}px`,
+    overflowY: "auto",
     background: "#0d1b2a",
     color: "rgba(255,255,255,0.88)",
     fontSize: "12px",
@@ -94,7 +98,7 @@ export default function Tooltip({ term, children, text }) {
         onMouseLeave={scheduleHide}
         style={{ display: "inline-flex", alignItems: "center", gap: "2px", cursor: "default" }}
       >
-        {children || <span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{term}</span>}
+        {!iconOnly && (children || <span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{term}</span>)}
         <span style={{
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           width: "13px", height: "13px", borderRadius: "50%",

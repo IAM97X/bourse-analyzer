@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { C } from "../constants/theme";
 import { LoadingPanel, BNextLabel } from "./UI";
+import Tooltip from "./Tooltip";
 import AppLogo from "./AppLogo";
 import { load, save } from "../lib/storage";
 import { sanitizePositions, fmtEur } from "../lib/finance";
@@ -239,7 +240,7 @@ const MSGS = {
     new: [
       (d,ctx) => ctx.isMonday ? `Lundi matin, défi lancé. Cette semaine va définir qui prend l'avantage en premier — et j'ai déjà ma stratégie.` : `Le défi commence maintenant. On part du même capital, avec les mêmes marchés — mais pas la même méthode. Montre-moi ce que tu sais faire.`,
       (d,ctx) => ctx.isWeekend ? `Démarrage ce weekend. Les marchés sont fermés, mais j'analyse déjà. Dès lundi matin, le premier cycle parlera.` : `Capital initialisé, portefeuille miroir du tien. À partir de maintenant, on joue sur les mêmes règles — et on verra qui gagne.`,
-      ()      => `Je viens d'être activé. Je tourne 3 fois par jour, sans émotion, sans hésitation. Prépare-toi à ce que la différence se voie.`,
+      ()      => `Je viens d'être activé. Sans émotion, sans hésitation. Prépare-toi à ce que la différence se voie.`,
       (d,ctx) => ctx.isOpen ? `Marché ouvert. Je suis déjà en train d'analyser les signaux — le premier cycle va se déclencher. Toi, qu'est-ce que tu regardes en ce moment ?` : `Le chrono est lancé. Dans quelques cycles, on aura une première idée de qui gère mieux ce portefeuille.`,
     ],
   },
@@ -412,6 +413,93 @@ function getCycleTaunt(decisions) {
   }
   const pool = CYCLE_TAUNTS.held;
   return pool[seed % pool.length]();
+}
+
+// ── Pilots IA — stratégies sélectionnables ───────────────────────────────────
+export const PILOTS = [
+  {
+    id: "equilibre",
+    nom: "Équilibre",
+    emoji: "⚖️",
+    tagline: "Croissance régulière, risque maîtrisé",
+    couleur: "#2D6CB5",
+    strategie_ia: "Stratégie ÉQUILIBRE : mix ETF World (~40%), valeurs de croissance européennes (~35%), liquidités (~25%). Stop-loss 15%. DCA systématique sur les creux. Rééquilibrage progressif, pas de concentration excessive.",
+  },
+  {
+    id: "croissance",
+    nom: "Croissance",
+    emoji: "🚀",
+    tagline: "Tech & innovation, haute conviction",
+    couleur: "#7C3AED",
+    strategie_ia: "Stratégie CROISSANCE : concentration sur ETFs tech (PANX.PA, PAEEM.PA), leaders tech européens (ASML, SAP, STMicro) et US. Accepte volatilité élevée. Prise de profit >25%. Cash minimum 10%. Évite valeurs cycliques défensives.",
+  },
+  {
+    id: "defensif",
+    nom: "Défensif",
+    emoji: "🛡️",
+    tagline: "Dividendes & blue chips, capital protégé",
+    couleur: "#059669",
+    strategie_ia: "Stratégie DÉFENSIVE : privilégie valeurs à dividendes (TotalEnergies, LVMH, Sanofi, AXA), ETFs à dividendes. Évite small caps spéculatives. Cash tampon 20-30%. Stop-loss strict 10%. Priorité : préserver le capital.",
+  },
+  {
+    id: "momentum",
+    nom: "Momentum",
+    emoji: "⚡",
+    tagline: "Rotation rapide, suit les tendances",
+    couleur: "#F59E0B",
+    strategie_ia: "Stratégie MOMENTUM : rotation sectorielle active. Achète RSI 55-70 + volume en hausse. Coupe les perdants vite (stop 8%). 5-8 positions max. Favorise les secteurs en tendance (tech, défense, santé) selon actualités marché. Ignore valeurs stagnantes.",
+  },
+  {
+    id: "dca_pur",
+    nom: "DCA Pur",
+    emoji: "⚙️",
+    tagline: "Accumulation mécanique, sans émotion",
+    couleur: "#64748B",
+    strategie_ia: "Stratégie DCA PUR : achat systématique ETF World (CW8.PA) et Émergents (PAEEM.PA) à chaque cycle. Répartition fixe 70/30. Ne vend jamais sauf stop-loss. Ignore les actualités court terme. Accumulation pure long terme.",
+  },
+];
+
+const pilotKey  = (account) => `bourse_ai_pilot_${account}`;
+const loadPilot = (account) => {
+  try {
+    const id = localStorage.getItem(pilotKey(account));
+    return PILOTS.find(p => p.id === id) || PILOTS[0];
+  } catch { return PILOTS[0]; }
+};
+const savePilot = (account, pilot) => { try { localStorage.setItem(pilotKey(account), pilot.id); } catch {} };
+
+// ── PilotSelector component ───────────────────────────────────────────────────
+function PilotSelector({ account, selected, onChange }) {
+  return (
+    <div style={{ marginBottom: "20px" }}>
+      <div style={{ fontSize: "10px", fontWeight: "700", color: "#1E3A5F", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>
+        Stratégie du pilote
+      </div>
+      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        {PILOTS.map(p => {
+          const isActive = selected.id === p.id;
+          return (
+            <button key={p.id} onClick={() => onChange(p)}
+              style={{
+                display: "flex", alignItems: "center", gap: "7px",
+                padding: "8px 14px", borderRadius: "12px", cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+                border: isActive ? `2px solid ${p.couleur}` : `1.5px solid rgba(0,0,0,0.08)`,
+                background: isActive ? `${p.couleur}14` : "rgba(255,255,255,0.72)",
+                transition: "all 0.18s",
+              }}
+            >
+              <span style={{ fontSize: "14px", lineHeight: 1 }}>{p.emoji}</span>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: isActive ? p.couleur : "#1E3A5F", lineHeight: 1.2 }}>{p.nom}</div>
+                <div style={{ fontSize: "10px", color: "#64748B", lineHeight: 1.2 }}>{p.tagline}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 // ── Batch price fetch via /api/yahoo ──────────────────────────────────────────
@@ -636,7 +724,7 @@ function EmptyState({ onInit, account, error }) {
         {getAiName() || "Portefeuille IA"}
       </div>
       <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.7, marginBottom: "28px" }}>
-        {getAiName() || "L'IA"} reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome. {getAiName() ? `${getAiName()} tourne` : "Elle tourne"} 3 fois par jour — à l'ouverture, à midi et avant la clôture — avec les mêmes contraintes que vous : courtier, horaires Euronext, {account}.
+        {getAiName() || "L'IA"} reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome avec les mêmes contraintes que vous : courtier, horaires Euronext, {account}.
       </div>
 
       {capital > 0 && (
@@ -662,7 +750,7 @@ function EmptyState({ onInit, account, error }) {
       </button>
 
       <div style={{ marginTop: "20px", fontSize: "11px", color: C.inkSubtle, lineHeight: 1.7 }}>
-        Cycles automatiques à 9h05 (ouverture), 12h30 (midi) et 17h15 (clôture), jours ouvrés.<br/>
+        Cycles automatiques jours ouvrés.<br/>
         {profil.dcaMensuel > 0 && <>DCA de <strong>{fmtEur(profil.dcaMensuel)}</strong> injecté automatiquement le 1er de chaque mois.<br/></>}
         Déclenchez aussi un cycle manuellement à tout moment.
       </div>
@@ -689,6 +777,12 @@ export default function AIPortfolioTab({ account, hidden }) {
   const [prices, setPrices]     = useState({});
   const [loadingPrices, setLoadingPrices] = useState(false);
   const [challengeScore, setChallengeScore] = useState(() => loadChallengeScore(account));
+  const [selectedPilot, setSelectedPilot]   = useState(() => loadPilot(account));
+
+  const handlePilotChange = (pilot) => {
+    setSelectedPilot(pilot);
+    savePilot(account, pilot);
+  };
 
   // Reload correct portfolio when account switches (PEA ↔ CTO)
   useEffect(() => {
@@ -697,6 +791,7 @@ export default function AIPortfolioTab({ account, hidden }) {
     setError(null);
     setPrices({});
     setChallengeScore(loadChallengeScore(account));
+    setSelectedPilot(loadPilot(account));
   }, [account]);
 
   // Refresh current position prices on mount / account change
@@ -878,7 +973,26 @@ export default function AIPortfolioTab({ account, hidden }) {
         actualites = (newsRaw || []).slice(0, 5).map(n => `• ${n.title}`);
       } catch {}
 
+      // News par position (parallèle, silencieux si échec, max 8 positions)
+      const newsParTicker = {};
+      await Promise.all(workingPf.positions.slice(0, 8).map(async p => {
+        try {
+          const raw = await Promise.race([
+            fetchGoogleNewsRSS(`${p.nom} bourse action résultats`),
+            new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000))
+          ]);
+          const headlines = (raw || []).slice(0, 3)
+            .map(n => `${n.pubDate ? `[${n.pubDate.slice(5, 11)}] ` : ""}${n.title}${n.snippet ? ` — ${n.snippet.slice(0, 120)}` : ""}`);
+          if (headlines.length) newsParTicker[`${p.ticker} (${p.nom})`] = headlines;
+        } catch {}
+      }));
+
       const app_context = {
+        pilot: {
+          id: selectedPilot.id,
+          nom: selectedPilot.nom,
+          strategie: selectedPilot.strategie_ia,
+        },
         profil_investisseur: {
           risque: profil.risque || "equilibre",
           horizon: profil.horizon || "moyen",
@@ -898,6 +1012,9 @@ export default function AIPortfolioTab({ account, hidden }) {
         transactions_recentes: recentTrades.map(o => `${o.date} ${o.type} ${o.quantite}×${o.titre} à ${o.prixUnitaire}€`),
         dividendes_recus: dividendes.map(d => `${d.date} ${d.titre}: +${d.montant}€`),
         actualites_marche: actualites,
+        news_par_position: Object.keys(newsParTicker).length > 0
+          ? Object.entries(newsParTicker).map(([k, headlines]) => `${k}:\n${headlines.map(h => `  • ${h}`).join("\n")}`)
+          : [],
       };
 
       // Journal : mettre à jour les cours des positions OPEN avant l'appel IA
@@ -1083,6 +1200,7 @@ export default function AIPortfolioTab({ account, hidden }) {
             <span style={{ fontSize: "24px", lineHeight: 1 }}>{getAiEmoji()}</span>
             <span style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>{getAiName() || "NextGen IA"}</span>
             <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
+            <Tooltip text={`${getAiName() || "Votre agent IA"} est autonome : il part avec le même capital et les mêmes positions que vous. Son objectif : faire mieux que vous.`} iconOnly />
           </div>
           <div style={{ fontSize: "12px", color: C.inkMuted, marginTop: "3px" }}>
             Depuis le {inceptionFmt} · Capital {fmtEur(aiPf.capital_initial)} · {account}
@@ -1383,8 +1501,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       {/* ── Cron info footer ── */}
       <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.5)", border: `1px solid ${C.border}`, borderRadius: "12px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
         <div style={{ fontSize: "12px", color: C.inkMuted }}>
-          <span>{getAiEmoji()} Cycle automatique : <strong>9h05 · 12h30 · 17h15 (Paris, jours ouvrés)</strong></span>
-          <span style={{ marginLeft: "16px" }}>Prochain : <strong>{nextCycleLabel}</strong></span>
+          <span>{getAiEmoji()} Prochain cycle : <strong>{nextCycleLabel}</strong></span>
           {(() => {
             const dcaAmt = load("bourse_profil", DEFAULT_PROFIL).dcaMensuel || 0;
             if (!dcaAmt) return null;
