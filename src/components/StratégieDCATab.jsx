@@ -740,7 +740,7 @@ function projDCA(capital, dcaMensuel, tauxAnnuel, mois) {
 
 function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
   const capitalActuel = positions.reduce((s, p) => s + (p.dernierCours || p.pru) * p.quantite, 0);
-  const dcaMin = 50, dcaMax = 3000, dcaStep = 50;
+  const dcaMin = 50, dcaMax = 10000, dcaStep = 50;
 
   // Calculs pour 3 scénarios : pessimiste 3%, réaliste 7%, optimiste 10%
   const scenarios = [
@@ -755,160 +755,129 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil, positions }) {
   const fraisAnnuel  = fraisMensuel * 12;
   const dcaNet       = dcaSim - fraisMensuel;
 
+  const fld = { background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box", width: "100%" };
+  const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", fontFamily: "'DM Sans', sans-serif" };
+
   return (
-    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "20px", marginTop: "20px", boxShadow: shadow.card }}>
-      <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "16px" }}>
-        🎚 Simulateur DCA — impact du montant mensuel
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "20px", marginTop: "20px", boxShadow: shadow.card, fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.inkSubtle} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase" }}>Simulateur DCA — impact du montant mensuel</span>
       </div>
 
-      {/* Slider */}
-      <div style={{ marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-          <span style={{ fontSize: "13px", color: C.inkMuted }}>DCA mensuel</span>
-          <span style={{ fontSize: "22px", fontWeight: "800", color: C.navy }}>{dcaSim} €<span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "400", marginLeft: "6px" }}>/ mois</span></span>
-        </div>
-        <input type="range" min={dcaMin} max={dcaMax} step={dcaStep} value={dcaSim}
-          onChange={e => setDcaSim(Number(e.target.value))}
-          onMouseUp={e => onSaveProfil && onSaveProfil({ ...profil, dcaMensuel: Number(e.target.value) })}
-          onTouchEnd={e => onSaveProfil && onSaveProfil({ ...profil, dcaMensuel: Number(e.target.value) })}
-          style={{ width: "100%", accentColor: C.navy, cursor: "pointer" }} />
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", color: C.inkSubtle, marginTop: "3px" }}>
-          <span>{dcaMin} €</span><span>{dcaMax} €</span>
-        </div>
-      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: "24px", alignItems: "start" }}>
 
-      {/* Info frais */}
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
-        <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px" }}>Frais estimés / mois</div>
-          <div style={{ fontSize: "14px", fontWeight: "800", color: C.goldDark }}>{fmtEur(fraisMensuel)}</div>
-          <div style={{ fontSize: "9px", color: C.inkSubtle }}>{fmtEur(fraisAnnuel)} / an</div>
-        </div>
-        <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px" }}>DCA net de frais</div>
-          <div style={{ fontSize: "14px", fontWeight: "800", color: C.navy }}>{fmtEur(dcaNet)}</div>
-          <div style={{ fontSize: "9px", color: C.inkSubtle }}>{((fraisMensuel / dcaSim) * 100).toFixed(1)}% de frais</div>
-        </div>
-        <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px" }}>Investi / an</div>
-          <div style={{ fontSize: "14px", fontWeight: "800", color: C.ink }}>{fmtEur(dcaSim * 12)}</div>
-        </div>
-      </div>
-
-      {/* Tableau projections */}
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-          <thead>
-            <tr style={{ background: C.snowOff }}>
-              <th style={{ padding: "8px 12px", textAlign: "left", fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", borderBottom: `1px solid ${C.border}` }}>Scénario</th>
-              {horizons.map(m => (
-                <th key={m} style={{ padding: "8px 12px", textAlign: "right", fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", borderBottom: `1px solid ${C.border}` }}>
-                  {m < 12 ? `${m} mois` : `${m / 12} an${m / 12 > 1 ? "s" : ""}`}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {scenarios.map(sc => (
-              <tr key={sc.label} style={{ borderBottom: `1px solid ${C.border}` }}>
-                <td style={{ padding: "10px 12px" }}>
-                  <span style={{ fontSize: "11px", fontWeight: "700", color: sc.color }}>{sc.label}</span>
-                  <span style={{ fontSize: "9px", color: C.inkSubtle, marginLeft: "6px" }}>{(sc.taux * 100).toFixed(0)}%/an</span>
-                </td>
-                {horizons.map(m => {
-                  const val = projDCA(capitalActuel, dcaNet, sc.taux, m);
-                  const gain = val - capitalActuel - dcaNet * m;
-                  return (
-                    <td key={m} style={{ padding: "10px 12px", textAlign: "right" }}>
-                      <div style={{ fontSize: "13px", fontWeight: "800", color: sc.color }}>{fmtEur(val)}</div>
-                      <div style={{ fontSize: "9px", color: gain >= 0 ? C.green : C.red }}>
-                        {gain >= 0 ? "+" : ""}{fmtEur(gain)} intérêts
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "8px" }}>
-        Capital de départ : {fmtEur(capitalActuel)} · Frais de courtage estimés (≤500€ : 1,99€ · &gt;500€ : 0,5%) · Projection indicative non garantie.
-      </div>
-
-      {/* Paramètres DCA */}
-      <div style={{ marginTop: "20px", borderTop: `1px solid ${C.border}`, paddingTop: "16px" }}>
-        <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "12px" }}>Paramètres DCA</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+        {/* Colonne gauche — Paramètres */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div>
-            <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Durée (mois)</div>
-            <input
-              type="number" min="1" max="480" placeholder="120"
-              value={profil?.dcaDuree || ""}
-              onChange={e => {
-                const mois = parseInt(e.target.value) || 0;
-                const horizon = mois <= 24 ? "court" : mois <= 48 ? "moyen" : mois <= 96 ? "long" : "tres-long";
-                onSaveProfil && onSaveProfil({ ...profil, dcaDuree: mois || profil?.dcaDuree, horizon });
-              }}
-              style={{ width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" }}
-            />
+            <div style={lbl}>Versement mensuel</div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <input type="number" min="0" step="50" placeholder="ex : 300" value={dcaSim || ""}
+                onChange={e => { const v = Number(e.target.value) || 0; setDcaSim(v); onSaveProfil && onSaveProfil({ ...profil, dcaMensuel: v }); }}
+                style={{ ...fld, width: "130px", fontSize: "18px", fontWeight: "700", color: C.navy }} />
+              <span style={{ fontSize: "13px", color: C.inkSubtle }}>€ / mois</span>
+            </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "6px 12px", background: C.navyLight, borderRadius: "10px", border: `1px solid rgba(30,58,95,0.1)` }}>
-            <div style={{ fontSize: "9px", color: C.navy, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Durée restante</div>
-            <div style={{ fontSize: "16px", fontWeight: "800", color: C.navy }}>
-              {(() => { const m = profil?.dcaDuree || 0; return m >= 24 ? `${Math.round(m/12)} ans` : m ? `${m} mois` : "—"; })()}
+          <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ flex: 1 }}>
+              <div style={lbl}>Durée (mois)</div>
+              <input type="number" min="1" max="480" placeholder="120" value={profil?.dcaDuree || ""}
+                onChange={e => { const mois = parseInt(e.target.value) || 0; const horizon = mois <= 24 ? "court" : mois <= 48 ? "moyen" : mois <= 96 ? "long" : "tres-long"; onSaveProfil && onSaveProfil({ ...profil, dcaDuree: mois || profil?.dcaDuree, horizon }); }}
+                style={fld} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={lbl}>Années</div>
+              <div style={{ ...fld, fontWeight: "700", color: C.navy }}>
+                {(() => { const m = profil?.dcaDuree || 0; return m >= 12 ? `${Math.round(m/12)} ans` : m ? `${m} mois` : "—"; })()}
+              </div>
             </div>
           </div>
           <div>
-            <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Jour du mois</div>
-            <select
-              value={profil?.dcaJour || 5}
-              onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaJour: parseInt(e.target.value) })}
-              style={{ width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box", cursor: "pointer" }}>
-              {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
-                <option key={d} value={d}>{d < 10 ? `0${d}` : d} du mois</option>
-              ))}
+            <div style={lbl}>Jour du mois</div>
+            <select value={profil?.dcaJour || 5} onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaJour: parseInt(e.target.value) })} style={{ ...fld, cursor: "pointer" }}>
+              {Array.from({ length: 28 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d < 10 ? `0${d}` : d} du mois</option>)}
             </select>
-            <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px" }}>
-              L'IA utilisera ce jour pour planifier votre DCA
+            <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px" }}>Jour utilisé par l'IA pour planifier</div>
+          </div>
+          <div style={{ background: C.snowOff, borderRadius: "10px", padding: "12px", border: `1px solid ${C.border}` }}>
+            <div style={{ ...lbl, marginBottom: "10px" }}>Revalorisation (optionnel)</div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ flex: 1 }}>
+                <div style={lbl}>Augmentation (€)</div>
+                <input type="number" min="0" step="10" placeholder="50" value={profil?.dcaCroissanceMontant || ""}
+                  onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaCroissanceMontant: parseFloat(e.target.value) || 0 })}
+                  style={{ ...fld, background: C.snow }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={lbl}>Tous les N ans</div>
+                <input type="number" min="1" max="10" step="1" placeholder="2" value={profil?.dcaCroissancePeriode || ""}
+                  onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaCroissancePeriode: parseInt(e.target.value) || 0 })}
+                  style={{ ...fld, background: C.snow }} />
+              </div>
             </div>
+            {(profil?.dcaCroissanceMontant > 0) && (profil?.dcaCroissancePeriode > 0) && (
+              <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "8px" }}>
+                {(() => { const b = Number(dcaSim), inc = Number(profil.dcaCroissanceMontant), per = Number(profil.dcaCroissancePeriode), a = n => n <= 1 ? "an" : "ans"; return `${b}€ → ${b+inc}€ après ${per} ${a(per)} → ${b+inc*2}€ après ${per*2} ${a(per*2)}…`; })()}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Revalorisation */}
-        <div style={{ background: C.snowOff, borderRadius: "12px", padding: "12px 14px", border: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "10px" }}>Revalorisation du DCA (optionnel)</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-            <div>
-              <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Augmentation (€)</div>
-              <input
-                type="number" min="0" step="10" placeholder="ex : 50"
-                value={profil?.dcaCroissanceMontant || ""}
-                onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaCroissanceMontant: parseFloat(e.target.value) || 0 })}
-                style={{ width: "100%", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" }}
-              />
+        {/* Colonne droite — Simulation */}
+        <div>
+          <div style={{ display: "flex", gap: "10px", marginBottom: "16px", flexWrap: "wrap" }}>
+            <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}` }}>
+              <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontFamily: "'DM Sans', sans-serif" }}>Frais estimés / mois</div>
+              <div style={{ fontSize: "14px", fontWeight: "800", color: C.goldDark, fontFamily: "'DM Sans', sans-serif" }}>{fmtEur(fraisMensuel)}</div>
+              <div style={{ fontSize: "9px", color: C.inkSubtle, fontFamily: "'DM Sans', sans-serif" }}>{fmtEur(fraisAnnuel)} / an</div>
             </div>
-            <div>
-              <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Tous les N ans</div>
-              <input
-                type="number" min="1" max="10" step="1" placeholder="ex : 2"
-                value={profil?.dcaCroissancePeriode || ""}
-                onChange={e => onSaveProfil && onSaveProfil({ ...profil, dcaCroissancePeriode: parseInt(e.target.value) || 0 })}
-                style={{ width: "100%", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" }}
-              />
+            <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}` }}>
+              <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontFamily: "'DM Sans', sans-serif" }}>DCA net de frais</div>
+              <div style={{ fontSize: "14px", fontWeight: "800", color: C.navy, fontFamily: "'DM Sans', sans-serif" }}>{fmtEur(dcaNet)}</div>
+              <div style={{ fontSize: "9px", color: C.inkSubtle, fontFamily: "'DM Sans', sans-serif" }}>{dcaSim > 0 ? ((fraisMensuel / dcaSim) * 100).toFixed(1) : "0"}% de frais</div>
+            </div>
+            <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}` }}>
+              <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontFamily: "'DM Sans', sans-serif" }}>Investi / an</div>
+              <div style={{ fontSize: "14px", fontWeight: "800", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>{fmtEur(dcaSim * 12)}</div>
             </div>
           </div>
-          {(profil?.dcaCroissanceMontant > 0) && (profil?.dcaCroissancePeriode > 0) && (
-            <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "8px" }}>
-              {(() => {
-                const base = Number(dcaSim);
-                const inc  = Number(profil.dcaCroissanceMontant);
-                const per  = Number(profil.dcaCroissancePeriode);
-                const anS  = n => n <= 1 ? "an" : "ans";
-                return `Ex : ${base}€ → ${base + inc}€ après ${per} ${anS(per)} → ${base + inc * 2}€ après ${per * 2} ${anS(per * 2)}…`;
-              })()}
-            </div>
-          )}
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", fontFamily: "'DM Sans', sans-serif" }}>
+              <thead>
+                <tr style={{ background: C.snowOff }}>
+                  <th style={{ padding: "8px 12px", textAlign: "left", fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", borderBottom: `1px solid ${C.border}` }}>Scénario</th>
+                  {horizons.map(m => (
+                    <th key={m} style={{ padding: "8px 12px", textAlign: "right", fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", borderBottom: `1px solid ${C.border}` }}>
+                      {m < 12 ? `${m} mois` : `${m / 12} an${m / 12 > 1 ? "s" : ""}`}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {scenarios.map(sc => (
+                  <tr key={sc.label} style={{ borderBottom: `1px solid ${C.border}` }}>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span style={{ fontSize: "11px", fontWeight: "700", color: sc.color }}>{sc.label}</span>
+                      <span style={{ fontSize: "9px", color: C.inkSubtle, marginLeft: "6px" }}>{(sc.taux * 100).toFixed(0)}%/an</span>
+                    </td>
+                    {horizons.map(m => {
+                      const val = projDCA(capitalActuel, dcaNet, sc.taux, m);
+                      const gain = val - capitalActuel - dcaNet * m;
+                      return (
+                        <td key={m} style={{ padding: "10px 12px", textAlign: "right" }}>
+                          <div style={{ fontSize: "13px", fontWeight: "800", color: sc.color }}>{fmtEur(val)}</div>
+                          <div style={{ fontSize: "9px", color: gain >= 0 ? C.green : C.red }}>{gain >= 0 ? "+" : ""}{fmtEur(gain)} intérêts</div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "8px", fontFamily: "'DM Sans', sans-serif" }}>
+            Capital de départ : {fmtEur(capitalActuel)} · Frais estimés (≤500€ : 1,99€ · &gt;500€ : 0,5%) · Projection indicative non garantie.
+          </div>
         </div>
       </div>
     </div>

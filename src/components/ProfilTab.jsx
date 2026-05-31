@@ -151,14 +151,17 @@ function ProfilTab({ profil, onChange }) {
   const Section = ProfilSection;
   const optBtn = (active) => ({ flex: 1, padding: "11px 8px", background: active ? C.paleBlue : C.snowOff, border: active ? `1px solid rgba(30,58,95,0.12)` : `1px solid ${C.border}`, borderRadius: "12px", color: active ? C.navy : C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", textAlign: "center", fontWeight: active ? "700" : "400" });
 
+  const card = { background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "22px 24px", boxShadow: shadow.card };
+  const cardTitle = { fontSize: "11px", fontWeight: "700", color: C.navy, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "18px" };
+
   return (
     <div>
-      <div style={{ maxWidth: "560px", margin: "0 auto" }}>
-        <div style={{ background: C.cardGradPurp, border: `1px solid ${C.border}`, borderRadius: "22px", padding: "28px", boxShadow: shadow.card }}>
-          <div style={{ fontSize: "13px", color: C.ink, fontWeight: "800", marginBottom: "22px" }}>Mon profil investisseur</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", maxWidth: "900px", margin: "0 auto" }}>
 
-          {/* Année de naissance */}
-          <div style={{ marginBottom: "22px" }}>
+        {/* Carte 1 — Identité */}
+        <div style={card}>
+          <div style={cardTitle}>Mon profil</div>
+          <div style={{ marginBottom: "18px" }}>
             <label style={lbl}>Année de naissance</label>
             <input style={{ ...inp, fontSize: "13px" }} type="number" min="1940" max={new Date().getFullYear() - 10}
               placeholder="ex : 1997" value={form.anneeNaissance || ""}
@@ -171,158 +174,131 @@ function ProfilTab({ profil, onChange }) {
               </div>;
             })()}
           </div>
-
-          {/* Courtiers PEA + CTO */}
-          <div style={{ marginBottom: "22px" }}>
+          <div>
             <label style={lbl}>Courtiers</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               <div>
                 <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600", marginBottom: "5px" }}>PEA</div>
-                <select value={form.courtierPEA || form.courtier || "boursobank"} onChange={e => setForm(f => ({ ...f, courtierPEA: e.target.value }))}
-                  style={{ ...inp, fontSize: "12px" }}>
-                  {Object.entries(COURTIERS).filter(([, v]) => v.pea).map(([k, v]) => (
-                    <option key={k} value={k}>{v.nom}</option>
-                  ))}
+                <select value={form.courtierPEA || form.courtier || "boursobank"} onChange={e => setForm(f => ({ ...f, courtierPEA: e.target.value }))} style={{ ...inp, fontSize: "12px" }}>
+                  {Object.entries(COURTIERS).filter(([, v]) => v.pea).map(([k, v]) => <option key={k} value={k}>{v.nom}</option>)}
                 </select>
               </div>
               <div>
                 <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "600", marginBottom: "5px" }}>CTO</div>
-                <select value={form.courtierCTO || form.courtier || "degiro"} onChange={e => setForm(f => ({ ...f, courtierCTO: e.target.value }))}
-                  style={{ ...inp, fontSize: "12px" }}>
-                  {Object.entries(COURTIERS).map(([k, v]) => (
-                    <option key={k} value={k}>{v.nom}{!v.pea ? " (CTO)" : ""}</option>
-                  ))}
+                <select value={form.courtierCTO || form.courtier || "degiro"} onChange={e => setForm(f => ({ ...f, courtierCTO: e.target.value }))} style={{ ...inp, fontSize: "12px" }}>
+                  {Object.entries(COURTIERS).map(([k, v]) => <option key={k} value={k}>{v.nom}{!v.pea ? " (CTO)" : ""}</option>)}
                 </select>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Horizon */}
-          <div style={{ marginBottom: "22px" }}>
+        {/* Carte 2 — Stratégie */}
+        <div style={card}>
+          <div style={cardTitle}>Stratégie</div>
+          <div style={{ marginBottom: "18px" }}>
             <label style={lbl}>Horizon d'investissement</label>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "6px" }}>
               {[["court", "Court", "< 2 ans", 24], ["moyen", "Moyen", "2–5 ans", 48], ["long", "Long", "5–10 ans", 96], ["tres-long", "Très long", "> 10 ans", 180]].map(([v, l, sub, mois]) => (
                 <button key={v} style={optBtn(form.horizon === v)} onClick={() => setForm(f => ({ ...f, horizon: v, dcaDuree: mois }))}>
                   <div style={{ fontWeight: "700" }}>{l}</div>
-                  <div style={{ fontSize: "10px", opacity: 0.6, marginTop: "3px" }}>{sub}</div>
+                  <div style={{ fontSize: "10px", opacity: 0.6, marginTop: "2px" }}>{sub}</div>
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Risque */}
-          <div style={{ marginBottom: "4px" }}>
+          <div>
             <label style={lbl}>Tolérance au risque</label>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "6px" }}>
               {[["prudent", "Prudent", "5%/ligne"], ["equilibre", "Équilibré", "10%/ligne"], ["dynamique", "Dynamique", "15%/ligne"], ["tres-dynamique", "Très dyn.", "20%/ligne"]].map(([v, l, sub]) => (
                 <button key={v} style={optBtn(form.risque === v)} onClick={() => setForm(f => ({ ...f, risque: v }))}>
                   <div style={{ fontWeight: "700" }}>{l}</div>
-                  <div style={{ fontSize: "10px", opacity: 0.6, marginTop: "3px" }}>{sub}</div>
+                  <div style={{ fontSize: "10px", opacity: 0.6, marginTop: "2px" }}>{sub}</div>
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Objectif patrimonial */}
-          <Section title="Objectif patrimonial (facultatif)">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div>
-                <label style={lbl}>Objectif à atteindre (€)</label>
-                <input style={inp} type="number" min="0" placeholder="Ex : 50 000" value={form.objectifEuros || ""} onChange={e => setForm(f => ({ ...f, objectifEuros: e.target.value }))} />
-                <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Valeur cible à l'horizon choisi</div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "8px 12px", background: C.snowOff, borderRadius: "14px", border: `1px solid ${C.border}` }}>
-                {(() => {
-                  const obj = parseFloat(form.objectifEuros);
-                  const horizonAns = { court: 2, moyen: 4, long: 8, "tres-long": 15 }[form.horizon] || 8;
-                  const dca = parseFloat(form.dcaMensuel) || 0;
-                  // Même logique que MarcheTab : répartition ETF/SC selon risque × horizon
-                  const repartMatrix = { prudent:{etfPct:90,scPct:10}, equilibre:{etfPct:70,scPct:30}, dynamique:{etfPct:50,scPct:50}, "tres-dynamique":{etfPct:30,scPct:70} };
-                  const repart = repartMatrix[form.risque || "equilibre"] || repartMatrix.equilibre;
-                  const cagrETF = { court: 6, moyen: 7, long: 8, "tres-long": 8 }[form.horizon || "moyen"] ?? 7;
-                  const cagrSC  = { court: 8, moyen: 11, long: 14, "tres-long": 15 }[form.horizon || "moyen"] ?? 11;
-                  const dcaCagr = Math.round(cagrETF * repart.etfPct/100 + cagrSC * repart.scPct/100);
-                  // Valeur actuelle du portefeuille depuis localStorage
-                  const allPos = (() => { try { return JSON.parse(localStorage.getItem("bourse_portfolio") || "[]"); } catch { return []; } })();
-                  const valActuelle = allPos.reduce((s, p) => s + (parseFloat(p.dernierCours || p.pru) || 0) * (parseFloat(p.quantite) || 0), 0);
-                  if (!obj) return <div style={{ fontSize: "11px", color: C.inkSubtle }}>Saisissez un objectif pour voir le CAGR requis</div>;
-                  // Recherche dichotomique du CAGR qui atteint l'objectif avec DCA
-                  // Projection avec DCA au CAGR profil, recherche CAGR positions requis
-                  const rDCA = dcaCagr / 100 / 12, nMois = horizonAns * 12;
-                  const dcaFV = dca > 0 && rDCA > 0 ? dca * ((Math.pow(1 + rDCA, nMois) - 1) / rDCA) : dca * nMois;
-                  const ciblePositions = Math.max(0, obj - dcaFV);
-                  let lo = 0, hi = 50, cagrReq = 10;
-                  for (let i = 0; i < 40; i++) {
-                    const r = (lo + hi) / 2 / 100;
-                    const proj = valActuelle * Math.pow(1 + r, horizonAns);
-                    if (proj < ciblePositions) lo = (lo + hi) / 2; else hi = (lo + hi) / 2;
-                    cagrReq = (lo + hi) / 2;
-                  }
-                  const projSansDCA = valActuelle * Math.pow(1 + cagrReq/100, horizonAns);
-                  return <>
-                    <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>CAGR requis{dca > 0 ? " (avec DCA)" : ""}</div>
-                    <div style={{ fontSize: "20px", fontWeight: "900", color: cagrReq > 15 ? C.red : cagrReq > 8 ? C.gold : C.green }}>+{cagrReq.toFixed(1)}%/an</div>
-                    <div style={{ fontSize: "10px", color: C.inkSubtle }}>
-                      sur {horizonAns} ans{dca > 0 ? ` + DCA ${fmtEur(dca)}/mois` : ""} pour {fmtEur(obj)}
-                    </div>
-                    {dca > 0 && <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px" }}>
-                      DCA pondéré ~{dcaCagr}%/an ({repart.etfPct}% ETF ~{cagrETF}% + {repart.scPct}% SC ~{cagrSC}%)
-                    </div>}
-                  </>;
-                })()}
-              </div>
-            </div>
-          </Section>
-
-          {/* Référence performance */}
-          <Section title={`Référence performance ${new Date().getFullYear()}`}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div>
-                <label style={lbl}>Valeur au 1er janvier {new Date().getFullYear()} (€)</label>
-                <input style={inp} type="number" min="0" placeholder="Ex : 2 889" value={form.valeurJan1 || ""} onChange={e => setForm(f => ({ ...f, valeurJan1: e.target.value }))} />
-                <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Pour le calcul YTD — visible sur Boursorama au 1er jan</div>
-              </div>
-              <div>
-                <label style={lbl}>Valeur au 1er {new Date().toLocaleDateString("fr-FR", { month: "long" })} (€)</label>
-                <input style={inp} type="number" min="0" placeholder="Ex : 3 330" value={form.valeurMois1 || ""} onChange={e => setForm(f => ({ ...f, valeurMois1: e.target.value }))} />
-                <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Pour la perf mensuelle — à mettre à jour chaque 1er du mois</div>
-              </div>
-            </div>
-          </Section>
-
-          {/* Liquidités */}
-          <Section title="Liquidités disponibles">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div>
-                <label style={lbl}>Espèces disponibles PEA (€)</label>
-                <input style={inp} type="number" min="0" placeholder="0" value={form.especesPEA || ""} onChange={e => setForm(f => ({ ...f, especesPEA: e.target.value }))} />
-              </div>
-              <div>
-                <label style={lbl}>Espèces disponibles CTO (€)</label>
-                <input style={inp} type="number" min="0" placeholder="0" value={form.especesCTO || ""} onChange={e => setForm(f => ({ ...f, especesCTO: e.target.value }))} />
-              </div>
-              <div>
-                <label style={lbl}>Cumul des versements PEA (€)</label>
-                <input style={inp} type="number" min="0" placeholder="Ex : 2 800" value={form.versementsPEA || ""} onChange={e => setForm(f => ({ ...f, versementsPEA: e.target.value }))} />
-                <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Total déposé depuis ton compte bancaire (plafond 150 000 €)</div>
-              </div>
-              <div>
-                <label style={lbl}>Cumul des versements CTO (€)</label>
-                <input style={inp} type="number" min="0" placeholder="0" value={form.versementsCTO || ""} onChange={e => setForm(f => ({ ...f, versementsCTO: e.target.value }))} />
-              </div>
-            </div>
-          </Section>
-
-          {/* Dates */}
-          <Section title="">
-            <AccountDatesSection />
-          </Section>
-
-          {saved && (
-            <div style={{ textAlign: "center", fontSize: "11px", color: C.green, fontWeight: "600", padding: "6px 0" }}>✓ Sauvegardé automatiquement</div>
-          )}
         </div>
+
+        {/* Carte 3 — Objectif (pleine largeur) */}
+        <div style={{ ...card, gridColumn: "1 / -1" }}>
+          <div style={cardTitle}>Objectif</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+            <div>
+              <label style={lbl}>Objectif à atteindre (€)</label>
+              <input style={inp} type="number" min="0" placeholder="Ex : 50 000" value={form.objectifEuros || ""} onChange={e => setForm(f => ({ ...f, objectifEuros: e.target.value }))} />
+              <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Valeur cible à l'horizon choisi</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "12px 16px", background: C.snowOff, borderRadius: "14px", border: `1px solid ${C.border}` }}>
+              {(() => {
+                const obj = parseFloat(form.objectifEuros);
+                const horizonAns = { court: 2, moyen: 4, long: 8, "tres-long": 15 }[form.horizon] || 8;
+                const dca = parseFloat(form.dcaMensuel) || 0;
+                const repartMatrix = { prudent:{etfPct:90,scPct:10}, equilibre:{etfPct:70,scPct:30}, dynamique:{etfPct:50,scPct:50}, "tres-dynamique":{etfPct:30,scPct:70} };
+                const repart = repartMatrix[form.risque || "equilibre"] || repartMatrix.equilibre;
+                const cagrETF = { court: 6, moyen: 7, long: 8, "tres-long": 8 }[form.horizon || "moyen"] ?? 7;
+                const cagrSC  = { court: 8, moyen: 11, long: 14, "tres-long": 15 }[form.horizon || "moyen"] ?? 11;
+                const dcaCagr = Math.round(cagrETF * repart.etfPct/100 + cagrSC * repart.scPct/100);
+                const allPos = (() => { try { return JSON.parse(localStorage.getItem("bourse_portfolio") || "[]"); } catch { return []; } })();
+                const valActuelle = allPos.reduce((s, p) => s + (parseFloat(p.dernierCours || p.pru) || 0) * (parseFloat(p.quantite) || 0), 0);
+                if (!obj) return <div style={{ fontSize: "11px", color: C.inkSubtle }}>Saisissez un objectif pour voir le CAGR requis</div>;
+                const rDCA = dcaCagr / 100 / 12, nMois = horizonAns * 12;
+                const dcaFV = dca > 0 && rDCA > 0 ? dca * ((Math.pow(1 + rDCA, nMois) - 1) / rDCA) : dca * nMois;
+                const ciblePositions = Math.max(0, obj - dcaFV);
+                let lo = 0, hi = 50, cagrReq = 10;
+                for (let i = 0; i < 40; i++) {
+                  const r = (lo + hi) / 2 / 100;
+                  const proj = valActuelle * Math.pow(1 + r, horizonAns);
+                  if (proj < ciblePositions) lo = (lo + hi) / 2; else hi = (lo + hi) / 2;
+                  cagrReq = (lo + hi) / 2;
+                }
+                return <>
+                  <div style={{ fontSize: "10px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>CAGR requis{dca > 0 ? " (avec DCA)" : ""}</div>
+                  <div style={{ fontSize: "20px", fontWeight: "900", color: cagrReq > 15 ? C.red : cagrReq > 8 ? C.gold : C.green }}>+{cagrReq.toFixed(1)}%/an</div>
+                  <div style={{ fontSize: "10px", color: C.inkSubtle }}>sur {horizonAns} ans{dca > 0 ? ` + DCA ${fmtEur(dca)}/mois` : ""} pour {fmtEur(obj)}</div>
+                  {dca > 0 && <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px" }}>DCA pondéré ~{dcaCagr}%/an ({repart.etfPct}% ETF ~{cagrETF}% + {repart.scPct}% SC ~{cagrSC}%)</div>}
+                </>;
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {/* Carte 4 — Liquidités & Dates (pleine largeur, 2 colonnes internes) */}
+        <div style={{ ...card, gridColumn: "1 / -1" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+            <div>
+              <div style={cardTitle}>Liquidités</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={lbl}>Espèces PEA (€)</label>
+                  <input style={inp} type="number" min="0" placeholder="0" value={form.especesPEA || ""} onChange={e => setForm(f => ({ ...f, especesPEA: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={lbl}>Espèces CTO (€)</label>
+                  <input style={inp} type="number" min="0" placeholder="0" value={form.especesCTO || ""} onChange={e => setForm(f => ({ ...f, especesCTO: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={lbl}>Versements PEA (€)</label>
+                  <input style={inp} type="number" min="0" placeholder="Ex : 2 800" value={form.versementsPEA || ""} onChange={e => setForm(f => ({ ...f, versementsPEA: e.target.value }))} />
+                  <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "3px" }}>Plafond 150 000 €</div>
+                </div>
+                <div>
+                  <label style={lbl}>Versements CTO (€)</label>
+                  <input style={inp} type="number" min="0" placeholder="0" value={form.versementsCTO || ""} onChange={e => setForm(f => ({ ...f, versementsCTO: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+            <div style={{ borderLeft: `1px solid ${C.border}`, paddingLeft: "24px" }}>
+              <div style={cardTitle}>Dates d'ouverture</div>
+              <AccountDatesSection />
+            </div>
+          </div>
+        </div>
+
       </div>
+      {saved && (
+        <div style={{ textAlign: "center", fontSize: "11px", color: C.green, fontWeight: "600", padding: "14px 0" }}>✓ Sauvegardé automatiquement</div>
+      )}
     </div>
   );
 }
