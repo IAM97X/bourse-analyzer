@@ -527,7 +527,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             </div>
           </div>
           <button
-            onClick={() => onRunScoring && onRunScoring(positions)}
+            onClick={() => { if (window.confirm(`Le scoring IA recherche les actualités en temps réel pour chaque position.\n\nCoût estimé : ~0,10–0,20 $ de crédits API.\n\nConfirmer ?`)) onRunScoring && onRunScoring(positions); }}
             disabled={marketScoringUi === UI.LOADING}
             style={{ padding: "8px 18px", borderRadius: "12px", border: "none", cursor: marketScoringUi === UI.LOADING ? "not-allowed" : "pointer", background: marketScoringUi === UI.LOADING ? C.snowDim : "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: marketScoringUi === UI.LOADING ? C.inkSubtle : "#fff", fontSize: "12px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", boxShadow: marketScoringUi !== UI.LOADING ? shadow.pill : "none", transition: "all 0.15s" }}>
             {marketScoringUi === UI.LOADING

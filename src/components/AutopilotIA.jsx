@@ -699,7 +699,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
             <span style={{ fontSize: "11px", color: C.inkSubtle }}>€/mois</span>
           </div>
           <button
-            onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,05–0,10 $ de crédits API.\n\nBudget à investir : ${budget}€\n\nConfirmer le lancement ?`)) runAnalysis(); }}
+            onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,10–0,20 $ de crédits API.\n\nBudget à investir : ${budget}€\n\nConfirmer le lancement ?`)) runAnalysis(); }}
             disabled={running || !allocOk}
             style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
             {running ? <BNextLabel /> : "Lancer l'analyse"}
@@ -758,7 +758,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
       <div style={{ background: "rgba(200,151,42,0.07)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "10px 16px", marginBottom: "16px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "1px" }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="#B45309" stroke="none"/></svg>
         <div style={{ fontSize: "11px", color: "#7A5A10", lineHeight: 1.6 }}>
-          <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,15–0,25 $ en crédits Anthropic.<br />
+          <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,20–0,40 $ en crédits Anthropic (web search inclus).<br />
           Conseil : lancez Autopilot Atlas <strong>1 à 2 fois par semaine</strong> maximum.
         </div>
       </div>
