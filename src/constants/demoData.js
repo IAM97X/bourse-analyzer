@@ -52,43 +52,47 @@ export const DEMO_PROFIL = {
 
 export const DEMO_SESSION = { name: "Démo", uid: null, demo: true };
 
-// ── Scoring IA fictif — cohérent avec DEMO_POSITIONS ─────────────────────────
+// ── Scoring IA fictif ─────────────────────────────────────────────────────────
+// Narration : portefeuille à potentiel global FAIBLE (score moyen ~11/20)
+// L'IA identifie 2 pépites (NVDA 19, ASML 17) noyées dans des positions ternes
+// → démontre la valeur de l'analyse IA pour trier le bon grain de l'ivraie
 export const DEMO_MARKET_SCORES = [
+  // PEA — potentiel limité
   {
-    isin: "LU1681043599", nom: "Amundi MSCI World", score_marche: 16, signal: "RENFORCER",
-    resume: "L'ETF MSCI World en tendance haussière soutenue par les valeurs tech US et la dynamique bénéficiaire. Socle incontournable pour un PEA long terme — idéal pour DCA mensuel régulier.",
-    catalyseur_cle: "Momentum US porté par les big tech IA, résultats S&P 500 au-dessus des attentes",
+    isin: "LU1681043599", nom: "Amundi MSCI World", score_marche: 10, signal: "ATTENDRE",
+    resume: "Le MSCI World marque une pause après 18 mois de hausse. La valorisation des actions US (P/E 22x) laisse peu de marge. La rotation sectorielle en cours pénalise les ETF généralistes à court terme. À conserver mais sans renforcer.",
+    catalyseur_cle: "Attente d'une consolidation avant reprise — rotation value/growth défavorable à court terme",
   },
   {
-    isin: "FR0013412269", nom: "Amundi PEA Nasdaq-100", score_marche: 15, signal: "RENFORCER",
-    resume: "Le Nasdaq-100 profite du super-cycle IA : Nvidia, Microsoft, Meta portent les bénéfices. Concentration tech élevée mais momentum fort. Complémentaire au MSCI World pour surpondérer la croissance US.",
-    catalyseur_cle: "Résultats big tech Q2 et guidance IA — cycle capex data centers en accélération",
+    isin: "FR0013412269", nom: "Amundi PEA Nasdaq-100", score_marche: 11, signal: "ATTENDRE",
+    resume: "Le Nasdaq-100 stagne malgré le cycle IA : les valorisations des mega-caps limitent le potentiel de hausse à court terme. Les investisseurs préfèrent désormais les titres IA en direct (NVIDIA, ASML) plutôt que les ETF tech.",
+    catalyseur_cle: "Valorisation tendue (P/E 28x) — rotation vers les titres IA individuels plus dynamiques",
   },
   {
-    isin: "FR0000120271", nom: "TotalEnergies", score_marche: 11, signal: "ATTENDRE",
-    resume: "TotalEnergies maintient un dividende solide (3,22€/action) mais le Brent sous pression à 75$/baril limite le potentiel court terme. La diversification EnR apporte de la visibilité long terme sans catalyseur immédiat identifié.",
-    catalyseur_cle: "Prix du Brent et discipline OPEC+ — dividende 3,22€/an sécurisé, pas de catalyseur hausse",
+    isin: "FR0000120271", nom: "TotalEnergies", score_marche: 6, signal: "PRUDENCE",
+    resume: "Le Brent est retombé sous 72$/baril, pénalisant directement les marges de TotalEnergies. Les engagements EnR nécessitent des investissements lourds sans retour immédiat. Le dividende reste sécurisé mais la plus-value court terme est compromise.",
+    catalyseur_cle: "Brent < 72$ — pression OPEC+, capex EnR en hausse, catalyseur de revalorisation absent",
   },
-  // CTO
+  // CTO — contraste fort : 2 pépites, 2 positions ternes
   {
-    isin: "US0378331005", nom: "Apple Inc.", score_marche: 14, signal: "RENFORCER",
-    resume: "Apple bénéficie d'un cycle de renouvellement iPhone solide et d'une montée en puissance des services (App Store, iCloud, Apple TV+). La marge opérationnelle record et le programme de rachat d'actions soutiennent le cours.",
-    catalyseur_cle: "Cycle iPhone 17 et intégration IA on-device — croissance Services +15% YoY",
-  },
-  {
-    isin: "US67066G1040", nom: "NVIDIA Corp.", score_marche: 17, signal: "RENFORCER",
-    resume: "NVIDIA est le principal bénéficiaire du cycle capex IA : les commandes de GPU H100/H200 restent en forte croissance. Backlog multi-trimestres et pricing power exceptionnel. Valorisation élevée mais thèse de croissance intacte.",
-    catalyseur_cle: "Résultats data center Q2, lancement Blackwell B200 — guidance capex hyper-scalers en hausse",
+    isin: "US0378331005", nom: "Apple Inc.", score_marche: 9, signal: "ATTENDRE",
+    resume: "Le cycle iPhone 16 déçoit en Chine (-12% de parts de marché face à Huawei). La croissance des Services ralentit à +9% YoY vs +15% attendu. Le cours intègre déjà un premium IA qui n'est pas encore monétisé.",
+    catalyseur_cle: "Faiblesse Chine persistante, cycle IA on-device retardé — pas de catalyseur à 3 mois",
   },
   {
-    isin: "NL0010273215", nom: "ASML Holding", score_marche: 15, signal: "RENFORCER",
-    resume: "ASML détient un monopole mondial sur les machines EUV indispensables à la production des puces avancées. Le carnet de commandes est plein jusqu'en 2026 malgré les restrictions à l'export vers la Chine.",
-    catalyseur_cle: "Commandes EUV High-NA, rampe TSMC/Samsung N2 — barrières à l'entrée insurmontables",
+    isin: "US67066G1040", nom: "NVIDIA Corp.", score_marche: 19, signal: "RENFORCER",
+    resume: "NVIDIA écrase la concurrence sur les GPU IA : part de marché data center > 85%. Le Blackwell B200 est en rupture de stock jusqu'en 2026. Chaque grand hyperscaler (Microsoft, Google, Amazon) multiplie ses commandes. C'est la position la plus prometteuse du portefeuille.",
+    catalyseur_cle: "Backlog B200 record, guidance Q2 +110% YoY — position à renforcer en priorité absolue",
   },
   {
-    isin: "IE00B3RBWM25", nom: "Vanguard FTSE All-World", score_marche: 13, signal: "RENFORCER",
-    resume: "ETF All-World très diversifié (3 800+ titres), frais réduits à 0,22%. Exposition globale équilibrée entre marchés développés (90%) et émergents (10%). Socle idéal pour un CTO à long terme.",
-    catalyseur_cle: "Diversification mondiale, frais 0,22% — résilience face aux rotations sectorielles",
+    isin: "NL0010273215", nom: "ASML Holding", score_marche: 17, signal: "RENFORCER",
+    resume: "ASML détient le monopole absolu sur les machines EUV nécessaires à toutes les puces avancées (3nm, 2nm). Le carnet de commandes dépasse 39 Md€. Les restrictions export vers la Chine sont déjà intégrées — la demande TSMC/Intel/Samsung compense largement.",
+    catalyseur_cle: "Monopole EUV High-NA inattaquable — 2e position la plus prometteuse du portefeuille CTO",
+  },
+  {
+    isin: "IE00B3RBWM25", nom: "Vanguard FTSE All-World", score_marche: 8, signal: "ATTENDRE",
+    resume: "Le VWRL souffre d'une exposition excessive aux marchés développés (US 65%) dont les valorisations sont historiquement hautes. La pondération Chine/émergents reste un frein. En CTO, des positions en direct sur NVDA ou ASML offrent un meilleur rendement ajusté au risque.",
+    catalyseur_cle: "Exposition US 65% à valorisation tendue — sous-performance probable vs titres IA en direct",
   },
 ];
 
@@ -231,7 +235,7 @@ export function loadDemoData() {
     localStorage.setItem("bourse_session",              JSON.stringify(DEMO_SESSION));
     localStorage.setItem("bourse_demo_mode",            "1");
     localStorage.setItem("bourse_market_scores",        JSON.stringify(DEMO_MARKET_SCORES));
-    localStorage.setItem("bourse_market_scores_ts",     String(Date.now() - 45 * 60 * 1000));
+    localStorage.setItem("bourse_market_scores_ts",     String(Date.now() - 18 * 60 * 1000));
     localStorage.setItem("bourse_ai_portfolio_PEA",     JSON.stringify(DEMO_AI_PORTFOLIO));
     localStorage.setItem("bourse_ai_delta_history_PEA", JSON.stringify(DEMO_AI_DELTA_HISTORY));
     localStorage.setItem("bourse_ai_challenge_PEA",     JSON.stringify(DEMO_AI_CHALLENGE));
