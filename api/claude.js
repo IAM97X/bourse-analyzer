@@ -6,13 +6,15 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+    const upstreamHeaders = {
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+    };
+    if (req.headers["anthropic-beta"]) upstreamHeaders["anthropic-beta"] = req.headers["anthropic-beta"];
     const upstream = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
+      headers: upstreamHeaders,
       body,
     });
     const data = await upstream.json();
