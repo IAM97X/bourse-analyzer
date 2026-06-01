@@ -33,6 +33,7 @@ const _ENV = {
   google:       process.env.REACT_APP_GOOGLE_API_KEY       || "",
   cx:           process.env.REACT_APP_GOOGLE_CX            || "",
   alphavantage: process.env.REACT_APP_ALPHAVANTAGE_KEY     || "",
+  fmp:          process.env.REACT_APP_FMP_KEY              || "",
 };
 
 export const getKey = (name) => {
