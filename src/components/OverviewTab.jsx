@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { C } from "../constants/theme";
 import { TABS } from "../constants/tabs";
 import { load } from "../lib/storage";
-import { sanitizePositions } from "../lib/finance";
+import { sanitizePositions, fmtEur } from "../lib/finance";
 import { useIsMobile } from "../context/mobile";
 import { getCourtierForAccount, COURTIERS } from "../constants/courtiers";
 
@@ -44,9 +44,6 @@ function BrokerLogo({ courtierKey }) {
   );
 }
 
-function fmtEur(v) {
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
-}
 function fmtPct(v, decimals = 1) {
   return (v >= 0 ? "+" : "") + v.toFixed(decimals) + " %";
 }

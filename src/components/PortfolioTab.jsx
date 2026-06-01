@@ -751,7 +751,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                   const etf    = isETFName(pos.nom);
                   const sigEntry = marketScores?.find(s => s.isin === pos.isin || s.nom === pos.nom);
                   const sig    = sigEntry?.signal || "";
-                  const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? "#7B1111" : sig === "PRUDENCE" ? C.red : C.goldDark;
+                  const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? C.red : sig === "PRUDENCE" ? C.red : C.goldDark;
                   const concentration = !etf && poids > 20;
                   const euronextUrl = pos.isin ? getEuronextUrl(pos.isin, pos.nom) : null;
                   const priceHist = loadPriceHistory(pos.id);
@@ -897,7 +897,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           const isFetching = fetchingIds.has(pos.id);
           const fetchError = fetchErrors[pos.id];
           const ia = marketScores?.find(s => s.isin === pos.isin || s.nom === pos.nom);
-          const sigColor = !ia?.signal ? null : ia.signal === "ACHAT" ? C.green : ia.signal === "RENFORCER" ? C.navy : ia.signal === "VENDRE" ? "#FF0000" : ia.signal === "PRUDENCE" ? C.red : C.goldDark;
+          const sigColor = !ia?.signal ? null : ia.signal === "ACHAT" ? C.green : ia.signal === "RENFORCER" ? C.navy : ia.signal === "VENDRE" ? C.red : ia.signal === "PRUDENCE" ? C.red : C.goldDark;
           const borderAccent = pv >= 0 ? C.green : C.red;
           return (
             <SwipeableCard key={pos.id} disabled={!isMobile}
@@ -918,7 +918,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                       return null;
                     }
                     if (ia.signal === "VENDRE") return (
-                      <span onClick={() => setVendreDisclaimer({ pos, resume: ia.resume || "" })} style={{ fontSize: "10px", fontWeight: "900", color: "#FF0000", background: "#1A0000", border: "1.5px solid #FF0000", borderRadius: "5px", padding: "2px 8px", letterSpacing: "1px", cursor: "pointer", whiteSpace: "nowrap", animation: "vendreAlarm 0.8s ease-in-out infinite", boxShadow: "0 0 8px #FF000066" }}>
+                      <span onClick={() => setVendreDisclaimer({ pos, resume: ia.resume || "" })} style={{ fontSize: "10px", fontWeight: "900", color: C.red, background: C.redLight, border: `1.5px solid ${C.red}`, borderRadius: "5px", padding: "2px 8px", letterSpacing: "1px", cursor: "pointer", whiteSpace: "nowrap" }}>
                         VENDRE
                       </span>
                     );
@@ -1388,9 +1388,9 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         <div style={{ background: "#fff", borderRadius: "24px", padding: "32px 28px", maxWidth: "420px", width: "100%", boxShadow: "0 32px 80px rgba(0,0,0,0.35)", animation: "fadeIn 0.2s ease" }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: "#1A0000", border: "2px solid #FF0000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "900", color: "#FF0000", flexShrink: 0 }}>!</div>
+            <div style={{ width: "44px", height: "44px", borderRadius: "14px", background: C.redLight, border: `2px solid ${C.red}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "900", color: C.red, flexShrink: 0 }}>!</div>
             <div>
-              <div style={{ fontSize: "16px", fontWeight: "800", color: "#CC0000", letterSpacing: "-0.02em" }}>Signal VENDRE</div>
+              <div style={{ fontSize: "16px", fontWeight: "800", color: C.red, letterSpacing: "-0.02em" }}>Signal VENDRE</div>
               <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px" }}>{vendreDisclaimer.pos.nom}</div>
             </div>
           </div>

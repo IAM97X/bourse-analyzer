@@ -153,30 +153,21 @@ export default function DashboardBar({ onTabChange, hidden, profil, account = "P
       </div>
 
       <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginLeft: "-4px", marginRight: "-4px", paddingLeft: "4px", paddingRight: "4px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(4, 150px)" : "repeat(4, 1fr)", gap: "10px", minWidth: isMobile ? "620px" : "auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(4, 150px)" : "repeat(4, 1fr)", gap: "10px", minWidth: isMobile ? "620px" : "auto", alignItems: "start" }}>
           {[
             { label: account === "CTO" ? "Capital investi CTO" : "Capital investi PEA", main: capitalInvesti > 0 ? fmtEur(capitalInvesti) : "—", sub: null, color: C.inkMuted, numColor: C.ink, subSmall: capitalInvesti === 0 },
             { label: "Plus-value latente", main: (totalPV >= 0 ? "+" : "") + fmtEur(totalPV), sub: (totalPVpct >= 0 ? "+" : "") + totalPVpct.toFixed(2) + "%", color: totalPV >= 0 ? C.green : C.red, numColor: totalPV >= 0 ? C.green : C.red },
             { label: "Variation du jour", main: varJourEur != null ? (varJourEur >= 0 ? "+" : "") + fmtEur(varJourEur) : "—", sub: varJourPct != null ? (varJourPct >= 0 ? "+" : "") + varJourPct.toFixed(2) + "%" : null, color: varJourEur == null ? C.inkSubtle : varJourEur >= 0 ? C.green : C.red, numColor: varJourEur == null ? C.inkMuted : varJourEur >= 0 ? C.green : C.red },
             { label: "Score de risque", main: riskScore !== null ? `${riskScore} / 10` : "—", sub: riskLabel, color: riskColor, numColor: riskColor, isRisk: true },
           ].map((card) => (
-            <div key={card.label} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: card.color, borderRadius: "16px 16px 0 0" }} />
-              <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "10px" }}>{card.label}</div>
-              <div style={{ fontSize: isMobile ? "20px" : "22px", fontWeight: "700", color: card.numColor || C.ink, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", lineHeight: 1, ...blurStyle }}>{card.main}</div>
-              {card.isRisk && riskScore !== null && (
-                <div style={{ marginTop: "8px", background: C.snowOff, borderRadius: "4px", height: "4px", overflow: "hidden" }}>
-                  <div style={{ width: `${riskScore * 10}%`, height: "100%", background: riskColor, borderRadius: "4px", transition: "width 0.5s ease" }} />
-                </div>
-              )}
-              {card.sub && (
-                <div style={{ marginTop: "8px", display: "inline-flex", alignItems: "center", background: card.color === C.green ? C.greenLight : card.color === C.red ? C.redLight : C.snowDim, borderRadius: "6px", padding: "2px 8px" }}>
-                  <span style={{ fontSize: "10px", fontWeight: "700", color: card.color, fontVariantNumeric: "tabular-nums", ...blurStyle }}>{card.sub}</span>
-                </div>
-              )}
-              {card.subSmall && (
-                <div style={{ marginTop: "8px", background: C.snowDim, borderRadius: "6px", padding: "4px 9px", fontSize: "10px", color: C.inkMuted, fontWeight: "600", display: "inline-block" }}>À renseigner dans Profil</div>
-              )}
+            <div key={card.label} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "11px 14px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: card.color, borderRadius: "14px 14px 0 0" }} />
+              <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "7px" }}>{card.label}</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "7px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: isMobile ? "18px" : "20px", fontWeight: "700", color: card.numColor || C.ink, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", lineHeight: 1, ...blurStyle }}>{card.main}</span>
+                {card.sub && <span style={{ fontSize: "11px", fontWeight: "700", color: card.color, fontVariantNumeric: "tabular-nums", ...blurStyle }}>{card.sub}</span>}
+                {card.subSmall && <span style={{ fontSize: "10px", color: C.inkMuted, fontWeight: "600" }}>À renseigner dans Profil</span>}
+              </div>
             </div>
           ))}
         </div>

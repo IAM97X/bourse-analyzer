@@ -3,6 +3,7 @@ import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtCours, sanitizePositions, getCachedCours, linReg, computeMA, computeRSI } from "../lib/finance";
 import { load } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
+import { fetchFMPHistoricalByTicker } from "../lib/market";
 import { BNextLabel, LoadingPanel, ErrorPanel } from "./UI";
 import { InfoTip } from "./PortfolioChart";
 import CompanyAvatar from "./CompanyAvatar";
@@ -616,16 +617,10 @@ export function StockProjectionChart({ pos, onClose }) {
       try {
         // Historique affiché selon la période choisie
         const urlDisplay = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${h.interval}&range=${h.range}`;
-        // Régression toujours calculée sur 5 ans hebdo → tendance stable quelle que soit la période
-        const urlReg = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1wk&range=5y`;
 
-        const [resDisplay, resReg] = await Promise.all([
-          fetchWithProxy(urlDisplay, { signal: AbortSignal.timeout(15000) }),
-          fetchWithProxy(urlReg,     { signal: AbortSignal.timeout(15000) }),
-        ]);
+        const resDisplay = await fetchWithProxy(urlDisplay, { signal: AbortSignal.timeout(15000) });
         if (!resDisplay.ok) throw new Error(`HTTP ${resDisplay.status}`);
         const jsonDisplay = await resDisplay.json();
-        const jsonReg     = resReg.ok ? await resReg.json() : null;
 
         const r = jsonDisplay?.chart?.result?.[0];
         if (!r) throw new Error("Données indisponibles");
@@ -637,14 +632,14 @@ export function StockProjectionChart({ pos, onClose }) {
           .filter(p => p.price != null && p.price > 0);
         if (rawPts.length < 10) throw new Error("Données insuffisantes (< 10 points)");
 
-        // Régression sur 5 ans (stable) — fallback sur données affichées si indispo
-        const regR = jsonReg?.chart?.result?.[0];
-        const regTs = regR?.timestamp || ts;
-        const regCl = regR?.indicators?.quote?.[0]?.close || cl;
-        const regPts = regTs
-          .map((t, j) => ({ date: t * 1000, price: regCl[j] }))
-          .filter(p => p.price != null && p.price > 0);
-        const regBase = regPts.length >= 10 ? regPts : rawPts;
+        // Régression sur 5 ans FMP (stable) — fallback sur données affichées si indispo
+        let regBase = rawPts;
+        try {
+          const toDate = new Date().toISOString().slice(0, 10);
+          const fromDate = new Date(Date.now() - 5 * 365 * 86400000).toISOString().slice(0, 10);
+          const daily = await fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
+          if (daily.length >= 10) regBase = daily.map(d => ({ date: new Date(d.date + "T00:00:00").getTime(), price: d.close }));
+        } catch {}
 
         // Régression linéaire sur log(prix) → modèle de croissance exponentielle
         const xs = regBase.map((_, i) => i);

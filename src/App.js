@@ -32,7 +32,7 @@ import { MobileCtx, TabletCtx, useIsMobile, useIsTablet, MobileProvider } from "
 import { TABS } from "./constants/tabs";
 import { save, load, supabase, setSyncUserId, pullFromCloud } from "./lib/storage";
 import { parsePrice, fmtEur, fmtCours, fmtPct, fmtPV, getCachedCours, setCachedCours, sanitizePositions, isETFName, computeRiskScore, PROFIL_RANK, getMIC, getEuronextUrl, linReg } from "./lib/finance";
-import { delay, CLAUDE_MODELS, getKey, ANTHROPIC_API_KEY, GOOGLE_API_KEY, GOOGLE_CX, ALPHAVANTAGE_KEY, hasClaudeKey, CLAUDE_ENDPOINT, enqueueApi, callClaude, callClaudeHaiku, callClaudeConversation, callGoogleSearch, fetchWithProxy } from "./lib/api";
+import { delay, CLAUDE_MODELS, getKey, ANTHROPIC_API_KEY, GOOGLE_API_KEY, GOOGLE_CX, hasClaudeKey, CLAUDE_ENDPOINT, enqueueApi, callClaude, callClaudeHaiku, callClaudeConversation, callGoogleSearch, fetchWithProxy } from "./lib/api";
 import { fetchYahooAnalysts, fetchGoogleNewsRSS, formatExternalContext } from "./lib/market";
 import PWAInstallBanner from "./components/PWAInstallBanner";
 import AuthPage from "./components/AuthPage";

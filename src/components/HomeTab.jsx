@@ -6,7 +6,6 @@ import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { TABS } from "../constants/tabs";
 import { fetchWithProxy, hasClaudeKey, hasAI } from "../lib/api";
-import { fetchFMPHistorical } from "../lib/market";
 import MarketStatusBar from "./MarketStatusBar";
 import { AUTOPILOT_UNIVERSE } from "../constants/universe";
 

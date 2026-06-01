@@ -41,6 +41,13 @@ export async function fetchFMPHistorical(isin, fromDate, toDate) {
   const key = String(FMP_KEY);
   if (!key) throw new Error("Clé FMP manquante");
   const ticker = await resolveFMPTicker(isin);
+  return fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
+}
+
+// ─── Financial Modeling Prep — historique journalier par ticker direct ─────────
+export async function fetchFMPHistoricalByTicker(ticker, fromDate, toDate) {
+  const key = String(FMP_KEY);
+  if (!key) throw new Error("Clé FMP requise pour les données historiques. Ajoutez-la dans Paramètres → Clés API.");
   const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${encodeURIComponent(ticker)}?from=${fromDate}&to=${toDate}&apikey=${key}`;
   const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);

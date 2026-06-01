@@ -2,7 +2,22 @@ import { useState } from "react";
 import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtPct, linReg } from "../lib/finance";
 import { load, save } from "../lib/storage";
-import { fetchWithProxy } from "../lib/api";
+import { hasFMPKey } from "../lib/api";
+import { fetchFMPHistoricalByTicker } from "../lib/market";
+
+// Downsample daily FMP data to weekly (last close per week)
+function toWeeklyFMP(daily) {
+  const byWeek = {};
+  for (const d of daily) {
+    const dt = new Date(d.date + "T00:00:00");
+    const day = dt.getDay();
+    const mon = new Date(dt);
+    mon.setDate(dt.getDate() - (day === 0 ? 6 : day - 1));
+    const wk = mon.toISOString().slice(0, 10);
+    byWeek[wk] = d;
+  }
+  return Object.values(byWeek).sort((a, b) => a.date.localeCompare(b.date));
+}
 import { useIsMobile } from "../context/mobile";
 import { StatBox, BNextLabel } from "./UI";
 
@@ -248,13 +263,10 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
     const results = await Promise.all(eligible.map(async p => {
       const ticker = (p.isin && tickerCache[p.isin]) || p.ticker;
       try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1wk&range=5y`;
-        const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
-        if (!res.ok) return null;
-        const json = await res.json();
-        const r = json?.chart?.result?.[0];
-        const cl = r?.indicators?.quote?.[0]?.close || [];
-        const pts = cl.filter(v => v != null && v > 0);
+        const toDate = new Date().toISOString().slice(0, 10);
+        const fromDate = new Date(Date.now() - 5 * 365 * 86400000).toISOString().slice(0, 10);
+        const daily = await fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
+        const pts = toWeeklyFMP(daily).map(d => d.close);
         if (pts.length < 20) return null;
         const xs = pts.map((_, i) => i);
         const ys = pts.map(v => Math.log(v));
@@ -266,7 +278,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
     }));
     const valid = results.filter(Boolean);
     if (valid.length === 0) {
-      setHistError("Impossible de récupérer les données historiques. Vérifiez votre connexion.");
+      setHistError(hasFMPKey() ? "Impossible de récupérer les données historiques." : "Clé FMP requise · Ajoutez-la dans Paramètres → Clés API");
       setLoadingHist(false); return;
     }
     const totalPoids = valid.reduce((s, r) => s + r.poids, 0);
@@ -341,26 +353,18 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
     await Promise.all(eligibleISINs.map(async isin => {
       const ticker = isinTicker[isin];
       try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=10y`;
-        const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(18000) });
-        if (!res.ok) return;
-        const json = await res.json();
-        const r = json?.chart?.result?.[0];
-        if (!r) return;
-        const timestamps = r.timestamp || [];
-        const closes = r.indicators?.quote?.[0]?.close || [];
+        const toDate = new Date().toISOString().slice(0, 10);
+        const fromDate = new Date(Date.now() - 10 * 365 * 86400000).toISOString().slice(0, 10);
+        const daily = await fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
+        if (!daily.length) return;
         historicalPrices[ticker] = {};
-        timestamps.forEach((ts, i) => {
-          const close = closes[i];
-          if (!close || close <= 0) return;
-          historicalPrices[ticker][new Date(ts * 1000).toISOString().slice(0, 10)] = close;
-        });
+        daily.forEach(d => { historicalPrices[ticker][d.date] = d.close; });
         fetchedCount++;
       } catch {}
     }));
 
     if (fetchedCount === 0) {
-      setReconstructMsg("Impossible de récupérer les données. Vérifiez votre connexion.");
+      setReconstructMsg(hasFMPKey() ? "Impossible de récupérer les données historiques." : "Clé FMP requise · Ajoutez-la dans Paramètres → Clés API");
       setReconstructing(false); return;
     }
 

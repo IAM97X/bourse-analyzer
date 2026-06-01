@@ -130,14 +130,9 @@ export default function TourGuide({ onDone, changeTab, currentTab }) {
           </div>
 
           {/* Contenu */}
-          <div style={{ display: "flex", gap: "14px", marginBottom: "20px", alignItems: "flex-start" }}>
-            <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: iconColor }}>
-              {s.icon}
-            </div>
-            <div>
-              <div style={{ fontSize: "14px", fontWeight: "800", color: C.ink, letterSpacing: "-0.02em", marginBottom: "6px", lineHeight: 1.3 }}>{s.title}</div>
-              <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.65 }}>{s.body}</div>
-            </div>
+          <div style={{ marginBottom: "20px" }}>
+            <div style={{ fontSize: "14px", fontWeight: "800", color: C.ink, letterSpacing: "-0.02em", marginBottom: "6px", lineHeight: 1.3 }}>{s.title}</div>
+            <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.65 }}>{s.body}</div>
           </div>
 
           {/* Boutons */}

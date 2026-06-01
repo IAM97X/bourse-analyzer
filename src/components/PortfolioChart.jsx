@@ -4,6 +4,7 @@ import { C, shadow } from "../constants/theme";
 import { fmtEur } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
+import { fetchFMPHistoricalByTicker } from "../lib/market";
 
 const SNAPSHOTS_KEY = "bourse_snapshots";
 
@@ -128,22 +129,16 @@ async function rebuildPortfolioHistory(account, onProgress) {
   const tickers = [...new Set(resolvedIsins.map(isin => isinToTicker[isin]))];
   if (!tickers.length) return { count: 0, resolved: 0, total: allIsins.length };
 
-  // ── Étape 3 : cours historiques Yahoo Finance ──────────────────────────────
+  // ── Étape 3 : cours historiques FMP ──────────────────────────────────────
   progress(`Téléchargement des cours pour ${tickers.length} valeur(s)...`);
   const pricesByTicker = {};
+  const toDate = new Date().toISOString().slice(0, 10);
+  const fromDate = new Date(Date.now() - 5 * 365 * 86400000).toISOString().slice(0, 10);
   await Promise.all(tickers.map(async ticker => {
     try {
-      const res  = await fetchWithProxy(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5y`);
-      const json = await res.json();
-      const result = json.chart?.result?.[0];
-      if (!result) { pricesByTicker[ticker] = {}; return; }
-      const ts     = result.timestamp || [];
-      const closes = result.indicators?.quote?.[0]?.close || [];
+      const daily = await fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
       pricesByTicker[ticker] = {};
-      ts.forEach((t, i) => {
-        if (closes[i] != null)
-          pricesByTicker[ticker][new Date(t * 1000).toISOString().slice(0, 10)] = closes[i];
-      });
+      daily.forEach(d => { pricesByTicker[ticker][d.date] = d.close; });
     } catch { pricesByTicker[ticker] = {}; }
   }));
 

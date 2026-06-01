@@ -7,7 +7,8 @@ import { isDemoMode } from "../constants/demoData";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { AUTOPILOT_UNIVERSE } from "../constants/universe";
 import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
-import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy } from "../lib/api";
+import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy, hasFMPKey } from "../lib/api";
+import { fetchFMPHistoricalByTicker } from "../lib/market";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { BNextLabel } from "./UI";
 import Tooltip from "./Tooltip";
@@ -20,6 +21,20 @@ function tickerFromUniverse(isin, nom) {
 }
 
 const AI_POTENTIEL_KEY = "bourse_ai_potentiel";
+
+// Downsample daily FMP data to weekly (last close per week)
+function toWeeklyFMP(daily) {
+  const byWeek = {};
+  for (const d of daily) {
+    const dt = new Date(d.date + "T00:00:00");
+    const day = dt.getDay();
+    const mon = new Date(dt);
+    mon.setDate(dt.getDate() - (day === 0 ? 6 : day - 1));
+    const wk = mon.toISOString().slice(0, 10);
+    byWeek[wk] = d;
+  }
+  return Object.values(byWeek).sort((a, b) => a.date.localeCompare(b.date));
+}
 
 const TICKER_CACHE_KEY_M = "bourse_isin_ticker_cache";
 const STEP_MS = 7 * 24 * 3600 * 1000; // 1 semaine
@@ -83,15 +98,11 @@ function GlobalProjectionChart({ positions, onClose }) {
         if (!ticker) { done++; if (!cancelled) setState(s => ({ ...s, progress: done / positions.length })); return null; }
 
         try {
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1wk&range=5y`;
-          const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
-          if (!res.ok) return null;
-          const json = await res.json();
-          const r = json?.chart?.result?.[0];
-          if (!r) return null;
-          const ts = r.timestamp || [];
-          const cl = r.indicators?.quote?.[0]?.close || [];
-          const pts = ts.map((t, i) => ({ t: t * 1000, p: cl[i] })).filter(x => x.p != null && x.p > 0);
+          const toDate = new Date().toISOString().slice(0, 10);
+          const fromDate = new Date(Date.now() - 5 * 365 * 86400000).toISOString().slice(0, 10);
+          const daily = await fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
+          const weekly = toWeeklyFMP(daily);
+          const pts = weekly.map(d => ({ t: new Date(d.date + "T00:00:00").getTime(), p: d.close }));
           if (pts.length < 10) return null;
 
           // Régression log(prix)
@@ -124,7 +135,7 @@ function GlobalProjectionChart({ positions, onClose }) {
 
       const valid = results.filter(Boolean);
       if (valid.length === 0) {
-        setState({ status: "error", data: null, error: "Aucune donnée Yahoo disponible", progress: 1 });
+        setState({ status: "error", data: null, error: hasFMPKey() ? "Aucune donnée historique disponible" : "Clé FMP requise · Ajoutez-la dans Paramètres → Clés API", progress: 1 });
         return;
       }
 
@@ -493,8 +504,8 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
   );
 
   const selectedPos = positions.find(p => p.id === selectedPosId) || null;
-  const SIG_COLOR  = { ACHAT: C.green, RENFORCER: C.accent, ATTENDRE: C.gold, PRUDENCE: C.red, VENDRE: "#7B1111" };
-  const SIG_BG     = { ACHAT: C.greenLight, RENFORCER: C.paleBlue, ATTENDRE: C.goldLight, PRUDENCE: C.redLight, VENDRE: "rgba(123,17,17,0.08)" };
+  const SIG_COLOR  = { ACHAT: C.green, RENFORCER: C.accent, ATTENDRE: C.gold, PRUDENCE: C.red, VENDRE: C.red };
+  const SIG_BG     = { ACHAT: C.greenLight, RENFORCER: C.paleBlue, ATTENDRE: C.goldLight, PRUDENCE: C.redLight, VENDRE: C.redLight };
   const SIG_PHRASE = { ACHAT: "Momentum favorable, à surveiller", RENFORCER: "Position solide, tu peux étoffer", ATTENDRE: "Pas d'action urgente", PRUDENCE: "Contexte dégradé, reste vigilant", VENDRE: "Signal négatif détecté" };
 
   const scores = Array.isArray(marketScores) ? marketScores : [];
@@ -553,7 +564,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
                   <div style={{ fontSize: "11px", color: C.inkSubtle }}>Non scoré — Lancez une analyse</div>
                 </div>
               );
-              const scoreBarColor = s.score_marche >= 16 ? C.green : s.score_marche >= 13 ? C.accent : s.score_marche >= 9 ? C.gold : s.score_marche >= 5 ? C.red : "#7B1111";
+              const scoreBarColor = s.score_marche >= 16 ? C.green : s.score_marche >= 13 ? C.accent : s.score_marche >= 9 ? C.gold : s.score_marche >= 5 ? C.red : C.red;
               // Dériver le signal depuis le score si incohérent (ex: ATTENDRE à 8/20)
               const derivedSignal = s.score_marche >= 16 ? "ACHAT" : s.score_marche >= 13 ? "RENFORCER" : s.score_marche >= 9 ? "ATTENDRE" : s.score_marche >= 5 ? "PRUDENCE" : "VENDRE";
               const signal = (s.signal && SIG_COLOR[s.signal] && (

@@ -234,23 +234,15 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         ))}
       </div>
 
-      {!mobileCompact && <div className="ba-sidebar-footer" style={{ padding: "10px 12px", display: "flex", gap: "5px", justifyContent: "center", flexShrink: 0 }}>
-        {c ? (
-          onShowGuide && (
-            <button onClick={onShowGuide} title="Guide interactif"
-              style={{ width: "36px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "'DM Sans', sans-serif" }}>?</button>
-          )
-        ) : (<>
-          {onShowGuide && (
-            <button onClick={onShowGuide} title="Guide interactif"
-              style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>?</button>
-          )}
-        </>)}
-      </div>}
-
       {!c && !mobileCompact && positions.length > 0 && <div className="ba-sidebar-pfcard" style={{ padding: "12px 12px 14px", flexShrink: 0 }}>
-        <div style={{ background: "#F2F2F7", borderRadius: "16px", padding: "16px 18px" }}>
-          <div style={{ fontSize: "9px", fontWeight: "600", color: "#8E8E93", letterSpacing: "1.2px", textTransform: "uppercase", marginBottom: "6px" }}>Portefeuille {account || "PEA"}</div>
+        <div style={{ background: "#F2F2F7", borderRadius: "16px", padding: "14px 16px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "6px" }}>
+            <div style={{ fontSize: "9px", fontWeight: "600", color: "#8E8E93", letterSpacing: "1.2px", textTransform: "uppercase" }}>Portefeuille {account || "PEA"}</div>
+            {onShowGuide && (
+              <button onClick={onShowGuide} title="Guide interactif"
+                style={{ width: "20px", height: "20px", borderRadius: "6px", background: "rgba(0,0,0,0.06)", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "11px", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>?</button>
+            )}
+          </div>
           <div style={{ fontSize: "20px", fontWeight: "700", color: "#1C1C1E", letterSpacing: "-0.5px", marginBottom: "4px", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{fmtEur(totalActuel)}</div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "11px", color: pv >= 0 ? "#16a34a" : "#dc2626", fontWeight: "600", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{(pv >= 0 ? "+" : "") + fmtEur(pv)}</span>
@@ -258,6 +250,13 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
           </div>
         </div>
       </div>}
+
+      {!mobileCompact && c && onShowGuide && (
+        <div style={{ padding: "10px 12px", display: "flex", justifyContent: "center", flexShrink: 0 }}>
+          <button onClick={onShowGuide} title="Guide interactif"
+            style={{ width: "36px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "'DM Sans', sans-serif" }}>?</button>
+        </div>
+      )}
     </div>
   );
 }

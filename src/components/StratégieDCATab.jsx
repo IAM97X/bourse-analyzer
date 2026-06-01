@@ -164,7 +164,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             {[...scored].sort((a, b) => b.score - a.score).map((pos, i) => {
               const sig = pos.iaEntry?.signal || "—";
-              const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? "#7B1111" : sig === "PRUDENCE" ? C.red : C.goldDark;
+              const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? C.red : sig === "PRUDENCE" ? C.red : C.goldDark;
               return (
                 <div key={pos.id} style={{ display: "flex", alignItems: "center", gap: "7px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "6px 10px" }}>
                   <CompanyAvatar nom={pos.nom} isin={pos.isin} size={30} />

@@ -32,7 +32,7 @@ export function ApiKeysSection() {
 
   const inp = { width: "100%", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "10px 14px", color: C.ink, fontSize: "12px", fontFamily: "monospace", outline: "none", boxSizing: "border-box" };
   const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", display: "block" };
-  const hasKeys = keys.anthropic || keys.google || keys.gemini;
+  const hasKeys = keys.anthropic || keys.google || keys.gemini || keys.fmp;
 
   return (
     <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "18px 20px", boxShadow: shadow.card }}>
@@ -59,6 +59,11 @@ export function ApiKeysSection() {
             <label style={lbl}>Clé Claude (Anthropic, analyses avancées) — <a href="https://console.anthropic.com/account/keys" target="_blank" rel="noreferrer" style={{ color: C.navy }}>console.anthropic.com</a></label>
             <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px" }}>Prioritaire sur Gemini si configurée. Active des analyses plus poussées.</div>
             <input style={inp} type="password" placeholder="sk-ant-api03-…" value={keys.anthropic || ""} onChange={e => setKeys(k => ({ ...k, anthropic: e.target.value }))} autoComplete="off" spellCheck="false" />
+          </div>
+          <div>
+            <label style={lbl}>Clé FMP (Financial Modeling Prep, graphiques historiques) — <a href="https://financialmodelingprep.com/developer/docs/" target="_blank" rel="noreferrer" style={{ color: C.navy }}>financialmodelingprep.com</a></label>
+            <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "6px" }}>Plan gratuit : 250 req/jour. Requise pour les projections, évolution du portefeuille et TWR.</div>
+            <input style={inp} type="password" placeholder="…" value={keys.fmp || ""} onChange={e => setKeys(k => ({ ...k, fmp: e.target.value }))} autoComplete="off" spellCheck="false" />
           </div>
           {saved && <div style={{ fontSize: "11px", color: C.green, fontWeight: "600" }}>✓ Sauvegardé</div>}
           {hasKeys && (
