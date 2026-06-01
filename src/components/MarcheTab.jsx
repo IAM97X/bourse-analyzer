@@ -612,7 +612,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
 
         {marketScoringUi === UI.ERROR && (
           <div style={{ padding: "12px 14px", background: C.redLight, border: `1px solid rgba(231,76,60,0.25)`, borderRadius: "12px", color: C.red, fontSize: "12.5px" }}>
-            Erreur lors du scoring — Vérifiez votre clé API et réessayez.
+            Erreur lors du scoring — Service temporairement indisponible. Réessayez dans quelques instants.
           </div>
         )}
       </div>

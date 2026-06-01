@@ -218,12 +218,12 @@ function AuthPage({ onSession, onBack, initialMode = "signin" }) {
                     style={{ width: "100%", background: "#F2F2F7", border: `1.5px solid ${keys.anthropic.trim() ? "rgba(22,163,74,0.5)" : "#E5E5EA"}`, borderRadius: "12px", padding: "11px 44px 11px 14px", color: "#1C1C1E", fontSize: "12px", fontFamily: "monospace", outline: "none", boxSizing: "border-box" }} />
                   <button onClick={() => toggleShow("anthropic")} style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8E8E93", fontSize: "10px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600" }}>{showKeys["anthropic"] ? "Cacher" : "Voir"}</button>
                 </div>
-                {keys.anthropic.trim() && <div style={{ fontSize: "10px", color: "#16a34a", marginTop: "4px" }}>✓ Toutes les fonctionnalités IA disponibles</div>}
+                <div style={{ fontSize: "10px", color: "#16a34a", marginTop: "4px" }}>✓ Toutes les fonctionnalités IA disponibles</div>
               </div>
               {apiInp("google", "AIzaSy…", "Clé Google Search")}
               {apiInp("cx", "707b30d5e62e…", "Google CX")}
               {apiInp("alphavantage", "AREI4UOU…", "Alpha Vantage")}
-              <button onClick={handleFinish} style={btnPrimary}>{keys.anthropic.trim() ? "Accéder à mon espace →" : "Continuer sans clé API →"}</button>
+              <button onClick={handleFinish} style={btnPrimary}>Accéder à mon espace →</button>
               <div style={{ textAlign: "center", marginTop: "10px", fontSize: "11px", color: "#8E8E93" }}>Vous pouvez ajouter les clés plus tard dans Paramètres.</div>
             </>
           )}

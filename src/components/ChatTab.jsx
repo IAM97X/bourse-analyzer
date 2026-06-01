@@ -316,15 +316,10 @@ Règles strictes :
           <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "10px" }}>
             {!hasAI() && (
               <div style={{ textAlign: "center", paddingTop: "16px" }}>
-                <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>IA non disponible</div>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Assistant temporairement indisponible</div>
                 <div style={{ fontSize: "11px", color: C.inkSubtle, marginBottom: "20px", lineHeight: "1.6" }}>
-                  Ajoutez une clé <strong>Gemini</strong> (gratuite) ou <strong>Claude</strong> dans Paramètres pour activer l'assistant.
+                  Le service IA est momentanément indisponible. Réessayez dans quelques instants.
                 </div>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer"
-                  style={{ display: "inline-block", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#fff", borderRadius: "10px", padding: "10px 20px", fontSize: "12px", fontWeight: "700", textDecoration: "none", marginBottom: "12px" }}>
-                  Clé Gemini gratuite →
-                </a>
-                <div style={{ fontSize: "10px", color: C.inkSubtle, lineHeight: "1.6" }}>Ajoutez votre clé dans<br/><strong>Profil → Clés API</strong></div>
               </div>
             )}
             {hasAI() && messages.length === 0 && (
