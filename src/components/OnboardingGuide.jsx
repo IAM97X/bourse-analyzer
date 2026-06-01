@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { C } from "../constants/theme";
-import AppLogo from "./AppLogo";
+
 
 export const ONBOARDING_KEY = "bourse_onboarding_v1";
 
@@ -109,7 +109,7 @@ export default function OnboardingGuide({ onDone }) {
         {isFirst ? (
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
             <div style={{ width: "80px", height: "80px", borderRadius: "24px", background: "linear-gradient(135deg, #E8F0FB, #D0E4F7)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <AppLogo size={44} />
+              <span style={{ fontSize: "18px", fontWeight: "800", color: C.accent, fontFamily: "'DM Sans', sans-serif" }}>BNext</span>
             </div>
           </div>
         ) : (

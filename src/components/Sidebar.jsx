@@ -4,7 +4,7 @@ import { TABS } from "../constants/tabs";
 import { load, save } from "../lib/storage";
 import { fmtEur, sanitizePositions } from "../lib/finance";
 import { useIsMobile } from "../context/mobile";
-import AppLogo from "./AppLogo";
+
 
 const IconHome = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

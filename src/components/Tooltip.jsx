@@ -94,18 +94,19 @@ export default function Tooltip({ term, children, text, iconOnly }) {
     <>
       <span
         ref={triggerRef}
-        onMouseEnter={show}
-        onMouseLeave={scheduleHide}
         style={{ display: "inline-flex", alignItems: "center", gap: "2px", cursor: "default" }}
       >
         {!iconOnly && (children || <span style={{ borderBottom: "1px dashed currentColor", cursor: "help" }}>{term}</span>)}
-        <span style={{
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          width: "13px", height: "13px", borderRadius: "50%",
-          background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.4)",
-          fontSize: "8px", fontWeight: "800", color: "#6366F1",
-          cursor: "help", flexShrink: 0, lineHeight: 1, userSelect: "none",
-        }}>?</span>
+        <span
+          onMouseEnter={show}
+          onMouseLeave={scheduleHide}
+          style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            width: "13px", height: "13px", borderRadius: "50%",
+            background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.4)",
+            fontSize: "8px", fontWeight: "800", color: "#6366F1",
+            cursor: "help", flexShrink: 0, lineHeight: 1, userSelect: "none",
+          }}>?</span>
       </span>
 
       {createPortal(tooltip, document.body)}

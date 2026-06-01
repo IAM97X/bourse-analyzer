@@ -236,7 +236,7 @@ export default function BourseAnalyzer() {
     </div>
   );
 
-  if (state === "landing") return <LandingPage onDemo={handleDemo} onLogin={() => setState("auth")} />;
-  if (state === "auth") return <AuthPage onSession={handleSession} />;
+  if (state === "landing") return <LandingPage onLogin={() => setState("auth")} />;
+  if (state === "auth") return <AuthPage onSession={handleSession} onBack={() => setState("landing")} />;
   return <AppErrorBoundary><MobileProvider><BourseAnalyzerInner key={loginKey} userName={userName} onLogout={handleLogout} /></MobileProvider></AppErrorBoundary>;
 }

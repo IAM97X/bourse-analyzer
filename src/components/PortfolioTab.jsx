@@ -482,10 +482,16 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
         <input ref={importCsvRef} type="file" accept=".csv,.txt" style={{ display: "none" }} onChange={handleCsvImport} />
         {!isDemoMode() && (
-          <button onClick={() => importCsvRef.current?.click()}
-            style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
-            {isMobile ? "↑ CSV" : "↑ Import CSV"}
-          </button>
+          <span style={{ position: "relative", display: "inline-flex" }} className="import-pos-tooltip-wrap">
+            <button onClick={() => importCsvRef.current?.click()}
+              style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
+              {isMobile ? "↑ Positions" : "↑ Importer mes positions"}
+            </button>
+            <span className="import-pos-tooltip-box" style={{ position: "absolute", bottom: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", background: C.ink, color: "#fff", fontSize: "11px", fontWeight: "400", lineHeight: 1.6, borderRadius: "10px", padding: "10px 13px", width: "280px", pointerEvents: "none", opacity: 0, transition: "opacity 0.15s ease", zIndex: 100, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", fontFamily: "'DM Sans', sans-serif", whiteSpace: "normal" }}>
+              Exportez votre relevé de portefeuille depuis votre espace courtier (Boursobank, Fortuneo, DEGIRO…) au format CSV, puis importez-le ici.
+            </span>
+            <style>{`.import-pos-tooltip-wrap:hover .import-pos-tooltip-box { opacity: 1 !important; }`}</style>
+          </span>
         )}
 
         {!isDemoMode() && <button
@@ -494,10 +500,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           style={{ background: marketScoringUi === UI.LOADING ? C.snowOff : C.navyLight, border: `1px solid ${marketScoringUi === UI.LOADING ? C.border : "rgba(30,58,95,0.12)"}`, borderRadius: "8px", padding: "9px 16px", color: marketScoringUi === UI.LOADING ? C.inkSubtle : C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: marketScoringUi === UI.LOADING || positions.length === 0 ? "not-allowed" : "pointer" }}>
           {marketScoringUi === UI.LOADING
             ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"13px" }}><BNextLabel /></span>
-            : <span style={{ display:"inline-flex", alignItems:"center", gap:"6px" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-                {isMobile ? "" : "Analyser toutes mes lignes"}
-              </span>}
+            : <span>{isMobile ? "Analyser" : "Analyser toutes mes lignes"}</span>}
         </button>}
 
         {/* Bouton Capturer */}
@@ -602,7 +605,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       {/* Modal preview CSV */}
       {csvPreview && (
         <div style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "10px", padding: "16px 18px", marginBottom: "16px", boxShadow: shadow.card }}>
-          <div style={{ fontSize: "12px", fontWeight: "800", color: C.navy, marginBottom: "6px" }}>Aperçu import CSV — {csvPreview.file}</div>
+          <div style={{ fontSize: "12px", fontWeight: "800", color: C.navy, marginBottom: "6px" }}>Aperçu import relevé — {csvPreview.file}</div>
           <div style={{ fontSize: "10px", color: C.inkMuted, marginBottom: "10px" }}>Le portefeuille sera <strong>remplacé</strong> par les {csvPreview.parsed.length} positions du CSV. Les alertes existantes sont conservées.</div>
           <div style={{ display: "flex", gap: "16px", marginBottom: "12px", flexWrap: "wrap" }}>
             <span style={{ fontSize: "11px", color: C.green, fontWeight: "700" }}>✓ {csvPreview.updated.length} position(s) existante(s)</span>
@@ -767,11 +770,11 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                             {pos.isin && <span style={{ fontSize: "8px", color: C.inkSubtle, fontWeight: "500", letterSpacing: "0.3px", flexShrink: 0 }}>{pos.isin}</span>}
                             {sig && <span style={{ fontSize: "8px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "3px", padding: "1px 4px", whiteSpace: "nowrap", flexShrink: 0 }}>{sig}</span>}
                             <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance"
-                              style={{ background: "#5F01D1", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "10px", fontWeight: "700", color: "#fff", fontFamily: "'DM Sans', sans-serif", padding: "2px 6px", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>
+                              style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "4px", cursor: "pointer", fontSize: "9px", fontWeight: "600", color: C.inkMuted, fontFamily: "'DM Sans', sans-serif", padding: "2px 6px", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>
                               Yahoo
                             </button>
                             {euronextUrl && <a href={euronextUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                              style={{ background: "#003087", border: "none", borderRadius: "4px", padding: "2px 6px", color: "#fff", fontSize: "10px", fontWeight: "700", textDecoration: "none", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>Euronext</a>}
+                              style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "4px", padding: "2px 6px", color: C.inkMuted, fontSize: "9px", fontWeight: "600", textDecoration: "none", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>Euronext</a>}
                           </div>
                         </div>
                       </div>
@@ -950,12 +953,12 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                       const url = getEuronextUrl(pos.isin, pos.nom);
                       return (
                         <a href={url} target="_blank" rel="noopener noreferrer"
-                          style={{ background: "#003087", border: "none", borderRadius: "8px", padding: "7px 14px", color: "#fff", fontSize: "12px", fontWeight: "700", textDecoration: "none" }}>
+                          style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 14px", color: C.inkMuted, fontSize: "12px", fontWeight: "600", textDecoration: "none", fontFamily: "'DM Sans', sans-serif" }}>
                           Euronext
                         </a>
                       );
                     })()}
-                    <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance" style={{ background: "#5F01D1", border: "none", borderRadius: "8px", padding: "7px 14px", color: "#fff", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "700" }}>Yahoo Finance</button>
+                    <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance" style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "600" }}>Yahoo Finance</button>
                     <button onClick={() => setSellSimPos(pos)} title="Simuler une vente" style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "8px", padding: "7px 12px", color: C.greenDark, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "700" }}>€ Vendre</button>
                     <button onClick={() => openForm(pos)} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 12px", color: C.inkMuted, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✏</button>
                     <button onClick={() => { if (window.confirm(`Supprimer ${pos.nom} ?`)) setPositions(prev => prev.filter(p => p.id !== pos.id)); }} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px 12px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✕</button>

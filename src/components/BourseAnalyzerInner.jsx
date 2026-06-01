@@ -10,7 +10,7 @@ import { useIsMobile } from "../context/mobile";
 import { UI, DEFAULT_PROFIL } from "../constants/config";
 import { TABS } from "../constants/tabs";
 import { Card } from "./UI";
-import AppLogo from "./AppLogo";
+
 import AutopilotIA from "./AutopilotIA";
 import ChatTab, { AIAssistant } from "./ChatTab";
 import MarketStatusBar from "./MarketStatusBar";

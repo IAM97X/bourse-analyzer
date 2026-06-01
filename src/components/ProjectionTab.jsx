@@ -70,9 +70,9 @@ function SuiviHistorique() {
   const hovP = hoverIdx !== null ? points[hoverIdx] : null;
 
   return (
-    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "24px", boxShadow: shadow.card }}>
+    <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: shadow.card }}>
       {/* En-tête */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "20px" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
         <div>
           <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, letterSpacing: "1px", marginBottom: "4px" }}>ÉVOLUTION RÉELLE DU PORTEFEUILLE</div>
           <div style={{ fontSize: "11px", color: C.inkSubtle }}>Depuis le {new Date(ref.date).toLocaleDateString("fr-FR")} · référence 7%/an + {fmtEur(ref.dcaMensuel)}/mois</div>
@@ -197,6 +197,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
   const [histWindow,   setHistWindow]     = useState(3);   // années d'historique affiché : 1 | 3 | 5
   const [ageRetraiteStr, setAgeRetraiteStr] = useState(() => localStorage.getItem("bourse_age_retraite") || "65");
   const ageRetraite = Math.min(75, Math.max(50, parseInt(ageRetraiteStr) || 65));
+  const [retraiteDansStr, setRetraiteDansStr] = useState(() => localStorage.getItem("bourse_retraite_dans") || "");
   const [histProj, setHistProj]     = useState(null);      // { taux, detail: [{nom,taux}] }
   const [loadingHist, setLoadingHist] = useState(false);
   const [histError, setHistError]   = useState(null);
@@ -523,13 +524,15 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
   const step5  = horizonYears <= 10 ? 2 : horizonYears <= 15 ? 3 : 5;
   // Retraite marker
   const ageActuel = profil?.anneeNaissance ? new Date().getFullYear() - parseInt(profil.anneeNaissance) : null;
-  const ansDuRetraite = ageActuel !== null ? Math.max(0, ageRetraite - ageActuel) : null;
+  const ansDuRetraiteDepuisAge = ageActuel !== null ? Math.max(0, ageRetraite - ageActuel) : null;
+  const ansDuRetraiteDirect = parseInt(retraiteDansStr) || null;
+  const ansDuRetraite = ansDuRetraiteDepuisAge ?? ansDuRetraiteDirect;
   // Plafond marker (en années)
   const ansDcaStops = dcaStopsAt < Infinity ? dcaStopsAt / 12 : null;
   const JALONS = annees.filter(a => a > 0 && a % step5 === 0 && a < horizonYears);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       {/* En-tête */}
       <div className="ba-g4" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: "10px" }}>
         <StatBox label="Capital actuel"  value={fmtEur(totalActuel)} color={C.navy} sensitive />
@@ -574,18 +577,25 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
               ))}
             </div>
             {/* Âge retraite */}
-            {ageActuel !== null && (
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "10px", padding: "4px 10px" }}>
-                <span style={{ fontSize: "10px", fontWeight: "700", color: "#92400E" }}>Retraite</span>
-                <input
-                  type="number" min="50" max="75" step="1"
-                  value={ageRetraiteStr}
-                  onChange={e => { setAgeRetraiteStr(e.target.value); const v = parseInt(e.target.value); if (v >= 50 && v <= 75) localStorage.setItem("bourse_age_retraite", String(v)); }}
-                  style={{ width: "38px", padding: "2px 4px", borderRadius: "6px", border: "1px solid rgba(245,158,11,0.35)", background: "#FFFBEB", fontSize: "11px", fontWeight: "800", color: "#92400E", fontFamily: "'DM Sans', sans-serif", textAlign: "center", outline: "none" }}
-                />
-                <span style={{ fontSize: "10px", color: "#92400E", fontWeight: "600" }}>ans</span>
-              </div>
-            )}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "10px", padding: "4px 10px" }}>
+              <span style={{ fontSize: "10px", fontWeight: "700", color: "#92400E" }}>Retraite</span>
+              {ageActuel !== null ? (
+                <>
+                  <input type="number" min="50" max="80" step="1" value={ageRetraiteStr}
+                    onChange={e => { setAgeRetraiteStr(e.target.value); const v = parseInt(e.target.value); if (v >= 50 && v <= 80) localStorage.setItem("bourse_age_retraite", String(v)); }}
+                    style={{ width: "38px", padding: "2px 4px", borderRadius: "6px", border: "1px solid rgba(245,158,11,0.35)", background: "#FFFBEB", fontSize: "11px", fontWeight: "800", color: "#92400E", fontFamily: "'DM Sans', sans-serif", textAlign: "center", outline: "none" }} />
+                  <span style={{ fontSize: "10px", color: "#92400E", fontWeight: "600" }}>ans</span>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: "10px", color: "#92400E" }}>dans</span>
+                  <input type="number" min="1" max="50" step="1" placeholder="30" value={retraiteDansStr}
+                    onChange={e => { setRetraiteDansStr(e.target.value); localStorage.setItem("bourse_retraite_dans", e.target.value); }}
+                    style={{ width: "38px", padding: "2px 4px", borderRadius: "6px", border: "1px solid rgba(245,158,11,0.35)", background: "#FFFBEB", fontSize: "11px", fontWeight: "800", color: "#92400E", fontFamily: "'DM Sans', sans-serif", textAlign: "center", outline: "none" }} />
+                  <span style={{ fontSize: "10px", color: "#92400E", fontWeight: "600" }}>ans</span>
+                </>
+              )}
+            </div>
             {/* Inflation configurable */}
             <div style={{ display: "flex", alignItems: "center", gap: "4px", background: showInflation ? C.goldLight : C.snowOff, border: `1px solid ${showInflation ? C.gold : C.border}`, borderRadius: "10px", padding: "4px 8px", cursor: "pointer" }} onClick={() => setShowInflation(v => !v)}>
               <span style={{ fontSize: "10px", fontWeight: "700", color: showInflation ? C.goldDark : C.inkSubtle }}>Inflation</span>
@@ -1003,113 +1013,72 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
         )}
       </div>
 
-      {/* ── Encadré Retraite ── */}
-      {ansDuRetraite !== null && ansDuRetraite > 0 && (
-        <div style={{ background: "linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)", border: "1px solid #D97706", borderRadius: "20px", padding: "22px 24px", boxShadow: shadow.card }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px" }}>
-            <div style={{ width: "36px", height: "36px", borderRadius: "12px", background: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      {/* ── Jalons de projection ── */}
+      {(() => {
+        const baseJalons = [
+          { label: "1 an",  mois: 12 },
+          { label: "5 ans", mois: 60 },
+          { label: "10 ans", mois: 120 },
+          { label: "20 ans", mois: 240 },
+        ];
+        const retraiteLabel = ageActuel !== null && ansDuRetraite !== null
+          ? `Retraite · ${ageActuel + ansDuRetraite} ans`
+          : ansDuRetraite !== null
+            ? `Retraite · dans ${ansDuRetraite} ans`
+            : null;
+        const jalons = retraiteLabel && ansDuRetraite > 0 && !baseJalons.find(j => j.mois === ansDuRetraite * 12)
+          ? [...baseJalons, { label: retraiteLabel, mois: ansDuRetraite * 12, isRetraite: true }]
+          : baseJalons;
+        const scen3 = [SCENARIOS[0], SCENARIOS[1], SCENARIOS[2]];
+        return (
+          <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 18px", boxShadow: shadow.card }}>
+            <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkSubtle, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "14px" }}>
+              Jalons clés · {dcaMensuel > 0 ? `DCA ${fmtEur(dcaMensuel)}/mois` : "sans DCA"}
             </div>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: "800", color: "#92400E" }}>À la retraite — {ageActuel + ansDuRetraite} ans</div>
-              <div style={{ fontSize: "10px", color: "#B45309", marginTop: "1px" }}>
-                Dans <strong>{ansDuRetraite} ans</strong> · capital investi estimé <strong>{fmtEur(investi(ansDuRetraite * 12))}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-            {[SCENARIOS[0], SCENARIOS[1], SCENARIOS[2]].map((sc) => {
-              const mRetraite = ansDuRetraite * 12;
-              const v = proj(sc.taux, mRetraite);
-              const inv = investi(mRetraite);
-              const mult = inv > 0 ? v / inv : 1;
-              const gains = Math.max(0, v - inv);
-              const net = v - gains * (impotSortie / 100);
-              return (
-                <div key={sc.label} style={{ background: "rgba(255,255,255,0.7)", borderRadius: "14px", padding: "16px", border: `1px solid rgba(217,119,6,0.2)`, textAlign: "center" }}>
-                  <div style={{ fontSize: "10px", fontWeight: "700", color: sc.color, marginBottom: "6px" }}>{sc.icon} {sc.label}</div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: sc.color, lineHeight: 1 }}>{fmtVal(v)}</div>
-                  <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px" }}>×{mult.toFixed(1)} l'investissement</div>
-                  {impotSortie > 0 && (
-                    <div style={{ fontSize: "10px", color: C.inkMuted, marginTop: "6px", paddingTop: "6px", borderTop: "1px solid rgba(217,119,6,0.15)", fontWeight: "600" }}>
-                      {fmtEur(net)} net après impôt
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${jalons.length}, 1fr)`, gap: "10px" }}>
+              {jalons.map(({ label, mois, isRetraite }) => {
+                const inv = investi(mois);
+                const vals = scen3.map(sc => ({ ...sc, v: proj(sc.taux, mois) }));
+                const maxVal = vals[2].v;
+                return (
+                  <div key={label} style={{
+                    background: isRetraite ? "linear-gradient(135deg, #FFFBEB, #FEF3C7)" : C.snowOff,
+                    border: `1px solid ${isRetraite ? "#D97706" : C.border}`,
+                    borderRadius: "12px", padding: "14px 12px",
+                  }}>
+                    <div style={{ fontSize: "12px", fontWeight: "800", color: isRetraite ? "#92400E" : C.ink, marginBottom: "2px" }}>{label}</div>
+                    <div style={{ fontSize: "10px", color: isRetraite ? "#B45309" : C.inkSubtle, marginBottom: "14px" }}>
+                      Investi : <strong>{fmtVal(inv)}</strong>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {(() => {
-            const mRetraite = ansDuRetraite * 12;
-            const dcaEffectifMois = Math.min(dcaStopsAt, mRetraite);
-            const dcaEffectifAns  = (dcaEffectifMois / 12).toFixed(1);
-            const capitalDCA      = investi(mRetraite) - totalInvesti;
-            const stopRaison      = isPEA && moisPlafond <= Math.min(dcaDureeConfig, mRetraite)
-              ? `plafond PEA 150k€ atteint`
-              : dcaDureeConfig <= Math.min(moisPlafond, mRetraite)
-                ? `durée DCA configurée`
-                : `jusqu'à la retraite`;
-            return (
-              <div style={{ marginTop: "12px", fontSize: "10px", color: "#92400E", opacity: 0.75, textAlign: "center", lineHeight: "1.6" }}>
-                DCA de {fmtEur(dcaMensuel)}/mois · actif pendant <strong>{dcaEffectifAns} ans</strong> ({dcaEffectifMois} versements) · arrêt : {stopRaison}<br />
-                Versements cumulés : <strong>{fmtEur(Math.round(capitalDCA))}</strong> · impôt sortie {impotSortie}% sur les gains
-              </div>
-            );
-          })()}
-        </div>
-      )}
-
-      {/* ── Tableau ── */}
-      <div className="ba-table-wrap" style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "12px", overflow: "hidden", boxShadow: shadow.card }}>
-        <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, fontSize: "11px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", letterSpacing: "1.5px" }}>
-          Tableau de projection détaillé
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: `130px repeat(${HORIZONS_TABLE.length}, 1fr)`, borderBottom: `1px solid ${C.border}`, padding: "10px 16px", background: C.snowOff }}>
-          <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase" }}>Scénario</div>
-          {HORIZONS_TABLE.map(m => (
-            <div key={m} style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", textTransform: "uppercase", textAlign: "center" }}>{durLabel(m)}</div>
-          ))}
-        </div>
-        {/* Coût réel */}
-        <div style={{ display: "grid", gridTemplateColumns: `130px repeat(${HORIZONS_TABLE.length}, 1fr)`, padding: "10px 16px", borderBottom: `1px solid ${C.border}`, background: C.snowOff }}>
-          <div style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600" }}>Coût réel</div>
-          {HORIZONS_TABLE.map(m => (
-            <div key={m} style={{ fontSize: "11px", color: C.inkMuted, textAlign: "center" }}>{fmtEur(investi(m))}</div>
-          ))}
-        </div>
-        {SCENARIOS.map((sc, si) => (
-          <div key={sc.taux} style={{ display: "grid", gridTemplateColumns: `130px repeat(${HORIZONS_TABLE.length}, 1fr)`, padding: "12px 16px", borderBottom: si < SCENARIOS.length - 1 ? `1px solid ${C.border}` : "none", background: si === 1 ? C.navyLight + "50" : si === 3 ? "#FBF0E430" : "transparent" }}>
-            <div>
-              <div style={{ fontSize: "11px", color: sc.color, fontWeight: "700" }}>{sc.icon} {sc.label}</div>
-              <div style={{ fontSize: "9px", color: sc.color, opacity: 0.7, fontWeight: "600" }}>
-                +{Math.round(sc.taux * 100)}%/an{si === 3 ? " (P/V CSV)" : ""}
-                {inflationRate > 0 && <span style={{ opacity: 0.6 }}> · réel {((sc.taux - inflationRate / 100) * 100).toFixed(1)}%</span>}
-              </div>
+                    {vals.map(({ label: scLabel, v, color, icon }) => {
+                      const gains = Math.max(0, v - inv);
+                      const net = v - gains * (impotSortie / 100);
+                      const barW = maxVal > 0 ? Math.round(v / maxVal * 100) : 0;
+                      return (
+                        <div key={scLabel} style={{ marginBottom: "10px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+                            <span style={{ fontSize: "9px", fontWeight: "700", color, opacity: 0.85 }}>{icon} {scLabel}</span>
+                            <span style={{ fontSize: "12px", fontWeight: "800", color }}>{fmtVal(v)}</span>
+                          </div>
+                          <div style={{ height: "3px", background: C.border, borderRadius: "2px", overflow: "hidden" }}>
+                            <div style={{ width: `${barW}%`, height: "100%", background: color, borderRadius: "2px" }} />
+                          </div>
+                          {impotSortie > 0 && (
+                            <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "2px" }}>{fmtVal(net)} net</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
-            {HORIZONS_TABLE.map(m => {
-              const v    = proj(sc.taux, m);
-              const inv  = investi(m);
-              const mult = inv > 0 ? v / inv : 1;
-              const gains = Math.max(0, v - inv);
-              const netApresImpot = v - gains * (impotSortie / 100);
-              const multReel = inv > 0 ? (v / Math.pow(1 + inflationRate / 100, m / 12)) / inv : 1;
-              return (
-                <div key={m} style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "12px", fontWeight: "700", color: sc.color }}>{fmtEur(v)}</div>
-                  <div style={{ fontSize: "9px", color: sc.color, opacity: 0.65 }}>×{mult.toFixed(1)}{inflationRate > 0 && <span> · ×{multReel.toFixed(1)} réel</span>}</div>
-                  {impotSortie > 0 && <div style={{ fontSize: "9px", color: C.inkSubtle, opacity: 0.8 }}>{fmtEur(netApresImpot)} net</div>}
-                </div>
-              );
-            })}
+            <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "12px", textAlign: "center" }}>
+              ⚠ Projections indicatives — Pessimiste +3%/an · Réaliste +7%/an · Optimiste +12%/an{impotSortie > 0 ? ` · impôt sortie ${impotSortie}% sur les gains` : ""}
+            </div>
           </div>
-        ))}
-      </div>
-
-      <div style={{ fontSize: "10px", color: C.inkSubtle, textAlign: "center", lineHeight: "1.7" }}>
-        Base : capital de marché actuel {fmtEur(totalActuel)} · coût historique {fmtEur(totalInvesti)} · DCA {dcaMensuel > 0 ? fmtEur(dcaMensuel) + "/mois" : "non configuré"}<br />
-        ×N = multiplicateur nominal · ×N réel = ajusté inflation {inflationRate}% · "net" = après impôt de sortie {impotSortie}% sur les gains · ⚠ Projections indicatives, non garanties.
-      </div>
+        );
+      })()}
 
       {/* ══════════════════════════════════════════════════════════
            SIMULATEUR DE RETRAIT PEA
@@ -1136,11 +1105,13 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
         const dateOuv = load(account === "PEA" ? "bourse_pea_ouverture" : "bourse_cto_ouverture", null);
         const agePEAActuel = dateOuv ? (Date.now() - new Date(dateOuv).getTime()) / (1000*60*60*24*365) : null;
         const agePEARetrait = agePEAActuel !== null ? agePEAActuel + retraitHorizon : null;
-        // Si on connaît la date : ancienneté calculée automatiquement
+        // Ancienneté : date ouverture > horizon ≥ 5 ans > manuel
         const ancienneteEffective = agePEARetrait !== null
           ? (agePEARetrait >= 5 ? "apres5" : "avant5")
-          : retraitAnciennete; // sinon valeur manuelle
-        const ancienneteInconsistante = agePEARetrait !== null && ancienneteEffective !== retraitAnciennete;
+          : retraitHorizon >= 5 ? "apres5"
+          : retraitAnciennete;
+        const ancienneteAuto = agePEARetrait !== null || retraitHorizon >= 5;
+        const ancienneteInconsistante = false;
 
         // Taux effectifs selon ancienneté réelle + régime fiscal
         const PS_RATE = 0.172;
@@ -1183,7 +1154,14 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                   <div style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", marginBottom: "6px" }}>Horizon de retrait</div>
                   <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
                     {[0,1,2,3,5,7,10,15,20].map(h => (
-                      <button key={h} onClick={() => setRetraitHorizon(h)}
+                      <button key={h} onClick={() => {
+                        setRetraitHorizon(h);
+                        const dateOuvLocal = load(account === "PEA" ? "bourse_pea_ouverture" : "bourse_cto_ouverture", null);
+                        const ageActuelLocal = dateOuvLocal ? (Date.now() - new Date(dateOuvLocal).getTime()) / (1000*60*60*24*365) : null;
+                        const agePEAFutur = ageActuelLocal !== null ? ageActuelLocal + h : null;
+                        const autoAnc = agePEAFutur !== null ? (agePEAFutur >= 5 ? "apres5" : "avant5") : (h >= 5 ? "apres5" : "avant5");
+                        setRetraitAnciennete(autoAnc);
+                      }}
                         style={{ padding: "4px 9px", borderRadius: "16px", border: `1.5px solid ${retraitHorizon === h ? C.navy : C.border}`, background: retraitHorizon === h ? C.navyLight : C.snow, color: retraitHorizon === h ? C.navy : C.inkMuted, fontSize: "10px", fontWeight: retraitHorizon === h ? "700" : "500", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                         {h === 0 ? "Maintenant" : `${h}a`}
                       </button>
@@ -1214,6 +1192,12 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                 {isPEA && (
                 <div>
                   <div style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", marginBottom: "6px" }}>Ancienneté du PEA</div>
+                  {ancienneteAuto ? (
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: ancienneteEffective === "apres5" ? C.greenLight : C.goldLight, border: `1px solid ${ancienneteEffective === "apres5" ? "rgba(5,150,105,0.2)" : "rgba(217,119,6,0.2)"}`, borderRadius: "8px", padding: "8px 14px", fontSize: "11px", fontWeight: "700", color: ancienneteEffective === "apres5" ? C.green : C.goldDark }}>
+                      {ancienneteEffective === "apres5" ? "✓ 5 ans et plus" : "Moins de 5 ans"}
+                      <span style={{ fontSize: "10px", fontWeight: "400", opacity: 0.7 }}>— calculé automatiquement</span>
+                    </div>
+                  ) : (
                   <div style={{ display: "flex", gap: "6px" }}>
                     {[["avant5","Moins de 5 ans"],["apres5","5 ans et plus"]].map(([v, label]) => (
                       <button key={v} onClick={() => setRetraitAnciennete(v)}
@@ -1222,10 +1206,11 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                       </button>
                     ))}
                   </div>
+                  )}
                 </div>
                 )}
 
-                {(!isPEA || retraitAnciennete === "avant5") && (
+                {(!isPEA || ancienneteEffective === "avant5") && (
                   <div>
                     <div style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", marginBottom: "6px" }}>Régime d'imposition (IR)</div>
                     <div style={{ display: "flex", gap: "6px" }}>

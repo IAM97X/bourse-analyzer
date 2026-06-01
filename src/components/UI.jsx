@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
-import AppLogo from "./AppLogo";
+
 
 const BN_KEYFRAMES = `
   @keyframes bn-sp-rot1 { from{transform:rotate(-120deg)} to{transform:rotate(240deg)} }
@@ -100,8 +100,7 @@ export function LoadingPanel() {
   return (
     <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "48px 32px", display: "flex", justifyContent: "center" }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
-        <AppLogo size={52} animated={true} />
-        <div style={{ fontSize: "14px", fontFamily: "'DM Sans', sans-serif" }}><BNextLabel /></div>
+        <div style={{ fontSize: "16px", fontFamily: "'DM Sans', sans-serif" }}><BNextLabel /></div>
       </div>
     </div>
   );

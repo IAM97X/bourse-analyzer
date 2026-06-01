@@ -257,6 +257,10 @@ function PEAAvisOperes({ account = "PEA" }) {
 
   const [sortKey, setSortKey] = useState("date");
   const [sortDir, setSortDir] = useState("desc");
+  const [avisPage, setAvisPage] = useState(0);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("TOUS");
+  const AVIS_PAGE_SIZE = 10;
 
   const removeOp = (id) => setOperations(prev => { const next = prev.filter(o => o.id !== id); save("bourse_avis_operes", next); return next; });
   const clearAll = () => { setOperations(prev => { const next = prev.filter(o => (o.compte || "PEA") !== account); save("bourse_avis_operes", next); return next; }); setUi(UI.IDLE); };
@@ -268,8 +272,14 @@ function PEAAvisOperes({ account = "PEA" }) {
 
   const typeColor = (t) => t === "ACHAT" ? C.green : t === "VENTE" ? C.navy : t === "DIVIDENDE" ? C.goldDark : C.inkMuted;
 
-  // Filtrer par compte courant
+  // Filtrer par compte courant + type + recherche
   const filteredOps = operations.filter(o => (o.compte || "PEA") === account);
+  const q = search.trim().toLowerCase();
+  const displayedOps = filteredOps.filter(o => {
+    if (typeFilter !== "TOUS" && o.type !== typeFilter) return false;
+    if (q && !o.titre?.toLowerCase().includes(q) && !o.isin?.toLowerCase().includes(q)) return false;
+    return true;
+  });
 
   // ── Calcul P&L réalisé par titre (chronologique) ─────────────────────────
   const computePnL = () => {
@@ -315,7 +325,7 @@ function PEAAvisOperes({ account = "PEA" }) {
   };
 
   // Tri du tableau
-  const sorted = [...filteredOps].sort((a, b) => {
+  const sorted = [...displayedOps].sort((a, b) => {
     let va, vb;
     if (sortKey === "date") {
       va = `${a.date || ""}T${a.heure || "00:00:00"}`;
@@ -338,9 +348,30 @@ function PEAAvisOperes({ account = "PEA" }) {
 
   return (
     <div style={{ marginTop: "28px" }}>
-      <div style={{ fontSize: "11px", fontWeight: "800", color: C.ink, letterSpacing: "0.5px", marginBottom: "14px" }}>
+      <div style={{ fontSize: "11px", fontWeight: "800", color: C.ink, letterSpacing: "0.5px", marginBottom: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
         Avis d'opérés
+        <span style={{ position: "relative", display: "inline-flex" }} className="avis-tooltip-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.inkSubtle} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "default", flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span className="avis-tooltip-box" style={{ position: "absolute", bottom: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", background: C.ink, color: "#fff", fontSize: "11px", fontWeight: "400", lineHeight: 1.6, borderRadius: "10px", padding: "10px 13px", width: "260px", pointerEvents: "none", opacity: 0, transition: "opacity 0.15s ease", zIndex: 100, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", fontFamily: "'DM Sans', sans-serif" }}>
+            Votre courtier vous envoie un avis d'opéré par e-mail après chaque transaction. Vous pouvez aussi le retrouver dans votre espace client, rubrique "Documents" ou "Historique des ordres".
+          </span>
+        </span>
+        <style>{`.avis-tooltip-wrap:hover .avis-tooltip-box { opacity: 1 !important; }`}</style>
       </div>
+      {(() => {
+        const year = new Date().getFullYear();
+        const divYear = filteredOps.filter(o => o.type === "DIVIDENDE" && o.date?.startsWith(String(year)));
+        if (!divYear.length) return null;
+        const total = divYear.reduce((s, o) => s + (parseFloat(o.montant) || parseFloat(o.prixUnitaire) * parseFloat(o.quantite) || 0), 0);
+        if (!total) return null;
+        return (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: C.goldLight, border: "1px solid rgba(217,119,6,0.18)", borderRadius: "8px", padding: "7px 14px", marginBottom: "12px" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.goldDark} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: C.goldDark }}>Dividendes {year} : +{total.toFixed(2)} €</span>
+            <span style={{ fontSize: "10px", color: C.goldDark, opacity: 0.7 }}>({divYear.length} versement{divYear.length > 1 ? "s" : ""})</span>
+          </div>
+        );
+      })()}
 
       {/* Import PDF */}
       <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "14px", flexWrap: "wrap" }}>
@@ -359,6 +390,29 @@ function PEAAvisOperes({ account = "PEA" }) {
       </div>
 
 
+      {/* ── Filtres + recherche ── */}
+      {filteredOps.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", flexWrap: "wrap" }}>
+          <div style={{ position: "relative", flex: "1 1 180px", minWidth: "160px" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.inkSubtle} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input value={search} onChange={e => { setSearch(e.target.value); setAvisPage(0); }} placeholder="Rechercher un titre ou ISIN…"
+              style={{ width: "100%", paddingLeft: "30px", paddingRight: "10px", paddingTop: "7px", paddingBottom: "7px", background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", fontSize: "12px", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ display: "flex", gap: "4px" }}>
+            {["TOUS","ACHAT","VENTE","DIVIDENDE"].map(t => {
+              const color = t === "ACHAT" ? C.green : t === "VENTE" ? C.navy : t === "DIVIDENDE" ? C.goldDark : C.inkMuted;
+              const active = typeFilter === t;
+              return (
+                <button key={t} onClick={() => { setTypeFilter(t); setAvisPage(0); }}
+                  style={{ fontSize: "10px", fontWeight: "700", padding: "5px 11px", borderRadius: "20px", border: active ? "none" : `1px solid ${C.border}`, background: active ? (t === "TOUS" ? C.ink : color + "18") : C.snowOff, color: active ? (t === "TOUS" ? "#fff" : color) : C.inkMuted, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s ease" }}>
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ── Tableau des opérations avec entête fixe + tri ── */}
       {filteredOps.length > 0 && (
         <div className="ba-tbl-scroll" style={{ border: `1px solid ${C.border}`, borderRadius: "18px", boxShadow: shadow.card }}>
@@ -371,7 +425,7 @@ function PEAAvisOperes({ account = "PEA" }) {
                 </div>
               ))}
             </div>
-            {sorted.map(op => {
+            {sorted.slice(avisPage * AVIS_PAGE_SIZE, (avisPage + 1) * AVIS_PAGE_SIZE).map(op => {
               const gain = op.type === "VENTE" ? enrichOp(op) : null;
               return (
                 <div key={op.id} style={{ display: "grid", gridTemplateColumns: cols, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, alignItems: "center", background: gain !== null ? (gain >= 0 ? "rgba(45,122,82,0.04)" : "rgba(176,58,46,0.04)") : "transparent" }}>
@@ -396,8 +450,22 @@ function PEAAvisOperes({ account = "PEA" }) {
               );
             })}
           </div>
-          <div style={{ padding: "10px 12px", background: C.snowOff, fontSize: "11px", color: C.inkSubtle, borderTop: `1px solid ${C.border}` }}>
-            {filteredOps.length} opération{filteredOps.length > 1 ? "s" : ""} · Cliquez sur une colonne pour trier · Données stockées localement
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: C.snowOff, borderTop: `1px solid ${C.border}` }}>
+            <span style={{ fontSize: "11px", color: C.inkSubtle }}>
+              {avisPage * AVIS_PAGE_SIZE + 1}–{Math.min((avisPage + 1) * AVIS_PAGE_SIZE, sorted.length)} sur {sorted.length} opération{sorted.length > 1 ? "s" : ""}
+            </span>
+            {sorted.length > AVIS_PAGE_SIZE && (
+              <div style={{ display: "flex", gap: "6px" }}>
+                <button onClick={() => setAvisPage(p => p - 1)} disabled={avisPage === 0}
+                  style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "4px 10px", fontSize: "11px", fontWeight: "600", color: avisPage === 0 ? C.inkSubtle : C.ink, cursor: avisPage === 0 ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                  ← Précédent
+                </button>
+                <button onClick={() => setAvisPage(p => p + 1)} disabled={(avisPage + 1) * AVIS_PAGE_SIZE >= sorted.length}
+                  style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "4px 10px", fontSize: "11px", fontWeight: "600", color: (avisPage + 1) * AVIS_PAGE_SIZE >= sorted.length ? C.inkSubtle : C.ink, cursor: (avisPage + 1) * AVIS_PAGE_SIZE >= sorted.length ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                  Suivant →
+                </button>
+              </div>
+            )}
           </div>
           </div>
         </div>
@@ -790,9 +858,12 @@ function StatistiquesHistorique() {
   const [sortKey, setSortKey] = useState("isin");
   const [sortDir, setSortDir] = useState("asc");
   const [methode, setMethode] = useState("pru"); // "pru" | "fifo"
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 5;
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
     else { setSortKey(key); setSortDir("asc"); }
+    setPage(0);
   };
 
   if (operations.length === 0) return null;
@@ -969,7 +1040,7 @@ function StatistiquesHistorique() {
               <div style={thS("rendementPct")}     onClick={() => toggleSort("rendementPct")}>{thLabel("rendementPct", "%")}</div>
             </div>
             {/* Rows */}
-            {entries.map(e => (
+            {entries.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map(e => (
               <div key={e.isin || e.titre} style={{ display: "grid", gridTemplateColumns: tCols, padding: "9px 10px", borderBottom: `1px solid ${C.border}`, alignItems: "center", background: e.rendementTotal > 0 ? "rgba(45,122,82,0.03)" : e.rendementTotal < 0 ? "rgba(176,58,46,0.03)" : "transparent" }}>
                 <div>
                   <div style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>{e.titre}</div>
@@ -1005,6 +1076,23 @@ function StatistiquesHistorique() {
             </div>
           </div>
         </div>
+        {entries.length > PAGE_SIZE && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderTop: `1px solid ${C.border}` }}>
+            <span style={{ fontSize: "11px", color: C.inkSubtle }}>
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, entries.length)} sur {entries.length} titres
+            </span>
+            <div style={{ display: "flex", gap: "6px" }}>
+              <button onClick={() => setPage(p => p - 1)} disabled={page === 0}
+                style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "5px 12px", fontSize: "11px", fontWeight: "600", color: page === 0 ? C.inkSubtle : C.ink, cursor: page === 0 ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                ← Précédent
+              </button>
+              <button onClick={() => setPage(p => p + 1)} disabled={(page + 1) * PAGE_SIZE >= entries.length}
+                style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "5px 12px", fontSize: "11px", fontWeight: "600", color: (page + 1) * PAGE_SIZE >= entries.length ? C.inkSubtle : C.ink, cursor: (page + 1) * PAGE_SIZE >= entries.length ? "default" : "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                Suivant →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

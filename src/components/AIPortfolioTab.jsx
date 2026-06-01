@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { C } from "../constants/theme";
 import { LoadingPanel, BNextLabel } from "./UI";
 import Tooltip from "./Tooltip";
-import AppLogo from "./AppLogo";
+
 import { load, save } from "../lib/storage";
 import { isDemoMode } from "../constants/demoData";
 import { sanitizePositions, fmtEur } from "../lib/finance";

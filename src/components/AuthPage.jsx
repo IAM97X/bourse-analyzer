@@ -40,7 +40,7 @@ async function hashPin(raw) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-function AuthPage({ onSession }) {
+function AuthPage({ onSession, onBack }) {
   const [mode, setMode]           = useState("signin");
   const [email, setEmail]         = useState("");
   const [password, setPassword]   = useState("");
@@ -174,6 +174,13 @@ function AuthPage({ onSession }) {
     <div style={{ minHeight: "100vh", background: "#F5F5F7", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "'DM Sans', sans-serif" }}>
 
       <div style={{ width: "100%", maxWidth: "380px" }}>
+        {/* Bouton retour landing */}
+        {onBack && (
+          <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", color: "#6C6C70", fontSize: "13px", fontWeight: "600", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", padding: "0 0 20px", lineHeight: 1 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Retour
+          </button>
+        )}
         {/* Logo + titre */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div style={{ fontSize: "36px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", lineHeight: 1.1, fontFamily: "'DM Sans', sans-serif" }}>
