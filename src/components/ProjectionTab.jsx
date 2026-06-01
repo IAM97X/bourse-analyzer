@@ -1272,7 +1272,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
                       </div>
                     )}
                     {/* Avertissement < 5 ans */}
-                    {ancienneteEffective === "avant5" && (
+                    {isPEA && ancienneteEffective === "avant5" && (
                       <div style={{ background: "rgba(220,38,38,0.06)", border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "10px", padding: "10px 13px", marginBottom: "14px", fontSize: "11px", color: C.red, lineHeight: "1.6" }}>
                         <strong>⚠ Attention</strong> : tout retrait avant 5 ans entraîne la <strong>clôture définitive du PEA</strong> (sauf licenciement, invalidité, décès du conjoint).
                       </div>

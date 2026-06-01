@@ -3,34 +3,40 @@ import { C, shadow } from "../constants/theme";
 
 /* ─── Mock data ─────────────────────────────────────────────────────────── */
 
+const SIG_COLOR  = { ACHAT: "#27AE60", RENFORCER: "#2D6CB5", ATTENDRE: "#E6B800", PRUDENCE: "#E74C3C", VENDRE: "#7B1111" };
+const SIG_BG     = { ACHAT: "rgba(39,174,96,0.08)", RENFORCER: "rgba(45,108,181,0.08)", ATTENDRE: "rgba(255,215,0,0.10)", PRUDENCE: "rgba(231,76,60,0.08)", VENDRE: "rgba(123,17,17,0.08)" };
+const SIG_PHRASE = { ACHAT: "Momentum favorable, à surveiller", RENFORCER: "Position solide, tu peux étoffer", ATTENDRE: "Pas d'action urgente", PRUDENCE: "Contexte dégradé, reste vigilant", VENDRE: "Signal négatif détecté" };
+
 const SIGNAL_POSITIONS = [
-  { nom: "ASML Holding",       signal: "RENFORCER", score: 82, pv: "+19.4 %", note: "Cycle semi-conducteurs en reprise. Carnet de commandes record.",          sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
-  { nom: "Air Liquide",        signal: "ACHAT",     score: 88, pv: "+8.1 %",  note: "Valorisation attractive. Dividende en hausse depuis 29 ans consécutifs.", sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
-  { nom: "Amundi MSCI World",  signal: "RENFORCER", score: 79, pv: "+13.7 %", note: "Cœur de portefeuille. Renforcer le DCA mensuel en priorité.",             sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
-  { nom: "LVMH",               signal: "ATTENDRE",  score: 54, pv: "+12.6 %", note: "Résultats T1 mitigés. Attendre les publications T2 avant d'agir.",        sigColor: "#B07D2E", sigBg: "rgba(255,215,0,0.10)"  },
-  { nom: "Worldline",          signal: "VENDRE",    score: 22, pv: "-54.2 %", note: "Révision en baisse des guidances. Risque bilan élevé, sortie conseillée.", sigColor: "#DC2626", sigBg: "rgba(220,38,38,0.08)"  },
+  { nom: "ASML Holding",      signal: "RENFORCER", score: 14, pv: "+19.4 %", pvPos: true,  resume: "Cycle semi-conducteurs en reprise. Carnet de commandes record." },
+  { nom: "Air Liquide",       signal: "ACHAT",     score: 17, pv: "+8.1 %",  pvPos: true,  resume: "Valorisation attractive. Dividende en hausse depuis 29 ans consécutifs." },
+  { nom: "Amundi MSCI World", signal: "RENFORCER", score: 15, pv: "+13.7 %", pvPos: true,  resume: "Cœur de portefeuille. Renforcer le DCA mensuel en priorité." },
+  { nom: "LVMH",              signal: "ATTENDRE",  score: 10, pv: "+12.6 %", pvPos: true,  resume: "Résultats T1 mitigés. Attendre les publications T2 avant d'agir." },
+  { nom: "Worldline",         signal: "VENDRE",    score:  4, pv: "-54.2 %", pvPos: false, resume: "Révision en baisse des guidances. Risque bilan élevé, sortie conseillée." },
 ];
 
 const SIGNAL_POSITIONS_CTO = [
-  { nom: "NVIDIA",            signal: "ACHAT",     score: 91, pv: "+187.3 %", note: "Leader IA incontesté. Datacenter en hypercroissance.",               sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
-  { nom: "Microsoft",         signal: "RENFORCER", score: 84, pv: "+28.4 %",  note: "Intégration Copilot solide. Azure Cloud en accélération.",           sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
-  { nom: "iShares S&P 500",   signal: "RENFORCER", score: 81, pv: "+21.1 %",  note: "Cœur de CTO — diversification maximale. DCA recommandé.",           sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
-  { nom: "Atos",              signal: "VENDRE",    score: 11, pv: "-91.3 %",  note: "Restructuration en cours, risque de dilution massive. Sortie recommandée.", sigColor: "#DC2626", sigBg: "rgba(220,38,38,0.08)"  },
-  { nom: "TSMC",              signal: "ACHAT",     score: 87, pv: "+62.7 %",  note: "Carnet de commandes record. Bénéficie du boom IA côté fonderies.",   sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
+  { nom: "NVIDIA",          signal: "ACHAT",     score: 18, pv: "+187.3 %", pvPos: true,  resume: "Leader IA incontesté. Datacenter en hypercroissance." },
+  { nom: "Microsoft",       signal: "RENFORCER", score: 16, pv: "+28.4 %",  pvPos: true,  resume: "Intégration Copilot solide. Azure Cloud en accélération." },
+  { nom: "iShares S&P 500", signal: "RENFORCER", score: 15, pv: "+21.1 %",  pvPos: true,  resume: "Cœur de CTO — diversification maximale. DCA recommandé." },
+  { nom: "PayPal",          signal: "VENDRE",    score:  4, pv: "-73.4 %",  pvPos: false, resume: "Perte de parts de marché face à Apple Pay et Stripe. Modèle sous pression." },
+  { nom: "TSMC",            signal: "ACHAT",     score: 17, pv: "+62.7 %",  pvPos: true,  resume: "Carnet de commandes record. Bénéficie du boom IA côté fonderies." },
 ];
 
 const AGENT_POSITIONS = [
-  { nom: "ASML Holding",      signal: "RENFORCER", pv: "+19.4 %", poids: "18 %", note: "Cycle semi-conducteurs en reprise. Momentum confirmé.",   sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
-  { nom: "Amundi MSCI World", signal: "RENFORCER", pv: "+13.7 %", poids: "22 %", note: "Cœur de portefeuille — maintenir le DCA mensuel.",        sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
-  { nom: "LVMH",              signal: "ATTENDRE",  pv: "+12.6 %", poids: "15 %", note: "Résultats T1 mitigés. Attendre les publications T2.",     sigColor: "#B07D2E", sigBg: "rgba(255,215,0,0.10)"  },
-  { nom: "Air Liquide",       signal: "ACHAT",     pv: "+8.1 %",  poids: "12 %", note: "Valorisation attractive. Dividende croissant 29 ans.",   sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
+  { nom: "Amundi MSCI World",  signal: "RENFORCER", pv: "+13.7 %", poids: "28 %", note: "Cœur de portefeuille renforcé. Agent IA a augmenté le DCA mensuel de 20 %.", sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
+  { nom: "Air Liquide",        signal: "ACHAT",     pv: "+8.1 %",  poids: "22 %", note: "Position initiée automatiquement. Opportunité de valorisation détectée.", sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
+  { nom: "ASML Holding",       signal: "RENFORCER", pv: "+19.4 %", poids: "24 %", note: "Poids relevé à 24 %. Momentum semi-conducteurs confirmé par Agent IA.",      sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
+  { nom: "LVMH",               signal: "ATTENDRE",  pv: "+12.6 %", poids: "18 %", note: "Agent IA gèle les ordres jusqu'aux publications T2. Position maintenue.",    sigColor: "#B07D2E", sigBg: "rgba(255,215,0,0.10)"  },
+  { nom: "Worldline",          signal: "VENDRE",    pv: "-54.2 %", poids: "8 %",  note: "Ordre de cession programmé. Agent IA redirige les fonds vers ASML.",         sigColor: "#DC2626", sigBg: "rgba(220,38,38,0.08)"  },
 ];
 
 const AGENT_POSITIONS_CTO = [
-  { nom: "NVIDIA",            signal: "ACHAT",     pv: "+187.3 %", poids: "20 %", note: "Leader IA — position core du portefeuille CTO.",        sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
-  { nom: "iShares S&P 500",   signal: "RENFORCER", pv: "+21.1 %",  poids: "25 %", note: "Socle ETF — DCA mensuel maintenu.",                    sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
-  { nom: "Intel",             signal: "VENDRE",    pv: "-38.6 %",  poids: "8 %",  note: "Perte de parts de marché structurelle. Sortie conseillée.", sigColor: "#DC2626", sigBg: "rgba(220,38,38,0.08)"  },
-  { nom: "TSMC",              signal: "ACHAT",     pv: "+62.7 %",  poids: "11 %", note: "Fonderies IA — position en cours de constitution.",    sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
+  { nom: "iShares S&P 500",   signal: "RENFORCER", pv: "+21.1 %",  poids: "27 %", note: "Socle CTO consolidé. Agent IA a porté l'allocation à 27 % ce trimestre.",    sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
+  { nom: "NVIDIA",            signal: "ACHAT",     pv: "+187.3 %", poids: "30 %", note: "Plus forte conviction du portefeuille. Agent IA a renforcé après le repli.",  sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
+  { nom: "TSMC",              signal: "ACHAT",     pv: "+62.7 %",  poids: "12 %", note: "Position initiée par Agent IA. Fonderie stratégique du cycle IA.",            sigColor: "#1E8449", sigBg: "rgba(39,174,96,0.10)"  },
+  { nom: "Microsoft",         signal: "RENFORCER", pv: "+28.4 %",  poids: "25 %", note: "DCA maintenu. Agent IA a détecté une fenêtre d'entrée sur repli de 4 %.",     sigColor: "#2D6CB5", sigBg: "rgba(45,108,181,0.10)" },
+  { nom: "PayPal",            signal: "VENDRE",    pv: "-73.4 %",  poids: "6 %",  note: "Cession automatique en cours. Agent IA réalloue vers NVIDIA et TSMC.",        sigColor: "#DC2626", sigBg: "rgba(220,38,38,0.08)"  },
 ];
 
 /* ─── Mini chart ────────────────────────────────────────────────────────── */
@@ -163,7 +169,7 @@ export default function LandingPage({ onLogin }) {
             </h1>
 
             <p style={{ fontSize: "14px", color: C.inkMuted, lineHeight: 1.85, maxWidth: "440px", margin: "0 0 36px" }}>
-              Atlas gère un portefeuille en parallèle du vôtre — même capital, mêmes règles, ses propres décisions. Gérez votre PEA, obtenez des signaux IA quotidiens, et voyez si vous faites mieux que l'agent.
+              Agent IA gère un portefeuille en parallèle du vôtre — même capital, mêmes règles, ses propres décisions. Gérez votre PEA, obtenez des signaux IA quotidiens, et voyez si vous faites mieux que l'agent.
             </p>
 
             <CTAPrimary />
@@ -290,20 +296,31 @@ export default function LandingPage({ onLogin }) {
                     ))}
                   </div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  {(sigTab === "PEA" ? SIGNAL_POSITIONS : SIGNAL_POSITIONS_CTO).map((p, i) => (
-                    <div key={i} style={{ background: "#F5F5F7", borderRadius: "10px", padding: "10px 12px", border: `1px solid ${C.border}` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: C.ink, flex: 1 }}>{p.nom}</span>
-                        <span style={{ fontSize: "9px", fontWeight: "800", color: p.sigColor, background: p.sigBg, padding: "2px 9px", borderRadius: "20px" }}>{p.signal}</span>
-                        <span style={{ fontSize: "9px", fontWeight: "700", color: "#1E8449", minWidth: "44px", textAlign: "right" }}>{p.pv}</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {(sigTab === "PEA" ? SIGNAL_POSITIONS : SIGNAL_POSITIONS_CTO).map((p, i) => {
+                    const sc = SIG_COLOR[p.signal]; const sb = SIG_BG[p.signal];
+                    return (
+                      <div key={i} style={{ padding: "12px 14px", background: sb, borderRadius: "14px", border: `1px solid ${sc}33`, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                          <div style={{ flex: 1, minWidth: "80px" }}>
+                            <div style={{ fontWeight: "700", fontSize: "12px", color: C.ink }}>{p.nom}</div>
+                            <div style={{ fontSize: "10px", color: sc, fontWeight: "500", marginTop: "1px", opacity: 0.85 }}>{SIG_PHRASE[p.signal]}</div>
+                          </div>
+                          <span style={{ fontSize: "10px", fontWeight: "800", color: sc, background: sc + "22", padding: "3px 10px", borderRadius: "20px", border: `1px solid ${sc}`, letterSpacing: "0.5px" }}>{p.signal}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                            <div style={{ width: "60px", height: "5px", borderRadius: "3px", background: "rgba(0,0,0,0.08)", overflow: "hidden" }}>
+                              <div style={{ width: `${(p.score / 20) * 100}%`, height: "100%", background: sc, borderRadius: "3px" }}/>
+                            </div>
+                            <span style={{ fontSize: "11px", fontWeight: "700", color: sc }}>{p.score}/20</span>
+                          </div>
+                          <span style={{ fontSize: "10px", fontWeight: "700", color: p.pvPos ? "#27AE60" : "#7B1111", minWidth: "42px", textAlign: "right" }}>{p.pv}</span>
+                        </div>
+                        <div style={{ fontSize: "11px", color: C.inkMuted, lineHeight: 1.5 }}>{p.resume}</div>
                       </div>
-                      <div style={{ fontSize: "9px", color: C.inkMuted, marginBottom: "5px", lineHeight: 1.4 }}>{p.note}</div>
-                      <ScoreBar score={p.score}/>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-                <div style={{ marginTop: "10px", padding: "8px 12px", background: C.navyLight, borderRadius: "8px", fontSize: "10px", color: C.accent, fontWeight: "600", textAlign: "center" }}>
+                <div style={{ marginTop: "8px", padding: "8px 12px", background: C.navyLight, borderRadius: "8px", fontSize: "10px", color: C.accent, fontWeight: "600", textAlign: "center" }}>
                   Analyse générée par Claude · Mise à jour quotidienne
                 </div>
               </div>
@@ -324,11 +341,11 @@ export default function LandingPage({ onLogin }) {
                 Même capital, mêmes règles.<br/>Qui fait mieux — vous ou l'IA ?
               </div>
               <p style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.85, marginBottom: "20px" }}>
-                Atlas gère un portefeuille fictif en parallèle du vôtre. Chaque jour, il analyse, décide, arbitre. À vous de le battre — ou d'apprendre de ses choix.
+                Agent IA gère un portefeuille fictif en parallèle du vôtre. Chaque jour, il analyse, décide, arbitre. À vous de le battre — ou d'apprendre de ses choix.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
                 {[
-                  "Comparez vos performances en temps réel — vous vs Atlas",
+                  "Comparez vos performances en temps réel — vous vs Agent IA",
                   "Capital 100 % fictif — aucun risque financier",
                   "Chaque décision expliquée en clair, sans jargon",
                 ].map((txt, i) => (
@@ -346,53 +363,88 @@ export default function LandingPage({ onLogin }) {
               <CTAPrimary label="Commencer →"/>
             </div>
 
-            {/* Mock agent */}
+            {/* Mock Agent IA agent */}
             <div className="land-split-mock" style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ background: "#F5F5F7", border: `1px solid ${C.border}`, borderRadius: "20px", padding: "18px 18px 14px", boxShadow: shadow.float }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "#B07D2E", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: "13px", color: "#FFF8E7", fontWeight: "700", letterSpacing: "0.5px", fontFamily: "'DM Sans', sans-serif" }}>IA</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "12px", fontWeight: "800", color: C.ink }}>Atlas — Analyse IA</div>
-                      <div style={{ fontSize: "9px", color: C.inkSubtle }}>Mis à jour · 1 juin 2026</div>
-                    </div>
+              <div style={{ background: "#F5F5F7", border: `1px solid ${C.border}`, borderRadius: "20px", padding: "16px", boxShadow: shadow.float, display: "flex", flexDirection: "column", gap: "10px" }}>
+
+                {/* Header */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "20px", lineHeight: 1 }}>👾</span>
+                  <span style={{ fontSize: "14px", fontWeight: "800", color: C.ink, letterSpacing: "-0.02em" }}>Agent IA</span>
+                  <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
+                  <div style={{ flex: 1 }}/>
+                </div>
+                <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "-6px" }}>Depuis le 31 mai 2026 · Capital 12 850,00 € · CTO</div>
+
+                {/* Hero card navy */}
+                <div style={{ background: "linear-gradient(135deg, #1A3A6B 0%, #2563EB 100%)", borderRadius: "14px", padding: "14px 16px", display: "grid", gridTemplateColumns: "auto 1fr", gap: "0" }}>
+                  {/* Perf left */}
+                  <div style={{ paddingRight: "16px", borderRight: "1px solid rgba(255,255,255,0.15)", marginRight: "16px", display: "flex", flexDirection: "column", justifyContent: "center", gap: "2px" }}>
+                    <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.5)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Agent IA</div>
+                    <div style={{ fontSize: "22px", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.1 }}>+31.4%</div>
+                    <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.45)", margin: "4px 0 2px" }}>VS</div>
+                    <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.5)", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.8px" }}>Vous</div>
+                    <div style={{ fontSize: "18px", fontWeight: "800", color: "rgba(255,255,255,0.75)", letterSpacing: "-0.03em", lineHeight: 1.1 }}>+12.4%</div>
                   </div>
-                  <div style={{ display: "flex", gap: "4px" }}>
-                    {["PEA","CTO"].map(t => (
-                      <button key={t} onClick={() => setAgentTab(t)} style={{ fontSize: "9px", fontWeight: "700", color: agentTab===t ? "#fff" : C.accent, background: agentTab===t ? "#2D6CB5" : "rgba(45,108,181,0.08)", padding: "3px 10px", borderRadius: "20px", border: "none", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>{t}</button>
-                    ))}
+                  {/* Quote right */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <span style={{ fontSize: "9px", fontWeight: "700", color: "#27AE60", background: "rgba(39,174,96,0.18)", padding: "2px 8px", borderRadius: "20px", alignSelf: "flex-start" }}>L'IA MÈNE +19.0%</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                      <span style={{ fontSize: "11px" }}>👾</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", color: "#fff" }}>Agent IA</span>
+                    </div>
+                    <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.72)", fontStyle: "italic", lineHeight: 1.6 }}>
+                      "J'ai soldé PayPal à -73 % pendant que tu hésitais. Couper une perte n'est pas un échec. C'est ce qui t'empêche d'en transformer une en catastrophe."
+                    </div>
+                    <div style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>Depuis le 31 mai 2026 · CTO</div>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "10px" }}>
-                  {(agentTab === "PEA" ? AGENT_POSITIONS : AGENT_POSITIONS_CTO).map((p, i) => (
-                    <div key={i} style={{ background: "#fff", borderRadius: "10px", padding: "10px 12px", border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "10px" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: C.ink, marginBottom: "2px" }}>{p.nom}</div>
-                        <div style={{ fontSize: "9px", color: C.inkMuted }}>{p.note}</div>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px", flexShrink: 0 }}>
-                        <span style={{ fontSize: "9px", fontWeight: "800", color: p.sigColor, background: p.sigBg, padding: "2px 8px", borderRadius: "20px" }}>{p.signal}</span>
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          <span style={{ fontSize: "9px", color: "#1E8449", fontWeight: "700" }}>{p.pv}</span>
-                          <span style={{ fontSize: "9px", color: C.inkSubtle }}>{p.poids}</span>
+                {/* 4 stat cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px" }}>
+                  {[
+                    { label: "Valeur IA",             val: "16 887,35 €", sub: "+31.4%",                 subColor: "#27AE60" },
+                    { label: "Cash dispo",             val: "1 542,00 €",  sub: "12% du capital",           subColor: C.inkSubtle },
+                    { label: "vs Votre portefeuille",  val: "+19.0%",      sub: "IA +31.4% · Vous +12.4%", subColor: "#27AE60" },
+                    { label: "Positions · Trades",     val: "4 · 3",       sub: "Dernier cycle 01/06/2026",  subColor: C.inkSubtle },
+                  ].map((s, i) => (
+                    <div key={i} style={{ background: "rgba(255,255,255,0.72)", border: `1px solid ${C.border}`, borderRadius: "14px", padding: "14px 16px", backdropFilter: "blur(8px)" }}>
+                      <div style={{ fontSize: "10px", fontWeight: "700", color: C.inkMuted, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>{s.label}</div>
+                      <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.01em" }}>{s.val}</div>
+                      <div style={{ fontSize: "11px", color: s.subColor, marginTop: "3px", fontWeight: "500" }}>{s.sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Positions */}
+                <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "12px", overflow: "hidden" }}>
+                  <div style={{ padding: "8px 12px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "10px", fontWeight: "700", color: C.ink }}>Positions (4)</span>
+                    <span style={{ fontSize: "9px", color: C.inkSubtle }}>15 345,35 € investis</span>
+                  </div>
+                  {[
+                    { nom: "NVIDIA CORP",               ticker: "NVDA",   titres: "12 titres", pf: "14% PF", cours: "178,40 €",  pru: "128,60 €", val: "2 140,80 €", pv: "+38.7%", pvPos: true },
+                    { nom: "AMUNDI MSCI WORLD",         ticker: "CW8",    titres: "18 titres", pf: "57% PF", cours: "486,20 €",  pru: "401,30 €", val: "8 751,60 €", pv: "+21.2%", pvPos: true },
+                    { nom: "ALLIANZ SE",                ticker: "ALV.DE", titres: "10 titres", pf: "24% PF", cours: "375,40 €",  pru: "310,50 €", val: "3 754,00 €", pv: "+20.9%", pvPos: true },
+                    { nom: "MICROSOFT",                 ticker: "MSFT",   titres: "6 titres",  pf: "7% PF",  cours: "185,20 €",  pru: "148,30 €", val: "1 111,20 €", pv: "+24.9%", pvPos: true },
+                  ].map((p, i) => (
+                    <div key={i} style={{ padding: "10px 14px", borderBottom: i < 3 ? `1px solid ${C.border}` : "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink }}>{p.nom}</div>
+                        <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px" }}>
+                          <span style={{ color: C.accent, fontWeight: "600" }}>{p.ticker}</span>
+                          {" · "}{p.titres}{" · "}{p.pf}
                         </div>
+                        <div style={{ fontSize: "11px", color: C.inkSubtle }}>Cours {p.cours} · PRU {p.pru}</div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink }}>{p.val}</div>
+                        <div style={{ fontSize: "11px", fontWeight: "700", color: p.pvPos ? "#27AE60" : "#DC2626" }}>{p.pv}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ background: "linear-gradient(135deg,rgba(45,108,181,0.06),rgba(45,108,181,0.02))", border: "1px solid rgba(45,108,181,0.12)", borderRadius: "10px", padding: "10px 14px" }}>
-                  <div style={{ fontSize: "9px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "4px" }}>Recommandation Atlas</div>
-                  <div style={{ fontSize: "11px", color: C.ink, lineHeight: 1.55 }}>
-                    {agentTab === "PEA"
-                      ? <>Renforcer les ETF monde de <strong>+5 %</strong> et alléger LVMH de <strong>-3 %</strong> avant les résultats T2. Capital disponible : <strong>2 000 €</strong>.</>
-                      : <>Renforcer NVIDIA de <strong>+3 %</strong> et initier une ligne TSMC. Alléger Amazon en attente des résultats Q2. Capital disponible : <strong>1 200 €</strong>.</>
-                    }
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -408,7 +460,7 @@ export default function LandingPage({ onLogin }) {
               Pourquoi une clé Claude ?
             </div>
             <p style={{ fontSize: "13px", color: C.inkMuted, marginTop: "12px", maxWidth: "520px", margin: "12px auto 0", lineHeight: 1.8 }}>
-              Les signaux IA et l'agent Atlas sont propulsés par <strong style={{ color: C.ink }}>Claude (Anthropic)</strong>.
+              Les signaux IA et l'Agent IA sont propulsés par <strong style={{ color: C.ink }}>Claude (Anthropic)</strong>.
               Vous avez besoin de votre propre clé API — facturée <strong style={{ color: C.ink }}>à l'usage</strong> directement par Anthropic, sans abonnement. Comptez <strong style={{ color: C.ink }}>quelques centimes par analyse</strong>.
               Vos données ne transitent jamais par nos serveurs.
             </p>
@@ -422,7 +474,7 @@ export default function LandingPage({ onLogin }) {
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {[
                   "Signaux IA quotidiens (ACHAT / RENFORCER / ATTENDRE)",
-                  "Agent Atlas — portefeuille autonome en parallèle",
+                  "Agent IA — portefeuille autonome en parallèle",
                   "Conseiller privé IA — posez vos questions",
                   "Autopilot — scan de 50+ instruments PEA/CTO",
                 ].map((txt, i) => (
@@ -445,7 +497,7 @@ export default function LandingPage({ onLogin }) {
                   ["Connexion courtier — Boursobank, Fortuneo, DEGIRO", true],
                   ["Plan DCA & projection de patrimoine", true],
                   ["Signaux IA quotidiens", false],
-                  ["Agent Atlas & Conseiller privé", false],
+                  ["Agent Agent IA & Conseiller privé", false],
                 ].map(([txt, ok], i) => (
                   <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                     {ok
@@ -482,7 +534,7 @@ export default function LandingPage({ onLogin }) {
             Prêt à défier l'IA ?
           </div>
           <p style={{ fontSize: "13px", color: C.inkMuted, marginBottom: "32px", lineHeight: 1.85 }}>
-            Créez votre compte, ajoutez vos positions et laissez Atlas investir en parallèle. Le défi commence maintenant.
+            Créez votre compte, ajoutez vos positions et laissez Agent IA investir en parallèle. Le défi commence maintenant.
           </p>
           <CTAPrimary style={{ padding: "14px 40px", fontSize: "14px" }}/>
           <p style={{ marginTop: "14px", fontSize: "11px", color: C.inkSubtle }}>

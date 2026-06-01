@@ -1284,27 +1284,6 @@ export default function AIPortfolioTab({ account, hidden }) {
         ))}
       </div>
 
-      {/* ── Chart ── */}
-      {aiPf.snapshots?.length >= 2 && (
-        <div style={{ background: "rgba(255,255,255,0.72)", border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 20px", marginBottom: "20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "12px" }}>
-            <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>Performance comparée</span>
-            <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#1E3A5F", fontWeight: "600" }}>
-              <span style={{ width: "18px", height: "2.5px", background: "#1E3A5F", borderRadius: "2px", display: "inline-block" }}/>IA
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#10B981", fontWeight: "600" }}>
-              <span style={{ width: "18px", height: "2px", background: "#10B981", borderRadius: "2px", display: "inline-block" }}/>Vous
-            </span>
-            {aiPf.benchmark_snapshots?.length >= 2 && (
-              <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#F59E0B", fontWeight: "600" }}>
-                <span style={{ width: "18px", height: "0px", borderTop: "2px dashed #F59E0B", display: "inline-block" }}/>{account === "CTO" ? "MSCI World" : "MSCI World"}
-              </span>
-            )}
-            {loadingPrices && <span style={{ fontSize: "11px", color: C.inkSubtle }}>actualisation…</span>}
-          </div>
-          <PerformanceChart aiSnapshots={aiPf.snapshots} userSnapshots={userSnaps} benchmarkSnapshots={aiPf.benchmark_snapshots} inceptionDate={aiPf.inception_date} />
-        </div>
-      )}
 
       {/* ── Stratégie actuelle ── */}
       {aiPf.strategie_courante && (
