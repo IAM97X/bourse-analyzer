@@ -495,19 +495,19 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil }) {
           Frais estimés (≤500€ : 1,99€ · &gt;500€ : 0,5%) déduits du versement net.
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
-          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}`, flex: 1, minWidth: "100px" }}>
+          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "0 1 auto", minWidth: "80px", maxWidth: "140px" }}>
             <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700", marginBottom: "3px" }}>Frais / mois</div>
-            <div style={{ fontSize: "14px", fontWeight: "800", color: C.goldDark }}>{fmtEur(fraisMensuel)}</div>
+            <div style={{ fontSize: "13px", fontWeight: "800", color: C.goldDark }}>{fmtEur(fraisMensuel)}</div>
             <div style={{ fontSize: "9px", color: C.inkSubtle }}>{fmtEur(fraisAnnuel)} / an</div>
           </div>
-          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}`, flex: 1, minWidth: "100px" }}>
+          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "0 1 auto", minWidth: "80px", maxWidth: "140px" }}>
             <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700", marginBottom: "3px" }}>Net de frais</div>
-            <div style={{ fontSize: "14px", fontWeight: "800", color: C.green }}>{fmtEur(dcaNet)}</div>
+            <div style={{ fontSize: "13px", fontWeight: "800", color: C.green }}>{fmtEur(dcaNet)}</div>
             <div style={{ fontSize: "9px", color: C.inkSubtle }}>versement effectif</div>
           </div>
-          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 14px", border: `1px solid ${C.border}`, flex: 1, minWidth: "100px" }}>
+          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "0 1 auto", minWidth: "80px", maxWidth: "140px" }}>
             <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700", marginBottom: "3px" }}>Investi / an</div>
-            <div style={{ fontSize: "14px", fontWeight: "800", color: C.navy }}>{fmtEur(dcaSim * 12)}</div>
+            <div style={{ fontSize: "13px", fontWeight: "800", color: C.navy }}>{fmtEur(dcaSim * 12)}</div>
             <div style={{ fontSize: "9px", color: C.inkSubtle }}>{fmtEur(dcaNet * 12)} net</div>
           </div>
         </div>

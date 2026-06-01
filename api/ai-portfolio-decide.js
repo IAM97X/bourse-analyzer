@@ -1,5 +1,6 @@
 // POST /api/ai-portfolio-decide
 // Reçoit l'état du portefeuille IA + les cours actuels, retourne les décisions BUY/SELL/HOLD
+const { checkOrigin } = require("./_cors");
 
 // BoursoMarkets ETFs = 0% frais si ordre ≥ 200€. TER = frais de gestion annuels (dans le prix).
 const BOURSOMARKETS_ETFS = {
@@ -143,13 +144,14 @@ const CTO_EXTRA_UNIVERSE = [
 ];
 
 module.exports = async function handler(req, res) {
+  if (!checkOrigin(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, claude_key, gemini_key, autopilot_context, app_context, market_open, decision_journal } = req.body || {};
-  const anthropicKey = claude_key || process.env.ANTHROPIC_API_KEY;
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, gemini_key, autopilot_context, app_context, market_open, market_reason, decision_journal } = req.body || {};
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const effectiveGeminiKey = gemini_key || geminiKey;
-  if (!effectiveGeminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA non configuré. Configure une clé Gemini ou Claude dans Paramètres → Clés API." });
+  if (!effectiveGeminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA temporairement indisponible." });
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
 
   const valeurTotale = portfolio.cash + (portfolio.positions || []).reduce((s, p) => {
@@ -244,7 +246,7 @@ module.exports = async function handler(req, res) {
     : "";
 
   const marketLine = market_open === false
-    ? "⛔ MARCHÉ FERMÉ — HOLD uniquement sur toutes les positions. Pas de BUY ni SELL."
+    ? `⛔ MARCHÉ FERMÉ (${market_reason || "Fermé"}) — HOLD uniquement. Pas de BUY ni SELL. Ne pas inventer de raison.`
     : `SESSION: ${session_type || "MANUEL"}`;
 
   const userMsg = `DATE: ${new Date().toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} | ${marketLine}

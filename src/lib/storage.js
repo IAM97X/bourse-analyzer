@@ -66,3 +66,11 @@ export const save = (key, val) => {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
   scheduleSync(key, val);
 };
+
+export async function getAuthToken() {
+  if (!supabase) return null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  } catch { return null; }
+}

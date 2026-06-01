@@ -1,4 +1,7 @@
+const { checkOrigin } = require("./_cors");
+
 module.exports = async function handler(req, res) {
+  if (!checkOrigin(req, res)) return;
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   const key = process.env.GOOGLE_API_KEY;

@@ -100,14 +100,17 @@ export default function OnboardingWizard({ onComplete }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,15,25,0.6)", backdropFilter: "blur(14px)", padding: "20px", fontFamily: "'DM Sans', Inter, sans-serif" }}>
-      <style>{`@keyframes onb-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }`}</style>
+      <style>{`
+        @keyframes onb-in  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+        @keyframes bn-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+      `}</style>
       <div style={{ width: "100%", maxWidth: "380px", background: "#fff", borderRadius: "24px", padding: "36px 32px 28px", boxShadow: "0 24px 60px rgba(0,0,0,0.18)", animation: "onb-in 0.3s ease" }}>
 
         {/* Icône */}
         <div style={{ marginBottom: "20px" }}>
           {s.type === "welcome"
-            ? <div style={{ fontSize: "22px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif", lineHeight: 1 }}>
-                Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(135deg, #0F2D5E 0%, #2D6CB5 50%, #7BBFE8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Next</span>
+            ? <div style={{ fontSize: "22px", fontWeight: "300", color: C.inkSoft, letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif", lineHeight: 1 }}>
+                Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: C.accentGrad, backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-wave 4s ease infinite" }}>Next</span>
               </div>
             : s.Icon && <s.Icon />
           }

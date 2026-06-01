@@ -77,7 +77,10 @@ function ETFResultPanel({ data, query, timestamp, profil, onRefresh }) {
         <div style={{ fontSize: "10px", color: C.inkSubtle, letterSpacing: "1px", fontWeight: "600", marginBottom: "6px", display: "flex", alignItems: "center", gap: "12px" }}>
           <span>Analyse ETF · DCA · {time}</span>
           <span style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "5px", padding: "2px 8px", color: C.navy, fontWeight: "700" }}>ETF</span>
-          {data.eligible_pea && <span style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "5px", padding: "2px 8px", color: C.green, fontWeight: "700" }}>🇫🇷 PEA</span>}
+          {data.eligible_pea
+            ? <span style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "5px", padding: "2px 8px", color: C.green, fontWeight: "700" }}>🇫🇷 PEA</span>
+            : <span style={{ background: C.navyLight, border: `1px solid rgba(45,108,181,0.2)`, borderRadius: "5px", padding: "2px 8px", color: C.accent, fontWeight: "700" }}>CTO</span>
+          }
           <button onClick={onRefresh} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "3px 10px", color: C.inkMuted, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "500" }}>↻ Actualiser</button>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>

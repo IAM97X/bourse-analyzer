@@ -77,19 +77,20 @@ function ScoreBar({ score }) {
 }
 
 /* ─── Composant principal ───────────────────────────────────────────────── */
-export default function LandingPage({ onLogin }) {
-  const [badgeAnim, setBadgeAnim] = useState(false);
+export default function LandingPage({ onLogin, onRegister }) {
   const [heroTab, setHeroTab] = useState("PEA");
   const [sigTab, setSigTab] = useState("PEA");
   const [agentTab, setAgentTab] = useState("PEA");
+  const [showTop, setShowTop] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setBadgeAnim(true), 400);
-    return () => clearTimeout(t);
+    const onScroll = () => setShowTop(window.scrollY > 300);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const CTAPrimary = ({ label = "Créer un compte gratuit →", style = {} }) => (
-    <button onClick={onLogin} className="land-btn-cta" style={{
+    <button onClick={onRegister} className="land-btn-cta" style={{
       padding: "13px 30px", borderRadius: "50px", border: "none",
       background: C.accentGrad, backgroundSize: "300% 300%",
       color: "#fff", fontSize: "13px", fontWeight: "700",
@@ -144,7 +145,7 @@ export default function LandingPage({ onLogin }) {
           <button className="land-nav-link" onClick={() => document.getElementById("lp-synthese")?.scrollIntoView({ behavior: "smooth" })}>Synthèse</button>
           <button className="land-nav-link" onClick={() => document.getElementById("lp-signaux")?.scrollIntoView({ behavior: "smooth" })}>Signaux IA</button>
           <button className="land-nav-link" onClick={() => document.getElementById("lp-agent")?.scrollIntoView({ behavior: "smooth" })}>Agent IA</button>
-          <button className="land-nav-link" onClick={() => document.getElementById("lp-api")?.scrollIntoView({ behavior: "smooth" })}>Clé API</button>
+          <button className="land-nav-link" onClick={() => document.getElementById("lp-tarifs")?.scrollIntoView({ behavior: "smooth" })}>Tarifs</button>
         </div>
         <button onClick={onLogin} className="land-btn-cta" style={{ background: C.accentGrad, border: "none", color: "#fff", padding: "8px 20px", borderRadius: "50px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: shadow.pill }}>
           Se connecter
@@ -152,24 +153,19 @@ export default function LandingPage({ onLogin }) {
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <div className="land-hero" style={{ padding: "72px 48px 64px", animation: "land-in 0.5s ease forwards" }}>
+      <div className="land-hero" style={{ padding: "80px 48px 72px", background: "#fff", animation: "land-in 0.5s ease forwards", borderBottom: `1px solid ${C.border}` }}>
         <div className="land-hero-cols" style={{ display: "flex", alignItems: "center", gap: "56px", maxWidth: "1100px", margin: "0 auto" }}>
 
           <div className="land-hero-text" style={{ flex: "1 1 420px", maxWidth: "520px", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-            <div className={badgeAnim ? "" : ""} style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: C.navyLight, border: "1px solid rgba(45,108,181,0.18)", borderRadius: "50px", padding: "5px 14px", fontSize: "11px", fontWeight: "700", color: C.accent, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "28px", opacity: badgeAnim ? 1 : 0, transition: "opacity 0.4s ease" }}>
-              <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: C.green, animation: "badge-pulse 2.2s ease infinite", display: "inline-block" }}/>
-              Défiez l'IA · Gérez votre PEA
-            </div>
-
             <h1 style={{ fontSize: "clamp(30px, 5.5vw, 56px)", fontWeight: "900", letterSpacing: "-0.04em", lineHeight: 1.07, margin: "0 0 20px", color: C.ink }}>
-              Prêt à investir ?<br />
+              Investissez avec méthode.<br />
               <span style={{ backgroundImage: C.accentGrad, backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-wave 4s ease infinite" }}>
-                Défiez l'IA.
+                L'IA vous guide.
               </span>
             </h1>
 
             <p style={{ fontSize: "14px", color: C.inkMuted, lineHeight: 1.85, maxWidth: "440px", margin: "0 0 36px" }}>
-              Agent IA gère un portefeuille en parallèle du vôtre — même capital, mêmes règles, ses propres décisions. Gérez votre PEA, obtenez des signaux IA quotidiens, et voyez si vous faites mieux que l'agent.
+              Signaux quotidiens, performance exacte, agent autonome — BourseNext analyse votre portefeuille (PEA & CTO) et vous explique chaque décision. Essai gratuit 7 jours.
             </p>
 
             <CTAPrimary />
@@ -251,12 +247,11 @@ export default function LandingPage({ onLogin }) {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
             {[
-              { titre: "Portefeuille unifié", desc: "PEA et CTO sur le même écran. Boursobank, Fortuneo, DEGIRO, Trade Republic — connectez votre courtier en important votre relevé ou saisissez vos positions en 2 minutes.", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
-              { titre: "Performance exacte (TWR)", desc: "La méthode Modified Dietz prend en compte vos versements et vos retraits. Votre vrai rendement — pas un chiffre qui flatte.", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
-              { titre: "Historique & graphiques", desc: "Évolution du patrimoine sur 1J, 1M, 1A ou depuis le début. Comparez votre courbe à celle du CAC 40 en temps réel.", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg> },
+              { titre: "Portefeuille unifié", desc: "PEA et CTO sur le même écran. Boursobank, Fortuneo, DEGIRO, Trade Republic — connectez votre courtier en important votre relevé ou saisissez vos positions en 2 minutes." },
+              { titre: "Performance exacte (TWR)", desc: "La méthode Modified Dietz prend en compte vos versements et vos retraits. Votre vrai rendement — pas un chiffre qui flatte." },
+              { titre: "Historique & graphiques", desc: "Évolution du patrimoine sur 1J, 1M, 1A ou depuis le début. Comparez votre courbe à celle du CAC 40 en temps réel." },
             ].map((f, i) => (
               <div key={i} className="land-feat-hover" style={{ background: "#F5F5F7", border: `1px solid ${C.border}`, borderRadius: "18px", padding: "24px 22px", boxShadow: shadow.card }}>
-                <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: C.navyLight, display: "flex", alignItems: "center", justifyContent: "center", color: C.accent, marginBottom: "14px" }}>{f.icon}</div>
                 <div style={{ fontSize: "13px", fontWeight: "800", color: C.ink, marginBottom: "8px", letterSpacing: "-0.02em" }}>{f.titre}</div>
                 <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.75 }}>{f.desc}</div>
               </div>
@@ -282,7 +277,6 @@ export default function LandingPage({ onLogin }) {
               <p style={{ fontSize: "12px", color: C.inkSubtle, lineHeight: 1.7, background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 14px", marginBottom: "24px" }}>
                 Nécessite une clé <strong style={{ color: C.ink }}>Claude (Anthropic)</strong> — gratuite à obtenir, voir plus bas.
               </p>
-              <CTAPrimary label="Commencer →"/>
             </div>
 
             {/* Mock signaux */}
@@ -360,7 +354,6 @@ export default function LandingPage({ onLogin }) {
               <p style={{ fontSize: "12px", color: C.inkSubtle, lineHeight: 1.7, background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 14px", marginBottom: "24px" }}>
                 Nécessite une clé <strong style={{ color: C.ink }}>Claude (Anthropic)</strong> — gratuite à obtenir, voir plus bas.
               </p>
-              <CTAPrimary label="Commencer →"/>
             </div>
 
             {/* Mock Agent IA agent */}
@@ -449,79 +442,75 @@ export default function LandingPage({ onLogin }) {
         </div>
       </div>
 
-      {/* ── Section Clé API ──────────────────────────────────────────────── */}
-      <div id="lp-api" className="land-section" style={{ padding: "72px 48px", background: "#F5F5F7", borderTop: `1px solid ${C.border}` }}>
+      {/* ── Section Tarifs ───────────────────────────────────────────────── */}
+      <div id="lp-tarifs" className="land-section" style={{ padding: "80px 48px", background: "#fff", borderTop: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: "860px", margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <div style={{ fontSize: "9px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "12px" }}>Clé API</div>
+            <div style={{ fontSize: "9px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "12px" }}>Tarifs</div>
             <div style={{ fontSize: "26px", fontWeight: "800", letterSpacing: "-0.03em", color: C.ink, lineHeight: 1.2 }}>
-              Pourquoi une clé Claude ?
+              Simple et transparent
             </div>
-            <p style={{ fontSize: "13px", color: C.inkMuted, marginTop: "12px", maxWidth: "520px", margin: "12px auto 0", lineHeight: 1.8 }}>
-              Les signaux IA et l'Agent IA sont propulsés par <strong style={{ color: C.ink }}>Claude (Anthropic)</strong>.
-              Vous avez besoin de votre propre clé API — facturée <strong style={{ color: C.ink }}>à l'usage</strong> directement par Anthropic, sans abonnement. Comptez <strong style={{ color: C.ink }}>quelques centimes par analyse</strong>.
-              Vos données ne transitent jamais par nos serveurs.
+            <p style={{ fontSize: "13px", color: C.inkMuted, marginTop: "12px", maxWidth: "400px", margin: "12px auto 0", lineHeight: 1.8 }}>
+              7 jours d'essai complet, sans carte bancaire. Ensuite, moins d'un café par mois.
             </p>
           </div>
 
-          <div className="land-api-cols" style={{ display: "flex", gap: "16px", marginBottom: "32px" }}>
-            {/* Avec clé */}
-            <div style={{ flex: 1, background: "linear-gradient(160deg,#1A3A5C,#2D5986)", borderRadius: "20px", padding: "28px 26px", boxShadow: "0 8px 32px rgba(45,108,181,0.22)", position: "relative", overflow: "hidden" }}>
-              <div style={{ fontSize: "9px", fontWeight: "700", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "10px" }}>Avec clé Claude</div>
-              <div style={{ fontSize: "18px", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", marginBottom: "20px" }}>Toutes les fonctionnalités IA</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", maxWidth: "960px", margin: "0 auto" }}>
+            {/* Essai */}
+            <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "22px", padding: "28px 24px", boxShadow: shadow.card }}>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>Essai</div>
+              <div style={{ fontSize: "30px", fontWeight: "900", color: C.ink, letterSpacing: "-0.04em", marginBottom: "4px" }}>Gratuit</div>
+              <div style={{ fontSize: "11px", color: C.inkMuted, marginBottom: "20px" }}>7 jours · Sans carte bancaire</div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {[
-                  "Signaux IA quotidiens (ACHAT / RENFORCER / ATTENDRE)",
-                  "Agent IA — portefeuille autonome en parallèle",
-                  "Conseiller privé IA — posez vos questions",
-                  "Autopilot — scan de 50+ instruments PEA/CTO",
-                ].map((txt, i) => (
-                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginTop: "1px", flexShrink: 0 }}><path d="M2.5 7l3 3 6-6" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)", lineHeight: 1.55 }}>{txt}</span>
+                {["Toutes les fonctionnalités", "Signaux IA quotidiens", "Agent IA autonome", "Projections & DCA", "Chat IA"].map((f, i) => (
+                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}><path d="M2.5 7l3 3 6-6" stroke={C.green} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span style={{ fontSize: "11px", color: C.inkMuted }}>{f}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Sans clé */}
-            <div style={{ flex: 1, background: "#fff", border: `1px solid ${C.border}`, borderRadius: "20px", padding: "28px 26px", boxShadow: shadow.card }}>
-              <div style={{ fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "10px" }}>Sans clé</div>
-              <div style={{ fontSize: "18px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginBottom: "20px" }}>Suivi de portefeuille</div>
+            {/* Basique */}
+            <div style={{ background: "#fff", border: `2px solid ${C.accent}`, borderRadius: "22px", padding: "28px 24px", boxShadow: shadow.float, position: "relative" }}>
+              <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: C.accentGrad, color: "#fff", fontSize: "10px", fontWeight: "700", padding: "3px 12px", borderRadius: "20px", whiteSpace: "nowrap" }}>Le plus populaire</div>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>Basique</div>
+              <div style={{ fontSize: "30px", fontWeight: "900", color: C.ink, letterSpacing: "-0.04em", marginBottom: "4px" }}>
+                2,99 €<span style={{ fontSize: "12px", fontWeight: "500", color: C.inkMuted, marginLeft: "4px" }}>/mois</span>
+              </div>
+              <div style={{ fontSize: "11px", color: C.inkMuted, marginBottom: "20px" }}>Sans engagement · Résiliable</div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {[
-                  ["Portefeuille PEA & CTO centralisé", true],
-                  ["Graphiques d'évolution & performance TWR", true],
-                  ["Connexion courtier — Boursobank, Fortuneo, DEGIRO", true],
-                  ["Plan DCA & projection de patrimoine", true],
-                  ["Signaux IA quotidiens", false],
-                  ["Agent Agent IA & Conseiller privé", false],
-                ].map(([txt, ok], i) => (
-                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                    {ok
-                      ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginTop: "1px", flexShrink: 0 }}><path d="M2.5 7l3 3 6-6" stroke={C.green} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      : <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginTop: "1px", flexShrink: 0 }}><path d="M4 4l6 6M10 4l-6 6" stroke={C.inkSubtle} strokeWidth="1.5" strokeLinecap="round"/></svg>
-                    }
-                    <span style={{ fontSize: "12px", color: ok ? C.ink : C.inkSubtle, lineHeight: 1.55 }}>{txt}</span>
+                {["Signaux IA quotidiens", "Agent IA (2 cycles/jour)", "Projections & DCA", "Chat IA", "Synchronisation cloud", "50 analyses IA/jour"].map((f, i) => (
+                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}><path d="M2.5 7l3 3 6-6" stroke={C.green} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span style={{ fontSize: "11px", color: C.ink }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pro */}
+            <div style={{ background: "linear-gradient(160deg,#1A3A5C,#2D5986)", borderRadius: "22px", padding: "28px 24px", boxShadow: "0 12px 40px rgba(45,108,181,0.30)", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }}/>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>Pro</div>
+              <div style={{ fontSize: "30px", fontWeight: "900", color: "#fff", letterSpacing: "-0.04em", marginBottom: "4px" }}>
+                7,99 €<span style={{ fontSize: "12px", fontWeight: "500", color: "rgba(255,255,255,0.5)", marginLeft: "4px" }}>/mois</span>
+              </div>
+              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginBottom: "20px" }}>Sans engagement · Résiliable</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {["Tout le plan Basique", "500 analyses IA/jour", "Autopilot illimité", "Priorité sur les analyses", "Support prioritaire"].map((f, i) => (
+                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}><path d="M2.5 7l3 3 6-6" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.8)" }}>{f}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Comment obtenir */}
-          <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "16px", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px", flexWrap: "wrap", boxShadow: shadow.card }}>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "4px" }}>Comment obtenir une clé Claude</div>
-              <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.6 }}>
-                Rendez-vous sur <strong style={{ color: C.ink }}>console.anthropic.com</strong> → créez un compte → ajoutez un moyen de paiement → copiez votre clé API.<br/>
-                Facturation à l'usage par Anthropic. Comptez <strong style={{ color: C.ink }}>moins de 0,10 € par analyse</strong> pour un usage personnel normal.
-              </div>
-            </div>
-            <a href="https://console.anthropic.com" target="_blank" rel="noreferrer" style={{ padding: "10px 22px", borderRadius: "50px", background: C.navyLight, border: "1px solid rgba(45,108,181,0.18)", color: C.accent, fontSize: "12px", fontWeight: "700", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
-              Obtenir ma clé →
-            </a>
-          </div>
+          <p style={{ textAlign: "center", marginTop: "20px", fontSize: "11px", color: C.inkSubtle }}>
+            Paiement sécurisé par Stripe · L'essai commence sans carte bancaire
+          </p>
         </div>
       </div>
 
@@ -529,14 +518,15 @@ export default function LandingPage({ onLogin }) {
       <div style={{ background: "linear-gradient(135deg,#EEF3FA,#F5F5F7)", padding: "80px 24px 96px", textAlign: "center", borderTop: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: "520px", margin: "0 auto" }}>
           <div style={{ fontSize: "clamp(26px,5vw,38px)", fontWeight: "900", letterSpacing: "-0.04em", color: C.ink, marginBottom: "16px", lineHeight: 1.1 }}>
-            Prêt à défier l'IA ?
+            Investissez avec méthode.<br/>
+            <span style={{ backgroundImage: C.accentGrad, backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-wave 4s ease infinite" }}>Pilotez votre patrimoine.</span>
           </div>
           <p style={{ fontSize: "13px", color: C.inkMuted, marginBottom: "32px", lineHeight: 1.85 }}>
-            Créez votre compte, ajoutez vos positions et laissez Agent IA investir en parallèle. Le défi commence maintenant.
+            Créez votre compte, ajoutez vos positions et laissez BourseNext analyser votre portefeuille. L'IA vous explique chaque décision.
           </p>
           <CTAPrimary style={{ padding: "14px 40px", fontSize: "14px" }}/>
           <p style={{ marginTop: "14px", fontSize: "11px", color: C.inkSubtle }}>
-            Sans carte bancaire · Vos données restent chez vous · 100 % gratuit
+            Sans carte bancaire · Essai gratuit 7 jours · Vos données restent chez vous
           </p>
         </div>
       </div>
@@ -545,6 +535,25 @@ export default function LandingPage({ onLogin }) {
       <div style={{ borderTop: `1px solid ${C.border}`, background: C.snow, padding: "20px 48px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ fontSize: "11px", color: C.inkSubtle }}>© 2026 BourseNext · Données à titre indicatif uniquement</span>
       </div>
+
+      {/* ── Scroll to top ─────────────────────────────────────────────────── */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        style={{
+          position: "fixed", bottom: "32px", right: "32px", zIndex: 9999,
+          width: "44px", height: "44px", borderRadius: "50%",
+          background: C.accentGrad, border: "none",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer", boxShadow: shadow.pill,
+          opacity: showTop ? 1 : 0, pointerEvents: showTop ? "auto" : "none",
+          transition: "opacity 0.25s ease",
+        }}
+        aria-label="Remonter en haut"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 12V4M4 7l4-4 4 4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
     </div>
   );
 }

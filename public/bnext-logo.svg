@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,800&amp;display=swap');
+    </style>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#1A3260"/>
+      <stop offset="35%"  stop-color="#2D6CB5"/>
+      <stop offset="75%"  stop-color="#5BA3D9"/>
+      <stop offset="100%" stop-color="#7BBFE8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- "B" light -->
+  <text
+    x="12" y="82"
+    font-family="'DM Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif"
+    font-size="72"
+    font-weight="300"
+    fill="#2C3655"
+    letter-spacing="-1"
+    text-rendering="geometricPrecision"
+  >B</text>
+
+  <!-- "Next" bold gradient -->
+  <text
+    x="58" y="82"
+    font-family="'DM Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif"
+    font-size="72"
+    font-weight="800"
+    fill="url(#g)"
+    letter-spacing="-3"
+    text-rendering="geometricPrecision"
+  >Next</text>
+</svg>

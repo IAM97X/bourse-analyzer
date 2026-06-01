@@ -791,7 +791,7 @@ function EmptyState({ onInit, account, error }) {
         {getAiName() || "Agent IA"}
       </div>
       <div style={{ fontSize: "13px", color: C.inkMuted, lineHeight: 1.7, marginBottom: "28px" }}>
-        {getAiName() || "Agent"} reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome avec les mêmes contraintes que vous : courtier, horaires Euronext, {account}.
+        {getAiName() || "Agent"} reprend votre portefeuille réel et vos liquidités, puis gère de façon autonome avec les mêmes contraintes que vous : courtier, {account === "CTO" ? "marchés internationaux" : "horaires Euronext"}, {account}.
       </div>
 
       {capital > 0 && (
@@ -1102,7 +1102,7 @@ export default function AIPortfolioTab({ account, hidden }) {
       const res = await fetch("/api/ai-portfolio-decide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, gemini_key: getKey("gemini") || undefined, autopilot_context, app_context, market_open: getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).open, decision_journal: journalWithUpdatedPrices.slice(0, 15) }),
+        body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, gemini_key: getKey("gemini") || undefined, autopilot_context, app_context, market_open: getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).open, market_reason: getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).reason, decision_journal: journalWithUpdatedPrices.slice(0, 15) }),
         signal: AbortSignal.timeout(45000),
       });
       if (!res.ok) {

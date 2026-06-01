@@ -42,9 +42,9 @@ const STEPS = [
   },
   {
     visual: null,
-    tag: "Profil & Clé API",
+    tag: "Profil",
     title: "Prêt en 2 minutes",
-    body: "Renseignez votre profil investisseur et ajoutez votre clé Claude (Anthropic) pour activer toutes les fonctionnalités IA. Vos données restent dans votre navigateur.",
+    body: "Renseignez votre profil investisseur pour personnaliser vos analyses IA. Vos données restent dans votre navigateur.",
     cta: "Commencer →",
   },
 ];

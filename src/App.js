@@ -39,6 +39,7 @@ import AuthPage from "./components/AuthPage";
 import BourseAnalyzerInner from "./components/BourseAnalyzerInner";
 import LandingPage from "./components/LandingPage";
 import { loadDemoData, isDemoMode } from "./constants/demoData";
+import { SubscriptionProvider } from "./context/subscription";
 
 
 
@@ -122,6 +123,8 @@ export default function BourseAnalyzer() {
   const [state, setState] = useState("loading"); // "loading" | "landing" | "auth" | "app"
   const [userName, setUserName] = useState("");
   const [loginKey, setLoginKey] = useState(0);
+  const [userId, setUserId] = useState(null);
+  const [authMode, setAuthMode] = useState("signin");
   const [isMobileScreen, setIsMobileScreen] = useState(() => isPhone());
 
   useEffect(() => {
@@ -146,6 +149,7 @@ export default function BourseAnalyzer() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setSyncUserId(session.user.id);
+        setUserId(session.user.id);
         const name = session.user.user_metadata?.display_name || session.user.email?.split("@")[0] || "Utilisateur";
         setUserName(name);
         await pullFromCloud(session.user.id);
@@ -169,28 +173,7 @@ export default function BourseAnalyzer() {
       }
     });
 
-    // Re-sync au retour de focus (changement d'appareil ou d'onglet)
-    let lastSync = Date.now();
-    const onFocus = async () => {
-      if (Date.now() - lastSync < 30000) return; // max 1 pull toutes les 30s
-      lastSync = Date.now();
-      const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: {} }));
-      if (!session?.user) return;
-      const changed = await pullFromCloud(session.user.id);
-      if (changed) {
-        const toast = Object.assign(document.createElement("div"), {
-          textContent: "🔄 Synchronisation en cours…",
-        });
-        Object.assign(toast.style, { position:"fixed", bottom:"24px", left:"50%", transform:"translateX(-50%)", background:"#0F172A", color:"#fff", padding:"10px 20px", borderRadius:"50px", fontSize:"13px", fontFamily:"'DM Sans', sans-serif", fontWeight:"600", zIndex:"99999", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", opacity:"0", transition:"opacity 0.3s" });
-        document.body.appendChild(toast);
-        requestAnimationFrame(() => { toast.style.opacity = "1"; });
-        if (!window.__aiCycling) setTimeout(() => window.location.reload(), 1200);
-      }
-    };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") onFocus(); });
-
-    return () => { subscription.unsubscribe(); window.removeEventListener("focus", onFocus); };
+    return () => { subscription.unsubscribe(); };
   }, []);
 
   const handleSession = (name) => {
@@ -236,7 +219,15 @@ export default function BourseAnalyzer() {
     </div>
   );
 
-  if (state === "landing") return <LandingPage onLogin={() => setState("auth")} />;
-  if (state === "auth") return <AuthPage onSession={handleSession} onBack={() => setState("landing")} />;
-  return <AppErrorBoundary><MobileProvider><BourseAnalyzerInner key={loginKey} userName={userName} onLogout={handleLogout} /></MobileProvider></AppErrorBoundary>;
+  if (state === "landing") return <LandingPage onLogin={() => { setAuthMode("signin"); setState("auth"); }} onRegister={() => { setAuthMode("signup"); setState("auth"); }} />;
+  if (state === "auth") return <AuthPage onSession={handleSession} onBack={() => setState("landing")} initialMode={authMode} />;
+  return (
+    <AppErrorBoundary>
+      <MobileProvider>
+        <SubscriptionProvider userId={userId}>
+          <BourseAnalyzerInner key={loginKey} userName={userName} onLogout={handleLogout} />
+        </SubscriptionProvider>
+      </MobileProvider>
+    </AppErrorBoundary>
+  );
 }

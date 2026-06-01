@@ -4,6 +4,8 @@ import { fmtEur, fmtPct, linReg } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { hasFMPKey } from "../lib/api";
 import { fetchFMPHistoricalByTicker } from "../lib/market";
+import { useIsMobile } from "../context/mobile";
+import { StatBox, BNextLabel } from "./UI";
 
 // Downsample daily FMP data to weekly (last close per week)
 function toWeeklyFMP(daily) {
@@ -18,8 +20,6 @@ function toWeeklyFMP(daily) {
   }
   return Object.values(byWeek).sort((a, b) => a.date.localeCompare(b.date));
 }
-import { useIsMobile } from "../context/mobile";
-import { StatBox, BNextLabel } from "./UI";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 const DEFAULT_POSITIONS = [];

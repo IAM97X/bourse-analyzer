@@ -29,6 +29,8 @@ import PWAInstallBanner from "./PWAInstallBanner";
 import HomeTab from "./HomeTab";
 import OverviewTab from "./OverviewTab";
 import { isDemoMode, clearDemoData } from "../constants/demoData";
+import { useSubscription } from "../context/subscription";
+import Paywall from "./Paywall";
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 
@@ -44,7 +46,7 @@ const TAB_LABELS = {
   [TABS.HOME]:       "Accueil",
   [TABS.PORTFOLIO]:  "Positions",
   [TABS.DCA]:        "Plan DCA",
-  [TABS.AUTOPILOT]:  "Autopilot Atlas",
+  [TABS.AUTOPILOT]:  "Opportunités",
   [TABS.PROJECTION]: "Simulateur",
   [TABS.MARCHE]:        "Signaux IA",
   [TABS.CHAT]:          "Conseiller Privé",
@@ -59,10 +61,10 @@ const TAB_LABELS = {
 function PillBar({ pills, active, onChange }) {
   return (
     <div style={{ display: "flex", gap: "6px", marginBottom: "28px", flexWrap: "wrap" }}>
-      {pills.map(({ key, label }) => {
+      {pills.map(({ key, label, title }) => {
         const isActive = active === key;
         return (
-          <button key={key} onClick={() => onChange(key)}
+          <button key={key} onClick={() => onChange(key)} title={title || undefined}
             style={{
               padding: "8px 18px", borderRadius: "50px", cursor: "pointer",
               fontSize: "13px", fontWeight: isActive ? "600" : "400",
@@ -109,6 +111,7 @@ const DEFAULT_SCREENING_STOCKS = [
 
 function BourseAnalyzerInner({ userName, onLogout }) {
   const isMobile = useIsMobile();
+  const { status, premium, loading: subLoading } = useSubscription();
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return !isDemoMode() && !localStorage.getItem(ONBOARDING_KEY); } catch { return false; }
   });
@@ -313,9 +316,15 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             if (!res.ok) return;
             const json = await res.json();
             const quotes = json?.quotes || [];
-            const best = quotes.find(q => q.symbol && (q.exchDisp?.includes("Paris") || q.exchDisp?.includes("Amsterdam") || q.exchDisp?.includes("Euronext")))
-              || quotes.find(q => q.symbol && q.quoteType === "EQUITY")
-              || quotes[0];
+            const isPEAAccount = (account || "PEA") === "PEA";
+            const best = isPEAAccount
+              ? (quotes.find(q => q.symbol && (q.exchDisp?.includes("Paris") || q.exchDisp?.includes("Amsterdam") || q.exchDisp?.includes("Euronext")))
+                  || quotes.find(q => q.symbol && q.quoteType === "EQUITY")
+                  || quotes[0])
+              : (quotes.find(q => q.symbol && (q.exchDisp?.includes("NYSE") || q.exchDisp?.includes("NASDAQ") || q.exchDisp?.includes("NasdaqGS") || q.exchDisp?.includes("NasdaqCM")))
+                  || quotes.find(q => q.symbol && (q.exchDisp?.includes("Paris") || q.exchDisp?.includes("Euronext") || q.exchDisp?.includes("Xetra") || q.exchDisp?.includes("London")))
+                  || quotes.find(q => q.symbol && q.quoteType === "EQUITY")
+                  || quotes[0]);
             if (best?.symbol) tickerCache[isin] = best.symbol;
           } catch {}
         }));
@@ -482,8 +491,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         `}</style>
         {/* Logo en haut */}
         <div style={{ padding: "24px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: "20px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif" }}>
-            Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(270deg, #0F2D5E, #2D6CB5, #7BBFE8, #2D6CB5, #0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 4s ease infinite" }}>Next</span>
+          <div style={{ fontSize: "20px", fontWeight: "300", color: C.inkSoft, letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif" }}>
+            Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: C.accentGrad, backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 4s ease infinite" }}>Next</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {/* Bouton masquer/afficher valeurs */}
@@ -516,6 +525,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F5F5F7", color: C.ink, fontFamily: "'DM Sans', sans-serif", paddingTop: isDemo ? "34px" : 0 }}>
+      {!subLoading && status === "expired" && <Paywall />}
       <style>{`
         @keyframes bn-next-wave   { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         @keyframes bn-brand-in    { from{opacity:0;transform:translateY(-6px) scale(0.92)} to{opacity:1;transform:none} }
@@ -668,8 +678,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 {/* BourseNext — fondu entrant */}
                 <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", pointerEvents: "none" }}>
                   {showBrand
-                    ? <span key="brand" style={{ fontSize: "22px", fontWeight: "300", color: "#374151", letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif", animation: refreshing ? "bn-brand-in 0.5s ease-out forwards" : "bn-brand-out 0.5s ease-in forwards" }}>
-                        Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: "linear-gradient(135deg, #0F2D5E, #2D6CB5, #7BBFE8, #2D6CB5, #0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 2s ease-in-out infinite" }}>Next</span>
+                    ? <span key="brand" style={{ fontSize: "22px", fontWeight: "300", color: C.inkSoft, letterSpacing: "-0.01em", fontFamily: "'DM Sans', sans-serif", animation: refreshing ? "bn-brand-in 0.5s ease-out forwards" : "bn-brand-out 0.5s ease-in forwards" }}>
+                        Bourse<span style={{ fontWeight: "800", letterSpacing: "-0.04em", fontFamily: "'DM Sans', sans-serif", backgroundImage: C.accentGrad, backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 4s ease infinite" }}>Next</span>
                       </span>
                     : <span style={{ fontSize: "15px", fontWeight: "600", color: C.ink, letterSpacing: "-0.02em" }}>{tabLabel}</span>
                   }
@@ -798,9 +808,9 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             {IA_TABS.includes(activeTab) && (
               <PillBar
                 pills={[
-                  { key: TABS.MARCHE,        label: "Signaux IA" },
-                  { key: TABS.AUTOPILOT,     label: "Autopilot Atlas" },
-                  { key: TABS.CHAT,          label: "Conseiller" },
+                  { key: TABS.MARCHE,        label: "Signaux IA",    title: "Analyse IA de chaque position — signal quotidien ACHAT / RENFORCER / ATTENDRE" },
+                  { key: TABS.AUTOPILOT,     label: "Opportunités",  title: "Scanne votre portefeuille et l'univers de valeurs éligibles pour identifier les meilleures opportunités d'achat selon votre profil, votre DCA et les signaux marché." },
+                  { key: TABS.CHAT,          label: "Conseiller",    title: "Posez vos questions à votre conseiller financier IA" },
                   { key: TABS.AI_PORTFOLIO,  label: aiPortfolioLabel },
                 ]}
                 active={activeTab}

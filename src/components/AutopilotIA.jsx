@@ -542,7 +542,7 @@ RÈGLES ABSOLUES (liées au profil) :
 1. ${profilRules}
 2. ${horizonRules}
 ${budgetRule ? `3. ${budgetRule}` : ""}
-- L'éligibilité PEA est indiquée [PEA✓/✗] — ne la remet jamais en question si PEA✓.
+${account === "PEA" ? "- L'éligibilité PEA est indiquée [PEA✓/✗] — ne la remet jamais en question si PEA✓. Ne propose que des valeurs PEA✓." : "- Compte CTO : tous les marchés internationaux sont accessibles (NYSE, NASDAQ, Xetra, LSE, Euronext). Pas de contrainte d'éligibilité PEA."}
 - Utilise exclusivement les données chiffrées ci-dessus. Sois direct et tranché.`;
 
       setStep("Analyse IA et recherche d'actualités…");
@@ -703,7 +703,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
             <span style={{ fontSize: "11px", color: C.inkSubtle }}>€/mois</span>
           </div>
           <button
-            onClick={() => { if (window.confirm(`Cette analyse consomme environ 0,10–0,20 $ de crédits API.\n\nBudget à investir : ${budget}€\n\nConfirmer le lancement ?`)) runAnalysis(); }}
+            onClick={() => runAnalysis()}
             disabled={running || !allocOk}
             style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
             {running ? <BNextLabel /> : "Lancer l'analyse"}
@@ -758,14 +758,6 @@ RÈGLE MONTANT : ${nbOppMax === 1
         )}
       </div>
 
-      {/* ── Warning API ── */}
-      <div style={{ background: "rgba(200,151,42,0.07)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "10px 16px", marginBottom: "16px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: "1px" }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="#B45309" stroke="none"/></svg>
-        <div style={{ fontSize: "11px", color: "#7A5A10", lineHeight: 1.6 }}>
-          <strong>Consommation API élevée</strong> — chaque analyse coûte ~0,20–0,40 $ en crédits Anthropic (web search inclus).<br />
-          Conseil : lancez Opportunités <strong>1 à 2 fois par semaine</strong> maximum.
-        </div>
-      </div>
 
       {/* ── Loading ── */}
       {running && step && (
@@ -944,12 +936,9 @@ RÈGLE MONTANT : ${nbOppMax === 1
       {/* ── État vide ── */}
       {!result && !running && !error && (
         <div style={{ textAlign: "center", padding: "60px 20px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "20px", boxShadow: shadow.card }}>
-          <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: "#F2F2F7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2D6CB5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="22" y1="12" x2="19" y2="12"/><line x1="5" y1="12" x2="2" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-          </div>
           <div style={{ fontSize: "16px", fontWeight: "700", color: C.ink, marginBottom: "8px" }}>Prêt à scanner le marché</div>
           <div style={{ fontSize: "13px", color: C.inkSubtle, marginBottom: "20px", maxWidth: "380px", margin: "0 auto 20px" }}>
-            L'agent analyse les écarts entre votre répartition actuelle et la cible, puis identifie les meilleures opportunités Euronext pour votre budget de <strong>{fmtEur(budget)}</strong>.
+            L'agent analyse les écarts entre votre répartition actuelle et la cible, puis identifie les meilleures opportunités {account === "CTO" ? "marchés internationaux" : "Euronext"} pour votre budget de <strong>{fmtEur(budget)}</strong>.
           </div>
           {!allocOk && <div style={{ marginTop: "8px", fontSize: "11px", color: C.red }}>Répartition cible = {allocTotal}% — ajustez pour atteindre 100% avant de lancer</div>}
         </div>

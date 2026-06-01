@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
 import { load } from "../lib/storage";
+import { BNextLoading } from "./BNextLogo";
 
 
 const BN_KEYFRAMES = `
@@ -14,16 +15,7 @@ const BN_KEYFRAMES = `
   @keyframes bn-next-wave { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 `;
 
-export function BNextLabel() {
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", fontFamily: "'DM Sans', sans-serif" }}>
-      <style>{`@keyframes bn-next-wave{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`}</style>
-      <span style={{ fontWeight: "300" }}>B</span>
-      <span style={{ fontWeight: "800", letterSpacing: "-0.03em", backgroundImage: "linear-gradient(270deg,#0F2D5E,#2D6CB5,#7BBFE8,#2D6CB5,#0F2D5E)", backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-next-wave 3s ease infinite" }}>Next</span>
-      <span style={{ fontWeight: "300" }}>…</span>
-    </span>
-  );
-}
+export function BNextLabel({ size }) { return <BNextLoading size={size} />; }
 
 export function OrivoSpinner({ size = 52, label, sublabel }) {
   return (
@@ -64,9 +56,9 @@ export function StatBox({ label, value, color, sensitive }) {
   const mobile  = window.innerWidth < 768;
   const blurStyle = hidden ? { filter: "blur(7px)", userSelect: "none", pointerEvents: "none" } : {};
   return (
-    <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "14px", padding: mobile ? "18px 12px" : "16px 14px", textAlign: "center", boxShadow: shadow.card }}>
-      <div style={{ fontSize: "9px", color: C.inkSubtle, letterSpacing: "0.08em", fontWeight: "500", marginBottom: "5px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{label}</div>
-      <div style={{ fontSize: mobile ? "15px" : "13px", fontWeight: "600", color: color || C.ink, wordBreak: "break-word", lineHeight: "1.3", ...blurStyle }}>{value || "—"}</div>
+    <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: "10px", padding: mobile ? "12px 10px" : "10px 12px", textAlign: "center", boxShadow: shadow.card }}>
+      <div style={{ fontSize: "9px", color: C.inkSubtle, letterSpacing: "0.08em", fontWeight: "500", marginBottom: "4px", textTransform: "uppercase", fontFamily: "'DM Sans', sans-serif" }}>{label}</div>
+      <div style={{ fontSize: mobile ? "13px" : "12px", fontWeight: "700", color: color || C.ink, wordBreak: "break-word", lineHeight: "1.3", ...blurStyle }}>{value || "—"}</div>
     </div>
   );
 }

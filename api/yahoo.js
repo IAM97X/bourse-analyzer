@@ -1,6 +1,7 @@
+const { checkOrigin } = require("./_cors");
+
 module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!checkOrigin(req, res)) return;
 
   const { symbols } = req.query;
   if (!symbols) return res.status(400).json({ error: "symbols required" });

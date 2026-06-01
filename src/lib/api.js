@@ -1,3 +1,4 @@
+import { getAuthToken } from "./storage";
 export const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
 const PROXIES = [
@@ -50,9 +51,8 @@ export const GOOGLE_CX         = { toString() { return getKey("cx"); } };
 export const ALPHAVANTAGE_KEY  = { toString() { return getKey("alphavantage"); } };
 export const FMP_KEY           = { toString() { return getKey("fmp"); } };
 export const hasFMPKey         = () => !!getKey("fmp");
-export const hasClaudeKey = () => !!getKey("anthropic");
-// IA disponible = clé Claude OU proxy Gemini serveur (production)
-export const hasAI = () => hasClaudeKey() || process.env.NODE_ENV === "production";
+export const hasClaudeKey = () => process.env.NODE_ENV === "production" || !!getKey("anthropic");
+export const hasAI = () => hasClaudeKey();
 
 export const CLAUDE_ENDPOINT = process.env.NODE_ENV === "production"
   ? "/api/claude"
@@ -61,7 +61,17 @@ export const CLAUDE_ENDPOINT = process.env.NODE_ENV === "production"
 export const GEMINI_ENDPOINT = "/api/gemini";
 
 // Retourne l'endpoint et les headers à utiliser selon la clé dispo
-function resolveAIEndpoint(maxTokens = 1500, system = "", messages = []) {
+function resolveAIEndpoint(maxTokens = 1500, system = "", messages = [], authToken = null) {
+  if (process.env.NODE_ENV === "production") {
+    const headers = { "Content-Type": "application/json" };
+    if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+    return {
+      endpoint: "/api/claude",
+      headers,
+      buildBody: (model, mt) => ({ model, max_tokens: mt, system, messages }),
+      parseText: (data) => (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n"),
+    };
+  }
   if (hasClaudeKey()) {
     return {
       endpoint: CLAUDE_ENDPOINT,
@@ -115,7 +125,8 @@ export async function callClaude(system, userMessage, useSearch = false, _retrie
   }
   const mt = maxTokens || (useSearch ? 4000 : 1500);
   const messages = [{ role: "user", content: userMessage }];
-  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(mt, system, messages);
+  const token = process.env.NODE_ENV === "production" ? await getAuthToken() : null;
+  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(mt, system, messages, token);
   const bodyObj = buildBody(model || CLAUDE_MODELS.standard, mt);
   if (useSearch && hasClaudeKey()) {
     bodyObj.tools = [{ type: "web_search_20250305", name: "web_search" }];
@@ -168,7 +179,8 @@ export async function callClaude(system, userMessage, useSearch = false, _retrie
 
 export async function callClaudeHaiku(system, userMessage) {
   const messages = [{ role: "user", content: userMessage }];
-  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(2000, system, messages);
+  const token = process.env.NODE_ENV === "production" ? await getAuthToken() : null;
+  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(2000, system, messages, token);
   const bodyObj = buildBody(CLAUDE_MODELS.fast, 2000);
   for (let attempt = 0; attempt < 3; attempt++) {
     let res, data;
@@ -193,7 +205,8 @@ export async function callClaudeHaiku(system, userMessage) {
 }
 
 export async function callClaudeConversation(system, messages, _retries = 3) {
-  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(1500, system, messages);
+  const token = process.env.NODE_ENV === "production" ? await getAuthToken() : null;
+  const { endpoint, headers, buildBody, parseText } = resolveAIEndpoint(1500, system, messages, token);
   const bodyObj = buildBody(CLAUDE_MODELS.fast, 1500);
   for (let attempt = 0; attempt < _retries; attempt++) {
     let res, data;
@@ -235,7 +248,12 @@ En te basant sur ces données, génère le JSON demandé. FORMAT PRIX : point d�
     system,
     messages: [{ role: "user", content: structuredMsg }]
   };
-  const res  = await fetch(CLAUDE_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify(bodyObj) });
+  const isProd = process.env.NODE_ENV === "production";
+  const token = isProd ? await getAuthToken() : null;
+  const claudeHeaders = isProd
+    ? { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}) }
+    : { "Content-Type": "application/json", "x-api-key": `${ANTHROPIC_API_KEY}`, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
+  const res  = await fetch(isProd ? "/api/claude" : CLAUDE_ENDPOINT, { method: "POST", headers: claudeHeaders, body: JSON.stringify(bodyObj) });
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");

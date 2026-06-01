@@ -220,10 +220,10 @@ Règles strictes :
     } catch (e) {
       const m = e.message || "";
       const errMsg = (m.includes("quota") || m.includes("limit: 0") || m.includes("429"))
-        ? "Quota IA atteint. Configure ta clé Claude ou Gemini dans Paramètres → Clés API."
+        ? "Limite d'utilisation atteinte. Réessayez dans quelques minutes."
         : (m.includes("401") || m.includes("invalid") || m.includes("auth"))
-        ? "Clé API invalide. Vérifie dans Paramètres → Clés API."
-        : m || "Vérifiez votre clé API.";
+        ? "Erreur d'authentification. Contactez le support."
+        : m || "Une erreur est survenue. Réessayez.";
       setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
     }
     setLoading(false);
@@ -536,7 +536,7 @@ ${autopilotLine}
 
 STRATÉGIE DCA DE L'INVESTISSEUR : le DCA mensuel (${profil?.dcaMensuel || 0}€/mois) est EXCLUSIVEMENT réservé aux ETF (Amundi, Lyxor, iShares, etc.). Les actions individuelles (small caps, mid caps, grandes capitalisations) ne font JAMAIS l'objet de DCA — ni dans le plan, ni dans l'explication, ni dans la logique présentée. Pour les actions individuelles, parler uniquement d'"achat opportuniste", de "renforcement ponctuel" ou d'"achat au comptant" — JAMAIS de DCA. Si l'utilisateur pose une question sur son DCA, réorienter systématiquement vers les ETF.
 
-${account === "PEA" ? `RÈGLE ABSOLUE PEA : l'utilisateur est dans son PEA. Ne JAMAIS recommander un instrument non éligible au PEA. Sont INTERDITS dans ce contexte : actions américaines (AAPL, NVDA, TSLA, etc.), ETF domiciliés hors UE (Vanguard FTSE, iShares IE sans équivalent PEA, etc.), obligations, fonds non UCITS, cryptos. Sont AUTORISÉS : actions cotées sur Euronext Paris/Amsterdam/Bruxelles/Lisbonne, ETF UCITS éligibles PEA (Amundi PEA, Lyxor PEA, etc.), actions européennes hors France si éligibles via UCITS. Si l'utilisateur demande un avis sur un instrument non éligible, lui signaler clairement et proposer l'équivalent PEA si disponible.` : `COMPTE CTO : tous les instruments sont accessibles (actions US, ETF monde, etc.).`}
+${account === "PEA" ? `RÈGLE ABSOLUE PEA : l'utilisateur est dans son PEA. Ne JAMAIS recommander un instrument non éligible au PEA. Sont INTERDITS dans ce contexte : actions américaines (AAPL, NVDA, TSLA, etc.), ETF domiciliés hors UE (Vanguard FTSE, iShares IE sans équivalent PEA, etc.), obligations, fonds non UCITS, cryptos. Sont AUTORISÉS : actions cotées sur Euronext Paris/Amsterdam/Bruxelles/Lisbonne, ETF UCITS éligibles PEA (Amundi PEA, Lyxor PEA, etc.), actions européennes hors France si éligibles via UCITS. Si l'utilisateur demande un avis sur un instrument non éligible, lui signaler clairement et proposer l'équivalent PEA si disponible.` : `RÈGLE COMPTE CTO : l'utilisateur détient un Compte-Titres Ordinaire. TOUS les marchés et instruments sont accessibles : actions américaines (NYSE, NASDAQ : AAPL, NVDA, MSFT, etc.), actions européennes (Euronext, Xetra, LSE), actions asiatiques, ETF monde domiciliés hors UE (Vanguard, iShares), obligations, REITs, ETF sectoriels. FISCALITÉ CTO : la flat tax (Prélèvement Forfaitaire Unique) de 30% s'applique aux plus-values et dividendes — en tenir compte dans les calculs de rentabilité nette. DIVERSIFICATION : le CTO permet une diversification mondiale totale ; recommander des valeurs et zones géographiques hors Europe quand pertinent. Si l'utilisateur mentionne une valeur, ne pas lui dire qu'elle est "non éligible PEA" — ce terme n'a aucun sens en CTO.`}
 
 RÈGLE ABSOLUE — ZÉRO INVENTION :
 - ISIN : INTERDIT d'en écrire un seul. Tes ISINs sont statistiquement faux même quand tu crois les connaître. Si l'utilisateur demande un ISIN, réponds : "Je ne fournis pas d'ISIN — cherche sur Boursorama ou JustETF."

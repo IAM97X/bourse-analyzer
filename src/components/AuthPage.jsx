@@ -40,8 +40,8 @@ async function hashPin(raw) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-function AuthPage({ onSession, onBack }) {
-  const [mode, setMode]           = useState("signin");
+function AuthPage({ onSession, onBack, initialMode = "signin" }) {
+  const [mode, setMode]           = useState(initialMode);
   const [email, setEmail]         = useState("");
   const [password, setPassword]   = useState("");
   const [displayName, setDisplay] = useState(() => { try { return JSON.parse(localStorage.getItem("bourse_session") || "{}").name || ""; } catch { return ""; } });

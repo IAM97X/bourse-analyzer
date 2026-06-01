@@ -1441,7 +1441,7 @@ function PerformanceGlobale({ positions, account = "PEA" }) {
       </div>
 
       {/* Décomposition en cards */}
-      <div className="ba-perf-breakdown" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: "12px", padding: "16px 20px", borderTop: `1px solid ${C.border}`, background: C.snowOff }}>
+      <div className="ba-perf-breakdown" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: "8px", padding: "12px 16px", borderTop: `1px solid ${C.border}`, background: C.snowOff }}>
         {[
           { label: "P/V Latente",       value: pvLatentes,      badge: pvLatentesPct, color: pvLatentes >= 0 ? C.green : C.red,    sign: pvLatentes >= 0 ? "+" : "" },
           { label: "Gains réalisés",     value: gainsRealises,   badge: null,          color: C.green,                               sign: "+" },
@@ -1449,9 +1449,9 @@ function PerformanceGlobale({ positions, account = "PEA" }) {
           { label: "Dividendes",         value: totalDivRec,     badge: null,          color: totalDivRec > 0 ? C.green : C.inkMuted, sign: "+" },
           { label: "Frais cumulés",      value: -totalFrais,     badge: null,          color: totalFrais > 0 ? C.red : C.inkMuted,   sign: "-" },
         ].map(({ label, value, badge, color, sign }, i) => (
-          <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 14px", boxShadow: shadow.card }}>
-            <div style={{ fontSize: "9px", color: C.inkSubtle, letterSpacing: "1px", fontWeight: "600", textTransform: "uppercase", marginBottom: "6px" }}>{label}</div>
-            <div style={{ fontSize: "20px", fontWeight: "700", color, fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
+          <div key={i} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 12px", boxShadow: shadow.card }}>
+            <div style={{ fontSize: "9px", color: C.inkSubtle, letterSpacing: "1px", fontWeight: "600", textTransform: "uppercase", marginBottom: "4px" }}>{label}</div>
+            <div style={{ fontSize: "14px", fontWeight: "700", color, fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.3px", lineHeight: 1.2 }}>
               {value == null ? "—" : `${sign}${fmtEur(Math.abs(value))}`}
             </div>
             {badge !== null && badge !== undefined && (
