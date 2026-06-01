@@ -369,7 +369,6 @@ export default function LandingPage({ onLogin }) {
 
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontSize: "20px", lineHeight: 1 }}>👾</span>
                   <span style={{ fontSize: "14px", fontWeight: "800", color: C.ink, letterSpacing: "-0.02em" }}>Agent IA</span>
                   <span style={{ fontSize: "10px", fontWeight: "800", background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", color: "#C1E8FF", borderRadius: "6px", padding: "3px 8px", letterSpacing: "0.5px" }}>AUTO</span>
                   <div style={{ flex: 1 }}/>
@@ -390,7 +389,6 @@ export default function LandingPage({ onLogin }) {
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <span style={{ fontSize: "9px", fontWeight: "700", color: "#27AE60", background: "rgba(39,174,96,0.18)", padding: "2px 8px", borderRadius: "20px", alignSelf: "flex-start" }}>L'IA MÈNE +19.0%</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                      <span style={{ fontSize: "11px" }}>👾</span>
                       <span style={{ fontSize: "10px", fontWeight: "700", color: "#fff" }}>Agent IA</span>
                     </div>
                     <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.72)", fontStyle: "italic", lineHeight: 1.6 }}>

@@ -184,7 +184,7 @@ export default function BourseAnalyzer() {
         Object.assign(toast.style, { position:"fixed", bottom:"24px", left:"50%", transform:"translateX(-50%)", background:"#0F172A", color:"#fff", padding:"10px 20px", borderRadius:"50px", fontSize:"13px", fontFamily:"'DM Sans', sans-serif", fontWeight:"600", zIndex:"99999", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", opacity:"0", transition:"opacity 0.3s" });
         document.body.appendChild(toast);
         requestAnimationFrame(() => { toast.style.opacity = "1"; });
-        setTimeout(() => window.location.reload(), 1200);
+        if (!window.__aiCycling) setTimeout(() => window.location.reload(), 1200);
       }
     };
     window.addEventListener("focus", onFocus);

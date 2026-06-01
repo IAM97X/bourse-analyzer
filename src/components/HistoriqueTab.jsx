@@ -530,7 +530,6 @@ function Reconciliation({ account = "PEA" }) {
   if (divergences.length === 0) {
     return (
       <div style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "10px", padding: "14px 18px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
-        <span style={{ fontSize: "13px" }}>✓</span>
         <div style={{ fontSize: "12px", fontWeight: "700", color: C.green }}>Réconciliation OK — portefeuille cohérent avec les avis d'opérés</div>
       </div>
     );
@@ -973,51 +972,49 @@ function StatistiquesHistorique() {
   return (
     <div style={{ marginBottom: "28px" }}>
       {/* ── Synthèse globale ── */}
-      <div style={{ background: C.cardGradGreen, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "22px 26px", marginBottom: "20px", boxShadow: shadow.card }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px", marginBottom: "18px" }}>
+      <div style={{ background: C.cardGradGreen, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "16px 20px", marginBottom: "20px", boxShadow: shadow.card }}>
+        {/* Title row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
           <div>
-            <div style={{ fontSize: "12px", fontWeight: "800", color: C.ink, letterSpacing: "0.5px" }}>Rendement global du portefeuille</div>
-            {premierDate && <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "3px" }}>Depuis le {new Date(premierDate).toLocaleDateString("fr-FR")}</div>}
-            <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
-              {["pru","fifo"].map(m => (
-                <button key={m} onClick={() => setMethode(m)}
-                  style={{ fontSize: "10px", fontWeight: "700", padding: "3px 10px", borderRadius: "6px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", background: methode === m ? C.navyLight : C.snowOff, border: `1px solid ${methode === m ? "rgba(30,58,95,0.12)" : C.border}`, color: methode === m ? C.navy : C.inkSubtle }}>
-                  {m === "pru" ? "PRU moyen" : "FIFO"}
-                </button>
-              ))}
-              <button onClick={() => {
-                const hdr = "Titre,ISIN,1er achat,Investi,PRU,Qté,P&L réalisé,Dividendes,Latent,Total,Rendement %";
-                const rows = entries.map(e => [e.titre, e.isin||"", e.premiereDate||"", e.totalInvesti.toFixed(2), e.pru.toFixed(2), e.qte, e.realise.toFixed(2), e.dividendes.toFixed(2), e.latent.toFixed(2), e.rendementTotal.toFixed(2), e.rendementPct !== null ? e.rendementPct.toFixed(1) : ""].join(","));
-                const csv = [hdr, ...rows].join("\n");
-                const blob = new Blob(["\uFEFF"+csv], { type: "text/csv;charset=utf-8" });
-                const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `rendements-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-              }} style={{ fontSize: "10px", fontWeight: "700", padding: "3px 10px", borderRadius: "6px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", background: C.snowOff, border: `1px solid ${C.border}`, color: C.inkMuted }}>
-                ↓ CSV
-              </button>
-            </div>
+            <div style={{ fontSize: "13px", fontWeight: "800", color: C.ink }}>Rendement global du portefeuille</div>
+            {premierDate && <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "2px" }}>Depuis le {new Date(premierDate).toLocaleDateString("fr-FR")}</div>}
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={lbl9}>Rendement total</div>
-            <div style={{ fontSize: "24px", fontWeight: "900", color: pctColor(gTotal) }}>{fmtPl(gTotal)}</div>
-            <div style={{ fontSize: "14px", fontWeight: "700", color: pctColor(gTotal), marginTop: "1px" }}>{fmtPct2(gPct)}</div>
+          <div style={{ display: "flex", gap: "6px" }}>
+            {["pru","fifo"].map(m => (
+              <button key={m} onClick={() => setMethode(m)}
+                style={{ fontSize: "10px", fontWeight: "700", padding: "3px 10px", borderRadius: "6px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", background: methode === m ? C.navyLight : C.snowOff, border: `1px solid ${methode === m ? "rgba(30,58,95,0.12)" : C.border}`, color: methode === m ? C.navy : C.inkSubtle }}>
+                {m === "pru" ? "PRU moyen" : "FIFO"}
+              </button>
+            ))}
+            <button onClick={() => {
+              const hdr = "Titre,ISIN,1er achat,Investi,PRU,Qté,P&L réalisé,Dividendes,Latent,Total,Rendement %";
+              const rows = entries.map(e => [e.titre, e.isin||"", e.premiereDate||"", e.totalInvesti.toFixed(2), e.pru.toFixed(2), e.qte, e.realise.toFixed(2), e.dividendes.toFixed(2), e.latent.toFixed(2), e.rendementTotal.toFixed(2), e.rendementPct !== null ? e.rendementPct.toFixed(1) : ""].join(","));
+              const csv = [hdr, ...rows].join("\n");
+              const blob = new Blob(["\uFEFF"+csv], { type: "text/csv;charset=utf-8" });
+              const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `rendements-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+            }} style={{ fontSize: "10px", fontWeight: "700", padding: "3px 10px", borderRadius: "6px", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", background: C.snowOff, border: `1px solid ${C.border}`, color: C.inkMuted }}>
+              ↓ CSV
+            </button>
           </div>
         </div>
-        <div className="ba-g4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
-          <div style={colGlob}>
-            <div style={lbl9}>Total investi</div>
-            <div style={val(gInvesti)}>{gInvesti.toFixed(0)} €</div>
-          </div>
-          <div style={colGlob}>
-            <div style={lbl9}>P&amp;L réalisé</div>
-            <div style={val(gRealise, pctColor(gRealise))}>{fmtPl(gRealise)}</div>
-          </div>
-          <div style={colGlob}>
-            <div style={lbl9}>Dividendes</div>
-            <div style={val(gDividendes, gDividendes > 0 ? C.goldDark : C.inkSubtle)}>{gDividendes > 0 ? `+${gDividendes.toFixed(2)} €` : "—"}</div>
-          </div>
-          <div style={colGlob}>
-            <div style={lbl9}>P&amp;L latent</div>
-            <div style={val(gLatent, pctColor(gLatent))}>{fmtPl(gLatent)}</div>
+        {/* Stats pills */}
+        <div className="ba-g4" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {[
+            { label: "Total investi",  value: `${gInvesti.toFixed(0)} €`,                              color: C.ink,                                          sub: null },
+            { label: "P&L réalisé",    value: fmtPl(gRealise),                                          color: pctColor(gRealise),                             sub: null },
+            { label: "Dividendes",     value: gDividendes > 0 ? `+${gDividendes.toFixed(2)} €` : "—",  color: gDividendes > 0 ? C.goldDark : C.inkSubtle,     sub: null },
+            { label: "P&L latent",     value: fmtPl(gLatent),                                           color: pctColor(gLatent),                              sub: null },
+          ].map(({ label, value, color }, i) => (
+            <div key={i} style={{ flex: "1 1 100px", background: "rgba(255,255,255,0.6)", border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 14px" }}>
+              <div style={lbl9}>{label}</div>
+              <div style={{ fontSize: "15px", fontWeight: "800", color, letterSpacing: "-0.3px", marginTop: "2px" }}>{value}</div>
+            </div>
+          ))}
+          {/* Rendement total — accentué */}
+          <div style={{ flex: "1 1 100px", background: gTotal >= 0 ? "rgba(5,150,105,0.08)" : "rgba(220,38,38,0.06)", border: `1px solid ${gTotal >= 0 ? "rgba(5,150,105,0.2)" : "rgba(220,38,38,0.15)"}`, borderRadius: "10px", padding: "10px 14px" }}>
+            <div style={lbl9}>Rendement total</div>
+            <div style={{ fontSize: "18px", fontWeight: "900", color: pctColor(gTotal), letterSpacing: "-0.5px", marginTop: "2px" }}>{fmtPl(gTotal)}</div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: pctColor(gTotal), marginTop: "1px" }}>{fmtPct2(gPct)}</div>
           </div>
         </div>
       </div>

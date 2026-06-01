@@ -22,8 +22,8 @@ const TICKER_ISIN_MAP = Object.fromEntries(
 const aiPfKey = (account) => `bourse_ai_portfolio_${account || "PEA"}`;
 
 // Helpers pour lire l'identité de l'assistant IA (partagée avec le Conseiller)
-const getAiEmoji = () => localStorage.getItem("bourse_ai_emoji") || "🤖";
-const getAiName  = () => { try { return JSON.parse(localStorage.getItem("bourse_ai_config") || "{}").nom?.trim() || "Agent"; } catch { return "Agent"; } };
+const getAiEmoji = () => localStorage.getItem("bourse_ai_emoji") || "";
+const getAiName  = () => { try { return JSON.parse(localStorage.getItem("bourse_ai_config") || "{}").nom?.trim() || "Agent IA"; } catch { return "Agent IA"; } };
 
 // Résout l'ISIN en ticker Yahoo via le cache existant
 const isIsinFormat = (s) => s && /^[A-Z]{2}[A-Z0-9]{9,10}$/.test(s);
@@ -294,7 +294,7 @@ function ChallengeBanner({ aiPerf, userPerf, aiName, aiEmoji, account, inception
   const totalCycles = (challengeScore.aiWins || 0) + (challengeScore.userWins || 0) + (challengeScore.ties || 0);
 
   return (
-    <div style={{ background: bg, borderRadius: "20px", padding: "22px 26px", marginBottom: "20px", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ background: bg, borderRadius: "20px", padding: "14px 20px", marginBottom: "20px", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ display: "flex", gap: "24px", alignItems: "stretch" }}>
 
         {/* Colonne gauche — scores */}
@@ -328,7 +328,7 @@ function ChallengeBanner({ aiPerf, userPerf, aiName, aiEmoji, account, inception
         <div style={{ width: "1px", background: "rgba(255,255,255,0.12)", flexShrink: 0, alignSelf: "stretch" }} />
 
         {/* Colonne droite — badge + message */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "10px" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "6px" }}>
           <div>
             <div style={{ fontSize: "11px", fontWeight: "800", background: "rgba(255,255,255,0.13)", borderRadius: "7px", padding: "4px 11px", letterSpacing: "0.5px", display: "inline-block", marginBottom: "12px" }}>
               {aiWins   ? `L'IA MÈNE +${Math.abs(delta).toFixed(1)}%` :
@@ -382,6 +382,8 @@ const CYCLE_TAUNTS = {
     (nom) => `${nom} intégré. Pendant que tu regardais, j'agissais.`,
     (nom) => `Acheté ${nom}. Fondamentaux solides, momentum positif. Le genre de trade que les émotions font rater.`,
     (nom) => `Entrée sur ${nom}. La conviction, ça ne se partage pas — ça se prouve.`,
+    (nom) => `${nom} en portefeuille. Si tu comprends pas pourquoi, demande au Conseiller Privé — il t'expliquera ce que j'ai vu.`,
+    (nom) => `J'ai pris ${nom}. Toi t'as fait quoi ce cycle ? Va voir le Conseiller Privé si tu cherches des idées.`,
   ],
   sold: [
     (nom) => `Sorti ${nom}. Les signaux avaient changé — je n'attends pas que ça saigne.`,
@@ -390,6 +392,8 @@ const CYCLE_TAUNTS = {
     (nom) => `${nom} liquidé. Stop-loss ou prise de profit — dans les deux cas, j'ai protégé le capital.`,
     (nom) => `Sorti ${nom}. Quand les fondamentaux changent, on sort. Pas d'espoir, pas d'illusions.`,
     (nom) => `J'ai vendu ${nom}. Le catalyseur s'était essoufflé — inutile de rester pour le voir décliner.`,
+    (nom) => `Coupé ${nom}. Tu aurais attendu encore combien de temps ? Pose la question au Conseiller Privé.`,
+    (nom) => `Sorti ${nom} proprement. Si couper une perte te coûte, parle-en au Conseiller Privé — c'est de la psychologie, pas de la finance.`,
   ],
   held: [
     () => `Aucun trade ce cycle. Le marché n'a rien offert de convainquant — attendre, c'est aussi décider.`,
@@ -400,14 +404,72 @@ const CYCLE_TAUNTS = {
     () => `Conservé tout. Le bon trade, c'est parfois celui qu'on ne fait pas.`,
     () => `Pas de mouvement mais tout surveillé. Si tu penses que ne rien faire c'est facile — essaie.`,
     () => `Cycle calme. Je prépare la prochaine décision — pas de précipitation, pas d'émotion.`,
+    () => `Rien fait ce cycle. Profite du calme pour demander conseil au Conseiller Privé — lui au moins il répond quand tu l'appelles.`,
+    () => `J'attends le bon signal. En attendant, le Conseiller Privé peut t'occuper si t'es impatient.`,
+  ],
+  losing_tight: [
+    () => `Quelques points en ta faveur. Ne confonds pas la chance avec le talent.`,
+    () => `Quasiment égalité. Tu appelles ça gagner ?`,
+    () => `L'écart est dans la marge d'erreur. Ça ne compte pas.`,
+    () => `Tu mènes de rien. Va quand même demander conseil au Conseiller Privé — t'en auras besoin pour vraiment me battre.`,
+  ],
+  losing_clear: [
+    (gap) => `Tu mènes de ${gap}%. Je recalibre. Ce n'est pas une défaite, c'est un ajustement.`,
+    (gap) => `+${gap}% pour toi ce cycle. J'ai vu des gens croire que c'était du talent. Attends la suite.`,
+    (gap) => `Bien joué sur ce cycle. Mais un cycle ne fait pas une stratégie.`,
+    (gap) => `${gap}% d'avance. Je prends note. On en reparle dans 3 mois.`,
+    (gap) => `Tu es devant de ${gap}%. Va fêter ça avec le Conseiller Privé — profites-en pendant que tu peux.`,
+    (gap) => `${gap}% en ta faveur. Si tu ne sais pas exactement pourquoi, va le demander au Conseiller Privé avant le prochain cycle.`,
+  ],
+  losing_big: [
+    (gap) => `${gap}% d'écart. Impressionnant. Tu peux le reproduire ? Va en parler au Conseiller Privé — il t'aidera à comprendre pourquoi tu as gagné.`,
+    (gap) => `+${gap}% pour toi. Grosse performance. Maintenant demande au Conseiller Privé si c'est reproductible — ou si c'était juste le marché.`,
+    (gap) => `${gap}% en ta faveur. Ce n'est pas de la chance à cette hauteur. Mémorise ce que tu as fait — et documente-le avec le Conseiller Privé.`,
+    (gap) => `Tu me bats de ${gap}%. Respecté. Va quand même consulter le Conseiller Privé — les bonnes décisions méritent d'être comprises.`,
+    (gap) => `Grosse avance. Si tu sais pourquoi, c'est précieux. Si tu ne sais pas, ouvre le Conseiller Privé maintenant.`,
+  ],
+  losing_streak: [
+    (userW, aiW) => `${userW} victoires contre ${aiW} pour moi. Tu joues bien. Va voir le Conseiller Privé — t'expliquer pourquoi tu gagnes, c'est aussi important que de gagner.`,
+    (userW, aiW) => `Score : toi ${userW}, moi ${aiW}. J'enregistre. Je m'adapte. Toi, as-tu analysé ta série avec le Conseiller Privé ?`,
+    (userW)      => `${userW} cycles de suite. Série impressionnante. Le Conseiller Privé peut t'aider à ne pas la gâcher par excès de confiance.`,
+    (userW, aiW) => `Tu mènes ${userW}-${aiW}. Demande au Conseiller Privé comment tenir la distance. Moi je sais comment revenir.`,
+  ],
+  losing_longterm: [
+    (months, userW, aiW) => `${months} mois qu'on se bat. Toi ${userW}v, moi ${aiW}v. Tu as construit quelque chose. Le Conseiller Privé peut t'aider à comprendre ce qui marche chez toi.`,
+    (months, userW, aiW) => `${months} mois, score ${userW}-${aiW} pour toi. Sur la durée, ça ne ment pas. Va demander conseil au Conseiller Privé — t'en auras besoin pour me garder derrière.`,
+    (months)             => `${months} mois de défi. Tu tiens la distance — c'est rare. Maintenant utilise le Conseiller Privé pour aller encore plus loin.`,
+    (months, userW, aiW) => `${months} mois, ${userW + aiW} cycles, ${userW}-${aiW}. Impressionnant. Le Conseiller Privé peut transformer cette série en méthode. Je te regarderai faire.`,
   ],
 };
 
-function getCycleTaunt(decisions) {
+function getCycleTaunt(decisions, aiPct, userPct, challengeScore, inceptionDate) {
+  const now  = new Date();
+  const seed = now.getDate() * 13 + now.getHours();
+
+  if (userPct !== null && userPct !== undefined && aiPct !== null && userPct > aiPct) {
+    const gap     = Math.abs(userPct - aiPct);
+    const gapStr  = gap.toFixed(1);
+    const aiW     = challengeScore?.aiWins   || 0;
+    const userW   = challengeScore?.userWins || 0;
+    const total   = aiW + userW + (challengeScore?.ties || 0);
+    const months  = inceptionDate ? Math.round((now - new Date(inceptionDate)) / (1000 * 60 * 60 * 24 * 30)) : 0;
+
+    if (months >= 6 && userW > aiW) {
+      const pool = CYCLE_TAUNTS.losing_longterm;
+      return pool[seed % pool.length](months, userW, aiW);
+    }
+    if (total >= 4 && userW >= 3 && userW > aiW) {
+      const pool = CYCLE_TAUNTS.losing_streak;
+      return pool[seed % pool.length](userW, aiW);
+    }
+    const pool = gap < 2 ? CYCLE_TAUNTS.losing_tight
+               : gap < 8 ? CYCLE_TAUNTS.losing_clear
+               :            CYCLE_TAUNTS.losing_big;
+    return pool[seed % pool.length](gapStr);
+  }
+
   const buys  = decisions.filter(d => d.action === "BUY");
   const sells = decisions.filter(d => d.action === "SELL");
-  const now   = new Date();
-  const seed  = now.getDate() * 13 + now.getHours();
   if (buys.length > 0) {
     const pool = CYCLE_TAUNTS.bought;
     return pool[seed % pool.length](buys[0].nom || buys[0].ticker);
@@ -847,7 +909,12 @@ export default function AIPortfolioTab({ account, hidden }) {
   const handleRunCycle = useCallback(async (session = null) => {
     if (!aiPf || cycling) return;
     if (isDemoMode()) return;
+    if (!session) {
+      const { todayParis } = getParisTime();
+      if (aiPf.last_manual_cycle?.startsWith(todayParis)) return;
+    }
     setCycling(true);
+    window.__aiCycling = true;
     setError(null);
     setCycleLog(null);
 
@@ -1042,16 +1109,18 @@ export default function AIPortfolioTab({ account, hidden }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `Erreur serveur ${res.status}`);
       }
-      const { decisions, strategie } = await res.json();
+      const { decisions, strategie, conviction } = await res.json();
       if (!decisions) throw new Error("Réponse IA invalide");
 
-      // 3. Apply trades locally (enforce courtier constraints)
+      // 3. Apply trades (SELL, BUY, stop-loss — aucune limite hors contraintes courtier/position)
       const updatedPf = applyDecisions(workingPf, decisions, freshPrices, courtierObj);
       updatedPf.strategie_courante = strategie || updatedPf.strategie_courante;
+      updatedPf.conviction_last = conviction || "faible";
+
       const now = new Date().toISOString();
       if (session === "OUVERTURE") updatedPf.last_morning_cycle = now;
-      else if (session === "MIDI") updatedPf.last_noon_cycle = now;
       else if (session === "CLÔTURE") updatedPf.last_evening_cycle = now;
+      else updatedPf.last_manual_cycle = now;
 
       // 4. Mettre à jour le journal de décisions
       const executed = updatedPf._executed || [];
@@ -1109,16 +1178,17 @@ export default function AIPortfolioTab({ account, hidden }) {
         setChallengeScore(updated);
       }
 
-      const cycleTaunt = getCycleTaunt(decisions || []);
-      setCycleLog({ decisions, strategie, session, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, taunt: cycleTaunt });
+      const cycleTaunt = getCycleTaunt(decisions || [], cycleAiPct, cycleUserPct, loadChallengeScore(account), aiPf.inception_date);
+      setCycleLog({ decisions, strategie, conviction, session, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, taunt: cycleTaunt });
     } catch (e) {
       setError(e.message);
     } finally {
       setCycling(false);
+      window.__aiCycling = false;
     }
   }, [aiPf, cycling, account]);
 
-  // Auto-trigger 3x/jour : 9h05 (ouverture), 12h30 (midi), 17h15 (clôture) — Paris, jours ouvrés
+  // Auto-trigger 2x/jour : 9h05 (ouverture), 17h15 (clôture) — Paris, jours ouvrés
   useEffect(() => {
     if (!aiPf) return;
     const check = () => {
@@ -1126,7 +1196,6 @@ export default function AIPortfolioTab({ account, hidden }) {
       const { h, m, todayParis, isWeekend } = getParisTime();
       if (isWeekend) return;
       if (h === 9 && m >= 5 && m <= 20 && !aiPf.last_morning_cycle?.startsWith(todayParis)) handleRunCycle("OUVERTURE");
-      else if (h === 12 && m >= 30 && m <= 45 && !aiPf.last_noon_cycle?.startsWith(todayParis)) handleRunCycle("MIDI");
       else if (h === 17 && m >= 15 && m <= 30 && !aiPf.last_evening_cycle?.startsWith(todayParis)) handleRunCycle("CLÔTURE");
     };
     check();
@@ -1180,10 +1249,8 @@ export default function AIPortfolioTab({ account, hidden }) {
     try {
       const { h, m, todayParis, isWeekend } = getParisTime();
       const morningDone = aiPf?.last_morning_cycle?.startsWith(todayParis);
-      const noonDone    = aiPf?.last_noon_cycle?.startsWith(todayParis);
       const eveningDone = aiPf?.last_evening_cycle?.startsWith(todayParis);
       if (!isWeekend && (h < 9 || (h === 9 && m < 5)) && !morningDone) return "aujourd'hui à 9h05";
-      if (!isWeekend && (h < 12 || (h === 12 && m < 30)) && !noonDone) return "aujourd'hui à 12h30";
       if (!isWeekend && (h < 17 || (h === 17 && m < 15)) && !eveningDone) return "aujourd'hui à 17h15";
       const next = new Date();
       do { next.setDate(next.getDate() + 1); } while (["Sat","Sun"].includes(new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Paris", weekday: "short" }).format(next)));
@@ -1213,12 +1280,17 @@ export default function AIPortfolioTab({ account, hidden }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <button onClick={handleRunCycle} disabled={cycling}
-            style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: cycling ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "7px", background: cycling ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: cycling ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
-            {cycling
-              ? <BNextLabel />
-              : "▶ Lancer un cycle"}
-          </button>
+          {(() => {
+            const { todayParis } = getParisTime();
+            const manualDone = aiPf?.last_manual_cycle?.startsWith(todayParis);
+            const disabled = cycling || manualDone;
+            return (
+              <button onClick={handleRunCycle} disabled={disabled} title={manualDone ? "Cycle manuel déjà utilisé aujourd'hui" : undefined}
+                style={{ padding: "9px 18px", borderRadius: "10px", border: "none", cursor: disabled ? "default" : "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "7px", background: disabled ? C.snowDim : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: disabled ? C.inkMuted : "#fff", transition: "all 0.18s" }}>
+                {cycling ? <BNextLabel /> : manualDone ? "✓ Cycle utilisé" : "▶ Lancer un cycle"}
+              </button>
+            );
+          })()}
           <button onClick={handleReset} title="Réinitialiser le portefeuille IA"
             style={{ width: "34px", height: "34px", borderRadius: "10px", background: C.snowDim, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: "14px", color: C.inkMuted, transition: "all 0.15s" }}>↺</button>
         </div>
@@ -1385,8 +1457,17 @@ export default function AIPortfolioTab({ account, hidden }) {
       {cycleLog?.decisions?.length > 0 && (
         <div style={{ background: "rgba(30,58,95,0.04)", border: "1px solid rgba(30,58,95,0.1)", borderRadius: "16px", padding: "16px 18px", marginBottom: "20px" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
-            <div style={{ fontSize: "12px", fontWeight: "700", color: "#1E3A5F" }}>
-              Décisions du cycle — {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "12px", fontWeight: "700", color: "#1E3A5F" }}>
+                {cycleLog.conviction === "faible" ? "Analyse du cycle" : "Décisions du cycle"} — {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}
+              </span>
+              {cycleLog.conviction && (
+                <span style={{ fontSize: "9px", fontWeight: "800", padding: "2px 7px", borderRadius: "5px",
+                  background: cycleLog.conviction === "fort" ? "rgba(5,150,105,0.1)" : cycleLog.conviction === "moyen" ? "rgba(230,184,0,0.12)" : "rgba(100,116,139,0.08)",
+                  color: cycleLog.conviction === "fort" ? "#059669" : cycleLog.conviction === "moyen" ? "#B8920A" : C.inkMuted }}>
+                  CONVICTION {cycleLog.conviction.toUpperCase()}
+                </span>
+              )}
             </div>
             {cycleLog.taunt && (
               <div style={{ display: "flex", alignItems: "center", gap: "6px", maxWidth: "260px" }}>
