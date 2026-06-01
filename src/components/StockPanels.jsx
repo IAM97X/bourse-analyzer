@@ -686,7 +686,15 @@ export function StockProjectionChart({ pos, onClose }) {
           setLoading(false);
         }
       } catch (e) {
-        if (!cancelled) { setError(e.message); setLoading(false); }
+        if (!cancelled) {
+          const raw = e.message || "";
+          const friendly = raw.includes("HTTP 4") ? "Cours non disponibles pour cette valeur (accès Yahoo refusé)"
+            : raw.includes("HTTP 5") ? "Serveur Yahoo Finance temporairement indisponible"
+            : raw.includes("insuffisant") || raw.includes("indisponible") ? raw
+            : "Données de cours indisponibles · Réessayez dans quelques instants";
+          setError(friendly);
+          setLoading(false);
+        }
       }
     };
     run();
