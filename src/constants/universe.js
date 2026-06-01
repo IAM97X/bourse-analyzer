@@ -50,7 +50,13 @@ export const AUTOPILOT_UNIVERSE = {
     { symbol: "PUB.PA",   isin: "FR0000130577", nom: "Publicis",                    type: "Action", secteur: "Médias/IA",         profil_min: "tres-dynamique" },
     { symbol: "KER.PA",   isin: "FR0000121485", nom: "Kering",                      type: "Action", secteur: "Luxe",              profil_min: "tres-dynamique" },
     { symbol: "ENGI.PA",  isin: "FR0010208488", nom: "Engie",                       type: "Action", secteur: "Énergie",           profil_min: "tres-dynamique" },
-    // Small caps PEA
+    // Small caps PEA — Euronext Growth
+    { symbol: "ALHAF.PA", isin: "FR0014007ND6", nom: "Haffner Energy",              type: "Action", secteur: "Hydrogène/Biomasse",  profil_min: "tres-dynamique" },
+    { symbol: "ALKAL.PA", isin: "FR0011950732", nom: "Kalray",                      type: "Action", secteur: "Processeurs",         profil_min: "tres-dynamique" },
+    { symbol: "ALIV.PA",  isin: "FR0013334298", nom: "Inventiva",                   type: "Action", secteur: "Biotech",             profil_min: "tres-dynamique" },
+    { symbol: "VLA.PA",   isin: "FR0004056851", nom: "Valneva SE",                  type: "Action", secteur: "Vaccins",             profil_min: "tres-dynamique" },
+    { symbol: "ALSMA.PA", isin: "FR0013505062", nom: "Smaio",                       type: "Action", secteur: "Dispositifs médicaux", profil_min: "tres-dynamique" },
+    { symbol: "ALENT.PA", isin: "FR0004152700", nom: "Entech",                      type: "Action", secteur: "Stockage énergie",    profil_min: "tres-dynamique" },
     { symbol: "ALWLX.PA", isin: "FR0014000TB2", nom: "Wallix Group",                type: "Action", secteur: "Cybersécurité FR",   profil_min: "tres-dynamique" },
     { symbol: "BLV.PA",   isin: "FR0014003FE9", nom: "Believe",                     type: "Action", secteur: "Musique numérique",  profil_min: "tres-dynamique" },
     { symbol: "SWP.PA",   isin: "FR0004188670", nom: "Sword Group",                 type: "Action", secteur: "IT Services",        profil_min: "tres-dynamique" },

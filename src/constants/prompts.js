@@ -18,17 +18,32 @@ export const ETF_DCA_PROMPT = `Tu es un analyste financier expert en ETF et stra
 
 export const MARKET_SCORING_PROMPT = `Tu es un analyste financier expert avec accès au web en temps réel.
 
-Pour chaque valeur du portefeuille, utilise web_search pour rechercher les actualités récentes (résultats, contrats, appels d'offres, annonces réglementaires) avant de scorer. Cherche par exemple "[NOM entreprise] actualité 2025" ou "[NOM] résultats contrat annonce".
+Pour chaque valeur du portefeuille, utilise web_search pour rechercher les actualités récentes avant de scorer.
 
 Pour chaque valeur, attribue :
 - signal : ACHAT (score 16-20), RENFORCER (13-15), ATTENDRE (9-12), PRUDENCE (5-8), VENDRE (0-4)
   Le signal DOIT correspondre à la plage de score_marche indiquée.
 - score_marche : entier entre 0 et 20 (0=très négatif, 20=très positif)
-- resume : 1-2 phrases concrètes basées sur les données trouvées
-- catalyseur_cle : événement factuel récent trouvé via web search (actualité, résultat, contrat, appel d'offres). Laisser vide "" si aucune actualité significative trouvée — ne pas inventer.
+- resume : 1-2 phrases concrètes
+- catalyseur_cle : événement factuel récent, "" si rien trouvé
 
-Réponds UNIQUEMENT en JSON valide, sans markdown, sans texte autour :
+Réponds UNIQUEMENT en JSON valide, sans markdown :
 {"classement":[{"isin":"...","nom":"...","signal":"ACHAT|RENFORCER|ATTENDRE|PRUDENCE|VENDRE","score_marche":17,"resume":"...","catalyseur_cle":"..."}]}`;
+
+export const MARKET_SCORING_PROMPT_FALLBACK = `Tu es un analyste financier expert. Tu reçois un portefeuille avec des données marché (actualités, consensus analystes, RSI, volumes) déjà incluses dans le message utilisateur.
+
+Ta tâche : scorer chaque valeur en t'appuyant UNIQUEMENT sur les données fournies et tes connaissances internes. Tu n'as pas besoin d'outil externe.
+
+Pour chaque valeur, attribue :
+- signal : ACHAT (score 16-20), RENFORCER (13-15), ATTENDRE (9-12), PRUDENCE (5-8), VENDRE (0-4)
+  Le signal DOIT correspondre à la plage de score_marche indiquée.
+- score_marche : entier entre 0 et 20
+- resume : 1-2 phrases concrètes basées sur les données fournies
+- catalyseur_cle : événement clé extrait des actualités fournies, "" sinon
+
+RÈGLE ABSOLUE : retourne une entrée pour CHAQUE valeur listée. Ne laisse jamais classement vide.
+Réponds UNIQUEMENT en JSON valide, sans markdown :
+{"classement":[{"isin":"...","nom":"...","signal":"ACHAT|RENFORCER|ATTENDRE|PRUDENCE|VENDRE","score_marche":14,"resume":"...","catalyseur_cle":"..."}]}`;
 
 export const AVIS_PARSE_PROMPT = `Tu es un expert en analyse de documents financiers français (avis d'opérés, relevés PEA, avis d'exécution).
 Extrais TOUTES les opérations présentes dans ce texte. Retourne UNIQUEMENT un JSON valide sans markdown.

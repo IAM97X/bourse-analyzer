@@ -100,8 +100,8 @@ export const NAV_GROUPS = [
   { items: [
     { key: TABS.HOME,       label: "Synthèse",  icon: <IconHome/>,      group: [TABS.HOME] },
     { key: TABS.PORTFOLIO,  label: "Portefeuille", icon: <IconPositions/>, group: [TABS.PORTFOLIO, TABS.HISTORIQUE, TABS.OPERATIONS] },
-    { key: TABS.DCA,        label: "Stratégie", icon: <IconTarget/>,    group: [TABS.DCA, TABS.PROJECTION] },
     { key: TABS.MARCHE,     label: "IA",        icon: <IconBrain/>,     group: [TABS.MARCHE, TABS.CHAT, TABS.AUTOPILOT], featured: true },
+    { key: TABS.DCA,        label: "Stratégie", icon: <IconTarget/>,    group: [TABS.DCA, TABS.PROJECTION] },
     { key: TABS.PLUS,       label: "Compte",    icon: <IconMore/>,      group: [TABS.PLUS, TABS.PROFIL, TABS.SETTINGS] },
   ]},
 ];
@@ -238,10 +238,6 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         <div style={{ background: "#F2F2F7", borderRadius: "16px", padding: "14px 16px" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "6px" }}>
             <div style={{ fontSize: "9px", fontWeight: "600", color: "#8E8E93", letterSpacing: "1.2px", textTransform: "uppercase" }}>Portefeuille {account || "PEA"}</div>
-            {onShowGuide && (
-              <button onClick={onShowGuide} title="Guide interactif"
-                style={{ width: "20px", height: "20px", borderRadius: "6px", background: "rgba(0,0,0,0.06)", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "11px", fontFamily: "'DM Sans', sans-serif", flexShrink: 0 }}>?</button>
-            )}
           </div>
           <div style={{ fontSize: "20px", fontWeight: "700", color: "#1C1C1E", letterSpacing: "-0.5px", marginBottom: "4px", ...(hidden ? { filter: "blur(7px)", userSelect: "none" } : {}) }}>{fmtEur(totalActuel)}</div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -251,12 +247,6 @@ function SidebarContent({ active, onChange, portfolioVersion, refreshAll, refres
         </div>
       </div>}
 
-      {!mobileCompact && c && onShowGuide && (
-        <div style={{ padding: "10px 12px", display: "flex", justifyContent: "center", flexShrink: 0 }}>
-          <button onClick={onShowGuide} title="Guide interactif"
-            style={{ width: "36px", height: "32px", borderRadius: "8px", background: "#F2F2F7", border: "none", color: "#6C6C70", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "13px", fontFamily: "'DM Sans', sans-serif" }}>?</button>
-        </div>
-      )}
     </div>
   );
 }

@@ -93,13 +93,18 @@ export function LiveMarketPanel({ pos, onClose }) {
     }
 
     if (!ticker) { setErr("Ticker Yahoo Finance introuvable · renseignez-le manuellement via ✏ dans le tableau."); setLoading(false); return; }
+    // Valider le format du ticker avant encodage (évite URIError Safari)
+    if (!/^[A-Z0-9.\-^=]+$/i.test(ticker)) { setErr("Ticker invalide · vérifiez le symbole dans ✏"); setLoading(false); return; }
     try {
       const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=5m&range=1d`;
       const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(14000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const r    = json?.chart?.result?.[0];
-      if (!r) throw new Error("Données indisponibles");
+      if (!r) {
+        const yahooErr = json?.chart?.error?.description;
+        throw new Error(yahooErr ? "Ticker invalide · vérifiez le symbole dans ✏" : "Données indisponibles");
+      }
 
       const meta  = r.meta || {};
       const ts    = r.timestamp || [];
@@ -613,6 +618,10 @@ export function StockProjectionChart({ pos, onClose }) {
         if (!cancelled) { setError("Ticker Yahoo Finance non configuré · Cliquez sur ✏ dans le tableau pour le définir"); setLoading(false); }
         return;
       }
+      if (!/^[A-Z0-9.\-^=]+$/i.test(ticker)) {
+        if (!cancelled) { setError("Ticker invalide · vérifiez le symbole dans ✏"); setLoading(false); }
+        return;
+      }
 
       try {
         // Historique affiché selon la période choisie
@@ -623,7 +632,10 @@ export function StockProjectionChart({ pos, onClose }) {
         const jsonDisplay = await resDisplay.json();
 
         const r = jsonDisplay?.chart?.result?.[0];
-        if (!r) throw new Error("Données indisponibles");
+        if (!r) {
+          const yahooErr = jsonDisplay?.chart?.error?.description;
+          throw new Error(yahooErr ? "Ticker invalide · vérifiez le symbole dans ✏" : "Données indisponibles");
+        }
         const ts = r.timestamp || [];
         const cl = r.indicators?.quote?.[0]?.close || [];
         const vol = r.indicators?.quote?.[0]?.volume || [];
@@ -1065,6 +1077,25 @@ export function PriceEvolutionChart({ positions }) {
     const run = async () => {
       const cache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY)||"{}"); } catch { return {}; } })();
       for (const pos of positions) { if (pos.isin && pos.ticker) cache[pos.isin] = pos.ticker; }
+
+      // Auto-résolution des ISINs manquants via Yahoo Search
+      const needResolve = positions.filter(p => p.isin && !p.ticker && !cache[p.isin]);
+      if (needResolve.length > 0) {
+        await Promise.all(needResolve.map(async (p) => {
+          try {
+            const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(p.isin)}&quotesCount=5&newsCount=0`;
+            const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
+            if (!res.ok) return;
+            const json = await res.json();
+            const quotes = json?.quotes || [];
+            const best = quotes.find(q => q.symbol && (q.exchDisp?.includes("Paris") || q.exchDisp?.includes("Euronext") || q.exchDisp?.includes("Amsterdam")))
+              || quotes.find(q => q.symbol && q.quoteType === "EQUITY")
+              || quotes[0];
+            if (best?.symbol) cache[p.isin] = best.symbol;
+          } catch {}
+        }));
+        try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(cache)); } catch {}
+      }
 
       // Résultats indexés pour conserver l'ordre des positions
       const results = new Array(positions.length).fill(null);

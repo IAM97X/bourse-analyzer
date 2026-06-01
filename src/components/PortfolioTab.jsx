@@ -86,7 +86,6 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   const [showForm, setShowForm]         = useState(false);
   const [editId, setEditId]             = useState(null);
   const [form, setForm]                 = useState({ nom: "", isin: "", pru: "", quantite: "", alerteHaute: "", alerteBasse: "", ticker: "", dateAchat: "", compte: account });
-  const [alerts, setAlerts]             = useState([]);
   const [portSaved, setPortSaved]       = useState(false);
   const [fetchingIds, setFetchingIds]   = useState(new Set());
   const [fetchErrors, setFetchErrors]   = useState({});
@@ -145,8 +144,22 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     setFetchingIds(prev => new Set([...prev, pos.id]));
     setFetchErrors(prev => { const n = { ...prev }; delete n[pos.id]; return n; });
     try {
-      // Fallback IA si Yahoo n'a pas résolu le cours individuellement
       let cours = null;
+      // Essayer Yahoo Finance d'abord (v8/finance/chart)
+      const tickerCacheLocal = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY) || "{}"); } catch { return {}; } })();
+      const ticker = pos.ticker || (pos.isin && tickerCacheLocal[pos.isin]);
+      if (ticker) {
+        try {
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`;
+          const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
+          if (res.ok) {
+            const json = await res.json();
+            const newPrice = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
+            if (newPrice && newPrice > 0) cours = newPrice;
+          }
+        } catch {}
+      }
+      // Fallback IA si Yahoo n'a pas résolu le cours
       if (!cours) {
         const query = pos.isin
           ? `Cours actuel de ${pos.nom} ISIN ${pos.isin}. JSON: {"performance":{"cours_actuel":"32.140"}}`
@@ -159,32 +172,6 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         setCachedCours(cacheKey, cours);
         savePricePoint(pos.id, cours);
         setPositions(prev => prev.map(p => p.id === pos.id ? { ...p, dernierCours: cours, lastFetch: Date.now() } : p));
-        const newAlerts = [];
-        if (pos.alerteHaute && cours >= pos.alerteHaute) newAlerts.push({ nom: pos.nom, type: "OBJECTIF ATTEINT", color: C.green, cours, seuil: pos.alerteHaute });
-        if (pos.alerteBasse && cours <= pos.alerteBasse) newAlerts.push({ nom: pos.nom, type: "STOP-LOSS ATTEINT", color: C.red, cours, seuil: pos.alerteBasse });
-        if (pos.pru > 0) {
-          const perf = (cours - pos.pru) / pos.pru;
-          if (!pos.alerteHaute && perf >= 0.50) newAlerts.push({ nom: pos.nom, type: "+50% depuis PRU", color: C.green, cours, seuil: null });
-          if (!pos.alerteBasse && perf <= -0.15) newAlerts.push({ nom: pos.nom, type: "-15% depuis PRU", color: C.red, cours, seuil: null });
-        }
-        if (newAlerts.length > 0) {
-          setAlerts(prev => [...prev, ...newAlerts]);
-          // Push notifications via SW (PWA) ou Web Notification classique
-          if ("Notification" in window) {
-            Notification.requestPermission().then(perm => {
-              if (perm !== "granted") return;
-              newAlerts.forEach(a => {
-                const title = `Bourse — ${a.nom}`;
-                const body = `${a.type} · ${fmtCours(a.cours)} (seuil ${fmtCours(a.seuil)})`;
-                if ("serviceWorker" in navigator) {
-                  navigator.serviceWorker.ready.then(reg => reg.showNotification(title, { body, icon: "/logo192.png", badge: "/logo192.png", tag: `alert-${a.nom}`, data: { url: "/" } })).catch(() => new Notification(title, { body, icon: "/favicon.ico" }));
-                } else {
-                  new Notification(title, { body, icon: "/favicon.ico" });
-                }
-              });
-            });
-          }
-        }
       } else {
         setFetchErrors(prev => ({ ...prev, [pos.id]: "Cours introuvable" }));
       }
@@ -276,8 +263,15 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       if (pos.isin && pos.ticker) cache[pos.isin] = pos.ticker;
     }
 
-    // Étape 1 : résoudre les tickers non encore cachés (1 req par ISIN inconnu)
-    const needTicker = positionsRef.current.filter(p => p.isin && !cache[p.isin]);
+    // Étape 1 : résoudre les tickers manquants ou mal résolus (non .PA pour valeurs françaises)
+    const needTicker = positionsRef.current.filter(p => {
+      if (!p.isin) return false;
+      const cached = cache[p.isin];
+      if (!cached) return true;
+      // Re-résoudre si l'ISIN est français mais le ticker n'est pas .PA
+      if (p.isin.startsWith("FR") && !cached.endsWith(".PA")) return true;
+      return false;
+    });
     await Promise.all(needTicker.map(async (pos) => {
       try {
         const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(pos.isin)}&quotesCount=3&newsCount=0`;
@@ -286,55 +280,77 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const json = await res.json();
         const hits = (json?.quotes || []).filter(q => ["EQUITY", "ETF", "MUTUALFUND"].includes(q.quoteType));
         if (!hits.length) throw new Error("introuvable — renseigner le ticker manuellement");
-        cache[pos.isin] = hits[0].symbol;
+        // Prioriser Euronext Paris (.PA) ou Growth (.PA) sur les autres bourses
+        const paHit = hits.find(q => q.symbol?.endsWith(".PA"));
+        cache[pos.isin] = (paHit || hits[0]).symbol;
       } catch (e) {
         errors.push(`${pos.nom} : ${e.message}`);
       }
     }));
     try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(cache)); } catch {}
 
-    // Étape 2 : une seule requête batch pour tous les tickers résolus
-    const resolved = positionsRef.current.filter(p => p.isin && cache[p.isin]);
+    // Étape 2 : cours Yahoo Finance — batch v7 en primaire, v8/chart en fallback individuel
+    const resolved = positionsRef.current.filter(p => {
+      const ticker = p.ticker || (p.isin && cache[p.isin]);
+      return !!ticker;
+    });
     if (resolved.length > 0) {
+      const newFlash = {};
+      const priceMap = {};
+
+      // Tentative 1 : batch v7/finance/quote (1 seule requête, plus permissif sur l'auth)
       try {
-        const symbols = resolved.map(p => cache[p.isin]).join(",");
+        const symbols = resolved.map(p => p.ticker || cache[p.isin]).join(",");
         const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`;
         const res = await fetchWithProxy(quoteUrl, { signal: AbortSignal.timeout(20000) });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        const qMap = {};
-        for (const q of (json?.quoteResponse?.result || [])) qMap[q.symbol] = q;
-        const newFlash = {};
-        setPositions(prev => {
-          const next = prev.map(p => {
-            const sym = p.isin && cache[p.isin];
-            if (!sym) return p;
-            const q = qMap[sym];
-            if (!q?.regularMarketPrice) { errors.push(`${p.nom} : cours indisponible`); return p; }
-            const sectorRaw = q.sector || null;
-            const secteur = sectorRaw ? translateSecteur(sectorRaw) : (p.secteur || ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || null);
-            const newPrice = q.regularMarketPrice;
-            const prevPrice = p.dernierCours || p.pru;
-            const deviation = prevPrice > 0 ? Math.abs(newPrice - prevPrice) / prevPrice : 0;
-            if (deviation > 0.20) {
-              errors.push(`${p.nom} : prix Yahoo suspect (${newPrice.toFixed(2)} vs ${prevPrice.toFixed(2)}, écart ${(deviation * 100).toFixed(0)}%) — ignoré`);
-              return p;
+        if (res.ok) {
+          const json = await res.json();
+          for (const q of (json?.quoteResponse?.result || [])) {
+            if (q?.regularMarketPrice > 0) {
+              const pos = resolved.find(p => (p.ticker || cache[p.isin]) === q.symbol);
+              if (pos) priceMap[pos.id] = { posId: pos.id, isin: pos.isin, newPrice: q.regularMarketPrice, changePercent: q.regularMarketChangePercent ?? null, dividendeAnnuel: q.trailingAnnualDividendRate ?? null, rendementDividende: q.trailingAnnualDividendYield != null ? q.trailingAnnualDividendYield * 100 : null };
             }
-            if (p.dernierCours && newPrice !== p.dernierCours) {
-              newFlash[p.id] = newPrice > p.dernierCours ? "green" : "red";
-            }
-            savePricePoint(p.id, newPrice);
-            return { ...p, dernierCours: newPrice, intradayVariation: q.regularMarketChangePercent ?? null, lastFetch: Date.now(), dividendeAnnuel: q.trailingAnnualDividendRate ?? p.dividendeAnnuel ?? null, rendementDividende: q.trailingAnnualDividendYield != null ? q.trailingAnnualDividendYield * 100 : (p.rendementDividende ?? null), ...(secteur && !p.secteur ? { secteur } : {}) };
-          });
-          if (Object.keys(newFlash).length > 0) {
-            setFlashIds(newFlash);
-            setTimeout(() => setFlashIds({}), 1500);
           }
-          return next;
-        });
-      } catch (e) {
-        errors.push(`Requête groupée : ${e.message}`);
+        }
+      } catch {}
+
+      // Fallback : v8/finance/chart pour les positions non résolues par v7
+      const stillMissing = resolved.filter(p => !priceMap[p.id]);
+      if (stillMissing.length > 0) {
+        await Promise.all(stillMissing.map(async pos => {
+          const ticker = pos.ticker || cache[pos.isin];
+          try {
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`;
+            const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
+            if (!res.ok) { errors.push(`${pos.nom} : HTTP ${res.status}`); return; }
+            const json = await res.json();
+            const meta = json?.chart?.result?.[0]?.meta;
+            const newPrice = meta?.regularMarketPrice;
+            if (!newPrice || newPrice <= 0) { errors.push(`${pos.nom} : cours indisponible`); return; }
+            priceMap[pos.id] = { posId: pos.id, isin: pos.isin, newPrice, changePercent: meta?.regularMarketChangePercent ?? null };
+          } catch (e) {
+            errors.push(`${pos.nom} : ${e.message}`);
+          }
+        }));
       }
+
+      setPositions(prev => {
+        const next = prev.map(p => {
+          const r = priceMap[p.id];
+          if (!r) return p;
+          const secteur = p.secteur || ISIN_SECTEUR[p.isin] || detectSecteurNom(p.nom) || null;
+          if (p.dernierCours && r.newPrice !== p.dernierCours) {
+            newFlash[p.id] = r.newPrice > p.dernierCours ? "green" : "red";
+          }
+          savePricePoint(p.id, r.newPrice);
+          return { ...p, dernierCours: r.newPrice, intradayVariation: r.changePercent, lastFetch: Date.now(), dividendeAnnuel: r.dividendeAnnuel ?? p.dividendeAnnuel ?? null, rendementDividende: r.rendementDividende ?? p.rendementDividende ?? null, ...(secteur && !p.secteur ? { secteur } : {}) };
+        });
+        if (Object.keys(newFlash).length > 0) {
+          setFlashIds(newFlash);
+          setTimeout(() => setFlashIds({}), 1500);
+        }
+        return next;
+      });
     }
 
     // Étape 3 : fetch secteur via assetProfile pour les positions sans secteur
@@ -373,20 +389,8 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
 
   const applyImport = (parsed) => {
-    // Remplacement STRICT : le portefeuille devient exactement ce que contient le CSV.
-    // Les alertes et l'id existants sont préservés pour les positions connues.
-    const newAlerts = [];
     const next = parsed.map((r, i) => {
       const existing = positions.find(p => (r.isin && r.isin === p.isin) || r.nom.toLowerCase() === p.nom.toLowerCase());
-      if (existing?.alerteHaute && r.dernierCours && r.dernierCours >= existing.alerteHaute)
-        newAlerts.push({ nom: r.nom, type: "OBJECTIF ATTEINT", color: C.green, cours: r.dernierCours, seuil: existing.alerteHaute });
-      if (existing?.alerteBasse && r.dernierCours && r.dernierCours <= existing.alerteBasse)
-        newAlerts.push({ nom: r.nom, type: "STOP-LOSS ATTEINT", color: C.red, cours: r.dernierCours, seuil: existing.alerteBasse });
-      if (existing?.pru > 0 && r.dernierCours) {
-        const perf = (r.dernierCours - existing.pru) / existing.pru;
-        if (!existing.alerteHaute && perf >= 0.50) newAlerts.push({ nom: r.nom, type: "+50% depuis PRU", color: C.green, cours: r.dernierCours, seuil: null });
-        if (!existing.alerteBasse && perf <= -0.15) newAlerts.push({ nom: r.nom, type: "-15% depuis PRU", color: C.red, cours: r.dernierCours, seuil: null });
-      }
       return {
         id:               existing?.id ?? (Date.now() + i),
         nom:              r.nom,
@@ -404,14 +408,6 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     const removed = positions.filter(p => !parsed.find(r => (r.isin && r.isin === p.isin) || r.nom.toLowerCase() === p.nom.toLowerCase())).length;
     // Merge : garder les positions des autres comptes + remplacer celles du compte courant
     setAllPositions(prev => [...prev.filter(p => (p.compte || "PEA") !== account), ...next]);
-    if (newAlerts.length > 0) {
-      setAlerts(prev => [...prev, ...newAlerts]);
-      if ("Notification" in window) {
-        Notification.requestPermission().then(perm => {
-          if (perm === "granted") newAlerts.forEach(a => new Notification(`Bourse — ${a.nom}`, { body: `${a.type} · ${fmtCours(a.cours)}`, icon: "/favicon.ico" }));
-        });
-      }
-    }
     // Snapshot CSV : uniquement si les cours réels sont disponibles (pas de PRU comme fallback)
     try {
       const withCours  = next.filter(p => (p.dernierCours || 0) > 0);
@@ -428,8 +424,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     } catch {}
     const now = Date.now(); setLastImport(now); save("bourse_last_import", now);
     const removedMsg = removed > 0 ? `, ${removed} supprimée(s)` : "";
-    const alertMsg   = newAlerts.length > 0 ? ` — ⚠ ${newAlerts.length} alerte(s) !` : "";
-    setCsvImportMsg({ ok: true, txt: `${parsed.length} positions importées${removedMsg}${alertMsg}` });
+    setCsvImportMsg({ ok: true, txt: `${parsed.length} positions importées${removedMsg}` });
     setTimeout(() => setCsvImportMsg(null), 4000);
     setCsvPreview(null);
   };
@@ -463,19 +458,6 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   return (
     <>
     <div>
-      {/* Alertes */}
-      {alerts.length > 0 && (
-        <div style={{ marginBottom: "16px" }}>
-          {alerts.map((a, i) => (
-            <div key={i} style={{ background: a.color === C.green ? C.greenLight : C.redLight, border: `1px solid ${a.color === C.green ? "rgba(5,150,105,0.2)" : "rgba(220,38,38,0.2)"}`, borderRadius: "8px", padding: "12px 16px", marginBottom: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "13px", color: a.color, fontWeight: "700" }}>{a.nom} · {a.type} · {fmtEur(a.cours)}{a.seuil ? ` (seuil ${fmtEur(a.seuil)})` : ""}</span>
-              <button onClick={() => setAlerts(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: C.inkMuted, cursor: "pointer", fontSize: "16px" }}>✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-
       {/* Toolbar */}
       <div className="ba-toolbar" style={{ display: "flex", gap: "8px", marginBottom: "8px", flexWrap: "wrap", alignItems: "center" }}>
         {!isDemoMode() && <button onClick={() => openForm()} style={btnPrimary}>+ Ajouter</button>}
@@ -492,6 +474,15 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
             </span>
             <style>{`.import-pos-tooltip-wrap:hover .import-pos-tooltip-box { opacity: 1 !important; }`}</style>
           </span>
+        )}
+
+        {positions.length > 0 && !isDemoMode() && (
+          <button
+            onClick={() => fetchAllCours()}
+            disabled={coursLoading}
+            style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 16px", color: coursLoading ? C.inkSubtle : C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: coursLoading ? "not-allowed" : "pointer" }}>
+            {coursLoading ? "…" : isMobile ? "Cours" : "Actualiser les cours"}
+          </button>
         )}
 
         {!isDemoMode() && <button
@@ -544,14 +535,21 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         {/* Statut — ligne séparée sur mobile */}
         <div className="ba-toolbar-status">
           {coursMsg
-            ? <span style={{ color: coursMsg.ok ? C.green : C.red, fontWeight: "600" }}>{coursMsg.ok ? "✓ " : "⚠ "}{coursMsg.txt}</span>
+            ? <span style={{ color: coursMsg.ok ? C.green : C.red, fontWeight: "600" }}>
+                {coursMsg.txt}
+                {coursMsg.errors?.length > 0 && (
+                  <span style={{ display: "block", fontSize: "10px", fontWeight: "400", color: C.red, marginTop: "2px" }}>
+                    {coursMsg.errors.slice(0, 3).join(" · ")}
+                  </span>
+                )}
+              </span>
             : csvImportMsg
               ? <span style={{ color: csvImportMsg.ok ? C.green : C.red, fontWeight: "600" }}>{csvImportMsg.ok ? "✓ " : "⚠ "}{csvImportMsg.txt}</span>
               : lastImport
                 ? <span style={{ color: C.inkSubtle }}>{`Import ${new Date(lastImport).toLocaleDateString("fr-FR")}`}</span>
                 : <span style={{ color: C.inkSubtle }}>Aucun import</span>
           }
-          {portSaved && <span style={{ color: C.green, fontWeight: "600", marginLeft: "8px" }}>✓ Sauvegardé</span>}
+          {portSaved && <span style={{ color: C.green, fontWeight: "600", marginLeft: "8px" }}>Sauvegardé</span>}
         </div>
       </div>
 
@@ -810,12 +808,14 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
                       {/* Actions */}
                       <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
-                        <button onClick={e => { e.stopPropagation(); setSellSimPos(pos); }}
-                          style={{ background: C.greenLight, border: `1px solid rgba(5,150,105,0.2)`, borderRadius: "6px", padding: "5px 8px", color: C.greenDark, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", fontWeight: "700" }}>€</button>
                         <button onClick={e => { e.stopPropagation(); openForm(pos); }}
-                          style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "5px 8px", color: C.inkMuted, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✏</button>
+                          style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "6px", padding: "5px 7px", color: C.inkMuted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Modifier">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                        </button>
                         <button onClick={e => { e.stopPropagation(); if (window.confirm(`Supprimer ${pos.nom} ?`)) setPositions(prev => prev.filter(p => p.id !== pos.id)); }}
-                          style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "6px", padding: "5px 8px", color: C.red, fontSize: "10px", fontFamily: "'DM Sans', sans-serif", cursor: "pointer" }}>✕</button>
+                          style={{ background: C.redLight, border: `1px solid rgba(231,76,60,0.2)`, borderRadius: "6px", padding: "5px 7px", color: C.red, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Supprimer">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        </button>
                       </div>
                     </div>
                   );

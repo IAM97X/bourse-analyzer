@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { C, shadow } from "../constants/theme";
 
 /* ─── Mock data ─────────────────────────────────────────────────────────── */
@@ -72,6 +72,36 @@ function ScoreBar({ score }) {
         <div style={{ width: `${score}%`, height: "100%", background: color, borderRadius: "2px" }}/>
       </div>
       <span style={{ fontSize: "9px", fontWeight: "700", color, minWidth: "24px", textAlign: "right" }}>{score}</span>
+    </div>
+  );
+}
+
+/* ─── Reveal on scroll ──────────────────────────────────────────────────── */
+function Reveal({ children, delay = 0, from = "bottom", className = "", style: sx = {} }) {
+  const ref = useRef(null);
+  const [vis, setVis] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVis(true); },
+      { threshold: 0.18, rootMargin: "0px 0px -60px 0px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const tx = from === "left"  ? "translateX(-36px)"
+           : from === "right" ? "translateX(36px)"
+           : from === "up"    ? "translateY(-20px)"
+           :                    "translateY(32px)";
+  return (
+    <div ref={ref} className={className} style={{
+      opacity: vis ? 1 : 0,
+      transform: vis ? "none" : tx,
+      transition: `opacity 0.85s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.85s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+      ...sx,
+    }}>
+      {children}
     </div>
   );
 }
@@ -235,7 +265,7 @@ export default function LandingPage({ onLogin, onRegister }) {
       {/* ── Section Synthèse ────────────────────────────────────────────── */}
       <div id="lp-synthese" className="land-section" style={{ padding: "72px 48px", background: C.snow, borderTop: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+          <Reveal from="bottom" style={{ textAlign: "center", marginBottom: "48px" }}>
             <div style={{ fontSize: "9px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "12px" }}>Synthèse</div>
             <div style={{ fontSize: "26px", fontWeight: "800", letterSpacing: "-0.03em", color: C.ink, lineHeight: 1.2 }}>
               Votre portefeuille PEA et CTO<br />centralisés en un seul endroit
@@ -243,7 +273,7 @@ export default function LandingPage({ onLogin, onRegister }) {
             <p style={{ fontSize: "13px", color: C.inkMuted, marginTop: "12px", maxWidth: "480px", margin: "12px auto 0", lineHeight: 1.8 }}>
               Valeur totale, plus-values latentes, performance YTD avec la méthode TWR — celle qu'utilisent les gérants de fonds. Pas une approximation.
             </p>
-          </div>
+          </Reveal>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
             {[
@@ -251,10 +281,10 @@ export default function LandingPage({ onLogin, onRegister }) {
               { titre: "Performance exacte (TWR)", desc: "La méthode Modified Dietz prend en compte vos versements et vos retraits. Votre vrai rendement — pas un chiffre qui flatte." },
               { titre: "Historique & graphiques", desc: "Évolution du patrimoine sur 1J, 1M, 1A ou depuis le début. Comparez votre courbe à celle du CAC 40 en temps réel." },
             ].map((f, i) => (
-              <div key={i} className="land-feat-hover" style={{ background: "#F5F5F7", border: `1px solid ${C.border}`, borderRadius: "18px", padding: "24px 22px", boxShadow: shadow.card }}>
+              <Reveal key={i} from="bottom" delay={i * 100} className="land-feat-hover" style={{ background: "#F5F5F7", border: `1px solid ${C.border}`, borderRadius: "18px", padding: "24px 22px", boxShadow: shadow.card }}>
                 <div style={{ fontSize: "13px", fontWeight: "800", color: C.ink, marginBottom: "8px", letterSpacing: "-0.02em" }}>{f.titre}</div>
                 <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.75 }}>{f.desc}</div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -266,7 +296,7 @@ export default function LandingPage({ onLogin, onRegister }) {
           <div className="land-split" style={{ display: "flex", alignItems: "center", gap: "64px" }}>
 
             {/* Texte */}
-            <div className="land-split-text" style={{ flex: "0 0 300px", maxWidth: "320px", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <Reveal from="left" className="land-split-text" style={{ flex: "0 0 300px", maxWidth: "320px", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
               <div style={{ fontSize: "9px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "12px" }}>Signaux IA</div>
               <div style={{ fontSize: "22px", fontWeight: "800", letterSpacing: "-0.03em", color: C.ink, lineHeight: 1.2, marginBottom: "16px" }}>
                 Chaque position analysée. Chaque matin.
@@ -275,12 +305,12 @@ export default function LandingPage({ onLogin, onRegister }) {
                 L'IA lit les actualités de chaque valeur en portefeuille et vous donne un signal clair : <strong style={{ color: "#1E8449" }}>ACHAT</strong>, <strong style={{ color: C.accent }}>RENFORCER</strong>, <strong style={{ color: "#B07D2E" }}>ATTENDRE</strong> ou <strong style={{ color: C.red }}>RÉDUIRE</strong>. Basé sur les faits du jour — pas un algorithme opaque.
               </p>
               <p style={{ fontSize: "12px", color: C.inkSubtle, lineHeight: 1.7, background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 14px", marginBottom: "24px" }}>
-                Nécessite une clé <strong style={{ color: C.ink }}>Claude (Anthropic)</strong> — gratuite à obtenir, voir plus bas.
+                Inclus dans votre abonnement — aucune clé API requise.
               </p>
-            </div>
+            </Reveal>
 
             {/* Mock signaux */}
-            <div className="land-split-mock" style={{ flex: 1, minWidth: 0 }}>
+            <Reveal from="right" delay={80} className="land-split-mock" style={{ flex: 1, minWidth: 0 }}>
               <div style={{ background: "#fff", borderRadius: "20px", padding: "18px 18px 14px", border: `1px solid ${C.border}`, boxShadow: shadow.float }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                   <div style={{ fontSize: "12px", fontWeight: "800", color: C.ink }}>Signaux du jour</div>
@@ -318,7 +348,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                   Analyse générée par Claude · Mise à jour quotidienne
                 </div>
               </div>
-            </div>
+            </Reveal>
           </div>
         </div>
       </div>
@@ -329,7 +359,7 @@ export default function LandingPage({ onLogin, onRegister }) {
           <div className="land-split" style={{ display: "flex", alignItems: "center", gap: "64px", flexDirection: "row-reverse" }}>
 
             {/* Texte */}
-            <div className="land-split-text" style={{ flex: "0 0 300px", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <Reveal from="right" className="land-split-text" style={{ flex: "0 0 300px", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
               <div style={{ fontSize: "9px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "12px" }}>Agent IA autonome</div>
               <div style={{ fontSize: "22px", fontWeight: "800", letterSpacing: "-0.03em", color: C.ink, lineHeight: 1.2, marginBottom: "16px" }}>
                 Même capital, mêmes règles.<br/>Qui fait mieux — vous ou l'IA ?
@@ -352,12 +382,12 @@ export default function LandingPage({ onLogin, onRegister }) {
                 ))}
               </div>
               <p style={{ fontSize: "12px", color: C.inkSubtle, lineHeight: 1.7, background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 14px", marginBottom: "24px" }}>
-                Nécessite une clé <strong style={{ color: C.ink }}>Claude (Anthropic)</strong> — gratuite à obtenir, voir plus bas.
+                Inclus dans votre abonnement — aucune clé API requise.
               </p>
-            </div>
+            </Reveal>
 
             {/* Mock Agent IA agent */}
-            <div className="land-split-mock" style={{ flex: 1, minWidth: 0 }}>
+            <Reveal from="left" delay={80} className="land-split-mock" style={{ flex: 1, minWidth: 0 }}>
               <div style={{ background: "#F5F5F7", border: `1px solid ${C.border}`, borderRadius: "20px", padding: "16px", boxShadow: shadow.float, display: "flex", flexDirection: "column", gap: "10px" }}>
 
                 {/* Header */}
@@ -437,7 +467,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                 </div>
 
               </div>
-            </div>
+            </Reveal>
           </div>
         </div>
       </div>
@@ -445,7 +475,7 @@ export default function LandingPage({ onLogin, onRegister }) {
       {/* ── Section Tarifs ───────────────────────────────────────────────── */}
       <div id="lp-tarifs" className="land-section" style={{ padding: "80px 48px", background: "#fff", borderTop: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: "860px", margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+          <Reveal from="bottom" style={{ textAlign: "center", marginBottom: "48px" }}>
             <div style={{ fontSize: "9px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "12px" }}>Tarifs</div>
             <div style={{ fontSize: "26px", fontWeight: "800", letterSpacing: "-0.03em", color: C.ink, lineHeight: 1.2 }}>
               Simple et transparent
@@ -453,11 +483,11 @@ export default function LandingPage({ onLogin, onRegister }) {
             <p style={{ fontSize: "13px", color: C.inkMuted, marginTop: "12px", maxWidth: "400px", margin: "12px auto 0", lineHeight: 1.8 }}>
               7 jours d'essai complet, sans carte bancaire. Ensuite, moins d'un café par mois.
             </p>
-          </div>
+          </Reveal>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", maxWidth: "960px", margin: "0 auto" }}>
             {/* Essai */}
-            <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "22px", padding: "28px 24px", boxShadow: shadow.card }}>
+            <Reveal from="bottom" delay={0} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "22px", padding: "28px 24px", boxShadow: shadow.card }}>
               <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>Essai</div>
               <div style={{ fontSize: "30px", fontWeight: "900", color: C.ink, letterSpacing: "-0.04em", marginBottom: "4px" }}>Gratuit</div>
               <div style={{ fontSize: "11px", color: C.inkMuted, marginBottom: "20px" }}>7 jours · Sans carte bancaire</div>
@@ -469,10 +499,10 @@ export default function LandingPage({ onLogin, onRegister }) {
                   </div>
                 ))}
               </div>
-            </div>
+            </Reveal>
 
             {/* Basique */}
-            <div style={{ background: "#fff", border: `2px solid ${C.accent}`, borderRadius: "22px", padding: "28px 24px", boxShadow: shadow.float, position: "relative" }}>
+            <Reveal from="bottom" delay={100} style={{ background: "#fff", border: `2px solid ${C.accent}`, borderRadius: "22px", padding: "28px 24px", boxShadow: shadow.float, position: "relative" }}>
               <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: C.accentGrad, color: "#fff", fontSize: "10px", fontWeight: "700", padding: "3px 12px", borderRadius: "20px", whiteSpace: "nowrap" }}>Le plus populaire</div>
               <div style={{ fontSize: "11px", fontWeight: "700", color: C.accent, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>Basique</div>
               <div style={{ fontSize: "30px", fontWeight: "900", color: C.ink, letterSpacing: "-0.04em", marginBottom: "4px" }}>
@@ -487,10 +517,10 @@ export default function LandingPage({ onLogin, onRegister }) {
                   </div>
                 ))}
               </div>
-            </div>
+            </Reveal>
 
             {/* Pro */}
-            <div style={{ background: "linear-gradient(160deg,#1A3A5C,#2D5986)", borderRadius: "22px", padding: "28px 24px", boxShadow: "0 12px 40px rgba(45,108,181,0.30)", position: "relative", overflow: "hidden" }}>
+            <Reveal from="bottom" delay={200} style={{ background: "linear-gradient(160deg,#1A3A5C,#2D5986)", borderRadius: "22px", padding: "28px 24px", boxShadow: "0 12px 40px rgba(45,108,181,0.30)", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "100px", height: "100px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }}/>
               <div style={{ fontSize: "11px", fontWeight: "700", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>Pro</div>
               <div style={{ fontSize: "30px", fontWeight: "900", color: "#fff", letterSpacing: "-0.04em", marginBottom: "4px" }}>
@@ -505,7 +535,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                   </div>
                 ))}
               </div>
-            </div>
+            </Reveal>
           </div>
 
           <p style={{ textAlign: "center", marginTop: "20px", fontSize: "11px", color: C.inkSubtle }}>
@@ -516,7 +546,7 @@ export default function LandingPage({ onLogin, onRegister }) {
 
       {/* ── Footer CTA ───────────────────────────────────────────────────── */}
       <div style={{ background: "linear-gradient(135deg,#EEF3FA,#F5F5F7)", padding: "80px 24px 96px", textAlign: "center", borderTop: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
+        <Reveal from="bottom" style={{ maxWidth: "520px", margin: "0 auto" }}>
           <div style={{ fontSize: "clamp(26px,5vw,38px)", fontWeight: "900", letterSpacing: "-0.04em", color: C.ink, marginBottom: "16px", lineHeight: 1.1 }}>
             Investissez avec méthode.<br/>
             <span style={{ backgroundImage: C.accentGrad, backgroundSize: "300% 300%", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", animation: "bn-wave 4s ease infinite" }}>Pilotez votre patrimoine.</span>
@@ -528,7 +558,7 @@ export default function LandingPage({ onLogin, onRegister }) {
           <p style={{ marginTop: "14px", fontSize: "11px", color: C.inkSubtle }}>
             Sans carte bancaire · Essai gratuit 7 jours · Vos données restent chez vous
           </p>
-        </div>
+        </Reveal>
       </div>
 
       {/* ── Footer bas ───────────────────────────────────────────────────── */}

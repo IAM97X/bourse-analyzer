@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { C, shadow } from "../constants/theme";
-import { load, save } from "../lib/storage";
+import { load, save, supabase } from "../lib/storage";
 import { fmtEur } from "../lib/finance";
 import { COURTIERS } from "../constants/courtiers";
 import { isDemoMode } from "../constants/demoData";
@@ -328,6 +328,33 @@ export function ParametresTab({ profil, onChange }) {
   const [aiCfg, setAiCfg] = useState(() => { try { return JSON.parse(localStorage.getItem(AI_CONFIG_KEY) || "{}"); } catch { return {}; } });
   const [aiEmoji, setAiEmoji] = useState(() => localStorage.getItem(AI_EMOJI_KEY) || "🤖");
   const [emojiCatIdx, setEmojiCatIdx] = useState(0);
+  const [userEmail, setUserEmail] = useState("");
+  const [pwdForm, setPwdForm] = useState({ current: "", next: "", confirm: "" });
+  const [pwdMsg, setPwdMsg] = useState(null);
+  const [resetSent, setResetSent] = useState(false);
+
+  useEffect(() => {
+    supabase?.auth.getUser().then(({ data }) => { if (data?.user?.email) setUserEmail(data.user.email); });
+  }, []);
+
+  const handleChangePwd = async () => {
+    if (!pwdForm.next || pwdForm.next !== pwdForm.confirm) { setPwdMsg({ ok: false, txt: "Les mots de passe ne correspondent pas." }); return; }
+    if (pwdForm.next.length < 8) { setPwdMsg({ ok: false, txt: "Minimum 8 caractères." }); return; }
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email: userEmail, password: pwdForm.current });
+    if (signInErr) { setPwdMsg({ ok: false, txt: "Mot de passe actuel incorrect." }); return; }
+    const { error } = await supabase.auth.updateUser({ password: pwdForm.next });
+    if (error) { setPwdMsg({ ok: false, txt: error.message }); return; }
+    setPwdMsg({ ok: true, txt: "Mot de passe modifié." });
+    setPwdForm({ current: "", next: "", confirm: "" });
+    setTimeout(() => setPwdMsg(null), 3000);
+  };
+
+  const handleResetPwd = async () => {
+    if (!userEmail) return;
+    await supabase.auth.resetPasswordForEmail(userEmail, { redirectTo: window.location.origin + window.location.pathname });
+    setResetSent(true);
+    setTimeout(() => setResetSent(false), 5000);
+  };
 
   const saveAiCfg = (update) => {
     const next = { ...aiCfg, ...update };
@@ -336,16 +363,52 @@ export function ParametresTab({ profil, onChange }) {
   };
   const pickAiEmoji = (e) => { setAiEmoji(e); localStorage.setItem(AI_EMOJI_KEY, e); window.dispatchEvent(new CustomEvent("aiEmojiChanged")); };
 
+  const inp = { width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 14px", background: C.snowOff, color: C.ink, outline: "none", boxSizing: "border-box" };
+  const lbl = { fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px", fontFamily: "'DM Sans', sans-serif" };
+
   return (
     <div style={{ maxWidth: "560px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "14px" }}>
 
+      {/* Compte */}
+      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "20px 22px", boxShadow: shadow.card }}>
+        <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "18px", fontFamily: "'DM Sans', sans-serif" }}>Compte</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div>
+            <label style={lbl}>Adresse email</label>
+            <div style={{ ...inp, color: C.inkMuted, cursor: "default" }}>{userEmail || "—"}</div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+            <div>
+              <label style={lbl}>Mot de passe actuel</label>
+              <input type="password" value={pwdForm.current} onChange={e => setPwdForm(f => ({ ...f, current: e.target.value }))} style={inp} placeholder="••••••••" />
+            </div>
+            <div>
+              <label style={lbl}>Nouveau mot de passe</label>
+              <input type="password" value={pwdForm.next} onChange={e => setPwdForm(f => ({ ...f, next: e.target.value }))} style={inp} placeholder="••••••••" />
+            </div>
+            <div>
+              <label style={lbl}>Confirmer</label>
+              <input type="password" value={pwdForm.confirm} onChange={e => setPwdForm(f => ({ ...f, confirm: e.target.value }))} style={inp} placeholder="••••••••" />
+            </div>
+          </div>
+          {pwdMsg && <div style={{ fontSize: "11px", fontWeight: "600", color: pwdMsg.ok ? C.green : C.red, fontFamily: "'DM Sans', sans-serif" }}>{pwdMsg.txt}</div>}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={handleChangePwd} style={{ background: C.accent, border: "none", borderRadius: "8px", padding: "9px 16px", color: "#fff", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
+              Modifier le mot de passe
+            </button>
+            <button onClick={handleResetPwd} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 16px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600", cursor: "pointer" }}>
+              {resetSent ? "Email envoyé !" : "Réinitialiser par email"}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Assistant IA */}
       <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "20px 22px", boxShadow: shadow.card }}>
-        <div style={{ fontSize: "13px", fontWeight: "700", color: C.navy, marginBottom: "16px" }}>Personnaliser l'assistant IA</div>
+        <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, marginBottom: "16px", fontFamily: "'DM Sans', sans-serif" }}>Assistant IA</div>
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <div>
-            <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "8px" }}>Avatar</label>
+            <label style={lbl}>Avatar</label>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
               <span style={{ fontSize: "32px" }}>{aiEmoji}</span>
               <div style={{ display: "flex", gap: "6px" }}>
@@ -359,7 +422,7 @@ export function ParametresTab({ profil, onChange }) {
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
               {AI_EMOJI_OPTIONS[emojiCatIdx].emojis.map(e => (
-                <button key={e} onClick={() => pickAiEmoji(e)}
+                <button key={e} onClick={() => { setAiEmoji(e); localStorage.setItem(AI_EMOJI_KEY, e); window.dispatchEvent(new CustomEvent("aiEmojiChanged")); }}
                   style={{ width: "36px", height: "36px", borderRadius: "8px", border: aiEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: aiEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {e}
                 </button>
@@ -367,37 +430,24 @@ export function ParametresTab({ profil, onChange }) {
             </div>
           </div>
           <div>
-            <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px" }}>Nom de l'assistant</label>
+            <label style={lbl}>Nom de l'assistant</label>
             <input value={aiCfg.nom || ""} onChange={e => saveAiCfg({ nom: e.target.value })} placeholder="ex: Aria, Max, Léa…"
-              style={{ width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none", boxSizing: "border-box" }} />
+              style={inp} />
+            {aiCfg.nom && (
+              <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "6px", fontFamily: "'DM Sans', sans-serif" }}>
+                Apparaîtra comme <strong style={{ color: C.ink }}>{aiCfg.nom}</strong> dans le chat.
+              </div>
+            )}
           </div>
           <div>
-            <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px" }}>Ton</label>
-            <select value={aiCfg.ton || "pedagogique"} onChange={e => saveAiCfg({ ton: e.target.value })}
-              style={{ width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none" }}>
-              <option value="pedagogique">Pédagogique</option>
-              <option value="professionnel">Direct et professionnel</option>
-              <option value="conservateur">Prudent et conservateur</option>
-              <option value="motivant">Motivant et positif</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px" }}>Longueur des réponses</label>
-            <select value={aiCfg.longueur || "concis"} onChange={e => saveAiCfg({ longueur: e.target.value })}
-              style={{ width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none" }}>
-              <option value="concis">Concis (3-5 phrases)</option>
-              <option value="detaille">Détaillé</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px" }}>Instructions personnalisées</label>
+            <label style={lbl}>Instructions personnalisées</label>
             <textarea value={aiCfg.instructions || ""} onChange={e => saveAiCfg({ instructions: e.target.value })}
               placeholder="ex: Je suis un investisseur prudent, privilégie les ETF…" rows={4}
-              style={{ width: "100%", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 12px", background: C.snowOff, color: C.ink, outline: "none", resize: "vertical", boxSizing: "border-box" }} />
-            <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Injectées dans chaque conversation avec l'assistant.</div>
+              style={{ ...inp, resize: "vertical" }} />
+            <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px", fontFamily: "'DM Sans', sans-serif" }}>Injectées dans chaque conversation.</div>
           </div>
           {(aiCfg.nom || aiCfg.instructions) && (
-            <button onClick={() => saveAiCfg({ nom: "", ton: "pedagogique", longueur: "concis", instructions: "" })}
+            <button onClick={() => saveAiCfg({ nom: "", instructions: "" })}
               style={{ alignSelf: "flex-start", background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px 14px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
               Réinitialiser
             </button>
@@ -405,33 +455,9 @@ export function ParametresTab({ profil, onChange }) {
         </div>
       </div>
 
-      {/* Sauvegarde */}
-      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "20px 22px", boxShadow: shadow.card }}>
-        <div style={{ fontSize: "13px", fontWeight: "700", color: C.navy, marginBottom: "14px" }}>Sauvegarde des données</div>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          <button onClick={() => {
-            const ks = ["bourse_portfolio","bourse_profil","bourse_avis_operes","bourse_market_scores","bourse_signal_history","bourse_port_result","bourse_last_import","bourse_dark"];
-            const data = {}; ks.forEach(k => { const v = localStorage.getItem(k); if (v) data[k] = v; });
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a"); a.href = url; a.download = `bourse-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
-          }} style={{ background: C.navyLight, border: `1px solid rgba(30,58,95,0.12)`, borderRadius: "8px", padding: "9px 16px", color: C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
-            ↓ Exporter JSON
-          </button>
-          <label style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 16px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
-            ↑ Importer JSON
-            <input type="file" accept=".json" style={{ display: "none" }} onChange={e => {
-              const file = e.target.files?.[0]; if (!file) return;
-              const r = new FileReader();
-              r.onload = ev => { try { const data = JSON.parse(ev.target.result); Object.entries(data).forEach(([k, v]) => localStorage.setItem(k, v)); window.location.reload(); } catch { alert("Fichier invalide"); } };
-              r.readAsText(file); e.target.value = "";
-            }} />
-          </label>
-        </div>
-        <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "8px" }}>
-          Données stockées localement sur votre appareil uniquement.
-        </div>
-      </div>
+
+      {/* Clés API */}
+      {!isDemoMode() && <ApiKeysSection />}
 
       <div style={{ fontSize: "11px", color: C.inkSubtle, textAlign: "center", padding: "8px" }}>
         Ces données restent sur votre appareil.

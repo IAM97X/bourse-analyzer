@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { C, shadow } from "../constants/theme";
-import { SYSTEM_PROMPT, MARKET_SCORING_PROMPT } from "../constants/prompts";
+import { SYSTEM_PROMPT, MARKET_SCORING_PROMPT, MARKET_SCORING_PROMPT_FALLBACK } from "../constants/prompts";
 import { load, save } from "../lib/storage";
 import { callClaude, enqueueApi, hasClaudeKey, hasAI, fetchWithProxy } from "../lib/api";
-import { computeRSI } from "../lib/finance";
+import { computeRSI, fmtEur } from "../lib/finance";
 import { fetchYahooAnalysts, fetchGoogleNewsRSS, formatExternalContext } from "../lib/market";
 import { useIsMobile } from "../context/mobile";
 import { UI, DEFAULT_PROFIL } from "../constants/config";
@@ -410,25 +410,64 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       const userMsg = `Date d'aujourd'hui : ${today}. Les catalyseurs doivent être les plus récents disponibles — évite tout événement antérieur à 12 mois sauf s'il est structurellement déterminant.\n\nPortefeuille PEA à analyser (DCA long terme, 10 ans) :\n${posListe}\n\nDONNÉES MARCHÉ EN TEMPS RÉEL :\n${contextBlocks}\n\nJSON uniquement.`;
 
       let data;
+      let scoringError = null;
       try {
-        data = await enqueueApi(() => callClaude(MARKET_SCORING_PROMPT, userMsg, true));
-      } catch {
-        // Fallback sans recherche web (native web search peut échouer si bêta non dispo)
-        data = await enqueueApi(() => callClaude(MARKET_SCORING_PROMPT, userMsg, false, 2, true));
+        const primary = await enqueueApi(() => callClaude(MARKET_SCORING_PROMPT, userMsg, true));
+        // N'utiliser le résultat principal que s'il couvre toutes les positions
+        const minExpected = positions.length;
+        const findArr = (d) => [d?.classement, d?.scores, d?.positions].find(a => Array.isArray(a) && a.length >= minExpected);
+        if (findArr(primary)) {
+          data = primary;
+        } else {
+          throw new Error("primary_incomplete");
+        }
+      } catch (e1) {
+        scoringError = e1;
+        try {
+          // Fallback : prompt sans web_search, données déjà incluses dans userMsg
+          data = await enqueueApi(() => callClaude(MARKET_SCORING_PROMPT_FALLBACK, userMsg, false, 3, true, 4000));
+          scoringError = null;
+        } catch (e2) {
+          scoringError = e2;
+        }
       }
-      const scores = data?.classement;
+      // Extraire le tableau de scores quelle que soit la clé utilisée par Claude
+      const scores = (() => {
+        if (!data || typeof data !== "object") return null;
+        if (Array.isArray(data.classement) && data.classement.length > 0) return data.classement;
+        if (Array.isArray(data.scores)     && data.scores.length > 0)     return data.scores;
+        if (Array.isArray(data.positions)  && data.positions.length > 0)  return data.positions;
+        if (Array.isArray(data.ranking)    && data.ranking.length > 0)    return data.ranking;
+        // Dernier recours : premier tableau trouvé dans l'objet
+        for (const v of Object.values(data)) {
+          if (Array.isArray(v) && v.length > 0 && v[0]?.nom) return v;
+        }
+        return null;
+      })();
+
       if (scores && scores.length > 0) {
-        save("bourse_market_scores", scores);
+        // Enrichir chaque score avec l'id/nom/isin exact de la position source (même ordre)
+        const enriched = scores.map((sc, i) => {
+          const src = positions[i];
+          if (!src) return sc;
+          return { ...sc, _posId: src.id, _posNom: src.nom, _posIsin: src.isin || sc.isin };
+        });
+        save("bourse_market_scores", enriched);
         save("bourse_market_scores_ts", Date.now());
         const hist = load("bourse_signal_history", []);
-        hist.unshift({ date: new Date().toISOString(), scores });
+        hist.unshift({ date: new Date().toISOString(), scores: enriched });
         save("bourse_signal_history", hist.slice(0, 30));
-        setMarketScores(scores);
+        setMarketScores(enriched);
         setMarketScoringUi(UI.RESULT);
+        save("bourse_market_scores_error", null);
       } else {
+        const dataStr = data ? JSON.stringify(data).slice(0, 200) : "null";
+        const msg = scoringError?.message || `Réponse IA vide ou format inattendu · data=${dataStr}`;
+        save("bourse_market_scores_error", msg);
         setMarketScoringUi(UI.ERROR);
       }
-    } catch {
+    } catch (outerErr) {
+      save("bourse_market_scores_error", outerErr?.message || "Erreur inconnue");
       setMarketScoringUi(UI.ERROR);
     }
   }, []);
@@ -774,6 +813,13 @@ function BourseAnalyzerInner({ userName, onLogout }) {
 
         {/* Content */}
         <div className="ba-content" style={{ flex: 1, overflowY: "auto", padding: "32px 36px", position: "relative" }}>
+          {/* Bouton guide ? fixe en haut à droite */}
+          {![TABS.PLUS, TABS.PROFIL, TABS.SETTINGS].includes(activeTab) && !isDemo && (
+            <button onClick={showGuide} title="Guide interactif"
+              style={{ position: "absolute", top: "24px", right: "28px", zIndex: 20, width: "28px", height: "28px", borderRadius: "50%", background: C.snow, border: `1px solid ${C.border}`, color: C.inkMuted, fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card }}>
+              ?
+            </button>
+          )}
           <div key={account} className="ba-content-inner" style={{ position: "relative", maxWidth: "1200px", margin: "0 auto", animation: `${prevAccountRef.current === "PEA" ? "bn-account-in-right" : prevAccountRef.current === "CTO" ? "bn-account-in-left" : "bn-account-in-right"} 0.75s cubic-bezier(0.16,1,0.3,1)` }}>
           {/* Bannière Gemini actif / Claude recommandé */}
           {!hasClaudeKey() && hasAI() && !load("bourse_gemini_banner_dismissed", false) && (
@@ -822,22 +868,21 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             {activeTab === TABS.PLUS && (
               <div style={{ animation: "fadeIn 0.3s ease" }}>
                 <div style={{ marginBottom: "20px" }}>
-                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#0F172A", letterSpacing: "-0.03em" }}>Compte</div>
-                  <div style={{ fontSize: "12px", color: "#64748B", marginTop: "3px" }}>Profil et configuration</div>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", fontFamily: "'DM Sans', sans-serif" }}>Compte</div>
+                  <div style={{ fontSize: "12px", color: C.inkSubtle, marginTop: "3px", fontFamily: "'DM Sans', sans-serif" }}>Profil et configuration</div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "480px" }}>
                   {[
-                    { key: TABS.PROFIL,   icon: null, label: "Profil",    desc: "Stratégie, horizon et préférences", color: "#FFF7ED", accent: "#F97316" },
-                    { key: TABS.SETTINGS, icon: null, label: "Paramètres", desc: "Clés API, cloud et options",        color: "#F8FAFC", accent: "#64748B" },
-                  ].map(({ key, icon, label, desc, color, accent }) => (
+                    { key: TABS.PROFIL,   label: "Profil",     desc: "Mon profil · Stratégie · Objectif · Liquidités" },
+                    { key: TABS.SETTINGS, label: "Paramètres", desc: "Compte · Assistant IA" },
+                  ].map(({ key, label, desc }) => (
                     <button key={key} onClick={() => changeTab(key)} className="ba-card-hover"
-                      style={{ display: "flex", alignItems: "center", gap: "14px", background: "rgba(255,255,255,0.85)", border: "1px solid rgba(15,23,42,0.07)", borderRadius: "14px", padding: "14px 16px", textAlign: "left", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", width: "100%" }}>
-                      <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>{icon}</div>
+                      style={{ display: "flex", alignItems: "center", gap: "14px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "16px 18px", textAlign: "left", cursor: "pointer", width: "100%", boxShadow: shadow.card, fontFamily: "'DM Sans', sans-serif" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "14px", fontWeight: "700", color: "#0F172A" }}>{label}</div>
-                        <div style={{ fontSize: "12px", color: "#64748B", marginTop: "2px" }}>{desc}</div>
+                        <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink, fontFamily: "'DM Sans', sans-serif" }}>{label}</div>
+                        <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px", fontFamily: "'DM Sans', sans-serif" }}>{desc}</div>
                       </div>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: "#CBD5E1" }}>
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: C.inkSubtle }}>
                         <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </button>

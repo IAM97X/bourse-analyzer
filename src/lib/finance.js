@@ -148,13 +148,20 @@ export function checkPEAEligibility(isin) {
 
 const SUFFIX_TO_MIC = { PA: "XPAR", AS: "XAMS", AM: "XAMS", BR: "XBRU", LS: "XLIS", LN: "XLON" };
 const NL_SUR_PARIS = new Set(["NL0014559478","NL00150001Q9","NL0000235190","NL0011794037"]);
+const EURONEXT_GROWTH_ISIN = new Set([
+  "FR0014007ND6","FR0011950732","FR0013334298","FR0013505062","FR0004152700",
+  "FR0014000TB2","FR0014003FE9","FR0004054427","FR0013015583","FR0014000U63",
+]);
 export function getMIC(isin, symbol) {
   if (!isin) return "XPAR";
-  // Dériver depuis le suffixe du symbol si disponible (source la plus fiable)
   if (symbol) {
+    const base   = symbol.split(".")[0].toUpperCase();
     const suffix = symbol.split(".").pop().toUpperCase();
+    // Euronext Growth Paris : symboles commençant par AL
+    if (suffix === "PA" && base.startsWith("AL")) return "ALXP";
     if (SUFFIX_TO_MIC[suffix]) return SUFFIX_TO_MIC[suffix];
   }
+  if (EURONEXT_GROWTH_ISIN.has(isin)) return "ALXP";
   if (NL_SUR_PARIS.has(isin)) return "XPAR";
   if (isin.startsWith("BE")) return "XBRU";
   if (isin.startsWith("NL")) return "XAMS";

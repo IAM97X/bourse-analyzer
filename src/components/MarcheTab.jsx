@@ -7,8 +7,8 @@ import { isDemoMode } from "../constants/demoData";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { AUTOPILOT_UNIVERSE } from "../constants/universe";
 import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
-import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy, hasFMPKey } from "../lib/api";
-import { fetchFMPHistoricalByTicker } from "../lib/market";
+import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy } from "../lib/api";
+import { fetchYahooHistorical } from "../lib/market";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { BNextLabel } from "./UI";
 import Tooltip from "./Tooltip";
@@ -100,7 +100,7 @@ function GlobalProjectionChart({ positions, onClose }) {
         try {
           const toDate = new Date().toISOString().slice(0, 10);
           const fromDate = new Date(Date.now() - 5 * 365 * 86400000).toISOString().slice(0, 10);
-          const daily = await fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
+          const daily = await fetchYahooHistorical(ticker, fromDate, toDate);
           const weekly = toWeeklyFMP(daily);
           const pts = weekly.map(d => ({ t: new Date(d.date + "T00:00:00").getTime(), p: d.close }));
           if (pts.length < 10) return null;
@@ -135,7 +135,7 @@ function GlobalProjectionChart({ positions, onClose }) {
 
       const valid = results.filter(Boolean);
       if (valid.length === 0) {
-        setState({ status: "error", data: null, error: hasFMPKey() ? "Aucune donnée historique disponible" : "Clé FMP requise · Ajoutez-la dans Paramètres → Clés API", progress: 1 });
+        setState({ status: "error", data: null, error: "Aucune donnée historique disponible", progress: 1 });
         return;
       }
 
@@ -510,8 +510,17 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
 
   const scores = Array.isArray(marketScores) ? marketScores : [];
   const tickerCache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY_M) || "{}"); } catch { return {}; } })();
+  const normStr = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
   const scoredPositions = positions.map(p => {
-    const s = scores.find(sc => sc.isin === p.isin || sc.nom?.toLowerCase() === p.nom?.toLowerCase());
+    const pNorm = normStr(p.nom);
+    const s = scores.find(sc =>
+      sc._posId === p.id ||
+      (sc._posIsin && p.isin && sc._posIsin.trim() === p.isin.trim()) ||
+      (sc.isin && p.isin && sc.isin.trim() === p.isin.trim()) ||
+      normStr(sc._posNom || sc.nom) === pNorm ||
+      (pNorm.length > 6 && pNorm.includes(normStr(sc._posNom || sc.nom))) ||
+      (normStr(sc._posNom || sc.nom).length > 6 && normStr(sc._posNom || sc.nom).includes(pNorm))
+    );
     const hasRealtime = !!(p.ticker || (p.isin && tickerCache[p.isin]));
     return { ...p, _score: s || null, _hasRealtime: hasRealtime };
   }).sort((a, b) => (b._score?.score_marche ?? -1) - (a._score?.score_marche ?? -1));
@@ -610,11 +619,15 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
           </div>
         )}
 
-        {marketScoringUi === UI.ERROR && (
-          <div style={{ padding: "12px 14px", background: C.redLight, border: `1px solid rgba(231,76,60,0.25)`, borderRadius: "12px", color: C.red, fontSize: "12.5px" }}>
-            Erreur lors du scoring — Service temporairement indisponible. Réessayez dans quelques instants.
-          </div>
-        )}
+        {marketScoringUi === UI.ERROR && (() => {
+          const detail = (() => { try { return load("bourse_market_scores_error", null); } catch { return null; } })();
+          return (
+            <div style={{ padding: "12px 14px", background: C.redLight, border: `1px solid rgba(231,76,60,0.25)`, borderRadius: "12px", color: C.red, fontSize: "12.5px" }}>
+              <div style={{ fontWeight: "700", marginBottom: detail ? "4px" : 0 }}>Erreur lors du scoring — Réessayez dans quelques instants.</div>
+              {detail && <div style={{ fontSize: "11px", opacity: 0.8, fontFamily: "monospace", wordBreak: "break-all" }}>{detail}</div>}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Potentiel du portefeuille (IA) ── */}

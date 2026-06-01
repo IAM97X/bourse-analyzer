@@ -2,8 +2,7 @@ import { useState } from "react";
 import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtPct, linReg } from "../lib/finance";
 import { load, save } from "../lib/storage";
-import { hasFMPKey } from "../lib/api";
-import { fetchFMPHistoricalByTicker } from "../lib/market";
+import { fetchYahooHistorical } from "../lib/market";
 import { useIsMobile } from "../context/mobile";
 import { StatBox, BNextLabel } from "./UI";
 
@@ -265,7 +264,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
       try {
         const toDate = new Date().toISOString().slice(0, 10);
         const fromDate = new Date(Date.now() - 5 * 365 * 86400000).toISOString().slice(0, 10);
-        const daily = await fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
+        const daily = await fetchYahooHistorical(ticker, fromDate, toDate);
         const pts = toWeeklyFMP(daily).map(d => d.close);
         if (pts.length < 20) return null;
         const xs = pts.map((_, i) => i);
@@ -278,7 +277,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
     }));
     const valid = results.filter(Boolean);
     if (valid.length === 0) {
-      setHistError(hasFMPKey() ? "Impossible de récupérer les données historiques." : "Clé FMP requise · Ajoutez-la dans Paramètres → Clés API");
+      setHistError("Impossible de récupérer les données historiques.");
       setLoadingHist(false); return;
     }
     const totalPoids = valid.reduce((s, r) => s + r.poids, 0);
@@ -355,7 +354,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
       try {
         const toDate = new Date().toISOString().slice(0, 10);
         const fromDate = new Date(Date.now() - 10 * 365 * 86400000).toISOString().slice(0, 10);
-        const daily = await fetchFMPHistoricalByTicker(ticker, fromDate, toDate);
+        const daily = await fetchYahooHistorical(ticker, fromDate, toDate);
         if (!daily.length) return;
         historicalPrices[ticker] = {};
         daily.forEach(d => { historicalPrices[ticker][d.date] = d.close; });
@@ -364,7 +363,7 @@ export default function ProjectionTab({ profil, account = "PEA" }) {
     }));
 
     if (fetchedCount === 0) {
-      setReconstructMsg(hasFMPKey() ? "Impossible de récupérer les données historiques." : "Clé FMP requise · Ajoutez-la dans Paramètres → Clés API");
+      setReconstructMsg("Impossible de récupérer les données historiques.");
       setReconstructing(false); return;
     }
 
