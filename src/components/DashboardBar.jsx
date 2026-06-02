@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { C, shadow } from "../constants/theme";
 import { MARKETS_CFG, getMarketStatus } from "../constants/markets";
 import { load } from "../lib/storage";
 import { fmtEur, computeRiskScore } from "../lib/finance";
+import Tooltip from "./Tooltip";
 import { useIsMobile } from "../context/mobile";
 
 function isJourFerie(d) {
@@ -157,12 +158,15 @@ export default function DashboardBar({ onTabChange, hidden, profil, account = "P
           {[
             { label: account === "CTO" ? "Capital investi CTO" : "Capital investi PEA", main: capitalInvesti > 0 ? fmtEur(capitalInvesti) : "—", sub: null, color: C.inkMuted, numColor: C.ink, subSmall: capitalInvesti === 0 },
             { label: "Plus-value latente", main: (totalPV >= 0 ? "+" : "") + fmtEur(totalPV), sub: (totalPVpct >= 0 ? "+" : "") + totalPVpct.toFixed(2) + "%", color: totalPV >= 0 ? C.green : C.red, numColor: totalPV >= 0 ? C.green : C.red },
-            { label: "Variation du jour", main: varJourEur != null ? (varJourEur >= 0 ? "+" : "") + fmtEur(varJourEur) : "—", sub: varJourPct != null ? (varJourPct >= 0 ? "+" : "") + varJourPct.toFixed(2) + "%" : null, color: varJourEur == null ? C.inkSubtle : varJourEur >= 0 ? C.green : C.red, numColor: varJourEur == null ? C.inkMuted : varJourEur >= 0 ? C.green : C.red },
+            { label: "Variation du jour", main: varJourEur != null ? (varJourEur >= 0 ? "+" : "") + fmtEur(varJourEur) : "—", sub: varJourPct != null ? (varJourPct >= 0 ? "+" : "") + varJourPct.toFixed(2) + "%" : null, color: varJourEur == null ? C.inkSubtle : varJourEur >= 0 ? C.green : C.red, numColor: varJourEur == null ? C.inkMuted : varJourEur >= 0 ? C.green : C.red, bgColor: varJourEur != null ? (varJourEur >= 0 ? C.greenLight : C.redLight) : null },
             { label: "Score de risque", main: riskScore !== null ? `${riskScore} / 10` : "—", sub: riskLabel, color: riskColor, numColor: riskColor, isRisk: true },
           ].map((card) => (
-            <div key={card.label} style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "11px 14px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
+            <div key={card.label} style={{ background: card.bgColor || C.snow, border: `1px solid ${card.bgColor ? card.color + "30" : C.border}`, borderRadius: "14px", padding: "11px 14px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: card.color, borderRadius: "14px 14px 0 0" }} />
-              <div style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "7px" }}>{card.label}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "7px" }}>
+                <span style={{ fontSize: "9px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase" }}>{card.label}</span>
+                {card.isRisk && <Tooltip term="Score de risque" text="Score calculé sur 10 selon la concentration, le nombre de positions, la part d'ETF et la diversification sectorielle. ≤3 = faible, ≤6 = modéré, >6 = élevé." iconOnly />}
+              </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: "7px", flexWrap: "wrap" }}>
                 <span style={{ fontSize: isMobile ? "18px" : "20px", fontWeight: "700", color: card.numColor || C.ink, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums", lineHeight: 1, ...blurStyle }}>{card.main}</span>
                 {card.sub && <span style={{ fontSize: "11px", fontWeight: "700", color: card.color, fontVariantNumeric: "tabular-nums", ...blurStyle }}>{card.sub}</span>}

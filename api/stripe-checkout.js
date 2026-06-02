@@ -2,7 +2,10 @@ const Stripe = require("stripe");
 const { checkOrigin } = require("./_cors");
 const { verifyJWT } = require("./_auth");
 
-const PRICE_ID = process.env.STRIPE_PRICE_ID || "price_1TdYinLtQieWByzOPnim27Ig";
+const PRICE_IDS = {
+  basique: process.env.STRIPE_PRICE_BASIQUE || "price_1TdYinLtQieWByzOPnim27Ig",
+  pro:     process.env.STRIPE_PRICE_PRO     || process.env.STRIPE_PRICE_BASIQUE || "price_1TdYinLtQieWByzOPnim27Ig",
+};
 
 module.exports = async function handler(req, res) {
   if (!checkOrigin(req, res)) return;
@@ -12,16 +15,17 @@ module.exports = async function handler(req, res) {
   if (!authUser) return res.status(401).json({ error: "Authentification requise." });
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const { email } = req.body || {};
+  const { email, plan } = req.body || {};
   const user_id = authUser.id;
   if (!email) return res.status(400).json({ error: "email requis" });
+  const priceId = PRICE_IDS[plan] || PRICE_IDS.basique;
 
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: email,
-      line_items: [{ price: PRICE_ID, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         trial_period_days: 7,
         metadata: { user_id },

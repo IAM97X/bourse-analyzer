@@ -92,6 +92,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   const [lastImport, setLastImport]     = useState(() => load("bourse_last_import", null));
   const [vueTableau, setVueTableau]       = useState(true);
   const [selectedPosId, setSelectedPosId] = useState(null);
+  const [hoveredId, setHoveredId] = useState(null);
   const [sortCol, setSortCol]             = useState(null);
   const [sortDir, setSortDir]             = useState("desc");
   const [showCaptures, setShowCaptures]   = useState(false);
@@ -782,12 +783,19 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                   const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? C.red : sig === "PRUDENCE" ? C.red : C.goldDark;
                   const concentration = !etf && poids > 20;
                   const euronextUrl = pos.isin ? getEuronextUrl(pos.isin, pos.nom) : null;
-                  const priceHist = (pos.intradayVariation != null && pos.dernierCours)
-                    ? [pos.dernierCours / (1 + pos.intradayVariation / 100), pos.dernierCours]
-                    : [];
+                  const priceHist = (() => {
+                    const hist = loadPriceHistory(pos.id);
+                    if (hist.length >= 3) return hist;
+                    if (pos.intradayVariation != null && pos.dernierCours)
+                      return [pos.dernierCours / (1 + pos.intradayVariation / 100), pos.dernierCours];
+                    return [];
+                  })();
                   return (
-                    <div key={pos.id} onClick={() => setSelectedPosId(selectedPosId === pos.id ? null : pos.id)}
-                      style={{ display: "grid", gridTemplateColumns: COL, alignItems: "center", padding: "10px 14px", gap: "6px", borderBottom: `1px solid ${C.border}`, background: selectedPosId === pos.id ? C.navyLight : concentration ? "#FFF8F5" : "transparent", cursor: "pointer", transition: "background 0.1s", animation: flashIds[pos.id] ? `flash${flashIds[pos.id] === "green" ? "Green" : "Red"} 1.5s ease-out` : "none" }}>
+                    <div key={pos.id}
+                      onClick={() => setSelectedPosId(selectedPosId === pos.id ? null : pos.id)}
+                      onMouseEnter={() => setHoveredId(pos.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                      style={{ display: "grid", gridTemplateColumns: COL, alignItems: "center", padding: "10px 14px", gap: "6px", borderBottom: `1px solid ${C.border}`, background: selectedPosId === pos.id ? C.navyLight : hoveredId === pos.id ? C.snowOff : concentration ? "#FFF8F5" : "transparent", cursor: "pointer", transition: "background 0.15s ease", animation: flashIds[pos.id] ? `flash${flashIds[pos.id] === "green" ? "Green" : "Red"} 1.5s ease-out` : "none" }}>
 
                       {/* Nom + avatar + signal + 📰 */}
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, overflow: "hidden" }}>
@@ -798,7 +806,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "2px", flexWrap: "nowrap", overflow: "hidden" }}>
                             {pos.isin && <span style={{ fontSize: "8px", color: C.inkSubtle, fontWeight: "500", letterSpacing: "0.3px", flexShrink: 0 }}>{pos.isin}</span>}
-                            {sig && <span style={{ fontSize: "8px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "3px", padding: "1px 4px", whiteSpace: "nowrap", flexShrink: 0 }}>{sig}</span>}
+                            {sig && <span style={{ fontSize: "9px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "4px", padding: "2px 5px", whiteSpace: "nowrap", flexShrink: 0, letterSpacing: "0.2px" }}>{sig}</span>}
                             <button onClick={e => { e.stopPropagation(); openLink(yahooFinanceUrl(pos)); }} title="Actualités Yahoo Finance"
                               style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "4px", cursor: "pointer", fontSize: "9px", fontWeight: "600", color: C.inkMuted, fontFamily: "'DM Sans', sans-serif", padding: "2px 6px", lineHeight: "16px", whiteSpace: "nowrap", flexShrink: 0 }}>
                               Yahoo
@@ -838,8 +846,8 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
                       {/* P/V */}
                       <div>
-                        <div style={{ fontSize: "12px", fontWeight: "700", color: pv >= 0 ? C.green : C.red }}>{pv >= 0 ? "+" : ""}{pvPct.toFixed(1)}%</div>
-                        <div style={{ fontSize: "9px", color: pv >= 0 ? C.green : C.red }}>{pv >= 0 ? "+" : ""}{fmtEur(pv)}</div>
+                        <div style={{ display: "inline-block", fontSize: "11px", fontWeight: "700", color: pv >= 0 ? C.green : C.red, background: pv >= 0 ? C.greenLight : C.redLight, borderRadius: "5px", padding: "2px 5px", letterSpacing: "-0.2px" }}>{pv >= 0 ? "+" : ""}{pvPct.toFixed(1)}%</div>
+                        <div style={{ fontSize: "9px", color: pv >= 0 ? C.green : C.red, marginTop: "2px" }}>{pv >= 0 ? "+" : ""}{fmtEur(pv)}</div>
                       </div>
 
                       {/* Actions */}

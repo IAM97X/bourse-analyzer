@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtPct, fmtCours, sanitizePositions, isETFName } from "../lib/finance";
 import { load, save } from "../lib/storage";
-import { fetchWithProxy, enqueueApi, callClaude } from "../lib/api";
+import { fetchWithProxy, enqueueApi, callClaude, safeJson } from "../lib/api";
+import { fetchYahooChart } from "../lib/market";
 import { BNextLabel } from "./UI";
 import CompanyAvatar from "./CompanyAvatar";
 import PortfolioPieChart from "./PortfolioPieChart";
@@ -614,7 +615,7 @@ function FeeWarnings({ account = "PEA" }) {
           </div>
         );
       })}
-      <div style={{ marginTop: "10px", fontSize: "10px", color: C.inkSubtle, opacity: 0.7 }}>
+      <div style={{ marginTop: "10px", fontSize: "10px", color: C.inkMuted }}>
         ⚠ Informations basées sur vos avis opérés importés · Indicatif uniquement
       </div>
     </div>
@@ -624,13 +625,13 @@ function FeeWarnings({ account = "PEA" }) {
 
 // ─── Benchmark Indices 6 mois / 1 an ─────────────────────────────────────────
 const BETA_SCALE = [
-  { min: 2,     max: Infinity, label: "Très Élevé",        color: "#C0392B" },
-  { min: 1.501, max: 1.999,    label: "Élevée",             color: "#E74C3C" },
-  { min: 1.01,  max: 1.5,      label: "Moyennement Élevé",  color: "#E67E22" },
-  { min: 1,     max: 1,        label: "Neutre",              color: "#7F8C8D" },
-  { min: 0.501, max: 0.999,    label: "Moyennement Faible",  color: "#27AE60" },
-  { min: 0.001, max: 0.5,      label: "Faible",              color: "#1E8449" },
-  { min: 0,     max: 0,        label: "Très Faible",         color: "#117A65" },
+  { min: 2,     max: Infinity, label: "Très Élevé",        color: C.red },
+  { min: 1.501, max: 1.999,    label: "Élevée",             color: C.red },
+  { min: 1.01,  max: 1.5,      label: "Moyennement Élevé",  color: C.goldDark },
+  { min: 1,     max: 1,        label: "Neutre",              color: C.inkSubtle },
+  { min: 0.501, max: 0.999,    label: "Moyennement Faible",  color: C.green },
+  { min: 0.001, max: 0.5,      label: "Faible",              color: C.green },
+  { min: 0,     max: 0,        label: "Très Faible",         color: C.green },
 ];
 function betaClassify(beta) {
   if (beta === null || beta === undefined || isNaN(beta)) return null;
@@ -682,25 +683,32 @@ function BenchmarkComparaison() {
 
   // Fetch performance via Yahoo Finance (proxied via corsproxy.io)
   // interval=1d pour une précision maximale : on prend le premier et dernier close de la période
-  const fetchPerf = async (symbol, months) => {
-    const to   = Math.floor(Date.now() / 1000);
-    const from = to - months * 30 * 86400;
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${from}&period2=${to}&interval=1d`;
-    const res = await fetchWithProxy(yahooUrl, { signal: AbortSignal.timeout(25000) });
+  const fetchChartCloses = async (symbol, params) => {
+    const safe = encodeURIComponent(symbol.replace(/[^A-Z0-9.\-^=]/gi, ""));
+    const qs = new URLSearchParams({ symbols: symbol, interval: "1d", ...params }).toString();
+    const res = await fetch(`/api/yahoo?${qs}`, { signal: AbortSignal.timeout(25000) });
+    if (res.status === 404) {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${safe}?interval=1d&${new URLSearchParams(params).toString()}`;
+      const r2 = await fetchWithProxy(url, { signal: AbortSignal.timeout(25000) });
+      if (!r2.ok) throw new Error(`HTTP ${r2.status}`);
+      const j2 = await safeJson(r2);
+      return (j2?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || []).filter(v => v != null);
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    const closes = (json?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || []).filter(v => v != null);
+    const json = await safeJson(res);
+    return (json?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || []).filter(v => v != null);
+  };
+
+  const fetchPerf = async (symbol, months) => {
+    const range = months <= 6 ? "6mo" : months <= 12 ? "1y" : "2y";
+    const closes = await fetchChartCloses(symbol, { range });
     if (closes.length < 2) throw new Error("Pas de données");
     return (closes[closes.length - 1] - closes[0]) / closes[0] * 100;
   };
 
   const fetchPerfSince = async (symbol, fromTs) => {
     const to = Math.floor(Date.now() / 1000);
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${Math.floor(fromTs/1000)}&period2=${to}&interval=1d`;
-    const res = await fetchWithProxy(yahooUrl, { signal: AbortSignal.timeout(25000) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    const closes = (json?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || []).filter(v => v != null);
+    const closes = await fetchChartCloses(symbol, { period1: Math.floor(fromTs / 1000), period2: to });
     if (closes.length < 2) throw new Error("Pas de données");
     return (closes[closes.length - 1] - closes[0]) / closes[0] * 100;
   };
@@ -1554,10 +1562,9 @@ function CorrelationMatrix({ positions }) {
       if (!ticker && p.isin) {
         try {
           const isinSafe = String(p.isin || "").replace(/[^A-Z0-9]/gi, "").slice(0, 12);
-          const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=5&newsCount=0`;
-          const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
+          const res = await fetch(`/api/yahoo?search=${encodeURIComponent(isinSafe)}`, { signal: AbortSignal.timeout(10000) });
           if (res.ok) {
-            const j = await res.json();
+            const j = await safeJson(res);
             const quotes = (j.quotes || []).filter(q => ["EQUITY","ETF","MUTUALFUND"].includes(q.quoteType));
             const euroSuffixes = [".PA", ".AS", ".BR", ".MI", ".MC", ".L", ".DE", ".SW"];
             const hit = quotes.find(q => euroSuffixes.some(s => q.symbol?.endsWith(s)))
@@ -1577,10 +1584,9 @@ function CorrelationMatrix({ positions }) {
     await Promise.all(resolved.map(async p => {
       if (!p.resolvedTicker) return;
       try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(p.resolvedTicker)}?interval=${INTERVAL}&range=${period}`;
-        const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
+        const res = await fetchYahooChart(p.resolvedTicker, INTERVAL, period, { signal: AbortSignal.timeout(15000) });
         if (!res.ok) return;
-        const j = await res.json();
+        const j = await safeJson(res);
         const closes = j?.chart?.result?.[0]?.indicators?.quote?.[0]?.close;
         if (!closes || closes.length < 6) return;
         // Rendements journaliers ln(Pt/Pt-1)
@@ -1667,7 +1673,7 @@ function CorrelationMatrix({ positions }) {
           </div>
         )}
         {!loading && error && (
-          <div style={{ background: "rgba(220,38,38,0.07)", border: "1px solid rgba(220,38,38,0.18)", borderRadius: "8px", padding: "14px 16px", fontSize: "12px", color: "#B91C1C" }}>{error}</div>
+          <div style={{ background: C.redLight, border: `1px solid ${C.red}30`, borderRadius: "8px", padding: "14px 16px", fontSize: "12px", color: C.red }}>{error}</div>
         )}
         {!loading && !error && data && data.labels && (
           <>
@@ -1718,7 +1724,7 @@ function CorrelationMatrix({ positions }) {
                 <span style={{ fontWeight: "700" }}>{tooltip.rowLabel}</span>
                 <span style={{ color: C.inkMuted }}>↔</span>
                 <span style={{ fontWeight: "700" }}>{tooltip.colLabel}</span>
-                <span style={{ marginLeft: "8px", fontSize: "15px", fontWeight: "800", color: tooltip.r >= 0.45 ? "#DC2626" : tooltip.r <= -0.45 ? "#059669" : C.ink }}>{tooltip.r?.toFixed(3)}</span>
+                <span style={{ marginLeft: "8px", fontSize: "15px", fontWeight: "800", color: tooltip.r >= 0.45 ? C.red : tooltip.r <= -0.45 ? C.green : C.ink }}>{tooltip.r?.toFixed(3)}</span>
                 <span style={{ color: C.inkMuted }}>{corrLabel(tooltip.r)}</span>
               </div>
             )}
@@ -1755,8 +1761,8 @@ function CorrelationMatrix({ positions }) {
               }
               if (clusters.length === 0) return null;
               return (
-                <div style={{ marginTop: "14px", background: "rgba(220,38,38,0.05)", border: "1px solid rgba(220,38,38,0.15)", borderRadius: "8px", padding: "10px 14px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "700", color: "#B91C1C", marginBottom: "6px" }}>⚠ Clusters de risque détectés (corrélation ≥ 0.65)</div>
+                <div style={{ marginTop: "14px", background: C.redLight, border: `1px solid ${C.red}25`, borderRadius: "8px", padding: "10px 14px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "700", color: C.red, marginBottom: "6px" }}>⚠ Clusters de risque détectés (corrélation ≥ 0.65)</div>
                   {clusters.map((g, idx) => (
                     <div key={idx} style={{ fontSize: "11px", color: C.ink, marginTop: "3px" }}>
                       <strong>{g.map(i => data.labels[i]).join(" · ")}</strong>

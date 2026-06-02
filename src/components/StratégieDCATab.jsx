@@ -137,7 +137,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
         const inflation = parseFloat(localStorage.getItem("bourse_inflation_rate") || "2.5") || 2.5;
         const ans = [1, 3, 5, 10].map(y => ({ y, v: dcaMensuel * Math.pow(1 + inflation / 100, y) }));
         return (
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "10px", padding: "8px 14px", marginBottom: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", background: C.goldLight, border: `1px solid ${C.goldDark}30`, borderRadius: "10px", padding: "8px 14px", marginBottom: "12px" }}>
             <span style={{ fontSize: "11px", color: C.goldDark, fontWeight: "700" }}>Inflation {inflation}%/an</span>
             <span style={{ fontSize: "11px", color: C.inkSubtle }}>Pour maintenir le même pouvoir d'achat :</span>
             {ans.map(({ y, v }) => (
@@ -172,7 +172,7 @@ function DCAStrategy({ positions, profil, marketScores, marketScoringUi, onRunSc
                   <span style={{ fontSize: "10px", fontWeight: "700", color: sigColor, background: sigColor + "18", borderRadius: "99px", padding: "2px 7px" }}>{sig}</span>
                   {pos.iaEntry
                     ? <span style={{ fontSize: "10px", color: C.inkSubtle }}>{Math.round(pos.scoreIA * 20)}/20</span>
-                    : <span style={{ fontSize: "10px", color: C.inkSubtle, opacity: 0.5 }} title="Analyse IA non lancée">—</span>
+                    : <span style={{ fontSize: "10px", color: C.inkSubtle }} title="Analyse IA non lancée">—</span>
                   }
                 </div>
               );

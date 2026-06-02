@@ -177,13 +177,15 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const emojiTriggerRef                         = useRef(null);
   const accountTriggerRef                       = useRef(null);
   const AVATAR_EMOJI_CATS = [
-    { icon: "😊", label: "Visages", emojis: ["😊","😎","🤩","😏","🥸","🤓","😇","🥳","😈","👻","💀","🤖","👽","🎭"] },
-    { icon: "👩", label: "Femmes",  emojis: ["👸","🧙‍♀️","🦸‍♀️","🧝‍♀️","🧜‍♀️","🧚‍♀️","🧛‍♀️","🧟‍♀️","💃","👩‍💻","👩‍🚀","🧑‍🎤","🧑‍🎨","🧕"] },
-    { icon: "🧙", label: "Hommes",  emojis: ["🧙","🦸","🥷","🧑‍💻","👨‍🚀","🧑‍🎤","🧑‍🎨","🧝","🧜","🧚","🧛","🧟","🕵️","🤴"] },
-    { icon: "🦁", label: "Animaux", emojis: ["🦁","🐯","🦊","🐺","🦅","🦉","🐻","🐼","🦄","🐉","🦋","🐸","🦈","🦊","🐧","🦩","🐺","🦝","🦥","🐙"] },
-    { icon: "⚡", label: "Nature",  emojis: ["🌟","⚡","🔥","❄️","🌊","🌪️","🌈","🌙","☀️","🌸","🌺","🌻","🌷","🍀","🌴","🍄","🌍","🏔️","🌌","🪐"] },
-    { icon: "📈", label: "Bourse",  emojis: ["📈","📊","💹","💰","💎","🏆","🎯","👑","🧠","💪","🔮","🃏","🎲","🔑","💡","⚙️","🧬","🧪","🛡️","⚔️"] },
-    { icon: "🚀", label: "Divers",  emojis: ["🚀","🛸","👾","🤖","🎸","🎹","🎺","🎵","🎪","🏹","🗡️","🌐","🔭","🎬","📸","🏋️","🧗","🏄‍♀️","🧘"] },
+    { icon: "😊", label: "Visages",  emojis: ["😊","😎","🤩","😏","🥸","🤓","😇","🥳","🤪","😤","🤔","😴","🥱","🤯","😱","🤫","😋","🫡","🫠","🤠","😈","👹","👺","👻","👽","💀","🫣","🥹","🫢","🤭"] },
+    { icon: "👩", label: "Femmes",   emojis: ["👸","👸🏽","👸🏾","👸🏿","💃","💃🏽","💃🏾","💃🏿","👩‍💻","👩🏽‍💻","👩🏾‍💻","👩🏿‍💻","👩‍🚀","👩🏽‍🚀","👩🏾‍🚀","👩🏿‍🚀","👩‍🎤","👩🏽‍🎤","👩🏾‍🎤","👩🏿‍🎤","👩‍🎨","👩🏽‍🎨","👩🏾‍🎨","👩🏿‍🎨","👩‍🍳","👩🏽‍🍳","👩🏾‍🍳","👩🏿‍🍳","👩‍🏫","👩🏽‍🏫","👩🏾‍🏫","👩🏿‍🏫","👩‍⚕️","👩🏽‍⚕️","👩🏾‍⚕️","👩🏿‍⚕️","👩‍⚖️","👩🏽‍⚖️","👩🏾‍⚖️","👩🏿‍⚖️","👩‍🔬","👩‍✈️","🕵️‍♀️","🧕","👩‍🌾","🧙‍♀️","🦸‍♀️","🦹‍♀️","🧝‍♀️","🧜‍♀️","🧚‍♀️","🧛‍♀️","🧟‍♀️","🧑‍🦰","🧑‍🦱","🧑‍🦳","🧑‍🦲"] },
+    { icon: "🧙", label: "Hommes",   emojis: ["🤴","🤴🏽","🤴🏾","🤴🏿","🧑‍💻","🧑🏽‍💻","🧑🏾‍💻","🧑🏿‍💻","👨‍🚀","👨🏽‍🚀","👨🏾‍🚀","👨🏿‍🚀","👨‍🎤","👨🏽‍🎤","👨🏾‍🎤","👨🏿‍🎤","👨‍🎨","👨🏽‍🎨","👨🏾‍🎨","👨🏿‍🎨","👨‍🍳","👨🏽‍🍳","👨🏾‍🍳","👨🏿‍🍳","👨‍🏫","👨🏽‍🏫","👨🏾‍🏫","👨🏿‍🏫","👨‍⚕️","👨🏽‍⚕️","👨🏾‍⚕️","👨🏿‍⚕️","👨‍⚖️","👨🏽‍⚖️","👨🏾‍⚖️","👨🏿‍⚖️","👮","👮🏽","👮🏾","👮🏿","💂","💂🏽","💂🏾","💂🏿","🧔","🧔🏽","🧔🏾","🧔🏿","👨‍🔬","👨‍✈️","🕵️","🧑‍🌾","🥷","👲","🤶","🎅","🧙","🦸","🧝","🧜","🧚","🧛","🧟"] },
+    { icon: "🦁", label: "Animaux",  emojis: ["🦁","🐯","🐻","🐼","🦊","🐺","🦅","🦉","🐸","🦄","🐉","🦋","🦈","🐧","🦩","🦝","🦥","🐙","🦔","🦦","🦭","🐿️","🦜","🦚","🦃","🐦‍⬛","🪶","🦕","🦖","🦎"] },
+    { icon: "⚡", label: "Nature",   emojis: ["🌟","⚡","🔥","❄️","🌊","🌪️","🌈","🌙","☀️","🌸","🌺","🌻","🌷","🍀","🌴","🍄","🌍","🏔️","🌋","🏝️","🌾","🪨","🌿","🍃","💨","🌬️","🌦️","🌧️","🌡️","🌤️"] },
+    { icon: "📈", label: "Bourse",   emojis: ["📈","📊","💹","💰","💎","🎯","👑","🧠","💪","🔮","🃏","🎲","🔑","💡","⚙️","🧬","🧪","🛡️","⚔️","🏦","💳","🪙","💸","🤑","📉","🔐","🗝️","📋","🖥️","💼"] },
+    { icon: "🚀", label: "Espace",   emojis: ["🚀","🛸","🌠","🌌","🪐","☄️","🌑","🌓","🌕","🌘","⭐","✨","💫","🔭","🛰️","👾","🤖","🦾","📡","🔬","🌐","🌏","🌎","🌀","💠","🔵","🟣","⚫","⚪","🪩"] },
+    { icon: "🎸", label: "Arts",     emojis: ["🎸","🎹","🎺","🥁","🎻","🪗","🎵","🎶","🎤","🎬","📸","🎨","🖌️","🎭","🎪","🎠","🎡","🎢","🏹","🎳","🧩","♟️","🎮","🕹️","🎰","🎗️","🎟️","🎫","🖼️","🪆"] },
+    { icon: "🏋️", label: "Sport",   emojis: ["🏋️","🏋🏽","🏋🏾","🏋🏿","🧗","🧗🏽","🧗🏾","🧗🏿","🏄","🏄🏽","🏄🏾","🏄🏿","🤸","🤸🏽","🤸🏾","🤸🏿","🚴","🚴🏽","🚴🏾","🚴🏿","🏊","🏊🏽","🏊🏾","🏊🏿","⛷️","🏇","🤺","🥊","🎽","🏅","🥇","🥈","🥉","🏆","⚽","🏀","🏈","⚾","🎾","🏐","🏉","🎱","🏓","🏸","🥋","🤼","🏌️","🧘"] },
   ];
   const pickEmoji = (e) => { setAvatarEmoji(e); save("bourse_avatar_emoji", e); setEmojiPickerOpen(false); };
 
@@ -687,15 +689,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                             onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
                             placeholder="Votre prénom ou pseudo"
                             style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
-                          <input value={aiName} onChange={e => setAiName(e.target.value)}
-                            onBlur={() => { save("bourse_ai_name", aiName.trim()); }}
-                            onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
-                            placeholder="Nom de votre IA (ex : Atlas)"
-                            style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
                           <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>Se déconnecter</button>
                         </div>
-                        <div style={{ display: "flex", height: "200px", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
-                          <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
+                        <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "0 0 14px 14px" }}>
+                          <div style={{ borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", padding: "4px 8px", gap: "2px", overflowX: "auto", flexShrink: 0 }}>
                             {AVATAR_EMOJI_CATS.map((cat, i) => (
                               <button key={i} onClick={() => setEmojiCat(i)} title={cat.label}
                                 style={{ width: "26px", height: "26px", borderRadius: "7px", border: "none", background: emojiCat === i ? C.navyLight : "transparent", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -703,7 +700,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                               </button>
                             ))}
                           </div>
-                          <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
+                          <div style={{ height: "160px", overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
                             {AVATAR_EMOJI_CATS[emojiCat].emojis.map(e => (
                               <button key={e} onClick={() => { pickEmoji(e); setEmojiPickerOpen(false); }}
                                 style={{ width: "28px", height: "28px", borderRadius: "7px", border: avatarEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: avatarEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -757,8 +754,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                   </div>
                   {emojiPickerOpen && createPortal(
                     <div data-emoji-picker style={{ position: "fixed", top: (emojiTriggerRef.current?.getBoundingClientRect().bottom ?? 52) + 8, right: 60, background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", boxShadow: "0 8px 28px rgba(0,0,0,0.13)", zIndex: 99999, width: "236px" }}>
-                      <div style={{ display: "flex", height: "200px", overflow: "hidden", borderRadius: "14px" }}>
-                        <div style={{ width: "34px", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "6px", gap: "2px", flexShrink: 0, overflowY: "auto" }}>
+                      <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "14px" }}>
+                        <div style={{ borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", padding: "4px 8px", gap: "2px", overflowX: "auto", flexShrink: 0 }}>
                           {AVATAR_EMOJI_CATS.map((cat, i) => (
                             <button key={i} onClick={() => setEmojiCat(i)} title={cat.label}
                               style={{ width: "26px", height: "26px", borderRadius: "7px", border: "none", background: emojiCat === i ? C.navyLight : "transparent", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -766,7 +763,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                             </button>
                           ))}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
+                        <div style={{ height: "160px", overflowY: "auto", padding: "8px", display: "flex", flexWrap: "wrap", gap: "4px", alignContent: "flex-start" }}>
                           {AVATAR_EMOJI_CATS[emojiCat].emojis.map(e => (
                             <button key={e} onClick={() => { pickEmoji(e); setEmojiPickerOpen(false); }}
                               style={{ width: "28px", height: "28px", borderRadius: "7px", border: avatarEmoji === e ? `2px solid ${C.navy}` : `1px solid ${C.border}`, background: avatarEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "15px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -814,11 +811,6 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                         onBlur={() => { const name = localUserName.trim() || "Utilisateur"; setLocalUserName(name); try { const s = JSON.parse(localStorage.getItem("bourse_session") || "{}"); localStorage.setItem("bourse_session", JSON.stringify({ ...s, name })); } catch {} }}
                         onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setAccountMenuOpen(false); }}
                         placeholder="Votre prénom ou pseudo"
-                        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
-                      <input value={aiName} onChange={e => setAiName(e.target.value)}
-                        onBlur={() => { save("bourse_ai_name", aiName.trim()); }}
-                        onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
-                        placeholder="Nom de votre IA (ex : Atlas)"
                         style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "7px 10px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", color: C.ink, background: C.snowOff, outline: "none", boxSizing: "border-box" }} />
                       <button onClick={onLogout} style={{ background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "8px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>Se déconnecter</button>
                     </div>

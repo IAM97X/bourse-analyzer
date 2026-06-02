@@ -657,13 +657,13 @@ RÈGLE MONTANT : ${nbOppMax === 1
     }
   };
 
-  const scoreColor = s => s >= 7 ? C.green : s >= 5 ? "#C8972A" : C.red;
-  const riskColor  = r => r === "Faible" ? C.green : r === "Modéré" ? "#C8972A" : C.red;
+  const scoreColor = s => s >= 7 ? C.green : s >= 5 ? C.goldDark : C.red;
+  const riskColor  = r => r === "Faible" ? C.green : r === "Modéré" ? C.goldDark : C.red;
   const ACTION_META = {
     "ACHETER":    { color: C.green,   label: "Acheter maintenant" },
     "RENFORCER":  { color: C.green,   label: "Renforcer la position" },
     "SURVEILLER": { color: "#6366F1", label: "Surveiller" },
-    "ALLÉGER":    { color: "#C8972A", label: "Alléger" },
+    "ALLÉGER":    { color: C.goldDark, label: "Alléger" },
     "ÉVITER":     { color: C.red,     label: "Éviter" },
   };
   const actionColor = a => {
@@ -705,7 +705,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
           <button
             onClick={() => runAnalysis()}
             disabled={running || !allocOk}
-            style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.inkSubtle : "linear-gradient(135deg, #2D6CB5, #4B9DD8, #2D6CB5)", color: "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
+            style={{ padding: "10px 20px", borderRadius: "12px", background: running || !allocOk ? C.snowDim : C.accentGrad, color: running || !allocOk ? C.inkSubtle : "#fff", border: "none", fontSize: "13px", fontWeight: "700", cursor: running || !allocOk ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: "8px" }}>
             {running ? <BNextLabel /> : "Lancer l'analyse"}
           </button>
           {result?.generatedAt && <span style={{ fontSize: "10px", color: C.inkSubtle }}>Dernière analyse : {new Date(result.generatedAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
@@ -775,7 +775,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
       )}
       {error && result && (
         <div style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 14px", marginBottom: "12px", fontSize: "11px", color: C.inkSubtle, display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ color: "#C8972A" }}>⚠</span>
+          <span style={{ color: C.goldDark }}>⚠</span>
           Nouvelle analyse échouée — résultats précédents affichés. Relancez l'analyse.
         </div>
       )}
@@ -804,24 +804,24 @@ RÈGLE MONTANT : ${nbOppMax === 1
           {/* Alertes portefeuille */}
           {result.alertes_portefeuille?.length > 0 && (
             <div style={{ background: "rgba(200,151,42,0.06)", border: "1px solid rgba(200,151,42,0.25)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", display: "flex", flexDirection: "column", gap: "6px" }}>
-              <div style={{ fontSize: "10px", fontWeight: "700", color: "#966F1A", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "2px" }}>Alertes portefeuille</div>
+              <div style={{ fontSize: "10px", fontWeight: "700", color: C.goldDark, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "2px" }}>Alertes portefeuille</div>
               {result.alertes_portefeuille.map((a, i) => {
                 if (typeof a === "string") return (
-                  <div key={i} style={{ fontSize: "12px", color: "#7A5A10", lineHeight: 1.5, display: "flex", gap: "8px" }}>
+                  <div key={i} style={{ fontSize: "12px", color: C.goldDark, lineHeight: 1.5, display: "flex", gap: "8px" }}>
                     <span style={{ flexShrink: 0 }}>▸</span><span>{a}</span>
                   </div>
                 );
                 const titre  = a?.titre  || a?.nom    || "";
                 const alerte = a?.alerte || a?.message || a?.detail || "";
                 const action = a?.action || "";
-                const actionCol = action === "ÉVITER" ? C.red : action === "SURVEILLER" ? "#6366F1" : action === "RÉÉQUILIBRER" ? C.navy : "#966F1A";
+                const actionCol = action === "ÉVITER" ? C.red : action === "SURVEILLER" ? "#6366F1" : action === "RÉÉQUILIBRER" ? C.navy : C.goldDark;
                 return (
                   <div key={i} style={{ borderLeft: "3px solid rgba(200,151,42,0.4)", paddingLeft: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
-                      {titre && <span style={{ fontSize: "11px", fontWeight: "700", color: "#7A5A10" }}>{titre}</span>}
+                      {titre && <span style={{ fontSize: "11px", fontWeight: "700", color: C.goldDark }}>{titre}</span>}
                       {action && <span style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: actionCol, borderRadius: "4px", padding: "1px 6px" }}>{action}</span>}
                     </div>
-                    {alerte && <div style={{ fontSize: "11px", color: "#966F1A", lineHeight: 1.5 }}>{alerte}</div>}
+                    {alerte && <div style={{ fontSize: "11px", color: C.goldDark, lineHeight: 1.5 }}>{alerte}</div>}
                   </div>
                 );
               })}
@@ -885,11 +885,11 @@ RÈGLE MONTANT : ${nbOppMax === 1
                         {/* Allocation gap indicator */}
                         {op.allocation_pct > 0 && (
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                            <div style={{ height: "4px", width: `${Math.min(100, op.allocation_pct)}%`, maxWidth: "120px", background: catCol, borderRadius: "2px", opacity: 0.7 }} />
+                            <div style={{ height: "4px", width: `${Math.min(100, op.allocation_pct)}%`, maxWidth: "120px", background: catCol, borderRadius: "2px" }} />
                             <span style={{ fontSize: "10px", fontWeight: "700", color: catCol }}>{op.allocation_pct}% cible</span>
                           </div>
                         )}
-                        {catalyseurDisplay && <div style={{ fontSize: "11px", fontWeight: "600", color: "#966F1A", background: "rgba(200,151,42,0.1)", borderRadius: "5px", padding: "2px 8px", display: "inline-block" }}>{catalyseurDisplay}</div>}
+                        {catalyseurDisplay && <div style={{ fontSize: "11px", fontWeight: "600", color: C.goldDark, background: C.goldLight, borderRadius: "5px", padding: "2px 8px", display: "inline-block" }}>{catalyseurDisplay}</div>}
                       </div>
                       <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
                         <span style={{ fontSize: "11px", fontWeight: "800", color: "#fff", background: acColor, borderRadius: "6px", padding: "3px 10px", whiteSpace: "nowrap" }}>{acShort}</span>

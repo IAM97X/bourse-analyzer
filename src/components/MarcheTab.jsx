@@ -539,10 +539,10 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
             <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "2px", display: "flex", alignItems: "center", gap: "6px" }}>
               Analyse temps réel de chaque position — actualités + signaux marché
               {marketScoringUi !== "loading" && scoredAgo && (
-                <span style={{ color: C.inkSubtle, opacity: 0.7 }}>· Mis à jour {scoredAgo}</span>
+                <span style={{ color: C.inkMuted, fontSize: "10px", fontWeight: "500" }}>· Mis à jour {scoredAgo}</span>
               )}
               {marketScoringUi !== "loading" && scores.length > 0 && realtimeCount < positions.length && (
-                <span style={{ color: "#B07D2E", fontWeight: "600" }} title="Ces positions n'ont pas de ticker Yahoo — scorées sur la base de connaissance Claude uniquement">
+                <span style={{ color: C.goldDark, fontWeight: "600" }} title="Ces positions n'ont pas de ticker Yahoo — scorées sur la base de connaissance Claude uniquement">
                   · ⚠ {positions.length - realtimeCount} sans ticker
                 </span>
               )}
@@ -609,7 +609,7 @@ function MarcheTab({ profil, portfolioVersion, account = "PEA", marketScores, ma
                     </div>
                   )}
                   {!pos._hasRealtime && (
-                    <div style={{ fontSize: "10px", color: "#B07D2E", background: "rgba(217,119,6,0.08)", border: "1px solid rgba(217,119,6,0.2)", borderRadius: "6px", padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px", alignSelf: "flex-start" }}
+                    <div style={{ fontSize: "10px", color: C.goldDark, background: "rgba(217,119,6,0.08)", border: "1px solid rgba(217,119,6,0.2)", borderRadius: "6px", padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px", alignSelf: "flex-start" }}
                       title="Aucun ticker Yahoo trouvé pour cette position — le score s'appuie sur la base de connaissance Claude sans données temps réel. Renseignez le ticker manuellement dans l'onglet Positions pour activer les données temps réel.">
                       ⚠ Base de connaissance uniquement — <strong>ajouter le ticker</strong> pour activer les données RT
                     </div>
@@ -850,9 +850,9 @@ Retourne ce JSON exact (aucun texte autour) :
           {/* Bouton Projection globale */}
           <button onClick={() => setSelectedPosId("__global__")} style={{
             padding: "6px 14px", borderRadius: "20px",
-            border: `1.5px solid ${selectedPosId === "__global__" ? "#7C3AED" : C.border}`,
-            background: selectedPosId === "__global__" ? "rgba(124,58,237,0.12)" : C.snowOff,
-            color: selectedPosId === "__global__" ? "#7C3AED" : C.inkMuted,
+            border: `1.5px solid ${selectedPosId === "__global__" ? C.navy : C.border}`,
+            background: selectedPosId === "__global__" ? C.navyLight : C.snowOff,
+            color: selectedPosId === "__global__" ? C.navy : C.inkMuted,
             fontSize: "11px", fontWeight: selectedPosId === "__global__" ? "700" : "500",
             fontFamily: "'DM Sans', sans-serif", cursor: "pointer",
           }}>

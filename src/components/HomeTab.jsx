@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
+import { C } from "../constants/theme";
 import { sanitizePositions, fmtEur, sanitizeTicker } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { isDemoMode } from "../constants/demoData";
@@ -142,7 +143,7 @@ function ColValeur({ positions, especes, cumul, hidden }) {
   const total        = titres + especes;
   const pv           = titres - totalInvesti;
   const pvPct        = totalInvesti > 0 ? (pv / totalInvesti) * 100 : 0;
-  const pvColor      = pv >= 0 ? "#4ade80" : "#f87171";
+  const pvColor      = pv >= 0 ? C.green : C.red;
   const versements   = cumul || totalInvesti;
   const today        = new Date().toLocaleDateString("fr-FR");
 
@@ -489,7 +490,6 @@ function detectAndParseEvolutionCSV(text) {
 
 // ── Courbe d'évolution ────────────────────────────────────────────────────────
 const PERIODS = [
-  { label: "1J",   days: 1   },
   { label: "5J",   days: 5   },
   { label: "1S",   days: 7   },
   { label: "1M",   days: 30  },

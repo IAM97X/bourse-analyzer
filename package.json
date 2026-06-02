@@ -30,6 +30,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "proxy": "https://boursenext.fr",
   "browserslist": {
     "production": [
       ">0.2%",

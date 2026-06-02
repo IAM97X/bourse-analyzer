@@ -160,7 +160,8 @@ export default function BourseAnalyzer() {
   const [userName, setUserName] = useState("");
   const [loginKey, setLoginKey] = useState(0);
   const [userId, setUserId] = useState(null);
-  const [authMode, setAuthMode] = useState("signin");
+  const [authMode, setAuthMode]   = useState("signin");
+  const [pendingPlan, setPendingPlan] = useState(null);
   const [isMobileScreen, setIsMobileScreen] = useState(() => isPhone());
 
   useEffect(() => {
@@ -212,9 +213,25 @@ export default function BourseAnalyzer() {
     return () => { subscription.unsubscribe(); };
   }, []);
 
-  const handleSession = (name) => {
+  const handleSession = async (name) => {
     setUserName(name);
     setLoginKey(k => k + 1);
+    const plan = pendingPlan;
+    setPendingPlan(null);
+    if (plan && plan !== "trial") {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          const res = await fetch("/api/stripe-checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+            body: JSON.stringify({ email: session.user.email, plan }),
+          });
+          const { url } = await res.json();
+          if (url) { window.location.href = url; return; }
+        }
+      } catch {}
+    }
     setState("app");
   };
 
@@ -255,7 +272,7 @@ export default function BourseAnalyzer() {
     </div>
   );
 
-  if (state === "landing") return <LandingPage onLogin={() => { setAuthMode("signin"); setState("auth"); }} onRegister={() => { setAuthMode("signup"); setState("auth"); }} />;
+  if (state === "landing") return <LandingPage onLogin={() => { setAuthMode("signin"); setState("auth"); }} onRegister={(plan) => { setPendingPlan(plan || null); setAuthMode("signup"); setState("auth"); }} />;
   if (state === "auth") return <AuthPage onSession={handleSession} onBack={() => setState("landing")} initialMode={authMode} />;
   return (
     <AppErrorBoundary>

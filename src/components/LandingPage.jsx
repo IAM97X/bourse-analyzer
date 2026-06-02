@@ -3,8 +3,8 @@ import { C, shadow } from "../constants/theme";
 
 /* ─── Mock data ─────────────────────────────────────────────────────────── */
 
-const SIG_COLOR  = { ACHAT: "#27AE60", RENFORCER: "#2D6CB5", ATTENDRE: "#E6B800", PRUDENCE: "#E74C3C", VENDRE: "#7B1111" };
-const SIG_BG     = { ACHAT: "rgba(39,174,96,0.08)", RENFORCER: "rgba(45,108,181,0.08)", ATTENDRE: "rgba(255,215,0,0.10)", PRUDENCE: "rgba(231,76,60,0.08)", VENDRE: "rgba(123,17,17,0.08)" };
+const SIG_COLOR  = { ACHAT: C.green, RENFORCER: C.accent, ATTENDRE: C.goldDark, PRUDENCE: C.red, VENDRE: C.red };
+const SIG_BG     = { ACHAT: C.greenLight, RENFORCER: C.paleBlue, ATTENDRE: C.goldLight, PRUDENCE: C.redLight, VENDRE: C.redLight };
 const SIG_PHRASE = { ACHAT: "Momentum favorable, à surveiller", RENFORCER: "Position solide, tu peux étoffer", ATTENDRE: "Pas d'action urgente", PRUDENCE: "Contexte dégradé, reste vigilant", VENDRE: "Signal négatif détecté" };
 
 const SIGNAL_POSITIONS = [
@@ -41,7 +41,7 @@ const AGENT_POSITIONS_CTO = [
 
 /* ─── Mini chart ────────────────────────────────────────────────────────── */
 const MINI_CURVE = [0, 4, 2, 7, 5, 9, 6, 12, 10, 15, 11, 18, 16, 20];
-function MiniChart({ color = "#0ea87e" }) {
+function MiniChart({ color = C.green }) {
   const w = 280, h = 48;
   const pts = MINI_CURVE.map((y, i) => {
     const x = (i / (MINI_CURVE.length - 1)) * w;
@@ -65,7 +65,7 @@ function MiniChart({ color = "#0ea87e" }) {
 
 /* ─── Score bar ─────────────────────────────────────────────────────────── */
 function ScoreBar({ score }) {
-  const color = score >= 75 ? "#1E8449" : score >= 55 ? "#2D6CB5" : "#B07D2E";
+  const color = score >= 75 ? C.green : score >= 55 ? C.accent : C.goldDark;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
       <div style={{ flex: 1, height: "4px", background: "rgba(0,0,0,0.06)", borderRadius: "2px", overflow: "hidden" }}>
@@ -226,12 +226,12 @@ export default function LandingPage({ onLogin, onRegister }) {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px", marginBottom: "10px" }}>
                 {(heroTab === "PEA" ? [
                   [["Courtier","Boursobank"],["Compte","PEA"],["Profil","Dynamique"],["Horizon","Long terme"],["DCA","500 €/mois"]],
-                  [["Total PF","36 034 €"],["Espèces","2 000 €"],["Titres","34 034 €"],["+/- values","+4 934 €","#4ade80"],["Perf.","+16.94 %","#4ade80"]],
-                  [["Perf. 2026","+15.8 %","#4ade80"],["Perf. juin","+2.3 %","#4ade80"],["Veille","+0.4 %","#4ade80"],["CAC 40","+8.2 %","#4ade80"],["CAC mois","+1.1 %","#4ade80"]],
+                  [["Total PF","36 034 €"],["Espèces","2 000 €"],["Titres","34 034 €"],["+/- values","+4 934 €",C.green],["Perf.","+16.94 %",C.green]],
+                  [["Perf. 2026","+15.8 %",C.green],["Perf. juin","+2.3 %",C.green],["Veille","+0.4 %",C.green],["CAC 40","+8.2 %",C.green],["CAC mois","+1.1 %",C.green]],
                 ] : [
                   [["Courtier","Trade Republic"],["Compte","CTO"],["Profil","Offensif"],["Horizon","Long terme"],["DCA","300 €/mois"]],
-                  [["Total PF","22 410 €"],["Espèces","1 200 €"],["Titres","21 210 €"],["+/- values","+8 210 €","#4ade80"],["Perf.","+57.83 %","#4ade80"]],
-                  [["Perf. 2026","+34.2 %","#4ade80"],["Perf. juin","+4.1 %","#4ade80"],["Veille","+1.1 %","#4ade80"],["S&P 500","+18.4 %","#4ade80"],["S&P mois","+2.8 %","#4ade80"]],
+                  [["Total PF","22 410 €"],["Espèces","1 200 €"],["Titres","21 210 €"],["+/- values","+8 210 €",C.green],["Perf.","+57.83 %",C.green]],
+                  [["Perf. 2026","+34.2 %",C.green],["Perf. juin","+4.1 %",C.green],["Veille","+1.1 %",C.green],["S&P 500","+18.4 %",C.green],["S&P mois","+2.8 %",C.green]],
                 ]).map((rows, ci) => (
                   <div key={ci} style={{ background: "linear-gradient(160deg,#1A3A5C,#2D5986)", borderRadius: "10px", padding: "10px 12px", boxShadow: "0 4px 16px rgba(30,58,95,0.22)" }}>
                     {rows.map(([label, value, color], ri) => (
@@ -277,11 +277,12 @@ export default function LandingPage({ onLogin, onRegister }) {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
             {[
-              { titre: "Portefeuille unifié", desc: "PEA et CTO sur le même écran. Boursobank, Fortuneo, DEGIRO, Trade Republic — connectez votre courtier en important votre relevé ou saisissez vos positions en 2 minutes." },
-              { titre: "Performance exacte (TWR)", desc: "La méthode Modified Dietz prend en compte vos versements et vos retraits. Votre vrai rendement — pas un chiffre qui flatte." },
-              { titre: "Historique & graphiques", desc: "Évolution du patrimoine sur 1J, 1M, 1A ou depuis le début. Comparez votre courbe à celle du CAC 40 en temps réel." },
+              { titre: "Portefeuille unifié", desc: "PEA et CTO sur le même écran. Boursobank, Fortuneo, DEGIRO, Trade Republic — connectez votre courtier en important votre relevé ou saisissez vos positions en 2 minutes.", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
+              { titre: "Performance exacte (TWR)", desc: "La méthode Modified Dietz prend en compte vos versements et vos retraits. Votre vrai rendement — pas un chiffre qui flatte.", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
+              { titre: "Historique & graphiques", desc: "Évolution du patrimoine sur 1J, 1M, 1A ou depuis le début. Comparez votre courbe à celle du CAC 40 en temps réel.", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
             ].map((f, i) => (
               <Reveal key={i} from="bottom" delay={i * 100} className="land-feat-hover" style={{ background: "#F5F5F7", border: `1px solid ${C.border}`, borderRadius: "18px", padding: "24px 22px", boxShadow: shadow.card }}>
+                <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: C.navyLight, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "14px" }}>{f.icon}</div>
                 <div style={{ fontSize: "13px", fontWeight: "800", color: C.ink, marginBottom: "8px", letterSpacing: "-0.02em" }}>{f.titre}</div>
                 <div style={{ fontSize: "12px", color: C.inkMuted, lineHeight: 1.75 }}>{f.desc}</div>
               </Reveal>
@@ -328,7 +329,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                           <div style={{ flex: 1, minWidth: "80px" }}>
                             <div style={{ fontWeight: "700", fontSize: "12px", color: C.ink }}>{p.nom}</div>
-                            <div style={{ fontSize: "10px", color: sc, fontWeight: "500", marginTop: "1px", opacity: 0.85 }}>{SIG_PHRASE[p.signal]}</div>
+                            <div style={{ fontSize: "10px", color: sc, fontWeight: "500", marginTop: "1px" }}>{SIG_PHRASE[p.signal]}</div>
                           </div>
                           <span style={{ fontSize: "10px", fontWeight: "800", color: sc, background: sc + "22", padding: "3px 10px", borderRadius: "20px", border: `1px solid ${sc}`, letterSpacing: "0.5px" }}>{p.signal}</span>
                           <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -499,6 +500,11 @@ export default function LandingPage({ onLogin, onRegister }) {
                   </div>
                 ))}
               </div>
+              <button onClick={onRegister} style={{ marginTop: "20px", width: "100%", padding: "11px 0", borderRadius: "50px", border: `1.5px solid ${C.border}`, background: C.snow, color: C.inkMuted, fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "background 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.background = C.snowDim}
+                onMouseLeave={e => e.currentTarget.style.background = C.snow}>
+                Commencer l'essai gratuit
+              </button>
             </Reveal>
 
             {/* Basique */}
@@ -517,6 +523,9 @@ export default function LandingPage({ onLogin, onRegister }) {
                   </div>
                 ))}
               </div>
+              <button onClick={() => onRegister("basique")} className="land-btn-cta" style={{ marginTop: "20px", width: "100%", padding: "11px 0", borderRadius: "50px", border: "none", background: C.accentGrad, color: "#fff", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", boxShadow: shadow.pill }}>
+                Choisir Basique →
+              </button>
             </Reveal>
 
             {/* Pro */}
@@ -530,11 +539,16 @@ export default function LandingPage({ onLogin, onRegister }) {
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {["Tout le plan Basique", "500 analyses IA/jour", "Autopilot illimité", "Priorité sur les analyses", "Support prioritaire"].map((f, i) => (
                   <div key={i} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}><path d="M2.5 7l3 3 6-6" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}><path d="M2.5 7l3 3 6-6" stroke={C.green} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.8)" }}>{f}</span>
                   </div>
                 ))}
               </div>
+              <button onClick={() => onRegister("pro")} style={{ marginTop: "20px", width: "100%", padding: "11px 0", borderRadius: "50px", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.12)", color: "#fff", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "background 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.22)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}>
+                Choisir Pro →
+              </button>
             </Reveal>
           </div>
 
