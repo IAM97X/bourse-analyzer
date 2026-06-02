@@ -63,9 +63,9 @@ module.exports = async function handler(req, res) {
   try {
     const { crumb, cookie } = await getCrumb();
 
-    // Injecte le crumb dans l'URL si c'est un appel chart/v8
+    // Injecte le crumb sur tous les endpoints JSON Yahoo
     let targetUrl = url.replace("query1.finance.yahoo.com", "query2.finance.yahoo.com");
-    if (crumb && (targetUrl.includes("/v8/finance/chart") || targetUrl.includes("/v7/finance"))) {
+    if (crumb) {
       const sep = targetUrl.includes("?") ? "&" : "?";
       targetUrl += `${sep}crumb=${encodeURIComponent(crumb)}`;
     }
@@ -77,21 +77,24 @@ module.exports = async function handler(req, res) {
     };
     if (cookie) headers["Cookie"] = cookie;
 
-    const r = await fetch(targetUrl, { headers });
-    if (r.ok) {
-      const data = await r.json();
-      return res.status(200).json(data);
+    const tryFetch = async (u) => {
+      const r = await fetch(u, { headers });
+      if (!r.ok) return null;
+      const text = await r.text();
+      if (!text || text.trimStart().startsWith("<")) return null;
+      try { return JSON.parse(text); } catch { return null; }
+    };
+
+    let data = await tryFetch(targetUrl);
+
+    // Fallback query1 sans crumb si query2 échoue
+    if (!data) {
+      const fallback = url.includes("query1") ? url : url.replace("query2", "query1");
+      data = await tryFetch(fallback);
     }
 
-    // Fallback query1
-    const fallback = url.includes("query1") ? url : url.replace("query2", "query1");
-    const r2 = await fetch(fallback, { headers });
-    if (r2.ok) {
-      const data = await r2.json();
-      return res.status(200).json(data);
-    }
-
-    return res.status(r.status).json({ error: `Yahoo returned ${r.status}` });
+    if (data) return res.status(200).json(data);
+    return res.status(503).json({ error: "Yahoo Finance indisponible ou rate-limit" });
   } catch (e) {
     return res.status(502).json({ error: "Yahoo Finance indisponible", detail: e.message });
   }

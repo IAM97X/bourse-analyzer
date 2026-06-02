@@ -17,8 +17,8 @@ export async function fetchWithProxy(url, opts = {}) {
     try {
       const proxyUrl = `/api/yahoo-proxy?url=${encodeURIComponent(url)}`;
       const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000), ...opts });
-      // 404 = route absente en dev → on passe aux proxies publics
-      if (res.status !== 404 && (res.ok || res.status < 500)) return res;
+      // 404 = route absente en dev → proxies publics. Tout autre statut → on remonte directement
+      if (res.status !== 404) return res;
     } catch {}
   }
   for (const proxy of PROXIES) {
