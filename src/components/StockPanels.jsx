@@ -1103,8 +1103,7 @@ export function PriceEvolutionChart({ positions }) {
         const ticker = (pos.isin && cache[pos.isin]) || pos.ticker;
         if (!ticker) { missingList.push({ nom: pos.nom, reason: "Ticker non configuré" }); return; }
         try {
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=${p.interval}&range=${p.range}`;
-          const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
+          const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(sanitizeTicker(ticker))}&interval=${p.interval}&range=${p.range}`, { signal: AbortSignal.timeout(15000) });
           if (!res.ok) { missingList.push({ nom: pos.nom, reason: `Erreur ${res.status}` }); return; }
           const data = await safeJson(res);
           const r = data?.chart?.result?.[0];
@@ -1125,8 +1124,7 @@ export function PriceEvolutionChart({ positions }) {
 
       // Fetch CAC 40 (^FCHI) en parallèle
       try {
-        const cacUrl = `https://query1.finance.yahoo.com/v8/finance/chart/%5EFCHI?interval=${p.interval}&range=${p.range}`;
-        const cacRes = await fetchWithProxy(cacUrl, { signal: AbortSignal.timeout(15000) });
+        const cacRes = await fetch(`/api/yahoo?symbols=%5EFCHI&interval=${p.interval}&range=${p.range}`, { signal: AbortSignal.timeout(15000) });
         if (cacRes.ok) {
           const cacJson = await safeJson(cacRes);
           const cr = cacJson?.chart?.result?.[0];

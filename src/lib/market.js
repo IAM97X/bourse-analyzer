@@ -62,10 +62,8 @@ export async function fetchFMPHistoricalByTicker(ticker, fromDate, toDate) {
 
 // ─── Yahoo Finance — historique journalier par ticker (sans clé API) ──────────
 export async function fetchYahooHistorical(ticker, fromDate, toDate) {
-  const period1 = Math.floor(new Date(fromDate + "T00:00:00").getTime() / 1000);
-  const period2 = Math.floor(new Date(toDate   + "T00:00:00").getTime() / 1000);
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=1d&period1=${period1}&period2=${period2}`;
-  const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
+  const safe = sanitizeTicker(ticker);
+  const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(safe)}&interval=1d&range=5y`, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`Yahoo chart HTTP ${res.status}`);
   const json = await safeJson(res);
   const result = json?.chart?.result?.[0];
@@ -74,7 +72,7 @@ export async function fetchYahooHistorical(ticker, fromDate, toDate) {
   const closes     = result.indicators?.quote?.[0]?.close || [];
   return timestamps
     .map((ts, i) => ({ date: new Date(ts * 1000).toISOString().slice(0, 10), close: closes[i] }))
-    .filter(d => d.close != null && d.close > 0)
+    .filter(d => d.close != null && d.close > 0 && d.date >= fromDate && d.date <= toDate)
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 

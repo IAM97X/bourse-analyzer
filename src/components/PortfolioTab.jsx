@@ -474,6 +474,8 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     <div>
       {/* Toolbar */}
       <div className="ba-toolbar" style={{ display: "flex", gap: "8px", marginBottom: "8px", flexWrap: "wrap", alignItems: "center" }}>
+
+        {/* ── Groupe 1 : données ── */}
         {!isDemoMode() && <button onClick={() => openForm()} style={btnPrimary}>+ Ajouter</button>}
 
         <input ref={importCsvRef} type="file" accept=".csv,.txt" style={{ display: "none" }} onChange={handleCsvImport} />
@@ -481,7 +483,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           <span style={{ position: "relative", display: "inline-flex" }} className="import-pos-tooltip-wrap">
             <button onClick={() => importCsvRef.current?.click()}
               style={{ background: C.goldLight, border: `1px solid rgba(217,119,6,0.2)`, borderRadius: "8px", padding: "9px 16px", color: C.goldDark, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>
-              {isMobile ? "↑ Positions" : "↑ Importer mes positions"}
+              {isMobile ? "↑ CSV" : "↑ Importer CSV"}
             </button>
             <span className="import-pos-tooltip-box" style={{ position: "absolute", bottom: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", background: C.ink, color: "#fff", fontSize: "11px", fontWeight: "400", lineHeight: 1.6, borderRadius: "10px", padding: "10px 13px", width: "280px", pointerEvents: "none", opacity: 0, transition: "opacity 0.15s ease", zIndex: 100, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", fontFamily: "'DM Sans', sans-serif", whiteSpace: "normal" }}>
               Exportez votre relevé de portefeuille depuis votre espace courtier (Boursobank, Fortuneo, DEGIRO…) au format CSV, puis importez-le ici.
@@ -491,24 +493,28 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         )}
 
         {positions.length > 0 && !isDemoMode() && (
-          <button
-            onClick={() => fetchAllCours()}
-            disabled={coursLoading}
+          <button onClick={() => fetchAllCours()} disabled={coursLoading}
             style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 16px", color: coursLoading ? C.inkSubtle : C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: coursLoading ? "not-allowed" : "pointer" }}>
             {coursLoading ? "…" : isMobile ? "Cours" : "Actualiser les cours"}
           </button>
         )}
 
+        {/* ── Séparateur ── */}
+        {!isDemoMode() && <div style={{ width: "1px", height: "24px", background: C.border, flexShrink: 0 }} />}
+
+        {/* ── Groupe 2 : analyse ── */}
         {!isDemoMode() && <button
           onClick={() => onRunScoring && onRunScoring(positions)}
           disabled={marketScoringUi === UI.LOADING || positions.length === 0}
           style={{ background: marketScoringUi === UI.LOADING ? C.snowOff : C.navyLight, border: `1px solid ${marketScoringUi === UI.LOADING ? C.border : "rgba(30,58,95,0.12)"}`, borderRadius: "8px", padding: "9px 16px", color: marketScoringUi === UI.LOADING ? C.inkSubtle : C.navy, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: marketScoringUi === UI.LOADING || positions.length === 0 ? "not-allowed" : "pointer" }}>
           {marketScoringUi === UI.LOADING
             ? <span style={{ display:"inline-flex", alignItems:"center", fontSize:"13px" }}><BNextLabel /></span>
-            : <span>{isMobile ? "Analyser" : "Analyser toutes mes lignes"}</span>}
+            : <span>Analyser</span>}
         </button>}
 
-        {/* Bouton Capturer */}
+        <div style={{ marginLeft: "auto" }} />
+
+        {/* ── Groupe 3 : captures ── */}
         {positions.length > 0 && !isDemoMode() && (
           <button
             onClick={() => {
@@ -528,23 +534,33 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                 </span>
               : <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  {captureCount > 0 ? captureCount : ""}
+                  {captureCount > 0 ? `Captures (${captureCount})` : "Capturer"}
                 </span>}
           </button>
         )}
 
-        {/* Voir les captures */}
         {captureCount > 0 && !showCaptures && !isDemoMode() && (
           <button onClick={() => setShowCaptures(true)}
             style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 14px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>
             <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-              {isMobile ? "" : "Voir"}
+              Voir
             </span>
           </button>
         )}
 
-        <div style={{ marginLeft: "auto" }} />
+        {/* ── Séparateur ── */}
+        {positions.length > 0 && !isDemoMode() && <div style={{ width: "1px", height: "24px", background: C.border, flexShrink: 0 }} />}
+
+        {/* ── Groupe 4 : destructif — icône seule ── */}
+        {positions.length > 0 && !isDemoMode() && (
+          <button title={`Supprimer toutes les positions (${positions.length})`}
+            onClick={() => { if (window.confirm(`Supprimer les ${positions.length} position(s) du compte ${account} ?`)) setPositions(prev => prev.filter(p => (p.compte || "PEA") !== account)); }}
+            style={{ background: C.redLight, border: `1px solid rgba(231,76,60,0.2)`, borderRadius: "8px", padding: "9px 10px", color: C.red, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        )}
+
 
         {/* Statut — ligne séparée sur mobile */}
         <div className="ba-toolbar-status">
@@ -734,15 +750,16 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           const totPVpct   = totInvesti > 0 ? (totPV / totInvesti) * 100 : 0;
 
           const th = { fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "0.8px", cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" };
-          const COL = "minmax(180px,1fr) 88px 68px 46px 82px 84px 95px 90px";
+          const COL = "minmax(160px,1fr) 88px 52px 68px 46px 82px 84px 95px 90px";
 
           return (
             <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", boxShadow: shadow.card, marginBottom: "14px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-              <div style={{ minWidth: "860px" }}>
+              <div style={{ minWidth: "900px" }}>
                 {/* En-têtes */}
                 <div style={{ display: "grid", gridTemplateColumns: COL, borderBottom: `1px solid ${C.border}`, padding: "9px 14px", background: C.snowOff, borderRadius: "18px 18px 0 0", gap: "6px" }}>
                   <div style={th} onClick={() => toggleSort("nom")}>Valeur{sortIcon("nom")}</div>
                   <div style={th} onClick={() => toggleSort("cours")}>Cours{sortIcon("cours")}</div>
+                  <div style={th} />
                   <div style={th} onClick={() => toggleSort("pru")}>PRU{sortIcon("pru")}</div>
                   <div style={th} onClick={() => toggleSort("quantite")}>Qté{sortIcon("quantite")}</div>
                   <div style={th} onClick={() => toggleSort("investi")}>Investi{sortIcon("investi")}</div>
@@ -765,7 +782,9 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                   const sigColor = sig === "ACHAT" ? C.green : sig === "RENFORCER" ? C.navy : sig === "VENDRE" ? C.red : sig === "PRUDENCE" ? C.red : C.goldDark;
                   const concentration = !etf && poids > 20;
                   const euronextUrl = pos.isin ? getEuronextUrl(pos.isin, pos.nom) : null;
-                  const priceHist = loadPriceHistory(pos.id);
+                  const priceHist = (pos.intradayVariation != null && pos.dernierCours)
+                    ? [pos.dernierCours / (1 + pos.intradayVariation / 100), pos.dernierCours]
+                    : [];
                   return (
                     <div key={pos.id} onClick={() => setSelectedPosId(selectedPosId === pos.id ? null : pos.id)}
                       style={{ display: "grid", gridTemplateColumns: COL, alignItems: "center", padding: "10px 14px", gap: "6px", borderBottom: `1px solid ${C.border}`, background: selectedPosId === pos.id ? C.navyLight : concentration ? "#FFF8F5" : "transparent", cursor: "pointer", transition: "background 0.1s", animation: flashIds[pos.id] ? `flash${flashIds[pos.id] === "green" ? "Green" : "Red"} 1.5s ease-out` : "none" }}>
@@ -798,12 +817,16 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                               onChange={e => setEditCoursVal(e.target.value)}
                               onBlur={() => { const v = parseFloat(editCoursVal.replace(",",".")); if (v > 0) { savePricePoint(pos.id, v); setPositions(prev => prev.map(p => p.id === pos.id ? { ...p, dernierCours: v, lastFetch: Date.now() } : p)); } setEditCoursId(null); }}
                               onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setEditCoursId(null); }} />
-                          : <>
+                          : <div style={{ whiteSpace: "nowrap" }}>
                               <div style={{ fontSize: "12px", color: C.navy, fontWeight: "700" }}>{fmtCours(cours)}</div>
                               {pos.intradayVariation != null && <div style={{ fontSize: "9px", fontWeight: "700", color: pos.intradayVariation >= 0 ? C.green : C.red }}>{pos.intradayVariation >= 0 ? "+" : ""}{pos.intradayVariation.toFixed(2)}%</div>}
-                              {priceHist.length >= 2 && <div style={{ marginTop: "3px" }}><MiniSparkline data={priceHist} posId={pos.id} width={48} height={14} /></div>}
-                            </>
+                            </div>
                         }
+                      </div>
+
+                      {/* Sparkline — colonne séparée pour alignement */}
+                      <div style={{ display: "flex", alignItems: "center", marginLeft: "-26px" }}>
+                        {priceHist.length >= 2 && <MiniSparkline data={priceHist} posId={pos.id} width={44} height={14} />}
                       </div>
 
                       <div style={{ fontSize: "12px", color: C.inkMuted }}>{fmtCours(pos.pru)}</div>
