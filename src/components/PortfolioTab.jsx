@@ -311,37 +311,37 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       const newFlash = {};
       const priceMap = {};
 
-      // Tentative 1 : batch v7/finance/quote (1 seule requête, plus permissif sur l'auth)
-      try {
-        const symbols = resolved.map(p => String(p.ticker || cache[p.isin] || "").replace(/[^A-Z0-9.\-^=]/gi, "")).filter(Boolean).join(",");
-        const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
-        const res = await fetchWithProxy(quoteUrl, { signal: AbortSignal.timeout(20000) });
-        if (res.ok) {
-          const json = await safeJson(res);
-          for (const q of (json?.quoteResponse?.result || [])) {
-            if (q?.regularMarketPrice > 0) {
-              const pos = resolved.find(p => (p.ticker || cache[p.isin]) === q.symbol);
-              if (pos) priceMap[pos.id] = { posId: pos.id, isin: pos.isin, newPrice: q.regularMarketPrice, changePercent: q.regularMarketChangePercent ?? null, dividendeAnnuel: q.trailingAnnualDividendRate ?? null, rendementDividende: q.trailingAnnualDividendYield != null ? q.trailingAnnualDividendYield * 100 : null };
+      // Batch via /api/yahoo (endpoint serveur, pas de CORS/crumb)
+      const symbols = resolved.map(p => String(p.ticker || cache[p.isin] || "").replace(/[^A-Z0-9.\-^=]/gi, "")).filter(Boolean);
+      if (symbols.length > 0) {
+        try {
+          const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(symbols.join(","))}`, { signal: AbortSignal.timeout(25000) });
+          if (res.ok) {
+            const json = await safeJson(res);
+            for (const q of (json?.quoteResponse?.result || [])) {
+              if (q?.regularMarketPrice > 0) {
+                const pos = resolved.find(p => (p.ticker || cache[p.isin]) === q.symbol);
+                if (pos) priceMap[pos.id] = { posId: pos.id, isin: pos.isin, newPrice: q.regularMarketPrice, changePercent: q.regularMarketChangePercent ?? null, dividendeAnnuel: q.trailingAnnualDividendRate ?? null, rendementDividende: q.trailingAnnualDividendYield != null ? q.trailingAnnualDividendYield * 100 : null };
+              }
             }
           }
-        }
-      } catch {}
+        } catch {}
+      }
 
-      // Fallback : v8/finance/chart pour les positions non résolues par v7
+      // Fallback individuel pour les positions non résolues par le batch
       const stillMissing = resolved.filter(p => !priceMap[p.id]);
       if (stillMissing.length > 0) {
         await Promise.all(stillMissing.map(async pos => {
-          const tickerRaw = pos.ticker || cache[pos.isin];
-          const ticker = String(tickerRaw || "").replace(/[^A-Z0-9.\-^=]/gi, "");
+          const ticker = String(pos.ticker || cache[pos.isin] || "").replace(/[^A-Z0-9.\-^=]/gi, "");
+          if (!ticker) { errors.push(`${pos.nom} : ticker non trouvé`); return; }
           try {
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`;
-            const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
+            const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(ticker)}`, { signal: AbortSignal.timeout(15000) });
             if (!res.ok) { errors.push(`${pos.nom} : HTTP ${res.status}`); return; }
             const json = await safeJson(res);
-            const meta = json?.chart?.result?.[0]?.meta;
-            const newPrice = meta?.regularMarketPrice;
+            const q = json?.quoteResponse?.result?.[0];
+            const newPrice = q?.regularMarketPrice;
             if (!newPrice || newPrice <= 0) { errors.push(`${pos.nom} : cours indisponible`); return; }
-            priceMap[pos.id] = { posId: pos.id, isin: pos.isin, newPrice, changePercent: meta?.regularMarketChangePercent ?? null };
+            priceMap[pos.id] = { posId: pos.id, isin: pos.isin, newPrice, changePercent: q.regularMarketChangePercent ?? null };
           } catch (e) {
             errors.push(`${pos.nom} : ${e.message}`);
           }
