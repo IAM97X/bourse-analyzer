@@ -466,4 +466,128 @@ export function ParametresTab({ profil, onChange }) {
   );
 }
 
+// ─── Mon compte ──────────────────────────────────────────────────────────────
+export function CompteTab() {
+  const [userEmail, setUserEmail] = useState("");
+  const [pwdForm, setPwdForm]     = useState({ current: "", next: "", confirm: "" });
+  const [pwdMsg, setPwdMsg]       = useState(null);
+  const [resetSent, setResetSent] = useState(false);
+
+  useEffect(() => {
+    supabase?.auth.getUser().then(({ data }) => { if (data?.user?.email) setUserEmail(data.user.email); });
+  }, []);
+
+  const inp = { width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 14px", background: C.snowOff, color: C.ink, outline: "none", boxSizing: "border-box" };
+  const lbl = { fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px", fontFamily: "'DM Sans', sans-serif" };
+
+  const handleChangePwd = async () => {
+    if (!pwdForm.next || pwdForm.next !== pwdForm.confirm) { setPwdMsg({ ok: false, txt: "Les mots de passe ne correspondent pas." }); return; }
+    if (pwdForm.next.length < 8) { setPwdMsg({ ok: false, txt: "Minimum 8 caractères." }); return; }
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email: userEmail, password: pwdForm.current });
+    if (signInErr) { setPwdMsg({ ok: false, txt: "Mot de passe actuel incorrect." }); return; }
+    const { error } = await supabase.auth.updateUser({ password: pwdForm.next });
+    if (error) { setPwdMsg({ ok: false, txt: error.message }); return; }
+    setPwdMsg({ ok: true, txt: "Mot de passe modifié." });
+    setPwdForm({ current: "", next: "", confirm: "" });
+    setTimeout(() => setPwdMsg(null), 3000);
+  };
+
+  const handleResetPwd = async () => {
+    if (!userEmail) return;
+    await supabase.auth.resetPasswordForEmail(userEmail, { redirectTo: window.location.origin + window.location.pathname });
+    setResetSent(true);
+    setTimeout(() => setResetSent(false), 5000);
+  };
+
+  return (
+    <div style={{ maxWidth: "520px", margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ marginBottom: "24px" }}>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Mon compte</div>
+        <div style={{ fontSize: "12px", color: C.inkSubtle, marginTop: "3px" }}>Email et sécurité</div>
+      </div>
+      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "22px", boxShadow: shadow.card, display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div>
+          <label style={lbl}>Adresse email</label>
+          <div style={{ ...inp, color: C.inkMuted, cursor: "default" }}>{userEmail || "—"}</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+          <div><label style={lbl}>Mot de passe actuel</label><input type="password" value={pwdForm.current} onChange={e => setPwdForm(f => ({ ...f, current: e.target.value }))} style={inp} placeholder="••••••••" /></div>
+          <div><label style={lbl}>Nouveau mot de passe</label><input type="password" value={pwdForm.next} onChange={e => setPwdForm(f => ({ ...f, next: e.target.value }))} style={inp} placeholder="••••••••" /></div>
+          <div><label style={lbl}>Confirmer</label><input type="password" value={pwdForm.confirm} onChange={e => setPwdForm(f => ({ ...f, confirm: e.target.value }))} style={inp} placeholder="••••••••" /></div>
+        </div>
+        {pwdMsg && <div style={{ fontSize: "11px", fontWeight: "600", color: pwdMsg.ok ? C.green : C.red }}>{pwdMsg.txt}</div>}
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={handleChangePwd} style={{ background: C.accentGrad, border: "none", borderRadius: "8px", padding: "9px 16px", color: "#fff", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>Modifier le mot de passe</button>
+          <button onClick={handleResetPwd} style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px 16px", color: C.inkMuted, fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600", cursor: "pointer" }}>{resetSent ? "Email envoyé !" : "Réinitialiser par email"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Assistant IA ─────────────────────────────────────────────────────────────
+export function AISettingsTab() {
+  const [aiCfg, setAiCfg]       = useState(() => { try { return JSON.parse(localStorage.getItem(AI_CONFIG_KEY) || "{}"); } catch { return {}; } });
+  const [aiEmoji, setAiEmoji]   = useState(() => localStorage.getItem(AI_EMOJI_KEY) || "🤖");
+  const [emojiCatIdx, setEmojiCatIdx] = useState(0);
+
+  const inp = { width: "100%", fontSize: "13px", fontFamily: "'DM Sans', sans-serif", border: `1px solid ${C.border}`, borderRadius: "10px", padding: "10px 14px", background: C.snowOff, color: C.ink, outline: "none", boxSizing: "border-box" };
+  const lbl = { fontSize: "11px", color: C.inkMuted, fontWeight: "600", display: "block", marginBottom: "5px", fontFamily: "'DM Sans', sans-serif" };
+
+  const saveAiCfg = (update) => {
+    const next = { ...aiCfg, ...update };
+    setAiCfg(next);
+    localStorage.setItem(AI_CONFIG_KEY, JSON.stringify(next));
+  };
+
+  return (
+    <div style={{ maxWidth: "520px", margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ marginBottom: "24px" }}>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Assistant IA</div>
+        <div style={{ fontSize: "12px", color: C.inkSubtle, marginTop: "3px" }}>Personnalisez votre assistant et vos clés API</div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "18px", padding: "22px", boxShadow: shadow.card, display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div style={{ fontSize: "13px", fontWeight: "700", color: C.ink }}>Personnalité</div>
+          <div>
+            <label style={lbl}>Avatar</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+              <span style={{ fontSize: "32px" }}>{aiEmoji}</span>
+              <div style={{ display: "flex", gap: "6px" }}>
+                {AI_EMOJI_OPTIONS.map((cat, i) => (
+                  <button key={i} onClick={() => setEmojiCatIdx(i)}
+                    style={{ padding: "4px 10px", borderRadius: "8px", border: `1px solid ${emojiCatIdx === i ? C.accent : C.border}`, background: emojiCatIdx === i ? C.navyLight : C.snowOff, color: emojiCatIdx === i ? C.accent : C.inkMuted, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "600", cursor: "pointer" }}>
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {AI_EMOJI_OPTIONS[emojiCatIdx].emojis.map(e => (
+                <button key={e} onClick={() => { setAiEmoji(e); localStorage.setItem(AI_EMOJI_KEY, e); window.dispatchEvent(new CustomEvent("aiEmojiChanged")); }}
+                  style={{ width: "36px", height: "36px", borderRadius: "8px", border: aiEmoji === e ? `2px solid ${C.accent}` : `1px solid ${C.border}`, background: aiEmoji === e ? C.navyLight : C.snowOff, cursor: "pointer", fontSize: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {e}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={lbl}>Nom de l'assistant</label>
+            <input value={aiCfg.nom || ""} onChange={e => saveAiCfg({ nom: e.target.value })} placeholder="ex: Aria, Max, Léa…" style={inp} />
+            {aiCfg.nom && <div style={{ fontSize: "11px", color: C.inkSubtle, marginTop: "5px" }}>Apparaîtra comme <strong style={{ color: C.ink }}>{aiCfg.nom}</strong> dans le chat.</div>}
+          </div>
+          <div>
+            <label style={lbl}>Instructions personnalisées</label>
+            <textarea value={aiCfg.instructions || ""} onChange={e => saveAiCfg({ instructions: e.target.value })} placeholder="ex: Je suis un investisseur prudent, privilégie les ETF…" rows={4} style={{ ...inp, resize: "vertical" }} />
+            <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "4px" }}>Injectées dans chaque conversation.</div>
+          </div>
+          {(aiCfg.nom || aiCfg.instructions) && (
+            <button onClick={() => saveAiCfg({ nom: "", instructions: "" })} style={{ alignSelf: "flex-start", background: C.redLight, border: `1px solid rgba(220,38,38,0.2)`, borderRadius: "8px", padding: "7px 14px", color: C.red, fontSize: "11px", fontFamily: "'DM Sans', sans-serif", fontWeight: "700", cursor: "pointer" }}>Réinitialiser</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default ProfilTab;

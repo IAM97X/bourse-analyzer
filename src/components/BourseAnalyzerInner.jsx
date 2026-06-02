@@ -21,7 +21,7 @@ import MarcheTab from "./MarcheTab";
 import StratégieDCATab from "./StratégieDCATab";
 import ProjectionTab from "./ProjectionTab";
 import HistoriqueTab, { OperationsTab } from "./HistoriqueTab";
-import ProfilTab, { ParametresTab } from "./ProfilTab";
+import ProfilTab, { ParametresTab, CompteTab, AISettingsTab } from "./ProfilTab";
 import AIPortfolioTab from "./AIPortfolioTab";
 import OnboardingWizard, { ONBOARDING_KEY } from "./OnboardingWizard";
 import TourGuide, { shouldShowTour, markTourDone } from "./TourGuide";
@@ -163,7 +163,7 @@ function SubscriptionTab() {
   ];
 
   return (
-    <div style={{ maxWidth: "520px", fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ maxWidth: "520px", margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ marginBottom: "24px" }}>
         <div style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Abonnement</div>
         <div style={{ fontSize: "12px", color: C.inkSubtle, marginTop: "3px" }}>Gérez votre plan et votre facturation</div>
@@ -183,12 +183,6 @@ function SubscriptionTab() {
               </div>
             )}
           </div>
-          {(status === "active") && (
-            <button onClick={handlePortal} disabled={loadingPortal}
-              style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 14px", fontSize: "11px", fontWeight: "700", color: C.inkMuted, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
-              {loadingPortal ? "Redirection…" : "Gérer / Résilier"}
-            </button>
-          )}
         </div>
       </div>
 
@@ -222,10 +216,17 @@ function SubscriptionTab() {
         </div>
       )}
 
-      {/* Gérer si actif */}
+      {/* Upgrade si actif */}
       {status === "active" && (
-        <div style={{ background: C.greenLight, border: `1px solid rgba(39,174,96,0.2)`, borderRadius: "12px", padding: "14px 16px", fontSize: "12px", color: C.green, fontWeight: "600" }}>
-          Abonnement actif — pour changer de plan ou résilier, utilisez le bouton "Gérer / Résilier" ci-dessus.
+        <div style={{ background: C.navyLight, border: `1px solid rgba(45,108,181,0.15)`, borderRadius: "12px", padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
+          <div>
+            <div style={{ fontSize: "12px", fontWeight: "700", color: C.accent }}>Changer de plan ou résilier</div>
+            <div style={{ fontSize: "11px", color: C.inkMuted, marginTop: "2px" }}>Passez au plan Pro ou résiliez depuis le portail Stripe.</div>
+          </div>
+          <button onClick={handlePortal} disabled={loadingPortal}
+            style={{ background: C.accentGrad, border: "none", borderRadius: "50px", padding: "9px 18px", color: "#fff", fontSize: "12px", fontWeight: "700", cursor: loadingPortal ? "not-allowed" : "pointer", opacity: loadingPortal ? 0.7 : 1, fontFamily: "'DM Sans', sans-serif", boxShadow: shadow.pill, whiteSpace: "nowrap", flexShrink: 0 }}>
+            {loadingPortal ? "Redirection…" : "Gérer l'abonnement →"}
+          </button>
         </div>
       )}
 
@@ -240,7 +241,7 @@ function SubscriptionTab() {
 
 function BourseAnalyzerInner({ userName, onLogout }) {
   const isMobile = useIsMobile();
-  const { status, premium, loading: subLoading } = useSubscription();
+  const { status, premium, loading: subLoading, refresh } = useSubscription();
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return !isDemoMode() && !localStorage.getItem(ONBOARDING_KEY); } catch { return false; }
   });
@@ -276,6 +277,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
   const [marketScores, setMarketScores]         = useState(() => load("bourse_market_scores", null));
   const [marketScoringUi, setMarketScoringUi]   = useState(() => load("bourse_market_scores", null)?.length > 0 ? UI.RESULT : UI.IDLE);
   const [hiddenValues, setHiddenValues]         = useState(() => load("bourse_hidden", false));
+  const [checkoutToast, setCheckoutToast]       = useState(null); // "success" | "cancelled" | null
   const toggleHidden  = () => setHiddenValues(h => { save("bourse_hidden", !h); return !h; });
   const [localUserName, setLocalUserName]       = useState(userName || "");
   const [editingName, setEditingName]           = useState(false);
@@ -613,6 +615,20 @@ function BourseAnalyzerInner({ userName, onLogout }) {
     return () => window.removeEventListener("openChatWithQuery", handler);
   }, []);
 
+  // Détecte le retour depuis Stripe Checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("checkout");
+    if (result === "success" || result === "cancelled") {
+      setCheckoutToast(result);
+      if (result === "success") refresh();
+      changeTab(TABS.SUBSCRIPTION);
+      window.history.replaceState({}, "", window.location.pathname);
+      const t = setTimeout(() => setCheckoutToast(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Écoute l'événement "analyseAll" déclenché depuis PortfolioTab quand une position est sauvée
   useEffect(() => {
     const handler = (e) => {
@@ -936,7 +952,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         {/* Content */}
         <div className="ba-content" style={{ flex: 1, overflowY: "auto", padding: "32px 36px", position: "relative" }}>
           {/* Bouton guide ? fixe en haut à droite */}
-          {![TABS.PLUS, TABS.PROFIL, TABS.SETTINGS, TABS.SUBSCRIPTION].includes(activeTab) && !isDemo && (
+          {![TABS.PLUS, TABS.PROFIL, TABS.SETTINGS, TABS.SUBSCRIPTION, TABS.ACCOUNT, TABS.AI_SETTINGS].includes(activeTab) && !isDemo && (
             <button onClick={showGuide} title="Guide interactif"
               style={{ position: "absolute", top: "24px", right: "28px", zIndex: 20, width: "28px", height: "28px", borderRadius: "50%", background: C.snow, border: `1px solid ${C.border}`, color: C.inkMuted, fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card }}>
               ?
@@ -995,9 +1011,10 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "480px" }}>
                   {[
-                    { key: TABS.PROFIL,        label: "Profil",       desc: "Mon profil · Stratégie · Objectif · Liquidités" },
-                    { key: TABS.SETTINGS,      label: "Paramètres",   desc: "Compte · Assistant IA" },
-                    { key: TABS.SUBSCRIPTION,  label: "Abonnement",   desc: "Plan · Facturation · Résiliation" },
+                    { key: TABS.PROFIL,        label: "Profil investisseur", desc: "Risque · Horizon · DCA · Objectifs · Courtier" },
+                    { key: TABS.ACCOUNT,       label: "Mon compte",          desc: "Email · Mot de passe" },
+                    { key: TABS.AI_SETTINGS,   label: "Assistant IA",        desc: "Avatar · Nom · Instructions personnalisées" },
+                    { key: TABS.SUBSCRIPTION,  label: "Abonnement",          desc: `Plan · Facturation · Résiliation${status ? ` · ${status === "trial" ? "Essai" : status === "active" ? "Actif ✓" : "Expiré"}` : ""}` },
                   ].map(({ key, label, desc }) => (
                     <button key={key} onClick={() => changeTab(key)} className="ba-card-hover"
                       style={{ display: "flex", alignItems: "center", gap: "14px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "16px 18px", textAlign: "left", cursor: "pointer", width: "100%", boxShadow: shadow.card, fontFamily: "'DM Sans', sans-serif" }}>
@@ -1015,7 +1032,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             )}
 
             {/* Back button for Plus sub-tabs */}
-            {[TABS.PROFIL, TABS.SETTINGS, TABS.SUBSCRIPTION].includes(activeTab) && (
+            {[TABS.PROFIL, TABS.SETTINGS, TABS.SUBSCRIPTION, TABS.ACCOUNT, TABS.AI_SETTINGS].includes(activeTab) && (
               <button onClick={() => changeTab(TABS.PLUS)}
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginBottom: "20px", background: "rgba(255,255,255,0.75)", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "50px", padding: "7px 14px 7px 10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#64748B", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -1038,12 +1055,21 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               {activeTab === TABS.AUTOPILOT    && <AutopilotIA account={account} profil={profil} hidden={hiddenValues} />}
               {activeTab === TABS.AI_PORTFOLIO && <AIPortfolioTab account={account} hidden={hiddenValues} />}
               {activeTab === TABS.PROFIL        && <ProfilTab profil={profil} onChange={setProfil} />}
-              {activeTab === TABS.SETTINGS      && <ParametresTab profil={profil} onChange={setProfil} />}
+              {activeTab === TABS.ACCOUNT       && <CompteTab />}
+              {activeTab === TABS.AI_SETTINGS   && <AISettingsTab />}
               {activeTab === TABS.SUBSCRIPTION  && <SubscriptionTab />}
             </TabErrorBoundary>
           </div>
         </div>
       </div>
+
+      {/* ── Toast checkout ── */}
+      {checkoutToast && (
+        <div style={{ position: "fixed", bottom: "28px", left: "50%", transform: "translateX(-50%)", zIndex: 99999, background: checkoutToast === "success" ? C.green : C.inkSoft, color: "#fff", borderRadius: "50px", padding: "12px 22px", fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 4px 20px rgba(0,0,0,0.18)", display: "flex", alignItems: "center", gap: "8px", animation: "fadeIn 0.25s ease" }}>
+          {checkoutToast === "success" ? "✓ Abonnement activé — bienvenue !" : "Paiement annulé"}
+          <button onClick={() => setCheckoutToast(null)} style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "50%", width: "20px", height: "20px", color: "#fff", cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif" }}>✕</button>
+        </div>
+      )}
 
       {/* ── Assistant IA flottant ── */}
       <AIAssistant account={account} profil={profil} />

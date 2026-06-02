@@ -41,6 +41,9 @@ export async function startCheckout(userId, email, plan = "basique") {
     headers,
     body: JSON.stringify({ email, plan }),
   });
+  if (!res.ok && res.headers.get("content-type")?.includes("text/html")) {
+    throw new Error("API indisponible en local — testez sur boursenext.fr");
+  }
   const data = await res.json();
   if (data.url) window.location.href = data.url;
   else throw new Error(data.error || "Erreur Stripe");
@@ -54,6 +57,9 @@ export async function openBillingPortal() {
     if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
   }
   const res = await fetch("/api/stripe-portal", { method: "POST", headers });
+  if (!res.ok && res.headers.get("content-type")?.includes("text/html")) {
+    throw new Error("API indisponible en local — testez sur boursenext.fr");
+  }
   const data = await res.json();
   if (data.url) window.location.href = data.url;
   else throw new Error(data.error || "Portail indisponible");
