@@ -13,6 +13,8 @@ function checkOrigin(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type,x-api-key,anthropic-beta,authorization");
   if (req.method === "OPTIONS") { res.status(200).end(); return false; }
+  // Pas d'Origin header = requête same-origin (même domaine Vercel) → autorisée
+  if (!origin) return true;
   if (!allowed) { res.status(403).json({ error: "Origine non autorisée" }); return false; }
   return true;
 }
