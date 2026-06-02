@@ -3,8 +3,9 @@ import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtCours, sanitizePositions, getCachedCours, linReg, computeMA, computeRSI, sanitizeTicker } from "../lib/finance";
 import { load } from "../lib/storage";
 import { fetchWithProxy, safeJson } from "../lib/api";
-import { fetchFMPHistoricalByTicker } from "../lib/market";
+import { fetchFMPHistoricalByTicker, fetchYahooChart } from "../lib/market";
 import { BNextLabel, LoadingPanel, ErrorPanel } from "./UI";
+import Tooltip from "./Tooltip";
 import { InfoTip } from "./PortfolioChart";
 import CompanyAvatar from "./CompanyAvatar";
 import { TABS } from "../constants/tabs";
@@ -1103,7 +1104,7 @@ export function PriceEvolutionChart({ positions }) {
         const ticker = (pos.isin && cache[pos.isin]) || pos.ticker;
         if (!ticker) { missingList.push({ nom: pos.nom, reason: "Ticker non configuré" }); return; }
         try {
-          const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(sanitizeTicker(ticker))}&interval=${p.interval}&range=${p.range}`, { signal: AbortSignal.timeout(15000) });
+          const res = await fetchYahooChart(ticker, p.interval, p.range);
           if (!res.ok) { missingList.push({ nom: pos.nom, reason: `Erreur ${res.status}` }); return; }
           const data = await safeJson(res);
           const r = data?.chart?.result?.[0];
@@ -1124,7 +1125,7 @@ export function PriceEvolutionChart({ positions }) {
 
       // Fetch CAC 40 (^FCHI) en parallèle
       try {
-        const cacRes = await fetch(`/api/yahoo?symbols=%5EFCHI&interval=${p.interval}&range=${p.range}`, { signal: AbortSignal.timeout(15000) });
+        const cacRes = await fetchYahooChart("^FCHI", p.interval, p.range);
         if (cacRes.ok) {
           const cacJson = await safeJson(cacRes);
           const cr = cacJson?.chart?.result?.[0];
@@ -1196,6 +1197,7 @@ export function PriceEvolutionChart({ positions }) {
       <div style={{ background: "linear-gradient(135deg, #1A3A6B, #2D6CB5)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.02em" }}>Évolution comparative</span>
+          <Tooltip term="Évolution comparative" text="Compare l'évolution en % de toutes vos positions sur la même période, avec le CAC 40 en référence. Permet d'identifier les valeurs qui sur/sous-performent l'indice." iconOnly />
           {series.length > 0 && <span style={{ fontSize: "10px", fontWeight: "600", color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.08)", borderRadius: "5px", padding: "2px 7px" }}>{series.length} valeur{series.length > 1 ? "s" : ""}</span>}
         </div>
         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", alignItems: "center" }}>

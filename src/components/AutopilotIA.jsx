@@ -874,7 +874,7 @@ RÈGLE MONTANT : ${nbOppMax === 1
                           {/* Catégorie cible badge */}
                           <span style={{ fontSize: "9px", fontWeight: "700", color: catCol, background: catCol + "18", borderRadius: "4px", padding: "1px 6px" }}>{catCible}</span>
                           {op.dans_portefeuille && <span style={{ fontSize: "9px", fontWeight: "700", color: C.navy, background: C.navyLight, borderRadius: "4px", padding: "1px 6px" }}>En portefeuille</span>}
-                          {account === "PEA" && op.isin && (() => { const p = checkPEAEligibility(op.isin); return <span title={p.label} style={{ fontSize: "9px", fontWeight: "700", color: p.color, background: p.color + "18", borderRadius: "4px", padding: "1px 6px", cursor: "default" }}>{p.eligible === true ? "PEA ✓" : p.eligible === false ? "⚠ Non-PEA" : "PEA ?"}</span>; })()}
+                          {account === "PEA" && op.isin && (() => { const p = checkPEAEligibility(op.isin); return <span title={p.label} style={{ fontSize: "9px", fontWeight: "700", color: p.color, background: p.color + "18", borderRadius: "4px", padding: "1px 6px", cursor: "default" }}>{p.eligible === true ? "PEA" : p.eligible === false ? "⚠ Non-PEA" : "PEA ?"}</span>; })()}
                           <a href={`https://fr.finance.yahoo.com/quote/${encodeURIComponent(op.symbol)}`} target="_blank" rel="noopener noreferrer"
                             style={{ fontSize: "9px", fontWeight: "700", color: "#fff", background: "#5F01D1", borderRadius: "4px", padding: "2px 6px", textDecoration: "none", flexShrink: 0 }}>Yahoo</a>
                           {op.isin && /\.(PA|AS|BR|AM|LS)$/.test(op.symbol || "") && (

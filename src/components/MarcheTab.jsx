@@ -842,8 +842,9 @@ Retourne ce JSON exact (aucun texte autour) :
 
       {/* ── Projection par valeur ── */}
       <div style={{ background: C.cardGradPurp, border: `1px solid ${C.border}`, borderRadius: "20px", padding: "22px", boxShadow: shadow.card }}>
-        <div style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "14px" }}>
-          Projection par valeur
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+          <span style={{ fontSize: "11px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase" }}>Projection par valeur</span>
+          <Tooltip term="Projection par valeur" text="Projection de la valeur future de chaque position (ou du portefeuille global) basée sur une régression log-linéaire des 5 dernières années. Indicatif uniquement — ne constitue pas un conseil en investissement." iconOnly />
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
           {/* Bouton Projection globale */}

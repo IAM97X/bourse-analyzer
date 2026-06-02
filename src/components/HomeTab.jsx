@@ -5,7 +5,8 @@ import { isDemoMode } from "../constants/demoData";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { TABS } from "../constants/tabs";
-import { fetchWithProxy, hasClaudeKey, hasAI } from "../lib/api";
+import { fetchWithProxy, hasClaudeKey, hasAI, safeJson } from "../lib/api";
+import { fetchYahooChart } from "../lib/market";
 import MarketStatusBar from "./MarketStatusBar";
 import { AUTOPILOT_UNIVERSE } from "../constants/universe";
 
@@ -571,10 +572,9 @@ function CourbeEvolution({ hidden, positions, account }) {
           const priceByIsinIntra = {};
           await Promise.all(Object.entries(isinTickers).map(async ([isin, ticker]) => {
             try {
-              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=5m&range=1d`;
-              const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
+              const res = await fetchYahooChart(ticker, "5m", "1d", { signal: AbortSignal.timeout(12000) });
               if (!res.ok) return;
-              const json = await res.json();
+              const json = await safeJson(res);
               const r = json?.chart?.result?.[0];
               const tss = r?.timestamp || [];
               const cls = r?.indicators?.quote?.[0]?.close || [];

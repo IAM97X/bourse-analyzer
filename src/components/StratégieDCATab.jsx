@@ -376,6 +376,22 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil }) {
   const fraisAnnuel  = fraisMensuel * 12;
   const dcaNet       = dcaSim - fraisMensuel;
 
+  // Projection avec revalorisation progressive
+  const augmentation   = Number(profil?.dcaCroissanceMontant) || 0;
+  const periodeMois    = (Number(profil?.dcaCroissancePeriode) || 0) * 12;
+  const capitalProjecte = (totalMois) => {
+    let total = 0;
+    let versement = dcaSim;
+    for (let m = 1; m <= totalMois; m++) {
+      if (augmentation > 0 && periodeMois > 0 && m > 1 && (m - 1) % periodeMois === 0) {
+        versement += augmentation;
+      }
+      const frais = versement <= 500 ? 1.99 : versement * 0.005;
+      total += versement - frais;
+    }
+    return total;
+  };
+
   const fld = { background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "9px 12px", fontSize: "13px", fontWeight: "600", color: C.ink, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box", width: "100%" };
   const lbl = { fontSize: "10px", color: C.inkSubtle, fontWeight: "700", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px", fontFamily: "'DM Sans', sans-serif" };
 
@@ -461,55 +477,44 @@ function DCASimulator({ profil, dcaSim, setDcaSim, onSaveProfil }) {
 
       {/* Carte Simulation — pleine largeur */}
       <div style={card}>
-        <div style={{ marginBottom: "14px" }}>
-          <div style={cardTitle}>Projection de capitalisation</div>
+        <div style={cardTitle}>Projection de capitalisation</div>
+
+        {/* Cartes horizons */}
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${horizons.length}, 1fr)`, gap: "10px", marginBottom: "16px" }}>
+          {horizons.map((m, i) => {
+            const label = m < 12 ? `${m} mois` : `${m / 12} an${m / 12 > 1 ? "s" : ""}`;
+            const capital = capitalProjecte(m);
+            const isLast = i === horizons.length - 1;
+            return (
+              <div key={m} style={{ background: isLast ? C.navyLight : C.snowOff, border: `1px solid ${isLast ? "rgba(45,108,181,0.18)" : C.border}`, borderRadius: "12px", padding: "14px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: "9px", fontWeight: "700", color: isLast ? C.navy : C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{label}</div>
+                <div style={{ fontSize: "15px", fontWeight: "800", color: isLast ? C.navy : C.ink, letterSpacing: "-0.02em" }}>{fmtEur(capital)}</div>
+                <div style={{ fontSize: "9px", color: C.inkSubtle, marginTop: "4px" }}>{m} versements{augmentation > 0 && periodeMois > 0 && m > periodeMois ? <span style={{ color: C.green }}> +revalo</span> : ""}</div>
+              </div>
+            );
+          })}
         </div>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-            <thead>
-              <tr style={{ background: C.snowOff }}>
-                <th style={{ padding: "10px 14px", textAlign: "left", fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", borderBottom: `1px solid ${C.border}` }}>Durée</th>
-                {horizons.map(m => (
-                  <th key={m} style={{ padding: "10px 14px", textAlign: "right", fontSize: "9px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", borderBottom: `1px solid ${C.border}` }}>
-                    {m < 12 ? `${m} mois` : `${m / 12} an${m / 12 > 1 ? "s" : ""}`}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                <td style={{ padding: "12px 14px" }}>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: C.ink }}>Capital investi</span>
-                </td>
-                {horizons.map(m => (
-                  <td key={m} style={{ padding: "12px 14px", textAlign: "right" }}>
-                    <div style={{ fontSize: "14px", fontWeight: "800", color: C.navy }}>{fmtEur(dcaNet * m)}</div>
-                    <div style={{ fontSize: "10px", color: C.inkSubtle }}>{m} versements</div>
-                  </td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "10px" }}>
-          Frais estimés (≤500€ : 1,99€ · &gt;500€ : 0,5%) déduits du versement net.
-        </div>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
-          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "0 1 auto", minWidth: "80px", maxWidth: "140px" }}>
+
+        {/* Frais + net */}
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "12px", borderTop: `1px solid ${C.border}` }}>
+          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "1 1 80px" }}>
             <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700", marginBottom: "3px" }}>Frais / mois</div>
             <div style={{ fontSize: "13px", fontWeight: "800", color: C.goldDark }}>{fmtEur(fraisMensuel)}</div>
             <div style={{ fontSize: "9px", color: C.inkSubtle }}>{fmtEur(fraisAnnuel)} / an</div>
           </div>
-          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "0 1 auto", minWidth: "80px", maxWidth: "140px" }}>
+          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "1 1 80px" }}>
             <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700", marginBottom: "3px" }}>Net de frais</div>
             <div style={{ fontSize: "13px", fontWeight: "800", color: C.green }}>{fmtEur(dcaNet)}</div>
             <div style={{ fontSize: "9px", color: C.inkSubtle }}>versement effectif</div>
           </div>
-          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "0 1 auto", minWidth: "80px", maxWidth: "140px" }}>
+          <div style={{ background: C.snowOff, borderRadius: "8px", padding: "8px 12px", border: `1px solid ${C.border}`, flex: "1 1 80px" }}>
             <div style={{ fontSize: "9px", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700", marginBottom: "3px" }}>Investi / an</div>
             <div style={{ fontSize: "13px", fontWeight: "800", color: C.navy }}>{fmtEur(dcaSim * 12)}</div>
             <div style={{ fontSize: "9px", color: C.inkSubtle }}>{fmtEur(dcaNet * 12)} net</div>
           </div>
+        </div>
+        <div style={{ fontSize: "10px", color: C.inkSubtle, marginTop: "8px" }}>
+          Frais estimés (≤500€ : 1,99€ · &gt;500€ : 0,5%) déduits du versement net.
         </div>
       </div>
     </div>

@@ -1,6 +1,17 @@
 import { ALPHAVANTAGE_KEY, GOOGLE_API_KEY, GOOGLE_CX, FMP_KEY, fetchWithProxy, safeJson } from "./api";
 import { sanitizeTicker } from "./finance";
 
+// Helper : /api/yahoo en prod, fetchWithProxy en local (fallback sur 404)
+export async function fetchYahooChart(ticker, interval, range, opts = {}) {
+  const safe = sanitizeTicker(ticker);
+  const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(safe)}&interval=${interval}&range=${range}`, { signal: AbortSignal.timeout(15000), ...opts });
+  if (res.status === 404) {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${safe}?interval=${interval}&range=${range}`;
+    return fetchWithProxy(url, { signal: AbortSignal.timeout(15000), ...opts });
+  }
+  return res;
+}
+
 // ─── FMP — cache ISIN → ticker ────────────────────────────────────────────────
 const _fmpTickerCache = {};
 
@@ -62,8 +73,7 @@ export async function fetchFMPHistoricalByTicker(ticker, fromDate, toDate) {
 
 // ─── Yahoo Finance — historique journalier par ticker (sans clé API) ──────────
 export async function fetchYahooHistorical(ticker, fromDate, toDate) {
-  const safe = sanitizeTicker(ticker);
-  const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(safe)}&interval=1d&range=5y`, { signal: AbortSignal.timeout(15000) });
+  const res = await fetchYahooChart(ticker, "1d", "5y");
   if (!res.ok) throw new Error(`Yahoo chart HTTP ${res.status}`);
   const json = await safeJson(res);
   const result = json?.chart?.result?.[0];

@@ -74,7 +74,7 @@ module.exports = async function handler(req, res) {
             symbol: meta.symbol || symbol,
             shortName: meta.shortName || meta.longName || symbol,
             regularMarketPrice: price,
-            regularMarketChangePercent: prev && prev !== price ? ((price - prev) / prev) * 100 : 0,
+            regularMarketChangePercent: meta.regularMarketChangePercent ?? (prev && prev !== price ? ((price - prev) / prev) * 100 : 0),
             regularMarketVolume: meta.regularMarketVolume || 0,
             fiftyTwoWeekLow: meta.fiftyTwoWeekLow || price,
             fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || price,
