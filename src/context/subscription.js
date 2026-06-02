@@ -30,18 +30,31 @@ export function SubscriptionProvider({ children, userId }) {
 export function useSubscription() { return useContext(SubscriptionCtx); }
 
 // Redirige vers Stripe Checkout
-export async function startCheckout(userId, email) {
+export async function startCheckout(userId, email, plan = "basique") {
   const headers = { "Content-Type": "application/json" };
   if (supabase) {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
   }
-  const res  = await fetch("/api/stripe-checkout", {
+  const res = await fetch("/api/stripe-checkout", {
     method: "POST",
     headers,
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, plan }),
   });
   const data = await res.json();
   if (data.url) window.location.href = data.url;
   else throw new Error(data.error || "Erreur Stripe");
+}
+
+// Redirige vers le portail Stripe (gestion / résiliation)
+export async function openBillingPortal() {
+  const headers = { "Content-Type": "application/json" };
+  if (supabase) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+  }
+  const res = await fetch("/api/stripe-portal", { method: "POST", headers });
+  const data = await res.json();
+  if (data.url) window.location.href = data.url;
+  else throw new Error(data.error || "Portail indisponible");
 }

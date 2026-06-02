@@ -29,7 +29,7 @@ import PWAInstallBanner from "./PWAInstallBanner";
 import HomeTab from "./HomeTab";
 import OverviewTab from "./OverviewTab";
 import { isDemoMode, clearDemoData } from "../constants/demoData";
-import { useSubscription } from "../context/subscription";
+import { useSubscription, startCheckout, openBillingPortal } from "../context/subscription";
 import Paywall from "./Paywall";
 
 class TabErrorBoundary extends Component {
@@ -127,6 +127,116 @@ const DEFAULT_SCREENING_STOCKS = [
   "Genomic Vision", "Obiz", "Osmoz Technologies", "NovaBay Pharmaceuticals",
   "Compagnie Lebon", "Hexaom", "Lectra", "Inventiva", "Ose Immunotherapeutics",
 ];
+
+function SubscriptionTab() {
+  const { status, trial_ends_at, refresh } = useSubscription();
+  const [loadingPlan, setLoadingPlan] = useState(null);
+  const [loadingPortal, setLoadingPortal] = useState(false);
+  const [error, setError] = useState(null);
+
+  const daysLeft = trial_ends_at
+    ? Math.max(0, Math.ceil((new Date(trial_ends_at) - Date.now()) / 86400000))
+    : null;
+
+  const STATUS_LABEL = { trial: "Essai gratuit", active: "Actif", expired: "Expiré", free: "Gratuit" };
+  const STATUS_COLOR = { trial: C.accent, active: C.green, expired: C.red, free: C.inkSubtle };
+  const STATUS_BG    = { trial: C.navyLight, active: C.greenLight, expired: C.redLight, free: C.snowDim };
+
+  const handleCheckout = async (plan) => {
+    setLoadingPlan(plan); setError(null);
+    try {
+      const { supabase: sb } = await import("../lib/storage");
+      const { data: { session } } = await sb.auth.getSession();
+      await startCheckout(session?.user?.id, session?.user?.email, plan);
+    } catch (e) { setError(e.message); setLoadingPlan(null); }
+  };
+
+  const handlePortal = async () => {
+    setLoadingPortal(true); setError(null);
+    try { await openBillingPortal(); }
+    catch (e) { setError(e.message); setLoadingPortal(false); }
+  };
+
+  const PLANS = [
+    { key: "basique", label: "Basique", price: "2,99 €", period: "/mois", features: ["Signaux IA quotidiens", "Agent IA (2 cycles/jour)", "Projections & DCA", "Chat IA", "50 analyses/jour", "Sync cloud"] },
+    { key: "pro",     label: "Pro",     price: "5,99 €", period: "/mois", features: ["Tout le plan Basique", "500 analyses/jour", "Autopilot illimité", "Analyses prioritaires", "Support prioritaire"] },
+  ];
+
+  return (
+    <div style={{ maxWidth: "520px", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ marginBottom: "24px" }}>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em" }}>Abonnement</div>
+        <div style={{ fontSize: "12px", color: C.inkSubtle, marginTop: "3px" }}>Gérez votre plan et votre facturation</div>
+      </div>
+
+      {/* Statut actuel */}
+      <div style={{ background: C.snow, border: `1px solid ${C.border}`, borderRadius: "16px", padding: "20px", marginBottom: "20px", boxShadow: shadow.card }}>
+        <div style={{ fontSize: "11px", fontWeight: "700", color: C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "12px" }}>Statut actuel</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <span style={{ display: "inline-block", background: STATUS_BG[status] || C.snowDim, color: STATUS_COLOR[status] || C.inkSubtle, fontSize: "11px", fontWeight: "700", padding: "3px 10px", borderRadius: "20px" }}>
+              {STATUS_LABEL[status] || status}
+            </span>
+            {status === "trial" && daysLeft !== null && (
+              <div style={{ fontSize: "12px", color: C.inkMuted, marginTop: "6px" }}>
+                {daysLeft > 0 ? `${daysLeft} jour${daysLeft > 1 ? "s" : ""} restant${daysLeft > 1 ? "s" : ""}` : "Essai expiré aujourd'hui"}
+              </div>
+            )}
+          </div>
+          {(status === "active") && (
+            <button onClick={handlePortal} disabled={loadingPortal}
+              style={{ background: C.snowOff, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "8px 14px", fontSize: "11px", fontWeight: "700", color: C.inkMuted, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+              {loadingPortal ? "Redirection…" : "Gérer / Résilier"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Plans */}
+      {status !== "active" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
+          {PLANS.map(plan => (
+            <div key={plan.key} style={{ background: C.snow, border: `1px solid ${plan.key === "basique" ? C.accent : C.border}`, borderRadius: "16px", padding: "20px", boxShadow: shadow.card }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: plan.key === "basique" ? C.accent : C.inkSubtle, textTransform: "uppercase", letterSpacing: "1px" }}>{plan.label}</span>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: C.ink, letterSpacing: "-0.03em", marginTop: "2px" }}>
+                    {plan.price}<span style={{ fontSize: "12px", fontWeight: "500", color: C.inkMuted }}>{plan.period}</span>
+                  </div>
+                </div>
+                <button onClick={() => handleCheckout(plan.key)} disabled={!!loadingPlan}
+                  style={{ background: plan.key === "basique" ? C.accentGrad : "linear-gradient(135deg,#1A3A5C,#2D5986)", border: "none", borderRadius: "50px", padding: "9px 18px", color: "#fff", fontSize: "12px", fontWeight: "700", cursor: loadingPlan ? "not-allowed" : "pointer", opacity: loadingPlan ? 0.7 : 1, fontFamily: "'DM Sans', sans-serif", boxShadow: shadow.pill, whiteSpace: "nowrap" }}>
+                  {loadingPlan === plan.key ? "Redirection…" : `Choisir ${plan.label} →`}
+                </button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                {plan.features.map(f => (
+                  <div key={f} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "11px", color: C.inkSoft }}>
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3 3 6-6" stroke={C.green} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Gérer si actif */}
+      {status === "active" && (
+        <div style={{ background: C.greenLight, border: `1px solid rgba(39,174,96,0.2)`, borderRadius: "12px", padding: "14px 16px", fontSize: "12px", color: C.green, fontWeight: "600" }}>
+          Abonnement actif — pour changer de plan ou résilier, utilisez le bouton "Gérer / Résilier" ci-dessus.
+        </div>
+      )}
+
+      {error && <div style={{ marginTop: "12px", fontSize: "12px", color: C.red }}>{error}</div>}
+
+      <div style={{ marginTop: "16px", fontSize: "11px", color: C.inkSubtle }}>
+        Paiement sécurisé par Stripe · Sans engagement · Résiliable à tout moment
+      </div>
+    </div>
+  );
+}
 
 function BourseAnalyzerInner({ userName, onLogout }) {
   const isMobile = useIsMobile();
@@ -826,7 +936,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         {/* Content */}
         <div className="ba-content" style={{ flex: 1, overflowY: "auto", padding: "32px 36px", position: "relative" }}>
           {/* Bouton guide ? fixe en haut à droite */}
-          {![TABS.PLUS, TABS.PROFIL, TABS.SETTINGS].includes(activeTab) && !isDemo && (
+          {![TABS.PLUS, TABS.PROFIL, TABS.SETTINGS, TABS.SUBSCRIPTION].includes(activeTab) && !isDemo && (
             <button onClick={showGuide} title="Guide interactif"
               style={{ position: "absolute", top: "24px", right: "28px", zIndex: 20, width: "28px", height: "28px", borderRadius: "50%", background: C.snow, border: `1px solid ${C.border}`, color: C.inkMuted, fontSize: "13px", fontWeight: "700", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: shadow.card }}>
               ?
@@ -885,8 +995,9 @@ function BourseAnalyzerInner({ userName, onLogout }) {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "480px" }}>
                   {[
-                    { key: TABS.PROFIL,   label: "Profil",     desc: "Mon profil · Stratégie · Objectif · Liquidités" },
-                    { key: TABS.SETTINGS, label: "Paramètres", desc: "Compte · Assistant IA" },
+                    { key: TABS.PROFIL,        label: "Profil",       desc: "Mon profil · Stratégie · Objectif · Liquidités" },
+                    { key: TABS.SETTINGS,      label: "Paramètres",   desc: "Compte · Assistant IA" },
+                    { key: TABS.SUBSCRIPTION,  label: "Abonnement",   desc: "Plan · Facturation · Résiliation" },
                   ].map(({ key, label, desc }) => (
                     <button key={key} onClick={() => changeTab(key)} className="ba-card-hover"
                       style={{ display: "flex", alignItems: "center", gap: "14px", background: C.snow, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "16px 18px", textAlign: "left", cursor: "pointer", width: "100%", boxShadow: shadow.card, fontFamily: "'DM Sans', sans-serif" }}>
@@ -904,7 +1015,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
             )}
 
             {/* Back button for Plus sub-tabs */}
-            {[TABS.PROFIL, TABS.SETTINGS].includes(activeTab) && (
+            {[TABS.PROFIL, TABS.SETTINGS, TABS.SUBSCRIPTION].includes(activeTab) && (
               <button onClick={() => changeTab(TABS.PLUS)}
                 style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginBottom: "20px", background: "rgba(255,255,255,0.75)", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "50px", padding: "7px 14px 7px 10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#64748B", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -926,8 +1037,9 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               {activeTab === TABS.CHAT       && <ChatTab profil={profil} account={account} portfolioVersion={portfolioVersion} marketScores={marketScores} />}
               {activeTab === TABS.AUTOPILOT    && <AutopilotIA account={account} profil={profil} hidden={hiddenValues} />}
               {activeTab === TABS.AI_PORTFOLIO && <AIPortfolioTab account={account} hidden={hiddenValues} />}
-              {activeTab === TABS.PROFIL     && <ProfilTab profil={profil} onChange={setProfil} />}
-              {activeTab === TABS.SETTINGS   && <ParametresTab profil={profil} onChange={setProfil} />}
+              {activeTab === TABS.PROFIL        && <ProfilTab profil={profil} onChange={setProfil} />}
+              {activeTab === TABS.SETTINGS      && <ParametresTab profil={profil} onChange={setProfil} />}
+              {activeTab === TABS.SUBSCRIPTION  && <SubscriptionTab />}
             </TabErrorBoundary>
           </div>
         </div>

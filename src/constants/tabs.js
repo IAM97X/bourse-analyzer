@@ -13,4 +13,5 @@ export const TABS = {
   SETTINGS:   "settings",
   PLUS:         "plus",
   AI_PORTFOLIO: "ai_portfolio",
+  SUBSCRIPTION: "subscription",
 };
