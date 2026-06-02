@@ -6,22 +6,42 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Lit le corps brut sans parsing — requis pour la vérification HMAC Stripe
+const getRawBody = (req) => new Promise((resolve, reject) => {
+  let data = "";
+  req.on("data", chunk => { data += chunk; });
+  req.on("end",  () => resolve(data));
+  req.on("error", reject);
+});
+
+// Désactiver le bodyParser Vercel pour recevoir le flux brut
+module.exports.config = { api: { bodyParser: false } };
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const sig    = req.headers["stripe-signature"];
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) return res.status(500).json({ error: "STRIPE_WEBHOOK_SECRET manquant" });
+
+  const sig = req.headers["stripe-signature"];
+  const raw = await getRawBody(req);
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   let event;
   try {
-    const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
-    event = secret
-      ? stripe.webhooks.constructEvent(raw, sig, secret)
-      : JSON.parse(raw);
+    event = stripe.webhooks.constructEvent(raw, sig, secret);
   } catch (e) {
     return res.status(400).json({ error: `Webhook error: ${e.message}` });
   }
+
+  // Idempotence — nécessite la table Supabase :
+  // CREATE TABLE stripe_processed_events (id TEXT PRIMARY KEY, processed_at TIMESTAMPTZ DEFAULT now());
+  try {
+    const { error: dupError } = await supabase
+      .from("stripe_processed_events")
+      .insert({ id: event.id });
+    if (dupError) return res.status(200).json({ received: true }); // déjà traité
+  } catch {}
 
   const getCustomerId = (obj) => typeof obj.customer === "string" ? obj.customer : obj.customer?.id;
 
@@ -43,10 +63,8 @@ module.exports = async function handler(req, res) {
         break;
       }
 
-      case "customer.subscription.trial_will_end": {
-        // 3 jours avant la fin du trial — on peut envoyer un email (futur)
+      case "customer.subscription.trial_will_end":
         break;
-      }
 
       case "customer.subscription.deleted": {
         const sub       = event.data.object;

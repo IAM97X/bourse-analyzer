@@ -1103,7 +1103,7 @@ export default function AIPortfolioTab({ account, hidden }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: safeStringify({ portfolio: workingPf, prices: freshPrices, account, session_type: session, courtier_info, dca_injected: dcaInjected, dca_amount: dcaInjected ? dcaMensuel : 0, courtier_min_ordre: courtierObj.minOrdre, courtier_min_etf: courtierObj.minOrdreETF, claude_key: getKey("anthropic") || undefined, gemini_key: getKey("gemini") || undefined, autopilot_context, app_context, market_open: getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).open, market_reason: getMarketStatus(MARKETS_CFG.find(m => m.id === "paris")).reason, decision_journal: journalWithUpdatedPrices.slice(0, 15) }),
-        signal: AbortSignal.timeout(45000),
+        signal: AbortSignal.timeout(90000),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

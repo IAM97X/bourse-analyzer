@@ -29,13 +29,9 @@ export const CLAUDE_MODELS = {
   standard: "claude-sonnet-4-6",
 };
 
-const _ENV = {
-  anthropic:    process.env.REACT_APP_ANTHROPIC_API_KEY    || "",
-  google:       process.env.REACT_APP_GOOGLE_API_KEY       || "",
-  cx:           process.env.REACT_APP_GOOGLE_CX            || "",
-  alphavantage: process.env.REACT_APP_ALPHAVANTAGE_KEY     || "",
-  fmp:          process.env.REACT_APP_FMP_KEY              || "",
-};
+// Les clés API ne sont PAS lues depuis les variables d'environnement côté client
+// pour éviter leur exposition dans le bundle. Elles viennent uniquement de localStorage.
+const _ENV = {};
 
 export const getKey = (name) => {
   try {
@@ -80,11 +76,10 @@ function resolveAIEndpoint(maxTokens = 1500, system = "", messages = [], authTok
       parseText: (data) => (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n"),
     };
   }
-  const geminiKey = getKey("gemini") || undefined;
   return {
     endpoint: GEMINI_ENDPOINT,
-    headers: { "Content-Type": "application/json" },
-    buildBody: (_, mt) => ({ system, messages, max_tokens: mt, ...(geminiKey ? { gemini_key: geminiKey } : {}) }),
+    headers: { "Content-Type": "application/json", ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {}) },
+    buildBody: (_, mt) => ({ system, messages, max_tokens: mt }),
     parseText: (data) => (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n"),
   };
 }

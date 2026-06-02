@@ -134,7 +134,13 @@ function AuthPage({ onSession, onBack, initialMode = "signin" }) {
 
   const handleResetLocal = () => {
     if (!window.confirm("Réinitialiser efface TOUTES vos données. Continuer ?")) return;
-    localStorage.clear();
+    ["bourse_portfolio","bourse_snapshots","bourse_profil","bourse_price_history",
+     "bourse_api_keys","bourse_autopilot_result_PEA","bourse_autopilot_result_CTO",
+     "bourse_isin_ticker_cache","bourse_evolution_csv","bourse_dividendes_log",
+     "bourse_dividendes","bourse_avis_operes","bourse_ai_portfolio",
+     "bourse_ai_portfolio_PEA","bourse_ai_portfolio_CTO","bourse_session",
+     "bourse_dark","bourse_account","bourse_pea_ouverture","bourse_cto_ouverture",
+    ].forEach(k => localStorage.removeItem(k));
     window.location.reload();
   };
 

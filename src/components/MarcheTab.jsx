@@ -79,7 +79,8 @@ function GlobalProjectionChart({ positions, onClose }) {
       const missing = positions.filter(p => p.isin && !p.ticker && !cache[p.isin]);
       await Promise.all(missing.map(async p => {
         try {
-          const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(p.isin)}&quotesCount=5&newsCount=0`;
+          const isinSafe = String(p.isin || "").replace(/[^A-Z0-9]/gi, "").slice(0, 12);
+          const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=5&newsCount=0`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
           if (!res.ok) return;
           const json = await res.json();

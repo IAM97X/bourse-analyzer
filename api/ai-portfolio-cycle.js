@@ -157,16 +157,16 @@ Retourne JSON strict uniquement:
 module.exports = async function handler(req, res) {
   // Vercel cron injecte Authorization: Bearer <CRON_SECRET>
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && req.headers["authorization"] !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || req.headers["authorization"] !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
   const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-  const serviceKey  = process.env.SUPABASE_SERVICE_KEY;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceKey) {
     return res.status(503).json({
-      error: "SUPABASE_SERVICE_KEY manquante — configurez-la dans les env vars Vercel (Settings → Environment Variables)."
+      error: "SUPABASE_SERVICE_ROLE_KEY manquante — configurez-la dans les env vars Vercel (Settings → Environment Variables)."
     });
   }
 

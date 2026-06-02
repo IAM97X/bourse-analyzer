@@ -54,6 +54,7 @@ module.exports = async function handler(req, res) {
       method: "POST",
       headers: upstreamHeaders,
       body,
+      signal: AbortSignal.timeout(120000),
     });
     const data = await upstream.json();
     res.status(upstream.status).json(data);

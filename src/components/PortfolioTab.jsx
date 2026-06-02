@@ -112,7 +112,8 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   useEffect(() => { positionsRef.current = allPositions; }, [allPositions]);
   useEffect(() => {
     save("bourse_portfolio", allPositions);
-    window.dispatchEvent(new CustomEvent("portfolioUpdated"));
+    const id = setTimeout(() => window.dispatchEvent(new CustomEvent("portfolioUpdated")), 200);
+    return () => clearTimeout(id);
   }, [allPositions]);
 
   // Auto-refresh au montage si des positions n'ont pas encore de cours
@@ -256,6 +257,9 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
   const fetchAllCours = async () => {
     setCoursLoading(true); setCoursMsg(null);
     const cache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY) || "{}"); } catch { return {}; } })();
+    // Supprimer les tickers invalides du cache (caractères non-ASCII, format incorrect)
+    const VALID_TICKER_RE = /^[A-Z0-9.\-^=]+$/i;
+    for (const [k, v] of Object.entries(cache)) { if (!v || !VALID_TICKER_RE.test(v)) delete cache[k]; }
     const errors = [];
 
     // Pré-remplir le cache avec les tickers manuels définis sur les positions
@@ -274,7 +278,10 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     });
     await Promise.all(needTicker.map(async (pos) => {
       try {
-        const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(pos.isin)}&quotesCount=3&newsCount=0`;
+        // Les ISINs sont alphanumériques — pas besoin d'encodeURIComponent
+        const isinClean = String(pos.isin || "").replace(/[^A-Z0-9]/gi, "").slice(0, 12);
+        if (!isinClean) return;
+        const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinClean}&quotesCount=3&newsCount=0`;
         const res = await fetchWithProxy(searchUrl, { signal: AbortSignal.timeout(12000) });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
@@ -290,9 +297,15 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
     try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(cache)); } catch {}
 
     // Étape 2 : cours Yahoo Finance — batch v7 en primaire, v8/chart en fallback individuel
+    const VALID_TICKER = /^[A-Z0-9.\-^=]+$/i;
     const resolved = positionsRef.current.filter(p => {
       const ticker = p.ticker || (p.isin && cache[p.isin]);
-      return !!ticker;
+      if (!ticker || !VALID_TICKER.test(ticker)) {
+        // Supprimer du cache si le ticker est invalide
+        if (p.isin && cache[p.isin] && !VALID_TICKER.test(cache[p.isin])) delete cache[p.isin];
+        return false;
+      }
+      return true;
     });
     if (resolved.length > 0) {
       const newFlash = {};
@@ -376,7 +389,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       }));
     }
 
-    const okCount = resolved.length - errors.filter(e => !e.includes("introuvable")).length;
+    const okCount = Math.max(0, resolved.length - errors.length);
     setCoursMsg({
       ok: errors.length === 0,
       txt: `${okCount} cours mis à jour${errors.length ? ` · ${errors.length} erreur(s)` : ""}`,
@@ -549,7 +562,6 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
                 ? <span style={{ color: C.inkSubtle }}>{`Import ${new Date(lastImport).toLocaleDateString("fr-FR")}`}</span>
                 : <span style={{ color: C.inkSubtle }}>Aucun import</span>
           }
-          {portSaved && <span style={{ color: C.green, fontWeight: "600", marginLeft: "8px" }}>Sauvegardé</span>}
         </div>
       </div>
 

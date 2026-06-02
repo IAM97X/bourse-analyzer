@@ -79,7 +79,8 @@ export function LiveMarketPanel({ pos, onClose }) {
     // Auto-résolution via Yahoo Finance search si ISIN connu mais ticker absent du cache
     if (!ticker && pos.isin) {
       try {
-        const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(pos.isin)}&quotesCount=3&newsCount=0`;
+        const isinSafe = String(pos.isin).replace(/[^A-Z0-9]/gi, "").slice(0, 12);
+        const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=3&newsCount=0`;
         const sRes = await fetchWithProxy(searchUrl, { signal: AbortSignal.timeout(10000) });
         if (sRes.ok) {
           const sJson = await sRes.json();
@@ -1083,7 +1084,8 @@ export function PriceEvolutionChart({ positions }) {
       if (needResolve.length > 0) {
         await Promise.all(needResolve.map(async (p) => {
           try {
-            const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(p.isin)}&quotesCount=5&newsCount=0`;
+            const isinSafe = String(p.isin).replace(/[^A-Z0-9]/gi, "").slice(0, 12);
+            const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=5&newsCount=0`;
             const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
             if (!res.ok) return;
             const json = await res.json();

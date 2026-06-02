@@ -158,7 +158,8 @@ export function AIAssistant({ account, profil }) {
     if (!open || !pendingQueryRef.current) return;
     const q = pendingQueryRef.current;
     pendingQueryRef.current = null;
-    setTimeout(() => sendRef.current?.(q), 250);
+    const id = setTimeout(() => sendRef.current?.(q), 250);
+    return () => clearTimeout(id);
   }, [open]);
 
   const buildContext = () => {
@@ -691,10 +692,14 @@ Sois spécifique, cite les noms des positions, donne des chiffres.`;
   };
 
   const formatMessage = (text) => {
-    const applyInline = (s) => s
-      .replace(/\*\*(.+?)\*\*/g, (_, m) => `<strong>${m}</strong>`)
-      .replace(/\*(.+?)\*/g, (_, m) => `<em>${m}</em>`)
-      .replace(/`(.+?)`/g, (_, m) => `<code style="background:rgba(30,58,95,0.08);padding:1px 5px;border-radius:4px;font-size:0.92em">${m}</code>`);
+    const escHtml = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    const applyInline = (s) => {
+      const safe = escHtml(s);
+      return safe
+        .replace(/\*\*(.+?)\*\*/g, (_, m) => `<strong>${m}</strong>`)
+        .replace(/\*(.+?)\*/g, (_, m) => `<em>${m}</em>`)
+        .replace(/`(.+?)`/g, (_, m) => `<code style="background:rgba(30,58,95,0.08);padding:1px 5px;border-radius:4px;font-size:0.92em">${m}</code>`);
+    };
 
     const lines = text.split("\n");
     const result = [];

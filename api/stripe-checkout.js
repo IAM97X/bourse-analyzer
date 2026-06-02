@@ -2,7 +2,7 @@ const Stripe = require("stripe");
 const { checkOrigin } = require("./_cors");
 const { verifyJWT } = require("./_auth");
 
-const PRICE_ID = "price_1TdYinLtQieWByzOPnim27Ig";
+const PRICE_ID = process.env.STRIPE_PRICE_ID || "price_1TdYinLtQieWByzOPnim27Ig";
 
 module.exports = async function handler(req, res) {
   if (!checkOrigin(req, res)) return;

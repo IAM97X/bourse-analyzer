@@ -7,7 +7,7 @@ export const SIGNAL_CONFIG = {
   RENFORCER: { color: C.navy,     bg: C.navyLight,  border: "rgba(30,58,95,0.12)",    icon: "+" },
   ATTENDRE:  { color: C.goldDark, bg: C.goldLight,  border: "rgba(217,119,6,0.2)",   icon: "◆" },
   PRUDENCE:  { color: C.red,      bg: C.redLight,   border: "rgba(220,38,38,0.2)",   icon: "▼" },
-  VENDRE:    { color: "#DC2626",  bg: "#FFF5F5",    border: "#DC2626",               icon: "✕" },
+  VENDRE:    { color: C.danger,   bg: C.dangerBg,   border: C.danger,                icon: "✕" },
 };
 
 export const RISQUE_PCT = { prudent: 0.05, equilibre: 0.10, dynamique: 0.15, "tres-dynamique": 0.20 };

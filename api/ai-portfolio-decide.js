@@ -1,6 +1,7 @@
 // POST /api/ai-portfolio-decide
 // Reçoit l'état du portefeuille IA + les cours actuels, retourne les décisions BUY/SELL/HOLD
 const { checkOrigin } = require("./_cors");
+const { verifyJWT } = require("./_auth");
 
 // BoursoMarkets ETFs = 0% frais si ordre ≥ 200€. TER = frais de gestion annuels (dans le prix).
 const BOURSOMARKETS_ETFS = {
@@ -147,11 +148,17 @@ module.exports = async function handler(req, res) {
   if (!checkOrigin(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const geminiKey = process.env.GEMINI_API_KEY;
-  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, gemini_key, autopilot_context, app_context, market_open, market_reason, decision_journal } = req.body || {};
+  // Auth obligatoire en production
+  if (process.env.NODE_ENV === "production") {
+    const { user } = await verifyJWT(req);
+    if (!user) return res.status(401).json({ error: "Authentification requise." });
+  }
+
+  const geminiKey    = process.env.GEMINI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const effectiveGeminiKey = gemini_key || geminiKey;
-  if (!effectiveGeminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA temporairement indisponible." });
+  // Ignorer claude_key/gemini_key du body — utiliser uniquement les clés serveur
+  const { portfolio, prices, account, session_type, courtier_info, dca_injected, dca_amount, courtier_min_ordre, courtier_min_etf, autopilot_context, app_context, market_open, market_reason, decision_journal } = req.body || {};
+  if (!geminiKey && !anthropicKey) return res.status(503).json({ error: "Service IA temporairement indisponible." });
   if (!portfolio || !prices) return res.status(400).json({ error: "Données manquantes" });
 
   const valeurTotale = portfolio.cash + (portfolio.positions || []).reduce((s, p) => {
@@ -347,13 +354,13 @@ conviction DOIT être : "faible" (observation, pas de BUY), "moyen" (signal pré
       const result = parseJson(text);
       return res.status(200).json({ ...result, _model: "claude-haiku-4-5" });
     } catch (e) {
-      if (!effectiveGeminiKey) return res.status(500).json({ error: `Claude : ${friendlyError(e.message)}` });
+      if (!geminiKey) return res.status(500).json({ error: `Claude : ${friendlyError(e.message)}` });
       // Fallback Gemini silencieux uniquement pour erreurs non-auth
     }
   }
 
   // ── Gemini fallback ───────────────────────────────────────────────────────────
-  if (!effectiveGeminiKey) return res.status(503).json({ error: "Service IA non configuré" });
+  if (!geminiKey) return res.status(503).json({ error: "Service IA non configuré" });
 
   const MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
 

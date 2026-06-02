@@ -73,7 +73,6 @@ export function sanitizePositions(positions) {
     const pru      = Number(p.pru)      || 0;
     const quantite = Number(p.quantite) || 0;
     let dernierCours = Number(p.dernierCours) || 0;
-    if (dernierCours && pru && dernierCours > pru * 20 && dernierCours > 1000) dernierCours = 0;
     return {
       nom: p.nom || "Inconnu",
       isin: p.isin || "",

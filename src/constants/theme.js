@@ -44,6 +44,10 @@ export const C = {
   cardGradRed:   "linear-gradient(150deg, #FFFFFF 0%, #FFF1EF 100%)",
   cardGradPurp:  "linear-gradient(150deg, #FFFFFF 0%, #F4EEFF 100%)",
 
+  // Danger (VENDRE)
+  danger:       "#DC2626",
+  dangerBg:     "#FFF5F5",
+
   // Sidebar
   sb:           "#F8F9FA",
   sbBorder:     "rgba(17,18,20,0.07)",

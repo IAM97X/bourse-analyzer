@@ -33,7 +33,8 @@ async function resolveISINsToTickers(isins) {
   if (missing.length) {
     await Promise.all(missing.map(async (isin) => {
       try {
-        const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(isin)}&quotesCount=5&newsCount=0`;
+        const isinSafe = String(isin || "").replace(/[^A-Z0-9]/gi, "").slice(0, 12);
+        const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=5&newsCount=0`;
         const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
         if (!res.ok) return;
         const json = await res.json();
@@ -357,7 +358,7 @@ function ColPerfs({ positions, account, profil }) {
     if (!v0 || v0 <= 0) return null;
     const cf = calcDeltaCapital(account, fromDate, today);
     const result = (currentValue - v0 - cf) / v0 * 100;
-    console.log(`[Perf ${label}] V1=${currentValue.toFixed(2)}€  V0=${v0.toFixed(2)}€  ΔCF=${cf.toFixed(2)}€  → ${result.toFixed(2)}%`);
+    if (process.env.NODE_ENV !== "production") console.log(`[Perf ${label}] V1=${currentValue.toFixed(2)}€  V0=${v0.toFixed(2)}€  ΔCF=${cf.toFixed(2)}€  → ${result.toFixed(2)}%`);
     return result;
   };
 

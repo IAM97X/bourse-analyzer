@@ -311,7 +311,8 @@ function BourseAnalyzerInner({ userName, onLogout }) {
       if (missingISINs.length > 0) {
         await Promise.all(missingISINs.map(async (isin) => {
           try {
-            const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(isin)}&quotesCount=5&newsCount=0`;
+            const isinSafe = String(isin || "").replace(/[^A-Z0-9]/gi, "").slice(0, 12);
+            const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=5&newsCount=0`;
             const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
             if (!res.ok) return;
             const json = await res.json();

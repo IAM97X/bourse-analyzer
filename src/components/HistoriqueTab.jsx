@@ -1553,7 +1553,8 @@ function CorrelationMatrix({ positions }) {
       let ticker = (p.isin && tickerCache[p.isin]) || p.ticker || tickerFromUniverse(p.isin, p.nom) || null;
       if (!ticker && p.isin) {
         try {
-          const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(p.isin)}&quotesCount=5&newsCount=0`;
+          const isinSafe = String(p.isin || "").replace(/[^A-Z0-9]/gi, "").slice(0, 12);
+          const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=5&newsCount=0`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
           if (res.ok) {
             const j = await res.json();

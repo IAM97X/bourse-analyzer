@@ -165,7 +165,7 @@ export async function fetchCoursAlphaVantage(nom, isin) {
   if (!symbol) {
     const keyword = isin || nom;
     const searchUrl = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(keyword)}&apikey=${ALPHAVANTAGE_KEY}`;
-    const searchRes  = await fetch(searchUrl);
+    const searchRes  = await fetch(searchUrl, { signal: AbortSignal.timeout(10000) });
     const searchData = await searchRes.json();
     const matches    = searchData.bestMatches || [];
     // Préférer la région Paris/EUR, sinon prendre le premier résultat
@@ -177,7 +177,7 @@ export async function fetchCoursAlphaVantage(nom, isin) {
 
   // 2. Récupérer le cours avec GLOBAL_QUOTE
   const quoteUrl  = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(symbol)}&apikey=${ALPHAVANTAGE_KEY}`;
-  const quoteRes  = await fetch(quoteUrl);
+  const quoteRes  = await fetch(quoteUrl, { signal: AbortSignal.timeout(10000) });
   const quoteData = await quoteRes.json();
   const price     = parseFloat(quoteData["Global Quote"]?.["05. price"]);
   if (!price || isNaN(price)) throw new Error(`Cours introuvable pour ${symbol}`);
@@ -191,7 +191,7 @@ export async function fetchFondamentauxAlphaVantage(nom, isin) {
 
   if (!symbol) {
     const searchUrl = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(isin || nom)}&apikey=${ALPHAVANTAGE_KEY}`;
-    const searchData = await (await fetch(searchUrl)).json();
+    const searchData = await (await fetch(searchUrl, { signal: AbortSignal.timeout(10000) })).json();
     const matches = searchData.bestMatches || [];
     const best = matches.find(m => m["4. region"] === "Paris" || m["8. currency"] === "EUR") || matches[0];
     if (!best) throw new Error(`Symbole introuvable pour ${nom}`);
@@ -200,7 +200,7 @@ export async function fetchFondamentauxAlphaVantage(nom, isin) {
   }
 
   const url  = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${encodeURIComponent(symbol)}&apikey=${ALPHAVANTAGE_KEY}`;
-  const data = await (await fetch(url)).json();
+  const data = await (await fetch(url, { signal: AbortSignal.timeout(10000) })).json();
   if (!data?.Symbol) throw new Error("Données indisponibles (hors couverture Alpha Vantage)");
 
   const n = (v) => v && v !== "None" && v !== "-" ? v : null;
