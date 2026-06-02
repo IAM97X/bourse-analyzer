@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
   const { symbols } = req.query;
   if (!symbols) return res.status(400).json({ error: "symbols required" });
 
-  const symbolList = symbols.split(",").map(s => s.trim()).filter(Boolean);
+  const symbolList = symbols.split(",").map(s => s.trim().replace(/[^A-Z0-9.\-^=]/gi, "")).filter(Boolean);
 
   const HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -27,9 +27,9 @@ module.exports = async function handler(req, res) {
 
   const fetchOne = async (symbol) => {
     const urls = [
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d&includePrePost=false`,
-      `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d&includePrePost=false`,
-      `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`,
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d&includePrePost=false`,
+      `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d&includePrePost=false`,
+      `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`,
     ];
 
     for (const url of urls) {

@@ -1,4 +1,4 @@
-import { ALPHAVANTAGE_KEY, GOOGLE_API_KEY, GOOGLE_CX, FMP_KEY, fetchWithProxy } from "./api";
+import { ALPHAVANTAGE_KEY, GOOGLE_API_KEY, GOOGLE_CX, FMP_KEY, fetchWithProxy, safeJson } from "./api";
 import { sanitizeTicker } from "./finance";
 
 // ─── FMP — cache ISIN → ticker ────────────────────────────────────────────────
@@ -10,7 +10,7 @@ async function resolveFMPTicker(isin) {
   const url = `https://financialmodelingprep.com/api/v3/search?query=${encodeURIComponent(isin)}&apikey=${key}`;
   const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`FMP search HTTP ${res.status}`);
-  const data = await res.json();
+  const data = await safeJson(res);
   if (!Array.isArray(data) || !data.length) throw new Error(`FMP: ticker introuvable pour ${isin}`);
   // Préférer marchés européens (suffixe .PA .AS .BR .MI .MC)
   const euroSuffixes = [".PA", ".AS", ".BR", ".MI", ".MC", ".L", ".DE", ".SW"];
@@ -27,7 +27,7 @@ export async function fetchFMPQuote(isin) {
   const url = `https://financialmodelingprep.com/api/v3/quote/${sanitizeTicker(ticker)}?apikey=${key}`;
   const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);
-  const data = await res.json();
+  const data = await safeJson(res);
   const q = Array.isArray(data) ? data[0] : data;
   if (!q?.price) throw new Error("FMP: prix introuvable");
   return {
@@ -52,7 +52,7 @@ export async function fetchFMPHistoricalByTicker(ticker, fromDate, toDate) {
   const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${sanitizeTicker(ticker)}?from=${fromDate}&to=${toDate}&apikey=${key}`;
   const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);
-  const data = await res.json();
+  const data = await safeJson(res);
   const historical = data?.historical || [];
   return historical
     .filter(d => d.date && d.close != null)
@@ -67,7 +67,7 @@ export async function fetchYahooHistorical(ticker, fromDate, toDate) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=1d&period1=${period1}&period2=${period2}`;
   const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`Yahoo chart HTTP ${res.status}`);
-  const json = await res.json();
+  const json = await safeJson(res);
   const result = json?.chart?.result?.[0];
   if (!result) throw new Error(`Yahoo: pas de données pour ${ticker}`);
   const timestamps = result.timestamp || [];
@@ -167,7 +167,7 @@ export async function fetchCoursAlphaVantage(nom, isin) {
     const keyword = isin || nom;
     const searchUrl = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(keyword)}&apikey=${ALPHAVANTAGE_KEY}`;
     const searchRes  = await fetch(searchUrl, { signal: AbortSignal.timeout(10000) });
-    const searchData = await searchRes.json();
+    const searchData = await safeJson(searchRes);
     const matches    = searchData.bestMatches || [];
     // Préférer la région Paris/EUR, sinon prendre le premier résultat
     const best = matches.find(m => m["4. region"] === "Paris" || m["8. currency"] === "EUR") || matches[0];
@@ -179,7 +179,7 @@ export async function fetchCoursAlphaVantage(nom, isin) {
   // 2. Récupérer le cours avec GLOBAL_QUOTE
   const quoteUrl  = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(symbol)}&apikey=${ALPHAVANTAGE_KEY}`;
   const quoteRes  = await fetch(quoteUrl, { signal: AbortSignal.timeout(10000) });
-  const quoteData = await quoteRes.json();
+  const quoteData = await safeJson(quoteRes);
   const price     = parseFloat(quoteData["Global Quote"]?.["05. price"]);
   if (!price || isNaN(price)) throw new Error(`Cours introuvable pour ${symbol}`);
   return price;
@@ -192,7 +192,7 @@ export async function fetchFondamentauxAlphaVantage(nom, isin) {
 
   if (!symbol) {
     const searchUrl = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(isin || nom)}&apikey=${ALPHAVANTAGE_KEY}`;
-    const searchData = await (await fetch(searchUrl, { signal: AbortSignal.timeout(10000) })).json();
+    const searchData = await safeJson(await fetch(searchUrl, { signal: AbortSignal.timeout(10000) }));
     const matches = searchData.bestMatches || [];
     const best = matches.find(m => m["4. region"] === "Paris" || m["8. currency"] === "EUR") || matches[0];
     if (!best) throw new Error(`Symbole introuvable pour ${nom}`);
@@ -201,7 +201,7 @@ export async function fetchFondamentauxAlphaVantage(nom, isin) {
   }
 
   const url  = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${encodeURIComponent(symbol)}&apikey=${ALPHAVANTAGE_KEY}`;
-  const data = await (await fetch(url, { signal: AbortSignal.timeout(10000) })).json();
+  const data = await safeJson(await fetch(url, { signal: AbortSignal.timeout(10000) }));
   if (!data?.Symbol) throw new Error("Données indisponibles (hors couverture Alpha Vantage)");
 
   const n = (v) => v && v !== "None" && v !== "-" ? v : null;
@@ -283,7 +283,7 @@ export async function fetchYahooAnalysts(ticker) {
   const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sanitizeTicker(ticker)}?modules=financialData,recommendationTrend`;
   const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
+  const json = await safeJson(res);
   const result = json?.quoteSummary?.result?.[0];
   if (!result) throw new Error("no data");
   return result;

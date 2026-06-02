@@ -6,7 +6,7 @@ import Tooltip from "./Tooltip";
 import { load, save } from "../lib/storage";
 import { isDemoMode } from "../constants/demoData";
 import { sanitizePositions, fmtEur } from "../lib/finance";
-import { getKey } from "../lib/api";
+import { getKey, safeJson } from "../lib/api";
 import { fetchGoogleNewsRSS } from "../lib/market";
 import { COURTIERS, COURTIERS_DETAIL, BOURSOMARKETS_ETFS, getCourtierForAccount } from "../constants/courtiers";
 import { DEFAULT_PROFIL } from "../constants/config";
@@ -576,9 +576,11 @@ async function fetchBatchPrices(symbols) {
   for (let i = 0; i < symbols.length; i += 20) chunks.push(symbols.slice(i, i + 20));
   await Promise.all(chunks.map(async chunk => {
     try {
-      const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(chunk.join(","))}`, { signal: AbortSignal.timeout(12000) });
+      const clean = chunk.map(s => String(s || "").replace(/[^A-Z0-9.\-^=]/gi, "")).filter(Boolean);
+      if (!clean.length) return;
+      const res = await fetch(`/api/yahoo?symbols=${encodeURIComponent(clean.join(","))}`, { signal: AbortSignal.timeout(12000) });
       if (!res.ok) return;
-      const data = await res.json();
+      const data = await safeJson(res);
       (data?.quoteResponse?.result || []).forEach(q => {
         if (q.regularMarketPrice) prices[q.symbol] = q.regularMarketPrice;
       });

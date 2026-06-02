@@ -3,7 +3,7 @@ import { isDemoMode } from "../constants/demoData";
 import { C, shadow } from "../constants/theme";
 import { parsePrice, fmtEur, fmtCours, sanitizePositions, isETFName, getEuronextUrl, getCachedCours, setCachedCours, sanitizeTicker } from "../lib/finance";
 import { load, save } from "../lib/storage";
-import { getKey, enqueueApi, callClaude, fetchWithProxy } from "../lib/api";
+import { getKey, enqueueApi, callClaude, fetchWithProxy, safeJson } from "../lib/api";
 import { useIsMobile, useIsTablet } from "../context/mobile";
 import { UI, DEFAULT_POSITIONS, SIGNAL_CONFIG, translateSecteur } from "../constants/config";
 import { parseBoursobankCSV, openLink, yahooFinanceUrl } from "../lib/market";
@@ -154,7 +154,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
           const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=1d&range=5d`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
           if (res.ok) {
-            const json = await res.json();
+            const json = await safeJson(res);
             const newPrice = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
             if (newPrice && newPrice > 0) cours = newPrice;
           }
@@ -284,7 +284,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinClean}&quotesCount=3&newsCount=0`;
         const res = await fetchWithProxy(searchUrl, { signal: AbortSignal.timeout(12000) });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
+        const json = await safeJson(res);
         const hits = (json?.quotes || []).filter(q => ["EQUITY", "ETF", "MUTUALFUND"].includes(q.quoteType));
         if (!hits.length) throw new Error("introuvable — renseigner le ticker manuellement");
         // Prioriser Euronext Paris (.PA) ou Growth (.PA) sur les autres bourses
@@ -317,7 +317,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
         const res = await fetchWithProxy(quoteUrl, { signal: AbortSignal.timeout(20000) });
         if (res.ok) {
-          const json = await res.json();
+          const json = await safeJson(res);
           for (const q of (json?.quoteResponse?.result || [])) {
             if (q?.regularMarketPrice > 0) {
               const pos = resolved.find(p => (p.ticker || cache[p.isin]) === q.symbol);
@@ -337,7 +337,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
             const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`;
             const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
             if (!res.ok) { errors.push(`${pos.nom} : HTTP ${res.status}`); return; }
-            const json = await res.json();
+            const json = await safeJson(res);
             const meta = json?.chart?.result?.[0]?.meta;
             const newPrice = meta?.regularMarketPrice;
             if (!newPrice || newPrice <= 0) { errors.push(`${pos.nom} : cours indisponible`); return; }
@@ -379,7 +379,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
         try {
           const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sanitizeTicker(ticker)}?modules=assetProfile,fundProfile`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
-          const json = await res.json();
+          const json = await safeJson(res);
           const profile = json?.quoteSummary?.result?.[0];
           const sectorRaw = profile?.assetProfile?.sector || profile?.assetProfile?.industry || profile?.fundProfile?.categoryName || null;
           if (sectorRaw) {

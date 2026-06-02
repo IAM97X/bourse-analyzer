@@ -1,6 +1,12 @@
 import { getAuthToken } from "./storage";
 export const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
+export async function safeJson(res) {
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch { throw new Error(`Réponse non-JSON (HTTP ${res.status})`); }
+}
+
 const PROXIES = [
   u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
   u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
