@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { C, shadow } from "../constants/theme";
 import { fmtEur, fmtCours, sanitizePositions, getCachedCours, linReg, computeMA, computeRSI, sanitizeTicker } from "../lib/finance";
 import { load } from "../lib/storage";
-import { fetchWithProxy } from "../lib/api";
+import { fetchWithProxy, safeJson } from "../lib/api";
 import { fetchFMPHistoricalByTicker } from "../lib/market";
 import { BNextLabel, LoadingPanel, ErrorPanel } from "./UI";
 import { InfoTip } from "./PortfolioChart";
@@ -83,7 +83,7 @@ export function LiveMarketPanel({ pos, onClose }) {
         const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=3&newsCount=0`;
         const sRes = await fetchWithProxy(searchUrl, { signal: AbortSignal.timeout(10000) });
         if (sRes.ok) {
-          const sJson = await sRes.json();
+          const sJson = await safeJson(sRes);
           const hit = (sJson?.quotes || []).find(q => ["EQUITY","ETF","MUTUALFUND"].includes(q.quoteType));
           if (hit?.symbol) {
             ticker = hit.symbol;
@@ -100,7 +100,7 @@ export function LiveMarketPanel({ pos, onClose }) {
       const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=5m&range=1d`;
       const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(14000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      const json = await safeJson(res);
       const r    = json?.chart?.result?.[0];
       if (!r) {
         const yahooErr = json?.chart?.error?.description;
@@ -630,7 +630,7 @@ export function StockProjectionChart({ pos, onClose }) {
 
         const resDisplay = await fetchWithProxy(urlDisplay, { signal: AbortSignal.timeout(15000) });
         if (!resDisplay.ok) throw new Error(`HTTP ${resDisplay.status}`);
-        const jsonDisplay = await resDisplay.json();
+        const jsonDisplay = await safeJson(resDisplay);
 
         const r = jsonDisplay?.chart?.result?.[0];
         if (!r) {
@@ -1088,7 +1088,7 @@ export function PriceEvolutionChart({ positions }) {
             const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=5&newsCount=0`;
             const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
             if (!res.ok) return;
-            const json = await res.json();
+            const json = await safeJson(res);
             const quotes = json?.quotes || [];
             const best = quotes.find(q => q.symbol && (q.exchDisp?.includes("Paris") || q.exchDisp?.includes("Euronext") || q.exchDisp?.includes("Amsterdam")))
               || quotes.find(q => q.symbol && q.quoteType === "EQUITY")
@@ -1109,7 +1109,7 @@ export function PriceEvolutionChart({ positions }) {
           const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=${p.interval}&range=${p.range}`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
           if (!res.ok) { missingList.push({ nom: pos.nom, reason: `Erreur ${res.status}` }); return; }
-          const data = await res.json();
+          const data = await safeJson(res);
           const r = data?.chart?.result?.[0];
           if (!r) { missingList.push({ nom: pos.nom, reason: "Données indisponibles" }); return; }
           const ts = r.timestamp || [];
@@ -1131,7 +1131,7 @@ export function PriceEvolutionChart({ positions }) {
         const cacUrl = `https://query1.finance.yahoo.com/v8/finance/chart/%5EFCHI?interval=${p.interval}&range=${p.range}`;
         const cacRes = await fetchWithProxy(cacUrl, { signal: AbortSignal.timeout(15000) });
         if (cacRes.ok) {
-          const cacJson = await cacRes.json();
+          const cacJson = await safeJson(cacRes);
           const cr = cacJson?.chart?.result?.[0];
           if (cr) {
             const ts = cr.timestamp || [];

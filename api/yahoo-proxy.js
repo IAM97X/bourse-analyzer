@@ -28,11 +28,11 @@ async function getCrumb() {
     headers: { ...BASE_HEADERS, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
     redirect: "follow",
   });
-  const setCookies = homeRes.headers.get("set-cookie") || "";
-  const cookie = setCookies.split(",")
-    .map(c => c.split(";")[0].trim())
-    .filter(Boolean)
-    .join("; ");
+  // getSetCookie() retourne TOUS les cookies (Node 18+), contrairement à get() qui n'en retourne qu'un
+  const rawCookies = typeof homeRes.headers.getSetCookie === "function"
+    ? homeRes.headers.getSetCookie()
+    : (homeRes.headers.get("set-cookie") || "").split(/,(?=[^ ])/).filter(Boolean);
+  const cookie = rawCookies.map(c => c.split(";")[0].trim()).filter(Boolean).join("; ");
 
   // 2. Récupère le crumb
   const crumbRes = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {

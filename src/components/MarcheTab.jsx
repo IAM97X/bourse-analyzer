@@ -7,7 +7,7 @@ import { isDemoMode } from "../constants/demoData";
 import { UI, DEFAULT_POSITIONS } from "../constants/config";
 import { AUTOPILOT_UNIVERSE } from "../constants/universe";
 import { StockProjectionChart, PriceEvolutionChart } from "./StockPanels";
-import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy } from "../lib/api";
+import { callClaude, enqueueApi, getKey, hasAI, fetchWithProxy, safeJson } from "../lib/api";
 import { fetchYahooHistorical } from "../lib/market";
 import { COURTIERS, getCourtierForAccount } from "../constants/courtiers";
 import { BNextLabel } from "./UI";
@@ -83,7 +83,7 @@ function GlobalProjectionChart({ positions, onClose }) {
           const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${isinSafe}&quotesCount=5&newsCount=0`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(8000) });
           if (!res.ok) return;
-          const json = await res.json();
+          const json = await safeJson(res);
           const quotes = json?.quotes || [];
           const best = quotes.find(q => q.symbol && (q.exchDisp?.includes("Paris") || q.exchDisp?.includes("Euronext")))
             || quotes.find(q => q.symbol && q.quoteType === "EQUITY") || quotes[0];
