@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { isDemoMode } from "../constants/demoData";
 import { C, shadow } from "../constants/theme";
-import { parsePrice, fmtEur, fmtCours, sanitizePositions, isETFName, getEuronextUrl, getCachedCours, setCachedCours } from "../lib/finance";
+import { parsePrice, fmtEur, fmtCours, sanitizePositions, isETFName, getEuronextUrl, getCachedCours, setCachedCours, sanitizeTicker } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { getKey, enqueueApi, callClaude, fetchWithProxy } from "../lib/api";
 import { useIsMobile, useIsTablet } from "../context/mobile";
@@ -151,7 +151,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       const ticker = pos.ticker || (pos.isin && tickerCacheLocal[pos.isin]);
       if (ticker) {
         try {
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`;
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=1d&range=5d`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
           if (res.ok) {
             const json = await res.json();
@@ -313,8 +313,8 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
 
       // Tentative 1 : batch v7/finance/quote (1 seule requête, plus permissif sur l'auth)
       try {
-        const symbols = resolved.map(p => p.ticker || cache[p.isin]).join(",");
-        const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`;
+        const symbols = resolved.map(p => String(p.ticker || cache[p.isin] || "").replace(/[^A-Z0-9.\-^=]/gi, "")).filter(Boolean).join(",");
+        const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
         const res = await fetchWithProxy(quoteUrl, { signal: AbortSignal.timeout(20000) });
         if (res.ok) {
           const json = await res.json();
@@ -331,9 +331,10 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       const stillMissing = resolved.filter(p => !priceMap[p.id]);
       if (stillMissing.length > 0) {
         await Promise.all(stillMissing.map(async pos => {
-          const ticker = pos.ticker || cache[pos.isin];
+          const tickerRaw = pos.ticker || cache[pos.isin];
+          const ticker = String(tickerRaw || "").replace(/[^A-Z0-9.\-^=]/gi, "");
           try {
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`;
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`;
             const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
             if (!res.ok) { errors.push(`${pos.nom} : HTTP ${res.status}`); return; }
             const json = await res.json();
@@ -376,7 +377,7 @@ function PortfolioTab({ profil, marketScores, marketScoringUi, onRunScoring, acc
       await Promise.all(needSecteur.map(async (pos) => {
         const ticker = cache[pos.isin];
         try {
-          const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=assetProfile,fundProfile`;
+          const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${sanitizeTicker(ticker)}?modules=assetProfile,fundProfile`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
           const json = await res.json();
           const profile = json?.quoteSummary?.result?.[0];

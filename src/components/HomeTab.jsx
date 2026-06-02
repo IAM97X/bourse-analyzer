@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { sanitizePositions, fmtEur } from "../lib/finance";
+import { sanitizePositions, fmtEur, sanitizeTicker } from "../lib/finance";
 import { load, save } from "../lib/storage";
 import { isDemoMode } from "../constants/demoData";
 import { DEFAULT_POSITIONS, DEFAULT_PROFIL } from "../constants/config";
@@ -79,7 +79,7 @@ async function fetchHistoricalByISIN(isin, ticker, fromDate, toDate) {
       const days = (new Date(toDate) - new Date(fromDate)) / 86400000;
       return days <= 35 ? "1mo" : days <= 95 ? "3mo" : days <= 190 ? "6mo" : days <= 370 ? "1y" : "5y";
     })();
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=${rangeParam}&interval=1d`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?range=${rangeParam}&interval=1d`;
     const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) return {};
     const json = await res.json();
@@ -571,7 +571,7 @@ function CourbeEvolution({ hidden, positions, account }) {
           const priceByIsinIntra = {};
           await Promise.all(Object.entries(isinTickers).map(async ([isin, ticker]) => {
             try {
-              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=5m&range=1d`;
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=5m&range=1d`;
               const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
               if (!res.ok) return;
               const json = await res.json();
@@ -618,7 +618,7 @@ function CourbeEvolution({ hidden, positions, account }) {
           const priceMapByIsin = {};
           await Promise.all(Object.entries(isinTickers).map(async ([isin, ticker]) => {
             try {
-              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=${rangeIntra}`;
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=1d&range=${rangeIntra}`;
               const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(12000) });
               if (!res.ok) return;
               const json = await res.json();

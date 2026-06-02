@@ -1,9 +1,8 @@
 const { createClient } = require("@supabase/supabase-js");
 
-// anon-key suffit pour valider un JWT — la service-role n'est pas nécessaire ici
 const supabase = createClient(
   process.env.REACT_APP_SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 async function verifyJWT(req) {

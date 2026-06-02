@@ -1,4 +1,5 @@
 import { ALPHAVANTAGE_KEY, GOOGLE_API_KEY, GOOGLE_CX, FMP_KEY, fetchWithProxy } from "./api";
+import { sanitizeTicker } from "./finance";
 
 // ─── FMP — cache ISIN → ticker ────────────────────────────────────────────────
 const _fmpTickerCache = {};
@@ -63,7 +64,7 @@ export async function fetchFMPHistoricalByTicker(ticker, fromDate, toDate) {
 export async function fetchYahooHistorical(ticker, fromDate, toDate) {
   const period1 = Math.floor(new Date(fromDate + "T00:00:00").getTime() / 1000);
   const period2 = Math.floor(new Date(toDate   + "T00:00:00").getTime() / 1000);
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&period1=${period1}&period2=${period2}`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=1d&period1=${period1}&period2=${period2}`;
   const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`Yahoo chart HTTP ${res.status}`);
   const json = await res.json();
@@ -236,7 +237,7 @@ export async function fetchActualites(nom, isin) {
 
 // ─── Yahoo Finance — actualités RSS avec liens ────────────────────────────────
 export async function fetchYahooFinanceRSS(ticker) {
-  const url = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=FR&lang=fr-FR&siteid=yahoofr`;
+  const url = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${sanitizeTicker(ticker)}&region=FR&lang=fr-FR&siteid=yahoofr`;
   const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
@@ -280,7 +281,7 @@ export function yahooFinanceUrl(pos) {
 
 // ─── Yahoo Finance — données analystes (consensus, objectif de cours) ────────
 export async function fetchYahooAnalysts(ticker) {
-  const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=financialData,recommendationTrend`;
+  const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sanitizeTicker(ticker)}?modules=financialData,recommendationTrend`;
   const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { C, shadow } from "../constants/theme";
-import { fmtEur, fmtCours, sanitizePositions, getCachedCours, linReg, computeMA, computeRSI } from "../lib/finance";
+import { fmtEur, fmtCours, sanitizePositions, getCachedCours, linReg, computeMA, computeRSI, sanitizeTicker } from "../lib/finance";
 import { load } from "../lib/storage";
 import { fetchWithProxy } from "../lib/api";
 import { fetchFMPHistoricalByTicker } from "../lib/market";
@@ -97,7 +97,7 @@ export function LiveMarketPanel({ pos, onClose }) {
     // Valider le format du ticker avant encodage (évite URIError Safari)
     if (!/^[A-Z0-9.\-^=]+$/i.test(ticker)) { setErr("Ticker invalide · vérifiez le symbole dans ✏"); setLoading(false); return; }
     try {
-      const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=5m&range=1d`;
+      const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=5m&range=1d`;
       const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(14000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
@@ -626,7 +626,7 @@ export function StockProjectionChart({ pos, onClose }) {
 
       try {
         // Historique affiché selon la période choisie
-        const urlDisplay = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${h.interval}&range=${h.range}`;
+        const urlDisplay = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=${h.interval}&range=${h.range}`;
 
         const resDisplay = await fetchWithProxy(urlDisplay, { signal: AbortSignal.timeout(15000) });
         if (!resDisplay.ok) throw new Error(`HTTP ${resDisplay.status}`);
@@ -1106,7 +1106,7 @@ export function PriceEvolutionChart({ positions }) {
         const ticker = (pos.isin && cache[pos.isin]) || pos.ticker;
         if (!ticker) { missingList.push({ nom: pos.nom, reason: "Ticker non configuré" }); return; }
         try {
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${p.interval}&range=${p.range}`;
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=${p.interval}&range=${p.range}`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
           if (!res.ok) { missingList.push({ nom: pos.nom, reason: `Erreur ${res.status}` }); return; }
           const data = await res.json();

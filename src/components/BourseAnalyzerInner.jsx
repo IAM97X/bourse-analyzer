@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Component } from "react";
 import { createPortal } from "react-dom";
 import { C, shadow } from "../constants/theme";
 import { SYSTEM_PROMPT, MARKET_SCORING_PROMPT, MARKET_SCORING_PROMPT_FALLBACK } from "../constants/prompts";
 import { load, save } from "../lib/storage";
 import { callClaude, enqueueApi, hasClaudeKey, hasAI, fetchWithProxy } from "../lib/api";
-import { computeRSI, fmtEur } from "../lib/finance";
+import { computeRSI, fmtEur, sanitizeTicker } from "../lib/finance";
 import { fetchYahooAnalysts, fetchGoogleNewsRSS, formatExternalContext } from "../lib/market";
 import { useIsMobile } from "../context/mobile";
 import { UI, DEFAULT_PROFIL } from "../constants/config";
@@ -31,6 +31,25 @@ import OverviewTab from "./OverviewTab";
 import { isDemoMode, clearDemoData } from "../constants/demoData";
 import { useSubscription } from "../context/subscription";
 import Paywall from "./Paywall";
+
+class TabErrorBoundary extends Component {
+  state = { error: null };
+  static getDerivedStateFromError(e) { return { error: e }; }
+  componentDidCatch(e) { if (process.env.NODE_ENV !== "production") console.error("[TabErrorBoundary]", e); }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "300px", gap: "12px", fontFamily: "'DM Sans', sans-serif", textAlign: "center", padding: "40px" }}>
+        <div style={{ fontSize: "15px", fontWeight: "700", color: "#0F172A" }}>Cet onglet a rencontré une erreur</div>
+        <div style={{ fontSize: "12px", color: "#64748B", maxWidth: "400px" }}>{this.state.error?.message || "Erreur inattendue"}</div>
+        <button onClick={() => this.setState({ error: null })}
+          style={{ marginTop: "8px", background: "#2D6CB5", color: "#fff", border: "none", borderRadius: "10px", padding: "9px 20px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+}
 
 const TICKER_CACHE_KEY = "bourse_isin_ticker_cache";
 
@@ -373,7 +392,7 @@ function BourseAnalyzerInner({ userName, onLogout }) {
         const ticker = pos.ticker || (pos.isin && tickerCache[pos.isin]) || null;
         if (!ticker) return { id: pos.id, rsi: null, volRatio: null };
         try {
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=60d`;
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=1d&range=60d`;
           const res = await fetchWithProxy(url, { signal: AbortSignal.timeout(6000) });
           if (!res.ok) return { id: pos.id, rsi: null, volRatio: null };
           const json = await res.json();
@@ -903,19 +922,21 @@ function BourseAnalyzerInner({ userName, onLogout }) {
               </button>
             )}
 
-            {activeTab === TABS.HOME       && <HomeTab account={account} profil={profil} marketScores={marketScores} onTabChange={changeTab} hidden={hiddenValues} />}
-            {PORTFOLIO_TABS.includes(activeTab) && activeTab !== TABS.HISTORIQUE && <DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} />}
-            {activeTab === TABS.PORTFOLIO  && <PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} />}
-            {activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
-            {activeTab === TABS.PROJECTION && <ProjectionTab profil={profil} account={account} />}
-            {activeTab === TABS.HISTORIQUE && <HistoriqueTab portfolioVersion={portfolioVersion} account={account} />}
-            {activeTab === TABS.DCA        && <StratégieDCATab profil={profil} portfolioVersion={portfolioVersion} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} onSaveProfil={p => { setProfil(p); save("bourse_profil", p); }} account={account} />}
-            {activeTab === TABS.OPERATIONS && <OperationsTab account={account} />}
-            {activeTab === TABS.CHAT       && <ChatTab profil={profil} account={account} portfolioVersion={portfolioVersion} marketScores={marketScores} />}
-            {activeTab === TABS.AUTOPILOT    && <AutopilotIA account={account} profil={profil} hidden={hiddenValues} />}
-            {activeTab === TABS.AI_PORTFOLIO && <AIPortfolioTab account={account} hidden={hiddenValues} />}
-            {activeTab === TABS.PROFIL     && <ProfilTab profil={profil} onChange={setProfil} />}
-            {activeTab === TABS.SETTINGS   && <ParametresTab profil={profil} onChange={setProfil} />}
+            <TabErrorBoundary key={activeTab}>
+              {activeTab === TABS.HOME       && <HomeTab account={account} profil={profil} marketScores={marketScores} onTabChange={changeTab} hidden={hiddenValues} />}
+              {PORTFOLIO_TABS.includes(activeTab) && activeTab !== TABS.HISTORIQUE && <DashboardBar onTabChange={changeTab} hidden={hiddenValues} profil={profil} account={account} />}
+              {activeTab === TABS.PORTFOLIO  && <PortfolioTab profil={profil} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} account={account} />}
+              {activeTab === TABS.MARCHE     && <MarcheTab profil={profil} portfolioVersion={portfolioVersion} account={account} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} />}
+              {activeTab === TABS.PROJECTION && <ProjectionTab profil={profil} account={account} />}
+              {activeTab === TABS.HISTORIQUE && <HistoriqueTab portfolioVersion={portfolioVersion} account={account} />}
+              {activeTab === TABS.DCA        && <StratégieDCATab profil={profil} portfolioVersion={portfolioVersion} marketScores={marketScores} marketScoringUi={marketScoringUi} onRunScoring={runMarketScoring} onSaveProfil={p => { setProfil(p); save("bourse_profil", p); }} account={account} />}
+              {activeTab === TABS.OPERATIONS && <OperationsTab account={account} />}
+              {activeTab === TABS.CHAT       && <ChatTab profil={profil} account={account} portfolioVersion={portfolioVersion} marketScores={marketScores} />}
+              {activeTab === TABS.AUTOPILOT    && <AutopilotIA account={account} profil={profil} hidden={hiddenValues} />}
+              {activeTab === TABS.AI_PORTFOLIO && <AIPortfolioTab account={account} hidden={hiddenValues} />}
+              {activeTab === TABS.PROFIL     && <ProfilTab profil={profil} onChange={setProfil} />}
+              {activeTab === TABS.SETTINGS   && <ParametresTab profil={profil} onChange={setProfil} />}
+            </TabErrorBoundary>
           </div>
         </div>
       </div>

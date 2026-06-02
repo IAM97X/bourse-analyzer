@@ -1,5 +1,8 @@
 import { load, save } from "./storage";
 
+// Tickers Yahoo Finance : alphanumériques + . - ^ = uniquement, jamais encodeURIComponent
+export const sanitizeTicker = (t) => String(t || "").replace(/[^A-Z0-9.\-^=]/gi, "");
+
 export function parsePrice(str) {
   if (!str) return null;
   const s = String(str).replace(/[€$£%\u00A0\u202F]/g, " ").trim();
