@@ -77,20 +77,23 @@ module.exports = async function handler(req, res) {
     };
     if (cookie) headers["Cookie"] = cookie;
 
-    const tryFetch = async (u) => {
+    const tryFetch = async (u, label) => {
       const r = await fetch(u, { headers });
-      if (!r.ok) return null;
+      const ct = r.headers.get("content-type") || "";
       const text = await r.text();
-      if (!text || text.trimStart().startsWith("<")) return null;
+      const preview = text.slice(0, 120).replace(/\s+/g, " ");
+      console.log(`[yahoo-proxy] ${label} status=${r.status} ct=${ct} preview=${preview}`);
+      if (!r.ok) return null;
+      if (ct.includes("text/html") || text.trimStart().startsWith("<")) return null;
       try { return JSON.parse(text); } catch { return null; }
     };
 
-    let data = await tryFetch(targetUrl);
+    let data = await tryFetch(targetUrl, "query2+crumb");
 
     // Fallback query1 sans crumb si query2 échoue
     if (!data) {
       const fallback = url.includes("query1") ? url : url.replace("query2", "query1");
-      data = await tryFetch(fallback);
+      data = await tryFetch(fallback, "query1-fallback");
     }
 
     if (data) return res.status(200).json(data);
