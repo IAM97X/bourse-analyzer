@@ -97,8 +97,7 @@ export function LiveMarketPanel({ pos, onClose }) {
     // Valider le format du ticker avant encodage (évite URIError Safari)
     if (!/^[A-Z0-9.\-^=]+$/i.test(ticker)) { setErr("Ticker invalide · vérifiez le symbole dans ✏"); setLoading(false); return; }
     try {
-      const url  = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=5m&range=1d`;
-      const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(14000) });
+      const res  = await fetch(`/api/yahoo?symbols=${encodeURIComponent(sanitizeTicker(ticker))}&interval=5m&range=1d`, { signal: AbortSignal.timeout(14000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await safeJson(res);
       const r    = json?.chart?.result?.[0];
@@ -626,9 +625,7 @@ export function StockProjectionChart({ pos, onClose }) {
 
       try {
         // Historique affiché selon la période choisie
-        const urlDisplay = `https://query1.finance.yahoo.com/v8/finance/chart/${sanitizeTicker(ticker)}?interval=${h.interval}&range=${h.range}`;
-
-        const resDisplay = await fetchWithProxy(urlDisplay, { signal: AbortSignal.timeout(15000) });
+        const resDisplay = await fetch(`/api/yahoo?symbols=${encodeURIComponent(sanitizeTicker(ticker))}&interval=${h.interval}&range=${h.range}`, { signal: AbortSignal.timeout(15000) });
         if (!resDisplay.ok) throw new Error(`HTTP ${resDisplay.status}`);
         const jsonDisplay = await safeJson(resDisplay);
 

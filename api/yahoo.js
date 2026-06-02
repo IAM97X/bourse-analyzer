@@ -3,10 +3,12 @@ const { checkOrigin } = require("./_cors");
 module.exports = async function handler(req, res) {
   if (!checkOrigin(req, res)) return;
 
-  const { symbols } = req.query;
+  const { symbols, interval, range } = req.query;
   if (!symbols) return res.status(400).json({ error: "symbols required" });
 
   const symbolList = symbols.split(",").map(s => s.trim().replace(/[^A-Z0-9.\-^=]/gi, "")).filter(Boolean);
+  const iv = /^[a-z0-9]+$/.test(interval || "") ? interval : "1d";
+  const rg = /^[a-z0-9]+$/.test(range    || "") ? range    : "5d";
 
   const HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -25,10 +27,31 @@ module.exports = async function handler(req, res) {
     "Sec-Fetch-Site": "same-site",
   };
 
+  // Mode chart : 1 symbole + interval explicite → retourne les données brutes v8/chart
+  const isChartMode = symbolList.length === 1 && req.query.interval;
+  if (isChartMode) {
+    const symbol = symbolList[0];
+    const chartUrls = [
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${iv}&range=${rg}&includePrePost=false`,
+      `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${iv}&range=${rg}&includePrePost=false`,
+    ];
+    for (const url of chartUrls) {
+      try {
+        const r = await fetch(url, { headers: HEADERS });
+        if (!r.ok) continue;
+        const text = await r.text();
+        if (!text || text.trimStart().startsWith("<")) continue;
+        const data = JSON.parse(text);
+        if (data?.chart?.result?.[0]) return res.status(200).json(data);
+      } catch { continue; }
+    }
+    return res.status(503).json({ error: "Données indisponibles" });
+  }
+
   const fetchOne = async (symbol) => {
     const urls = [
-      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d&includePrePost=false`,
-      `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d&includePrePost=false`,
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${iv}&range=${rg}&includePrePost=false`,
+      `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${iv}&range=${rg}&includePrePost=false`,
       `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`,
     ];
 
@@ -37,8 +60,9 @@ module.exports = async function handler(req, res) {
         const r = await fetch(url, { headers: HEADERS });
         if (r.status === 429) continue;
         if (!r.ok) continue;
-
-        const data = await r.json();
+        const text = await r.text();
+        if (!text || text.trimStart().startsWith("<")) continue;
+        const data = JSON.parse(text);
 
         // v8/chart response
         if (data?.chart?.result?.[0]) {
