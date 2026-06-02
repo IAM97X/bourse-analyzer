@@ -68,6 +68,40 @@ const DEFAULT_SCREENING_STOCKS = [
   }
 })();
 
+// ─── Ticker sanitization migration (one-shot) ─────────────────────────────────
+(function migrateTickerSanitize() {
+  if (localStorage.getItem("bourse_ticker_migration_v1") === "1") return;
+  try {
+    const raw = localStorage.getItem("bourse_portfolio");
+    if (raw) {
+      const portfolio = JSON.parse(raw);
+      if (Array.isArray(portfolio)) {
+        const clean = portfolio.map(p => {
+          if (!p.ticker) return p;
+          const t = String(p.ticker).replace(/[^A-Z0-9.\-^=]/gi, "");
+          return t !== p.ticker ? { ...p, ticker: t } : p;
+        });
+        localStorage.setItem("bourse_portfolio", JSON.stringify(clean));
+      }
+    }
+    const cache = localStorage.getItem("bourse_isin_ticker_cache");
+    if (cache) {
+      const obj = JSON.parse(cache);
+      if (obj && typeof obj === "object") {
+        let changed = false;
+        const cleanCache = {};
+        Object.entries(obj).forEach(([isin, ticker]) => {
+          const t = String(ticker || "").replace(/[^A-Z0-9.\-^=]/gi, "");
+          cleanCache[isin] = t;
+          if (t !== ticker) changed = true;
+        });
+        if (changed) localStorage.setItem("bourse_isin_ticker_cache", JSON.stringify(cleanCache));
+      }
+    }
+  } catch {}
+  localStorage.setItem("bourse_ticker_migration_v1", "1");
+})();
+
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 class AppErrorBoundary extends Component {
   state = { error: null };
