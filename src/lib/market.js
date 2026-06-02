@@ -24,7 +24,7 @@ export async function fetchFMPQuote(isin) {
   const key = String(FMP_KEY);
   if (!key) throw new Error("Clé FMP manquante");
   const ticker = await resolveFMPTicker(isin);
-  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(ticker)}?apikey=${key}`;
+  const url = `https://financialmodelingprep.com/api/v3/quote/${sanitizeTicker(ticker)}?apikey=${key}`;
   const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);
   const data = await res.json();
@@ -49,7 +49,7 @@ export async function fetchFMPHistorical(isin, fromDate, toDate) {
 export async function fetchFMPHistoricalByTicker(ticker, fromDate, toDate) {
   const key = String(FMP_KEY);
   if (!key) throw new Error("Clé FMP requise pour les données historiques. Ajoutez-la dans Paramètres → Clés API.");
-  const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${encodeURIComponent(ticker)}?from=${fromDate}&to=${toDate}&apikey=${key}`;
+  const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${sanitizeTicker(ticker)}?from=${fromDate}&to=${toDate}&apikey=${key}`;
   const res  = await fetchWithProxy(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`FMP HTTP ${res.status}`);
   const data = await res.json();
@@ -272,8 +272,7 @@ export function openLink(url) {
 export function yahooFinanceUrl(pos) {
   const tickerCache = (() => { try { return JSON.parse(localStorage.getItem(TICKER_CACHE_KEY) || "{}"); } catch { return {}; } })();
   const t = pos.ticker || (pos.isin && tickerCache[pos.isin]) || null;
-  if (t) return `https://fr.finance.yahoo.com/quote/${encodeURIComponent(t)}/actualites/`;
-  // Fallback : Yahoo accepte aussi les ISIN comme identifiant de cotation
+  if (t) return `https://fr.finance.yahoo.com/quote/${sanitizeTicker(t)}/actualites/`;
   if (pos.isin) return `https://fr.finance.yahoo.com/quote/${encodeURIComponent(pos.isin)}/actualites/`;
   return `https://fr.finance.yahoo.com/recherche?p=${encodeURIComponent(pos.nom)}`;
 }
